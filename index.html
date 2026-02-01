@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gilded Stream</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <style>
+        body, html { margin: 0; padding: 0; background: #000; color: white; font-family: sans-serif; overflow: hidden; }
+        .liquid-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: linear-gradient(45deg, #996515, #D4AF37, #F9E076, #D4AF37);
+            background-size: 400% 400%; animation: flow 15s ease infinite;
+        }
+        @keyframes flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .feed-container { display: flex; flex-direction: column; align-items: center; height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; }
+        .video-card { 
+            min-height: 85vh; width: 90%; max-width: 400px; margin: 10vh 0;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 215, 0, 0.3); border-radius: 40px;
+            scroll-snap-align: center; display: flex; flex-direction: column; 
+            justify-content: space-around; align-items: center; text-align: center;
+        }
+        .gold-button {
+            background: linear-gradient(to bottom, #F9E076, #D4AF37); border: none;
+            padding: 20px 40px; border-radius: 50px; font-weight: bold; color: #4a3700;
+            cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="liquid-bg"></div>
+    <div class="feed-container" id="feed"></div>
+
+    <script>
+        const WITHDRAW_LINK = "YOUR_LNURL_WITHDRAW_LINK_HERE"; 
+
+        async function loadAds() {
+            const res = await fetch('ads.json');
+            const ads = await res.json();
+            const feed = document.getElementById('feed');
+            ads.forEach(ad => {
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.innerHTML = `
+                    <h2>${ad.title}</h2>
+                    <iframe width="80%" height="200" src="${ad.video_url}" frameborder="0" style="border-radius:20px"></iframe>
+                    <p>${ad.description}</p>
+                    <button class="gold-button" onclick="claimReward(this)">Claim Gold</button>
+                `;
+                feed.appendChild(card);
+            });
+        }
+
+        async function claimReward(btn) {
+            if (window.webln) {
+                await window.webln.enable();
+                await window.webln.lnurl(WITHDRAW_LINK);
+                btn.innerText = "Sats Sent!";
+                btn.style.background = "#4CAF50";
+            } else {
+                alert("Connect a Lightning Wallet like Alby!");
+            }
+        }
+        loadAds();
+    </script>
+</body>
+</html>
