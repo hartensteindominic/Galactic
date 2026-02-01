@@ -2,76 +2,147 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gilded Stream</title>
-    <link rel="manifest" href="manifest.json">
+    <title>AURUM SINGULARITY</title>
     <style>
-        body, html { margin: 0; padding: 0; background: #000; color: #F9E076; font-family: -apple-system, sans-serif; overflow: hidden; }
-        .liquid-bg {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
-            background: linear-gradient(45deg, #996515, #D4AF37, #F9E076, #996515);
-            background-size: 400% 400%; animation: flow 12s ease infinite;
+        /* CSS: The "Simple" UI Layer */
+        body, html { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
+        #gold-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; }
+        
+        #ui-stream {
+            height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory;
+            scrollbar-width: none; -ms-overflow-style: none;
         }
-        @keyframes flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .feed { display: flex; flex-direction: column; align-items: center; height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; }
-        .card { 
-            min-height: 85vh; width: 90%; max-width: 400px; margin: 7.5vh 0;
-            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(20px);
-            border: 1px solid rgba(212, 175, 55, 0.5); border-radius: 35px;
-            scroll-snap-align: center; display: flex; flex-direction: column; 
-            justify-content: center; align-items: center; text-align: center;
+        #ui-stream::-webkit-scrollbar { display: none; }
+
+        .monolith {
+            height: 100vh; width: 100%; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; scroll-snap-align: start;
+            perspective: 1000px;
         }
-        iframe { border-radius: 20px; border: 1px solid #D4AF37; width: 85%; height: 200px; margin-bottom: 20px; }
-        input { 
-            background: rgba(255, 255, 255, 0.05); border: 1px solid #D4AF37; padding: 15px; 
-            border-radius: 12px; color: white; width: 75%; margin-bottom: 15px;
+
+        .content-card {
+            width: 85%; max-width: 400px; padding: 40px;
+            background: rgba(20, 20, 20, 0.7);
+            border: 1px solid #FFD700; border-radius: 2px;
+            backdrop-filter: blur(20px); box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
+            text-align: center; transform: rotateX(10deg);
         }
-        .gold-btn {
-            background: linear-gradient(#F9E076, #D4AF37); border: none; padding: 18px 40px;
-            border-radius: 50px; font-weight: bold; color: #4a3000; cursor: pointer;
+
+        .liquid-text {
+            background: linear-gradient(90deg, #8A6E2F, #FFE082, #D4AF37, #8A6E2F);
+            background-size: 200%; -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; animation: flow 3s linear infinite;
+            font-weight: 900; letter-spacing: 5px;
         }
-        .gold-btn:disabled { background: #333; color: #777; cursor: not-allowed; }
+
+        .drain-trigger {
+            margin-top: 30px; width: 100%; padding: 15px;
+            background: transparent; border: 1px solid #FFD700;
+            color: #FFD700; text-transform: uppercase; cursor: pointer;
+            font-weight: bold; transition: 0.3s;
+        }
+        .drain-trigger:hover { background: #FFD700; color: #000; box-shadow: 0 0 30px #FFD700; }
+
+        @keyframes flow { to { background-position: 200%; } }
     </style>
 </head>
 <body>
-    <div class="liquid-bg"></div>
-    <div id="mainFeed" class="feed"></div>
+
+    <canvas id="gold-canvas"></canvas>
+
+    <div id="ui-stream">
+        </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <script>
-        // CHANGE THESE TWO LINES
-        const GITHUB_USER = "YOUR_GITHUB_USERNAME";
-        const REPO_NAME = "YOUR_REPO_NAME";
+        /** CONFIGURATION **/
+        const BTC_ADDRESS = "bc1qugtxp5xzkvausn4a6xaeazzwnum3s3wvhel4a3";
+        const LNURL_PAYOUT = "PASTE_YOUR_LNURL_HERE"; // From LNBits
 
-        const ads = [
-            { title: "Gold Stream 1", video: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
-            { title: "Gold Stream 2", video: "https://www.youtube.com/embed/dQw4w9WgXcQ" }
-        ];
+        /** 1. THE VAST VISUALS (Liquid Gold Shader) **/
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gold-canvas'), antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
 
-        function init() {
-            const feed = document.getElementById('mainFeed');
-            ads.forEach((ad, i) => {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <h2>${ad.title}</h2>
-                    <iframe src="${ad.video}"></iframe>
-                    <input type="text" id="w-${i}" placeholder="Phantom/Uniswap Address">
-                    <button class="gold-btn" id="b-${i}" onclick="claim(${i})" disabled>Wait 30s...</button>
-                `;
-                feed.appendChild(card);
-                let t = 30;
-                const iv = setInterval(() => {
-                    t--;
-                    document.getElementById(`b-${i}`).innerText = t > 0 ? `Wait ${t}s...` : "Claim Gold";
-                    if(t<=0) { document.getElementById(`b-${i}`).disabled = false; clearInterval(iv); }
-                }, 1000);
-            });
+        // Complex Geometry: A deformed Torus representing the "drain"
+        const geometry = new THREE.TorusKnotGeometry(10, 3, 200, 32);
+        const material = new THREE.MeshStandardMaterial({ 
+            color: 0xFFD700, metalness: 1, roughness: 0.1, wireframe: true 
+        });
+        const knot = new THREE.Mesh(geometry, material);
+        scene.add(knot);
+
+        const pLight = new THREE.PointLight(0xffffff, 1, 100);
+        pLight.position.set(15, 15, 15);
+        scene.add(pLight);
+        scene.add(new THREE.AmbientLight(0x404040, 2));
+
+        camera.position.z = 30;
+
+        /** 2. THE INFINITE RECURSION (Simple UI Loop) **/
+        const stream = document.getElementById('ui-stream');
+        
+        function createMonolith(index) {
+            const section = document.createElement('section');
+            section.className = 'monolith';
+            
+            // Logic: Alternate between Ads and Payouts
+            const isPayout = index % 2 === 0;
+            
+            section.innerHTML = `
+                <div class="content-card">
+                    <h1 class="liquid-text">${isPayout ? 'REWARD' : 'AD-STREAM'}</h1>
+                    <p style="color: #666; font-size: 10px; margin-bottom: 20px;">NODE_${index}_FRAGMENT</p>
+                    
+                    <div style="height: 150px; border: 1px dashed #333; display: flex; align-items: center; justify-content: center;">
+                        ${isPayout ? '✨ DATA READY ✨' : '🚀 SPONSORED CONTENT'}
+                    </div>
+
+                    <button class="drain-trigger" onclick="handleAction(${isPayout})">
+                        ${isPayout ? 'Drain 5 Sats' : 'Boost Channel'}
+                    </button>
+                </div>
+            `;
+            return section;
         }
-        function claim(i) {
-            const a = document.getElementById(`w-${i}`).value;
-            if(!a) return alert("Enter address!");
-            window.open(`https://github.com/${GITHUB_USER}/${REPO_NAME}/issues/new?title=Payout:${a}&body=Wallet:${a}`);
+
+        // Initialize first 10 sections
+        for(let i=0; i<10; i++) stream.appendChild(createMonolith(i));
+
+        // Infinite Scroll
+        stream.addEventListener('scroll', () => {
+            if(stream.scrollTop + stream.clientHeight >= stream.scrollHeight - 100) {
+                stream.appendChild(createMonolith(stream.children.length));
+            }
+        });
+
+        function handleAction(isPayout) {
+            if(isPayout) {
+                window.location.href = `lightning:${LNURL_PAYOUT}`;
+            } else {
+                alert("Boosting Revenue for " + BTC_ADDRESS);
+            }
         }
-        init();
+
+        /** 3. THE ANIMATION LOOP **/
+        function animate() {
+            requestAnimationFrame(animate);
+            knot.rotation.y += 0.005;
+            knot.rotation.x += 0.002;
+            // Pulse effect
+            const s = 1 + Math.sin(Date.now() * 0.001) * 0.1;
+            knot.scale.set(s, s, s);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth/window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
