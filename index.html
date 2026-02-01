@@ -1,32 +1,77 @@
-<div class="video-card">
-    <h2 style="color:#F9E076">Watch to Earn</h2>
-    <iframe width="85%" height="200" src="YOUR_YOUTUBE_LINK" frameborder="0"></iframe>
-    
-    <input type="text" id="userAddress" placeholder="Enter BTC or SOL Address" 
-           style="width:80%; padding:10px; border-radius:10px; border:none; margin-top:10px;">
-    
-    <button class="gold-button" id="claimBtn" onclick="requestPayout(this)" disabled>
-        Watch 30s to Unlock
-    </button>
-</div>
-
-<script>
-    // Logic to unlock button after video "watch" time
-    setTimeout(() => {
-        document.getElementById('claimBtn').disabled = false;
-        document.getElementById('claimBtn').innerText = "Request Payout";
-    }, 30000); // 30 seconds
-
-    function requestPayout(btn) {
-        const addr = document.getElementById('userAddress').value;
-        if(addr.length < 10) {
-            alert("Please enter a valid wallet address!");
-            return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gilded Stream</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body, html { margin: 0; padding: 0; background: #000; color: #F9E076; font-family: -apple-system, sans-serif; overflow: hidden; }
+        .liquid-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: linear-gradient(45deg, #996515, #D4AF37, #F9E076, #996515);
+            background-size: 400% 400%; animation: flow 12s ease infinite;
         }
-        // Since we have no backend, we "simulated" the request
-        btn.innerText = "Request Sent! ✨";
-        btn.style.background = "#4CAF50";
-        console.log("Pay this person:", addr);
-        alert("Gold request for " + addr + " has been logged. Check your GitHub 'Issues' for the payout list!");
-    }
-</script>
+        @keyframes flow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .feed { display: flex; flex-direction: column; align-items: center; height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; }
+        .card { 
+            min-height: 85vh; width: 90%; max-width: 400px; margin: 7.5vh 0;
+            background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.5); border-radius: 35px;
+            scroll-snap-align: center; display: flex; flex-direction: column; 
+            justify-content: center; align-items: center; text-align: center;
+        }
+        iframe { border-radius: 20px; border: 1px solid #D4AF37; width: 85%; height: 200px; margin-bottom: 20px; }
+        input { 
+            background: rgba(255, 255, 255, 0.05); border: 1px solid #D4AF37; padding: 15px; 
+            border-radius: 12px; color: white; width: 75%; margin-bottom: 15px;
+        }
+        .gold-btn {
+            background: linear-gradient(#F9E076, #D4AF37); border: none; padding: 18px 40px;
+            border-radius: 50px; font-weight: bold; color: #4a3000; cursor: pointer;
+        }
+        .gold-btn:disabled { background: #333; color: #777; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+    <div class="liquid-bg"></div>
+    <div id="mainFeed" class="feed"></div>
+    <script>
+        // CHANGE THESE TWO LINES
+        const GITHUB_USER = "YOUR_GITHUB_USERNAME";
+        const REPO_NAME = "YOUR_REPO_NAME";
+
+        const ads = [
+            { title: "Gold Stream 1", video: "https://www.youtube.com/embed/dQw4w9WgXcQ" },
+            { title: "Gold Stream 2", video: "https://www.youtube.com/embed/dQw4w9WgXcQ" }
+        ];
+
+        function init() {
+            const feed = document.getElementById('mainFeed');
+            ads.forEach((ad, i) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h2>${ad.title}</h2>
+                    <iframe src="${ad.video}"></iframe>
+                    <input type="text" id="w-${i}" placeholder="Phantom/Uniswap Address">
+                    <button class="gold-btn" id="b-${i}" onclick="claim(${i})" disabled>Wait 30s...</button>
+                `;
+                feed.appendChild(card);
+                let t = 30;
+                const iv = setInterval(() => {
+                    t--;
+                    document.getElementById(`b-${i}`).innerText = t > 0 ? `Wait ${t}s...` : "Claim Gold";
+                    if(t<=0) { document.getElementById(`b-${i}`).disabled = false; clearInterval(iv); }
+                }, 1000);
+            });
+        }
+        function claim(i) {
+            const a = document.getElementById(`w-${i}`).value;
+            if(!a) return alert("Enter address!");
+            window.open(`https://github.com/${GITHUB_USER}/${REPO_NAME}/issues/new?title=Payout:${a}&body=Wallet:${a}`);
+        }
+        init();
+    </script>
+</body>
+</html>
