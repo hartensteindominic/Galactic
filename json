@@ -1,0 +1,12 @@
+[
+  {
+    "title": "Ad from Account A",
+    "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "description": "Watch this for 10 Sats"
+  },
+  {
+    "title": "Promotion B",
+    "video_url": "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "description": "Support my other page!"
+  }
+]
