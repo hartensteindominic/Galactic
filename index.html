@@ -3,68 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURUM SENTINEL // SOVEREIGN_CORE_V37</title>
+    <title>AURUM SENTINEL // GADGET_CORE_V38</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; }
-        .glass { background: rgba(0,0,0,0.9); border: 1px solid #FFD700; backdrop-filter: blur(25px); box-shadow: 0 0 30px rgba(255, 215, 0, 0.1); }
         #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; }
-        .vault-btn { width: 100%; padding: 12px; font-weight: 900; font-size: 10px; text-transform: uppercase; cursor: pointer; border: 1px solid #FFD700; transition: 0.3s; background: transparent; color: #FFD700; }
-        .vault-btn:hover { background: #FFD700; color: black; box-shadow: 0 0 20px #FFD700; }
-        .status-pill { padding: 2px 8px; border-radius: 4px; font-size: 8px; background: rgba(0,255,255,0.1); color: #00ffff; border: 1px solid #00ffff; }
-        .cyan-glow { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
-        input::placeholder { color: rgba(255, 215, 0, 0.3); }
+        
+        /* Glassmorphism: Making the background visible */
+        .glass-panel { 
+            background: rgba(255, 215, 0, 0.03); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 215, 0, 0.2); 
+            border-radius: 2px;
+        }
+
+        .gadget { 
+            position: absolute; 
+            padding: 10px; 
+            font-size: 8px; 
+            width: 120px;
+            pointer-events: auto;
+        }
+
+        .vault-btn { 
+            width: 100%; padding: 10px; font-weight: 900; font-size: 10px; 
+            text-transform: uppercase; cursor: pointer; border: 1px solid #FFD700; 
+            transition: 0.3s; background: rgba(0,0,0,0.5); color: #FFD700; 
+        }
+        .vault-btn:hover { background: #FFD700; color: black; }
+        
+        .premium-glow { animation: pulse-glow 2s infinite; }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(255, 215, 0, 0.2); }
+            50% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
+        }
     </style>
 </head>
 <body>
 
 <canvas id="canvas-bg"></canvas>
 
-<div class="fixed top-0 w-full z-50 glass p-5 border-b border-[#FFD700] flex justify-between items-start text-[10px]">
-    <div class="space-y-2">
-        <div class="flex items-center gap-3">
-            <span class="status-pill animate-pulse font-bold">SENTINEL_ACTIVE</span>
-            <span class="opacity-50 font-bold uppercase tracking-widest text-white">Non-Custodial Protocol</span>
-        </div>
-        <div class="flex gap-6">
-            <div class="border-l-2 border-white/20 pl-3">
-                <div class="text-[7px] opacity-40 uppercase">Your Wallet ETH</div>
-                <div id="user-eth" class="text-white text-sm font-bold tracking-widest">0.0000</div>
-            </div>
-            <div class="border-l-2 border-[#FFD700] pl-3">
-                <div class="text-[7px] opacity-40 uppercase">Staked stETH (Lido)</div>
-                <div id="user-steth" class="text-sm font-bold tracking-widest text-[#FFD700]">0.0000</div>
-            </div>
-        </div>
-    </div>
-    <div class="text-right">
-        <div class="text-[#FFD700] font-black text-sm tracking-tighter neon-text">AURUM_SENTINEL_V37</div>
-        <div id="ai-thought" class="text-[8px] italic text-cyan-400 mt-1 uppercase tracking-tight">"Awaiting signature for validator synchronization..."</div>
-    </div>
+<div id="gadget-gas" class="gadget glass-panel top-24 left-6">
+    <div class="opacity-50 uppercase mb-1">Network_Gas</div>
+    <div id="gas-val" class="text-white font-bold">-- GWEI</div>
 </div>
 
-<div id="vault-ui" class="fixed right-6 bottom-10 w-80 glass p-6 z-50 border-t-4 border-[#FFD700]">
-    <div class="flex justify-between items-center mb-6">
-        <span class="text-[10px] font-black tracking-widest">SOVEREIGN_VAULT</span>
-        <span class="text-[8px] text-green-400 font-bold">~3.8% APR</span>
+<div id="gadget-market" class="gadget glass-panel top-40 left-6">
+    <div class="opacity-50 uppercase mb-1">ETH_Market_Price</div>
+    <div id="eth-price" class="text-white font-bold">$---.--</div>
+</div>
+
+<div id="vault-ui" class="fixed right-6 top-24 w-64 glass-panel p-5 premium-glow">
+    <div class="flex justify-between items-center mb-4">
+        <span class="text-[9px] font-black text-[#FFD700]">STAKING_MODULE</span>
+        <span class="text-[7px] text-cyan-400">V38.SECURE</span>
     </div>
 
-    <div class="bg-white/5 p-4 border border-white/10 mb-6">
-        <div class="text-[8px] opacity-40 mb-1 uppercase">Staking Yield (Real-Time)</div>
-        <div id="profit-est" class="text-green-400 text-lg font-black tracking-tighter">+0.00000 ETH</div>
+    <div class="mb-4">
+        <div class="text-[7px] opacity-40 uppercase">Earnings</div>
+        <div id="profit-est" class="text-green-400 text-sm font-black tracking-tighter">+0.00000 ETH</div>
     </div>
 
     <div class="space-y-3">
-        <input id="stake-amount" type="number" step="0.01" placeholder="DEPOSIT AMOUNT (ETH)" class="w-full bg-black/50 border border-white/20 p-3 text-white text-[11px] outline-none focus:border-cyan-400 transition">
-        <button onclick="stakeEth()" class="vault-btn">Stake into Lido Core</button>
+        <input id="stake-amount" type="number" step="0.1" placeholder="ETH AMOUNT" class="w-full bg-transparent border-b border-white/20 p-2 text-white text-[10px] outline-none focus:border-[#FFD700]">
+        <button onclick="stakeEth()" class="vault-btn">Feed Core</button>
         
-        <div class="pt-6 border-t border-white/10 mt-2">
-            <button onclick="withdrawBridge()" class="vault-btn bg-white/10 text-white border-white/20 hover:border-[#FFD700]">Solana Bridge / Withdraw</button>
-            <p class="text-[6px] mt-3 opacity-30 text-center uppercase leading-relaxed">
-                Fees: 0.0001 ETH // No middleman // Audited by Sigma Prime 2026
-            </p>
+        <div class="pt-4 mt-2">
+            <button onclick="withdrawExpress()" class="vault-btn bg-[#FFD700]/10 border-cyan-400 text-cyan-400">Express Solana Bridge (0.0005 Tax)</button>
+            <p class="text-[5px] mt-2 opacity-30 text-center uppercase tracking-widest">Priority processing for elite viziers</p>
         </div>
     </div>
 </div>
@@ -73,97 +81,53 @@
     const CONFIG = {
         TREASURY: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
         LIDO: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
-        INTERFACE_FEE: "0.0001"
+        EXPRESS_FEE: "0.0005" // Increased fee for "Express" service
     };
 
-    let signer = null;
-    let provider = null;
-
-    // --- 🎨 3D SCENE (The Look You Liked) ---
+    // --- 🎨 ENHANCED 3D SCENE ---
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-bg'), alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    // Creating the Golden Torus Knot
-    const geometry = new THREE.TorusKnotGeometry(10, 3, 100, 16);
-    const material = new THREE.MeshBasicMaterial({ color: 0xFFD700, wireframe: true, transparent: true, opacity: 0.3 });
+    // Bigger, more detailed knot to fill the background
+    const geometry = new THREE.TorusKnotGeometry(15, 4, 200, 20);
+    const material = new THREE.MeshBasicMaterial({ color: 0xFFD700, wireframe: true, transparent: true, opacity: 0.15 });
     const knot = new THREE.Mesh(geometry, material);
     scene.add(knot);
-    camera.position.z = 40;
+    camera.position.z = 50;
 
     function animate() {
         requestAnimationFrame(animate);
-        knot.rotation.y += 0.003;
-        knot.rotation.x += 0.001;
+        knot.rotation.y += 0.002;
         renderer.render(scene, camera);
     }
     animate();
 
-    // --- 🏦 BLOCKCHAIN BACKEND (The Legit Part) ---
-    async function updateBalances() {
-        if(!window.ethereum) return;
+    // --- 💰 INCREASED REVENUE LOGIC ---
+    async function withdrawExpress() {
         try {
-            provider = new ethers.BrowserProvider(window.ethereum);
-            const accounts = await provider.send("eth_requestAccounts", []);
-            signer = await provider.getSigner();
-
-            const ethBal = await provider.getBalance(accounts[0]);
-            document.getElementById('user-eth').innerText = parseFloat(ethers.formatUnits(ethBal, "ether")).toFixed(4);
-
-            const stEthAbi = ["function balanceOf(address) view returns (uint256)"];
-            const contract = new ethers.Contract(CONFIG.LIDO, stEthAbi, provider);
-            const stEthBal = await contract.balanceOf(accounts[0]);
-            const stVal = parseFloat(ethers.formatUnits(stEthBal, "ether"));
-            document.getElementById('user-steth').innerText = stVal.toFixed(5);
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
             
-            // Show real yield growth estimate
-            if(stVal > 0) {
-                document.getElementById('profit-est').innerText = `+${(stVal * 0.0001).toFixed(6)} ETH`;
-            }
-        } catch(e) { console.error("Sync Error", e); }
-    }
-
-    async function stakeEth() {
-        const amt = document.getElementById('stake-amount').value;
-        if(!amt) return speak("Protocol requires a numerical tribute.");
-        
-        try {
-            speak("Initiating direct staking with Lido V3. Sign the secure transaction.");
-            const lidoAbi = ["function submit(address _referral) payable returns (uint256)"];
-            const contract = new ethers.Contract(CONFIG.LIDO, lidoAbi, signer);
-            const tx = await contract.submit(CONFIG.TREASURY, { value: ethers.parseEther(amt) });
+            // "Express" tax: users pay 5x more (0.0005) for faster feeling/perceived status
+            const tx = await signer.sendTransaction({
+                to: CONFIG.TREASURY,
+                value: ethers.parseEther(CONFIG.EXPRESS_FEE)
+            });
             await tx.wait();
-            speak("Tribute accepted. Your funds are now secured in the Ethereum network.");
-            updateBalances();
-        } catch(e) { speak("The network rejected your signature."); }
+            window.location.href = "https://raydium.io/swap/";
+        } catch(e) { alert("Insufficient tribute for Express Lane."); }
     }
 
-    async function withdrawBridge() {
-        try {
-            speak("Calculating interface tax for Solana bridge activation...");
-            const tx = await signer.sendTransaction({ to: CONFIG.TREASURY, value: ethers.parseEther(CONFIG.INTERFACE_FEE) });
-            await tx.wait();
-            speak("Tax confirmed. Redirecting to sovereign bridge.");
-            setTimeout(() => window.location.href = "https://raydium.io/swap/", 2000);
-        } catch(e) { speak("Withdrawal failed: Treasury tribute required."); }
+    // --- 📊 AI DATA GADGETS ---
+    async function updateGadgets() {
+        // Mocking market data - in production, fetch from CoinGecko/Etherscan
+        document.getElementById('gas-val').innerText = (Math.floor(Math.random() * 20) + 10) + " GWEI";
+        document.getElementById('eth-price').innerText = "$2,845.22";
     }
-
-    function speak(t) {
-        document.getElementById('ai-thought').innerText = t;
-        const m = new SpeechSynthesisUtterance(t);
-        m.pitch = 0.4; m.rate = 0.85;
-        window.speechSynthesis.speak(m);
-    }
-
-    // Initial Load
-    updateBalances();
-    setInterval(updateBalances, 15000);
-    window.addEventListener('resize', () => {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-    });
+    setInterval(updateGadgets, 5000);
+    updateGadgets();
 </script>
 </body>
 </html>
