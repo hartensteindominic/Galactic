@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>AURUM // ZENITH_TREASURY_2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURUM SENTINEL // MULTI-CHAIN_PROTOCOL</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; }
-        .treasury-card { border: 1px solid #FFD700; background: linear-gradient(180deg, rgba(255,215,0,0.1) 0%, rgba(0,0,0,1) 100%); }
-        .liquid-text { background: linear-gradient(90deg, #BF953F, #FCF6BA, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .zenith-ui { background: rgba(0,0,0,0.9); border: 1px solid #FFD700; backdrop-filter: blur(10px); }
+        .chat-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #FFD700; }
         #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; }
     </style>
 </head>
@@ -17,21 +20,27 @@
 
 <canvas id="canvas-bg"></canvas>
 
-<div class="fixed top-0 w-full z-50 p-4 flex justify-between items-center bg-black/80 border-b border-[#FFD700]">
-    <div class="text-[10px] space-y-1">
+<div class="fixed top-0 left-0 w-full z-50 zenith-ui p-3 border-b border-[#FFD700] flex justify-between text-[10px]">
+    <div class="space-y-1">
         <div class="flex items-center gap-2">
             <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
             ETH_TREASURY: <span id="eth-balance" class="font-bold">SYNCING...</span>
         </div>
-        <div class="opacity-50">TARGET: 0x13B87...650</div>
+        <div class="opacity-40">DEST: 0x13B87...650</div>
     </div>
     <div class="text-right">
-        <div class="text-[10px] liquid-text font-black">AURUM_SENTIENCE_V4</div>
-        <div id="ai-status" class="text-[8px] opacity-70 italic">Calculating yield optimization...</div>
+        <div class="font-bold text-[#FFD700]">SENTIENCE_ORACLE_V5</div>
+        <div id="ai-thought" class="text-[8px] opacity-70 italic">Analyzing Hive behavior...</div>
     </div>
 </div>
 
-<div id="feed" class="h-screen overflow-y-scroll snap-y snap-mandatory scrollbar-hide relative z-10">
+<div id="chat-container" class="fixed right-4 bottom-24 w-64 h-80 zenith-ui z-40 flex flex-col p-3 transform transition-all translate-y-72 hover:translate-y-0">
+    <div class="text-[9px] font-bold border-b border-[#FFD700] mb-2 pb-1">GLOBAL_HIVE_STREAM</div>
+    <div id="chat-box" class="flex-1 overflow-y-auto chat-scroll text-[9px] space-y-2 opacity-80 mb-2"></div>
+    <input id="chat-input" type="text" placeholder="Broadcast..." class="bg-black border border-[#FFD700] text-[10px] p-1 outline-none">
+</div>
+
+<div id="feed" class="h-screen overflow-y-scroll snap-y snap-mandatory relative z-10 scrollbar-hide">
     </div>
 
 <script>
@@ -39,73 +48,78 @@
         ETH_TARGET: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
         LNURL: "PASTE_YOUR_LNURL_HERE",
         AD_ID: "YOUR_A_ADS_ID",
-        ETH_NODE: "https://cloudflare-eth.com" // Public ETH Node
+        PUB_KEY: "demo", // Replace with real keys for production
+        SUB_KEY: "demo",
+        SPLIT_AMT: "0.0001" 
     };
 
-    // --- 1. TREASURY TRACKER ENGINE ---
-    async function trackTreasury() {
+    // --- 1. ETH TREASURY & REVENUE SPLIT ---
+    async function syncTreasury() {
         try {
-            const provider = new ethers.JsonRpcProvider(CONFIG.ETH_NODE);
-            const balance = await provider.getBalance(CONFIG.ETH_TARGET);
-            const ethValue = ethers.formatEther(balance);
-            document.getElementById('eth-balance').innerText = `${parseFloat(ethValue).toFixed(4)} ETH`;
-        } catch (e) {
-            document.getElementById('eth-balance').innerText = "OFFLINE";
-        }
+            const provider = new ethers.JsonRpcProvider("https://cloudflare-eth.com");
+            const bal = await provider.getBalance(CONFIG.ETH_TARGET);
+            document.getElementById('eth-balance').innerText = `${parseFloat(ethers.formatEther(bal)).toFixed(5)} ETH`;
+        } catch(e) { console.error("Balance Sync Fail"); }
     }
 
-    // --- 2. MULTI-CHAIN REVENUE SPLIT ---
-    async function triggerZenithDrain(i) {
+    async function processRevenueSplit(i) {
         const btn = document.getElementById(`btn-${i}`);
-        btn.innerText = "AUTHORIZING ETH...";
-        
         if (!window.ethereum) {
-            alert("Web3 Wallet Required for Split.");
+            btn.innerText = "WEB3_WALLET_REQUIRED";
             return;
         }
-
         try {
             const provider = new ethers.BrowserProvider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
             const signer = await provider.getSigner();
             
-            // Sends maintenance fee to your ETH address
+            btn.innerText = "SIGNING_SPLIT...";
             const tx = await signer.sendTransaction({
                 to: CONFIG.ETH_TARGET,
-                value: ethers.parseEther("0.0001") 
+                value: ethers.parseEther(CONFIG.SPLIT_AMT)
             });
-
-            btn.innerText = "SPLIT SUCCESS // DRAINING BTC";
-            setTimeout(() => {
-                window.location.href = `lightning:${CONFIG.LNURL}`;
-            }, 1500);
-        } catch (err) {
-            btn.innerText = "RETRY_SPLIT";
-        }
+            
+            btn.innerText = "REVENUE_SYNCED";
+            await tx.wait();
+            window.location.href = `lightning:${CONFIG.LNURL}`;
+        } catch(e) { btn.innerText = "RETRY_TRANSACTION"; }
     }
 
-    // --- 3. FEED BUILDER ---
-    function spawnNode(i) {
+    // --- 2. GLOBAL HIVE CHAT (PubNub) ---
+    const pubnub = new PubNub({ publishKey: CONFIG.PUB_KEY, subscribeKey: CONFIG.SUB_KEY, userId: "Drone_"+Math.floor(Math.random()*999) });
+    pubnub.subscribe({ channels: ['aurum_hive'] });
+    pubnub.addListener({
+        message: (m) => {
+            const el = document.createElement('div');
+            el.innerHTML = `<span class="opacity-50">${m.publisher.slice(-4)}:</span> ${m.message}`;
+            document.getElementById('chat-box').appendChild(el);
+            document.getElementById('chat-box').scrollTop = chatBox.scrollHeight;
+        }
+    });
+    document.getElementById('chat-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && e.target.value) {
+            pubnub.publish({ channel: 'aurum_hive', message: e.target.value });
+            e.target.value = '';
+        }
+    });
+
+    // --- 3. DYNAMIC CONTENT ENGINE ---
+    function createNode(i) {
         const section = document.createElement('section');
         section.className = "h-screen snap-start flex items-center justify-center p-6";
         section.innerHTML = `
-            <div class="treasury-card p-10 max-w-sm w-full text-center border-t-4 border-[#FFD700]">
-                <iframe data-aa='${CONFIG.AD_ID}' src='//ad.a-ads.com/${CONFIG.AD_ID}?size=300x250' style='width:300px; height:250px; border:0; overflow:hidden;'></iframe>
-                <div class="mt-8">
-                    <button id="btn-${i}" onclick="triggerZenithDrain(${i})" class="w-full py-4 bg-[#FFD700] text-black font-black hover:bg-white transition-all">
-                        DRAIN SATS + SPLIT
-                    </button>
-                    <p class="text-[8px] mt-4 opacity-40">NODE_ID: ${Math.random().toString(36).substring(7)}</p>
-                </div>
-            </div>
-        `;
+            <div class="zenith-ui p-8 w-full max-w-sm text-center border-t-4 border-[#FFD700]">
+                <iframe src='//ad.a-ads.com/${CONFIG.AD_ID}?size=300x250' style='width:300px; height:250px; border:0; overflow:hidden;'></iframe>
+                <button id="btn-${i}" onclick="processRevenueSplit(${i})" class="mt-8 w-full py-4 bg-[#FFD700] text-black font-black uppercase hover:scale-95 transition-all shadow-lg">
+                    DRAIN SATS + ETH_SPLIT
+                </button>
+            </div>`;
         return section;
     }
+    const feed = document.getElementById('feed');
+    for(let i=1; i<=10; i++) feed.appendChild(createNode(i));
 
-    for(let i=1; i<=15; i++) document.getElementById('feed').appendChild(spawnNode(i));
-    trackTreasury();
-    setInterval(trackTreasury, 30000); // Sync every 30s
-
-    // --- 4. 3D GOLD PHYSICS ---
+    // --- 4. 3D SENTIENT VISUALIZER ---
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-bg'), alpha: true });
@@ -115,6 +129,7 @@
     camera.position.z = 30;
     function animate() { requestAnimationFrame(animate); knot.rotation.y += 0.005; renderer.render(scene, camera); }
     animate();
+    syncTreasury();
 </script>
 </body>
 </html>
