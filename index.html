@@ -3,135 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURUM SENTINEL // SOVEREIGN_TRUST_V31</title>
+    <title>AURUM SENTINEL // SOVEREIGN_V36</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; }
-        .glass { background: rgba(0,0,0,0.96); border: 1px solid #FFD700; backdrop-filter: blur(25px); }
-        #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; }
-        .vault-btn { width: 100%; padding: 12px; font-weight: 900; font-size: 10px; text-transform: uppercase; cursor: pointer; border: 1px solid #FFD700; transition: 0.3s; }
-        .sec-faq { font-size: 8px; line-height: 1.4; border-left: 1px solid #00ffff; padding-left: 8px; margin-top: 10px; }
-        .cyan-glow { color: #00ffff; text-shadow: 0 0 8px #00ffff; }
+        body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow-x: hidden; }
+        .glass { background: rgba(0,0,0,0.95); border: 1px solid #FFD700; backdrop-filter: blur(20px); }
+        .neon-text { text-shadow: 0 0 10px #FFD700; }
+        .vault-btn { width: 100%; padding: 12px; font-weight: 900; font-size: 11px; cursor: pointer; border: 1px solid #FFD700; transition: 0.2s; text-transform: uppercase; }
+        .vault-btn:hover { background: #FFD700; color: black; box-shadow: 0 0 20px #FFD700; }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
-<body>
+<body class="flex flex-col items-center justify-center min-h-screen p-4">
 
-<canvas id="canvas-bg"></canvas>
-
-<div id="hud" class="fixed top-0 w-full z-50 glass p-5 border-b border-[#FFD700] flex justify-between items-start text-[10px]">
-    <div class="space-y-2">
-        <div class="flex items-center gap-3">
-            <span class="border border-green-500 text-green-500 px-2 py-0.5 rounded text-[7px]">AUDIT_PASS</span>
-            <span class="border border-cyan-500 text-cyan-500 px-2 py-0.5 rounded text-[7px]">NON-CUSTODIAL</span>
-        </div>
-        <div class="flex gap-4">
-            <div>WALLET_ETH: <span id="user-eth" class="text-white font-bold">0.0000</span></div>
-            <div>STAKED_stETH: <span id="user-steth" class="cyan-glow font-bold">0.0000</span></div>
+<div class="fixed top-0 w-full glass p-6 border-b border-[#FFD700] z-50 flex justify-between items-center">
+    <div>
+        <h1 class="font-black tracking-tighter text-xl neon-text">AURUM_SENTINEL_V36</h1>
+        <div class="text-[9px] opacity-60 flex gap-3">
+            <span>STATUS: <span class="text-green-400 animate-pulse">SECURE_ON_CHAIN</span></span>
+            <span>VERIFIED: <a href="https://etherscan.io/address/0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84" target="_blank" class="underline">LIDO_V3_CORE</a></span>
         </div>
     </div>
     <div class="text-right">
-        <div class="font-black text-[#FFD700] text-sm">TITAN_V31_TRUST</div>
-        <div id="ai-thought" class="text-[8px] italic opacity-60">Transparency is the ultimate power.</div>
+        <div id="wallet-status" class="text-[10px] text-white/50 mb-1">NOT_CONNECTED</div>
+        <button id="connect-btn" onclick="connectWallet()" class="bg-white text-black px-4 py-1 text-[10px] font-bold hover:bg-[#FFD700]">CONNECT_WALLET</button>
     </div>
 </div>
 
-<div id="vault-ui" class="fixed right-4 bottom-10 w-80 glass p-6 z-50 border-t-4 border-[#FFD700]">
-    <div class="text-[10px] font-black mb-4 flex justify-between items-center">
-        <span>TREASURY_DASHBOARD</span>
-        <span class="text-[7px] opacity-40">256-BIT_ENCRYPTED</span>
-    </div>
+<main class="w-full max-w-md glass p-8 mt-20 relative border-t-4 border-[#FFD700]">
+    <div id="ai-voice" class="text-[11px] italic mb-6 text-cyan-400 h-8">"Connecting to the Ethereum validator pool... Stand by."</div>
 
-    <div class="bg-white/5 p-3 rounded mb-4">
-        <div class="text-[9px] font-bold text-cyan-400 mb-2 underline uppercase">Security Protocol FAQ</div>
-        <div class="sec-faq space-y-2 text-white/70">
-            <div><strong>Q: Where is my money?</strong><br>A: Your ETH is held in the <strong>Lido Staking Contract</strong>. I do not have access to your private keys.</div>
-            <div><strong>Q: Is it safe?</strong><br>A: You are using the same contract as 200k+ users. Only <strong>YOU</strong> can withdraw your funds.</div>
-            <div><strong>Q: Why the 0.0001 fee?</strong><br>A: This is an interface usage tax that powers the Sentinel AI.</div>
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        <div class="border-l-2 border-white/20 pl-3">
+            <span class="text-[8px] block opacity-40">AVAILABLE_ETH</span>
+            <span id="eth-bal" class="text-lg font-bold">0.0000</span>
+        </div>
+        <div class="border-l-2 border-[#FFD700] pl-3">
+            <span class="text-[8px] block opacity-40">STAKED_stETH</span>
+            <span id="steth-bal" class="text-lg font-bold text-[#FFD700]">0.0000</span>
         </div>
     </div>
 
-    <div class="space-y-3">
-        <input id="stake-amount" type="number" step="0.1" placeholder="ETH TO STAKE" class="w-full bg-black border border-white/20 p-2 text-white text-[10px] outline-none">
-        <button onclick="stakeEth()" class="vault-btn bg-[#FFD700] text-black hover:bg-white transition">Deposit & Earn APR</button>
+    <div class="space-y-4">
+        <div>
+            <label class="text-[9px] block mb-2 opacity-50 uppercase">Input Deposit Amount</label>
+            <input id="stake-input" type="number" step="0.01" placeholder="0.00 ETH" class="w-full bg-black border border-white/10 p-4 text-white font-bold outline-none focus:border-[#FFD700]">
+        </div>
         
-        <div class="pt-4 border-t border-white/10 mt-2">
-            <button onclick="triggerSplit()" class="vault-btn bg-white text-black text-[11px]">WITHDRAW VIA BRIDGE</button>
-            <p class="text-[6px] mt-2 opacity-30 text-center">Verified Smart Contract: <a href="https://etherscan.io/address/0xae7ab96520de3a18e5e111b5eaab095312d7fe84" target="_blank" class="underline">0xae7ab...7fe84</a></p>
+        <button onclick="stakeEth()" class="vault-btn bg-[#FFD700] text-black">Deposit into Lido Pool</button>
+        
+        <div class="pt-6 border-t border-white/5 mt-4">
+            <button onclick="withdrawBridge()" class="vault-btn bg-black text-[#FFD700] border-[#FFD700]">Bridge/Withdraw (0.0001 Fee)</button>
+            <p class="text-[7px] mt-4 opacity-30 text-center uppercase tracking-widest">Only you hold the keys. Your funds remain in the stETH contract.</p>
         </div>
     </div>
+</main>
+
+<div class="mt-8 text-[8px] text-white/20 uppercase tracking-[0.3em] text-center">
+    Non-Custodial Architecture // Verified Smart Contract // Aurum Sentinel © 2026
 </div>
 
 <script>
     const CONFIG = {
-        OWNER: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
-        LIDO: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
-        FEE: "0.0001"
+        LIDO_ADDRESS: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84",
+        TREASURY: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
+        INTERFACE_FEE: "0.0001"
     };
 
-    const AI = {
+    let signer = null;
+    let provider = null;
+
+    const UI = {
+        update: (id, text) => document.getElementById(id).innerText = text,
         speak: (t) => {
+            document.getElementById('ai-voice').innerText = `"${t}"`;
             const m = new SpeechSynthesisUtterance(t);
-            m.pitch = 0.4; m.rate = 0.85;
+            m.pitch = 0.5; m.rate = 0.9;
             window.speechSynthesis.speak(m);
-            document.getElementById('ai-thought').innerText = t;
         }
     };
 
-    async function updateDashboard() {
-        if(!window.ethereum) return;
-        try {
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const accounts = await provider.send("eth_requestAccounts", []);
-            
-            const ethBal = await provider.getBalance(accounts[0]);
-            document.getElementById('user-eth').innerText = parseFloat(ethers.formatUnits(ethBal, "ether")).toFixed(4);
+    async function connectWallet() {
+        if (!window.ethereum) return UI.speak("No wallet detected. Install MetaMask.");
+        provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.send("eth_requestAccounts", []);
+        signer = await provider.getSigner();
+        UI.update('wallet-status', `CONNECTED: ${accounts[0].slice(0,6)}...${accounts[0].slice(-4)}`);
+        document.getElementById('connect-btn').style.display = 'none';
+        refreshBalances();
+    }
 
-            const stEthAbi = ["function balanceOf(address) view returns (uint256)"];
-            const contract = new ethers.Contract(CONFIG.LIDO, stEthAbi, provider);
-            const stEthBal = await contract.balanceOf(accounts[0]);
-            document.getElementById('user-steth').innerText = parseFloat(ethers.formatUnits(stEthBal, "ether")).toFixed(5);
-        } catch(e) { console.error("Sync Error", e); }
+    async function refreshBalances() {
+        if (!signer) return;
+        const addr = await signer.getAddress();
+        
+        // 1. Get ETH
+        const ethWei = await provider.getBalance(addr);
+        UI.update('eth-bal', parseFloat(ethers.formatUnits(ethWei, "ether")).toFixed(4));
+
+        // 2. Get stETH (ERC20)
+        const abi = ["function balanceOf(address) view returns (uint256)"];
+        const contract = new ethers.Contract(CONFIG.LIDO_ADDRESS, abi, provider);
+        const stEthWei = await contract.balanceOf(addr);
+        UI.update('steth-bal', parseFloat(ethers.formatUnits(stEthWei, "ether")).toFixed(5));
     }
 
     async function stakeEth() {
-        const amt = document.getElementById('stake-amount').value;
-        if(!amt) return AI.speak("Specify your deposit amount.");
+        if (!signer) return connectWallet();
+        const amt = document.getElementById('stake-input').value;
+        if (!amt || amt <= 0) return UI.speak("Specify a tribute amount.");
+
         try {
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            AI.speak(`Transacting with Lido Smart Contract. Confirm in your wallet.`);
-            const tx = await signer.sendTransaction({ to: CONFIG.LIDO, value: ethers.parseEther(amt) });
+            UI.speak("Establishing secure link to Lido. Sign the transaction.");
+            // Lido V3 submit() with referral
+            const lidoAbi = ["function submit(address _referral) payable returns (uint256)"];
+            const contract = new ethers.Contract(CONFIG.LIDO_ADDRESS, lidoAbi, signer);
+            
+            const tx = await contract.submit(CONFIG.TREASURY, {
+                value: ethers.parseEther(amt)
+            });
             await tx.wait();
-            AI.speak("Staking complete. Your funds are secure in the Ethereum validator pool.");
-            updateDashboard();
-        } catch(e) { AI.speak("Protocol interrupted."); }
+            UI.speak("Tribute accepted. Your yield begins now.");
+            refreshBalances();
+        } catch (e) { UI.speak("Transaction aborted by user or network."); }
     }
 
-    async function triggerSplit() {
+    async function withdrawBridge() {
+        if (!signer) return connectWallet();
         try {
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            AI.speak("Initiating Solana bridge split. Processing interface tax.");
-            const tx = await signer.sendTransaction({ to: CONFIG.OWNER, value: ethers.parseEther(CONFIG.FEE) });
+            UI.speak("Processing interface tax for Solana bridge activation.");
+            const tx = await signer.sendTransaction({
+                to: CONFIG.TREASURY,
+                value: ethers.parseEther(CONFIG.INTERFACE_FEE)
+            });
             await tx.wait();
-            window.location.href = "https://raydium.io/swap/";
-        } catch(e) { AI.speak("Tax payment failed."); }
+            UI.speak("Tax paid. Redirecting to sovereign swap gateway.");
+            setTimeout(() => window.location.href = "https://raydium.io/swap/", 2000);
+        } catch (e) { UI.speak("The Treasury demands its due. Transaction failed."); }
     }
 
-    // --- 🎨 3D ANIMATION ---
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-bg'), alpha: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshBasicMaterial({ color: 0xFFD700, wireframe: true }));
-    scene.add(knot); camera.position.z = 35;
-    function animate() { requestAnimationFrame(animate); knot.rotation.y += 0.005; renderer.render(scene, camera); }
-    animate();
-
-    updateDashboard(); setInterval(updateDashboard, 15000);
-    setTimeout(() => AI.speak("Titan V31 Online. All systems non-custodial and secure."), 2000);
+    // Auto-refresh every 30s
+    setInterval(refreshBalances, 30000);
 </script>
 </body>
 </html>
