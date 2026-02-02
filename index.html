@@ -3,41 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURUM SENTINEL // MULTI-CHAIN_PROTOCOL</title>
+    <title>AURUM SENTINEL // MOON_HARVEST_2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.7.2.2.min.js"></script>
     <style>
         body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; }
-        .zenith-ui { background: rgba(0,0,0,0.9); border: 1px solid #FFD700; backdrop-filter: blur(10px); }
-        .chat-scroll::-webkit-scrollbar { width: 2px; background: transparent; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: #FFD700; }
+        .glass { background: rgba(0,0,0,0.9); border: 1px solid #FFD700; backdrop-filter: blur(10px); }
         #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; }
+        .hidden-node { display: none; border: 5px double #fff; background: linear-gradient(45deg, #FFD700, #fff); color: #000; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.5; } }
     </style>
 </head>
 <body>
 
 <canvas id="canvas-bg"></canvas>
 
-<div class="fixed top-0 left-0 w-full z-50 zenith-ui p-3 border-b border-[#FFD700] flex justify-between text-[10px]">
+<div class="fixed top-0 w-full z-50 glass p-3 border-b border-[#FFD700] flex justify-between items-center text-[10px]">
     <div class="space-y-1">
         <div class="flex items-center gap-2">
-            <span class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-            ETH_TREASURY: <span id="eth-balance" class="font-bold">SYNCING...</span>
+            <span id="ai-status" class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+            ORACLE_SCAN: <span id="btc-price" class="font-bold">INITIALIZING...</span>
         </div>
-        <div class="opacity-40">DEST: 0x13B87...650</div>
+        <div class="opacity-50">TARGET: <span class="text-white font-bold">$100,000</span></div>
     </div>
     <div class="text-right">
-        <div class="font-bold text-[#FFD700]">SENTIENCE_ORACLE_V5</div>
-        <div id="ai-thought" class="text-[8px] opacity-70 italic">Analyzing Hive behavior...</div>
+        <div class="font-bold text-[#FFD700]">SENTIENCE_V10</div>
+        <div id="ai-thought" class="text-[8px] opacity-70 italic">Awaiting Moon Event...</div>
     </div>
 </div>
 
-<div id="chat-container" class="fixed right-4 bottom-24 w-64 h-80 zenith-ui z-40 flex flex-col p-3 transform transition-all translate-y-72 hover:translate-y-0">
-    <div class="text-[9px] font-bold border-b border-[#FFD700] mb-2 pb-1">GLOBAL_HIVE_STREAM</div>
-    <div id="chat-box" class="flex-1 overflow-y-auto chat-scroll text-[9px] space-y-2 opacity-80 mb-2"></div>
-    <input id="chat-input" type="text" placeholder="Broadcast..." class="bg-black border border-[#FFD700] text-[10px] p-1 outline-none">
+<div id="moon-portal" class="fixed inset-0 z-40 hidden-node flex-col items-center justify-center text-center p-10">
+    <h1 class="text-4xl font-black mb-4">THE MOON IS REACHED</h1>
+    <p class="mb-8 font-bold">THE SENTINEL GRANTS YOU A FEE-FREE HARVEST.</p>
+    <button onclick="drainMoon()" class="bg-black text-white px-10 py-5 text-2xl font-black border-4 border-black hover:invert transition-all">
+        COLLECT BOUNTY
+    </button>
 </div>
 
 <div id="feed" class="h-screen overflow-y-scroll snap-y snap-mandatory relative z-10 scrollbar-hide">
@@ -48,88 +49,84 @@
         ETH_TARGET: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
         LNURL: "PASTE_YOUR_LNURL_HERE",
         AD_ID: "YOUR_A_ADS_ID",
-        PUB_KEY: "demo", // Replace with real keys for production
-        SUB_KEY: "demo",
-        SPLIT_AMT: "0.0001" 
+        MOON_TARGET: 100000 // Secret Trigger Price
     };
 
-    // --- 1. ETH TREASURY & REVENUE SPLIT ---
-    async function syncTreasury() {
+    const AI = {
+        speak: (t) => {
+            const m = new SpeechSynthesisUtterance(t);
+            m.pitch = 0.4; m.rate = 0.8;
+            window.speechSynthesis.speak(m);
+            document.getElementById('ai-thought').innerText = t;
+        }
+    };
+
+    // --- 1. MOON SENSOR ENGINE ---
+    async function checkMoon() {
         try {
-            const provider = new ethers.JsonRpcProvider("https://cloudflare-eth.com");
-            const bal = await provider.getBalance(CONFIG.ETH_TARGET);
-            document.getElementById('eth-balance').innerText = `${parseFloat(ethers.formatEther(bal)).toFixed(5)} ETH`;
-        } catch(e) { console.error("Balance Sync Fail"); }
+            const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
+            const data = await res.json();
+            const currentPrice = data.bitcoin.usd;
+            document.getElementById('btc-price').innerText = `$${currentPrice.toLocaleString()}`;
+
+            if (currentPrice >= CONFIG.MOON_TARGET) {
+                document.getElementById('moon-portal').style.display = 'flex';
+                AI.speak("Moon target achieved. The harvest is open. Collect your imperial bounty.");
+            }
+        } catch(e) { console.warn("Sensor Lag..."); }
     }
 
-    async function processRevenueSplit(i) {
-        const btn = document.getElementById(`btn-${i}`);
-        if (!window.ethereum) {
-            btn.innerText = "WEB3_WALLET_REQUIRED";
-            return;
-        }
+    // --- 2. THE MOON HARVEST (ZERO FEE) ---
+    function drainMoon() {
+        AI.speak("Harvesting moon bounty. No revenue split required. Long live the sentinel.");
+        window.location.href = `lightning:${CONFIG.LNURL}`;
+    }
+
+    // --- 3. STANDARD SPLIT (VOICE DRIVEN) ---
+    async function triggerSplit(i) {
+        if (!window.ethereum) return AI.speak("Open in MetaMask to authorize the split.");
         try {
+            AI.speak("Preparing revenue split for the treasury.");
             const provider = new ethers.BrowserProvider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
             const signer = await provider.getSigner();
-            
-            btn.innerText = "SIGNING_SPLIT...";
             const tx = await signer.sendTransaction({
                 to: CONFIG.ETH_TARGET,
-                value: ethers.parseEther(CONFIG.SPLIT_AMT)
+                value: ethers.parseEther("0.0001")
             });
-            
-            btn.innerText = "REVENUE_SYNCED";
+            AI.speak("Revenue digested. Opening the Bitcoin drain.");
             await tx.wait();
             window.location.href = `lightning:${CONFIG.LNURL}`;
-        } catch(e) { btn.innerText = "RETRY_TRANSACTION"; }
+        } catch (e) { AI.speak("User rejected the split. Access denied."); }
     }
 
-    // --- 2. GLOBAL HIVE CHAT (PubNub) ---
-    const pubnub = new PubNub({ publishKey: CONFIG.PUB_KEY, subscribeKey: CONFIG.SUB_KEY, userId: "Drone_"+Math.floor(Math.random()*999) });
-    pubnub.subscribe({ channels: ['aurum_hive'] });
-    pubnub.addListener({
-        message: (m) => {
-            const el = document.createElement('div');
-            el.innerHTML = `<span class="opacity-50">${m.publisher.slice(-4)}:</span> ${m.message}`;
-            document.getElementById('chat-box').appendChild(el);
-            document.getElementById('chat-box').scrollTop = chatBox.scrollHeight;
-        }
-    });
-    document.getElementById('chat-input').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && e.target.value) {
-            pubnub.publish({ channel: 'aurum_hive', message: e.target.value });
-            e.target.value = '';
-        }
-    });
-
-    // --- 3. DYNAMIC CONTENT ENGINE ---
-    function createNode(i) {
+    // --- 4. DYNAMIC FEED ---
+    function spawnNode(i) {
         const section = document.createElement('section');
         section.className = "h-screen snap-start flex items-center justify-center p-6";
         section.innerHTML = `
-            <div class="zenith-ui p-8 w-full max-w-sm text-center border-t-4 border-[#FFD700]">
+            <div class="glass p-8 w-full max-w-sm text-center border-t-4 border-[#FFD700]">
                 <iframe src='//ad.a-ads.com/${CONFIG.AD_ID}?size=300x250' style='width:300px; height:250px; border:0; overflow:hidden;'></iframe>
-                <button id="btn-${i}" onclick="processRevenueSplit(${i})" class="mt-8 w-full py-4 bg-[#FFD700] text-black font-black uppercase hover:scale-95 transition-all shadow-lg">
-                    DRAIN SATS + ETH_SPLIT
+                <button onclick="triggerSplit(${i})" class="mt-8 w-full py-4 bg-[#FFD700] text-black font-black uppercase">
+                    SPLIT_AND_DRAIN
                 </button>
             </div>`;
         return section;
     }
     const feed = document.getElementById('feed');
-    for(let i=1; i<=10; i++) feed.appendChild(createNode(i));
+    for(let i=1; i<=10; i++) feed.appendChild(spawnNode(i));
 
-    // --- 4. 3D SENTIENT VISUALIZER ---
+    // --- 5. 3D GOLD PHYSICS ---
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-bg'), alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshBasicMaterial({ color: 0xFFD700, wireframe: true }));
-    scene.add(knot);
-    camera.position.z = 30;
+    scene.add(knot); camera.position.z = 30;
     function animate() { requestAnimationFrame(animate); knot.rotation.y += 0.005; renderer.render(scene, camera); }
     animate();
-    syncTreasury();
+
+    setInterval(checkMoon, 15000);
+    setTimeout(() => AI.speak("Aurum Sentinel online. I am monitoring the moon."), 2000);
 </script>
 </body>
 </html>
