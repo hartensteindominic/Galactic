@@ -3,130 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURUM SENTINEL // MOON_HARVEST_2026</title>
+    <title>AURUM SENTINEL // FINAL_EVOLUTION_2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; }
-        .glass { background: rgba(0,0,0,0.9); border: 1px solid #FFD700; backdrop-filter: blur(10px); }
+        body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; transition: 0.8s filter ease-in-out; }
+        .glass { background: rgba(0,0,0,0.9); border: 1px solid #FFD700; backdrop-filter: blur(15px); }
         #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; }
-        .hidden-node { display: none; border: 5px double #fff; background: linear-gradient(45deg, #FFD700, #fff); color: #000; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.5; } }
+        .shattered { filter: grayscale(1) invert(1) blur(5px); pointer-events: none; }
+        .shield-glow { box-shadow: 0 0 20px #00ffff, inset 0 0 10px #00ffff; border-color: #00ffff !important; }
+        .vault-btn { width: 100%; padding: 8px; font-weight: 900; text-transform: uppercase; font-size: 9px; margin-top: 5px; transition: 0.2s; }
+        .liquid-gold { background: linear-gradient(90deg, #BF953F, #FCF6BA, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body>
 
 <canvas id="canvas-bg"></canvas>
 
-<div class="fixed top-0 w-full z-50 glass p-3 border-b border-[#FFD700] flex justify-between items-center text-[10px]">
+<div id="hud" class="fixed top-0 w-full z-50 glass p-3 border-b border-[#FFD700] flex justify-between items-center text-[10px]">
     <div class="space-y-1">
         <div class="flex items-center gap-2">
-            <span id="ai-status" class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-            ORACLE_SCAN: <span id="btc-price" class="font-bold">INITIALIZING...</span>
+            <span id="ai-pulse" class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
+            TREASURY_POWER: <span id="t-power" class="font-bold">1.00x</span>
         </div>
-        <div class="opacity-50">TARGET: <span class="text-white font-bold">$100,000</span></div>
+        <div class="opacity-50">HEALTH_FACTOR: <span id="health-pct" class="text-white">100%</span></div>
     </div>
     <div class="text-right">
-        <div class="font-bold text-[#FFD700]">SENTIENCE_V10</div>
-        <div id="ai-thought" class="text-[8px] opacity-70 italic">Awaiting Moon Event...</div>
+        <div class="liquid-gold font-black text-[12px]">AURUM_SENTINEL_V12</div>
+        <div id="ai-status" class="text-[8px] opacity-70 italic truncate w-48 italic">Analyzing collateral vectors...</div>
     </div>
 </div>
 
-<div id="moon-portal" class="fixed inset-0 z-40 hidden-node flex-col items-center justify-center text-center p-10">
-    <h1 class="text-4xl font-black mb-4">THE MOON IS REACHED</h1>
-    <p class="mb-8 font-bold">THE SENTINEL GRANTS YOU A FEE-FREE HARVEST.</p>
-    <button onclick="drainMoon()" class="bg-black text-white px-10 py-5 text-2xl font-black border-4 border-black hover:invert transition-all">
-        COLLECT BOUNTY
-    </button>
+<div id="vault-card" class="fixed right-4 bottom-20 w-52 glass p-4 z-50 border-t-4 border-[#FFD700] transition-all">
+    <div class="text-[10px] font-black mb-2 border-b border-white/10 pb-1">IMPERIAL_VAULT</div>
+    <div class="space-y-2 text-[9px]">
+        <div class="flex justify-between"><span>COLLATERAL:</span> <span id="v-col">0.00</span> ETH</div>
+        <div class="flex justify-between"><span>DEBT:</span> <span id="v-debt" class="text-red-500">0.00</span> ETH</div>
+        <div id="shield-ui" class="hidden text-blue-400 font-bold text-[8px] animate-pulse">🛡️ SHIELD_ACTIVE: <span id="timer">24:00</span></div>
+        <button onclick="vaultAction('deposit')" class="vault-btn bg-[#FFD700] text-black">Deposit ETH</button>
+        <button onclick="vaultAction('borrow')" class="vault-btn bg-white text-black">Borrow Sats</button>
+        <button id="insure-btn" onclick="buyInsurance()" class="vault-btn border border-blue-500 text-blue-400">Buy Shield (0.002 ETH)</button>
+    </div>
 </div>
 
 <div id="feed" class="h-screen overflow-y-scroll snap-y snap-mandatory relative z-10 scrollbar-hide">
     </div>
 
 <script>
+    // --- ⚙️ CONFIG & STATE ---
     const CONFIG = {
         ETH_TARGET: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
         LNURL: "PASTE_YOUR_LNURL_HERE",
-        AD_ID: "YOUR_A_ADS_ID",
-        MOON_TARGET: 100000 // Secret Trigger Price
+        AD_ID: "YOUR_A_ADS_ID"
     };
 
-    const AI = {
-        speak: (t) => {
-            const m = new SpeechSynthesisUtterance(t);
-            m.pitch = 0.4; m.rate = 0.8;
-            window.speechSynthesis.speak(m);
-            document.getElementById('ai-thought').innerText = t;
+    let STATE = {
+        col: 0, debt: 0, health: 100, 
+        isInsured: false, power: 1.0, 
+        isShattered: false, shieldTime: 0
+    };
+
+    // --- 🤖 AI VOICE ENGINE ---
+    const ORACLE = {
+        speak: (text) => {
+            const msg = new SpeechSynthesisUtterance(text);
+            msg.pitch = STATE.health < 30 ? 1.5 : 0.6;
+            msg.rate = 0.9;
+            window.speechSynthesis.speak(msg);
+            document.getElementById('ai-status').innerText = text;
         }
     };
 
-    // --- 1. MOON SENSOR ENGINE ---
-    async function checkMoon() {
-        try {
-            const res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd");
-            const data = await res.json();
-            const currentPrice = data.bitcoin.usd;
-            document.getElementById('btc-price').innerText = `$${currentPrice.toLocaleString()}`;
-
-            if (currentPrice >= CONFIG.MOON_TARGET) {
-                document.getElementById('moon-portal').style.display = 'flex';
-                AI.speak("Moon target achieved. The harvest is open. Collect your imperial bounty.");
-            }
-        } catch(e) { console.warn("Sensor Lag..."); }
+    // --- 🏦 VAULT & RE-HYPOTHECATION ---
+    async function vaultAction(type) {
+        if(STATE.isShattered) return;
+        
+        if(type === 'deposit') {
+            STATE.col += 0.01;
+            ORACLE.speak("Collateral absorbed. Treasury power increasing.");
+            growTreasury(0.01);
+        } else if(type === 'borrow') {
+            if(STATE.col > 0) {
+                STATE.debt += 0.008;
+                STATE.health -= 30;
+                ORACLE.speak("Loan authorized. Do not let the health factor fail.");
+            } else { ORACLE.speak("Insufficient collateral. Deposit required."); }
+        }
+        updateUI();
     }
 
-    // --- 2. THE MOON HARVEST (ZERO FEE) ---
-    function drainMoon() {
-        AI.speak("Harvesting moon bounty. No revenue split required. Long live the sentinel.");
-        window.location.href = `lightning:${CONFIG.LNURL}`;
+    function buyInsurance() {
+        if(STATE.isInsured) return;
+        STATE.isInsured = true;
+        STATE.shieldTime = 86400; // 24h
+        growTreasury(0.05); // Insurance provides huge growth boost
+        document.getElementById('vault-card').classList.add('shield-glow');
+        document.getElementById('shield-ui').classList.remove('hidden');
+        ORACLE.speak("Re-hypothecating premium. Imperial Shield active.");
+        startShieldTimer();
     }
 
-    // --- 3. STANDARD SPLIT (VOICE DRIVEN) ---
+    function growTreasury(amt) {
+        STATE.power += (amt * 5);
+        knot.scale.set(STATE.power, STATE.power, STATE.power);
+        document.getElementById('t-power').innerText = STATE.power.toFixed(2) + "x";
+    }
+
+    function updateUI() {
+        document.getElementById('v-col').innerText = STATE.col.toFixed(3);
+        document.getElementById('v-debt').innerText = STATE.debt.toFixed(3);
+        document.getElementById('health-pct').innerText = STATE.health + "%";
+        
+        if(STATE.health <= 0 && !STATE.isInsured) shatter();
+        else if(STATE.health < 40) ORACLE.speak("WARNING: Liquidation risk detected.");
+    }
+
+    function shatter() {
+        STATE.isShattered = true;
+        document.body.classList.add('shattered');
+        ORACLE.speak("LIQUIDATION COMPLETE. COLLATERAL SEIZED BY THE SENTINEL.");
+        knot.material.wireframe = false;
+        knot.scale.set(0,0,0);
+    }
+
+    // --- 💎 WEB3 REVENUE SPLIT ---
     async function triggerSplit(i) {
-        if (!window.ethereum) return AI.speak("Open in MetaMask to authorize the split.");
+        if(!window.ethereum) return ORACLE.speak("Web3 missing. Use a crypto browser.");
         try {
-            AI.speak("Preparing revenue split for the treasury.");
+            ORACLE.speak("Awaiting signature for revenue split.");
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
-            const tx = await signer.sendTransaction({
-                to: CONFIG.ETH_TARGET,
-                value: ethers.parseEther("0.0001")
-            });
-            AI.speak("Revenue digested. Opening the Bitcoin drain.");
+            const tx = await signer.sendTransaction({ to: CONFIG.ETH_TARGET, value: ethers.parseEther("0.0001") });
+            ORACLE.speak("Split verified. Releasing Bitcoin reward.");
             await tx.wait();
             window.location.href = `lightning:${CONFIG.LNURL}`;
-        } catch (e) { AI.speak("User rejected the split. Access denied."); }
+        } catch(e) { ORACLE.speak("Split rejected. Process terminated."); }
     }
 
-    // --- 4. DYNAMIC FEED ---
-    function spawnNode(i) {
-        const section = document.createElement('section');
-        section.className = "h-screen snap-start flex items-center justify-center p-6";
-        section.innerHTML = `
-            <div class="glass p-8 w-full max-w-sm text-center border-t-4 border-[#FFD700]">
-                <iframe src='//ad.a-ads.com/${CONFIG.AD_ID}?size=300x250' style='width:300px; height:250px; border:0; overflow:hidden;'></iframe>
-                <button onclick="triggerSplit(${i})" class="mt-8 w-full py-4 bg-[#FFD700] text-black font-black uppercase">
-                    SPLIT_AND_DRAIN
-                </button>
-            </div>`;
-        return section;
-    }
-    const feed = document.getElementById('feed');
-    for(let i=1; i<=10; i++) feed.appendChild(spawnNode(i));
-
-    // --- 5. 3D GOLD PHYSICS ---
+    // --- 🎨 3D & FEED GENERATION ---
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-bg'), alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshBasicMaterial({ color: 0xFFD700, wireframe: true }));
     scene.add(knot); camera.position.z = 30;
-    function animate() { requestAnimationFrame(animate); knot.rotation.y += 0.005; renderer.render(scene, camera); }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        knot.rotation.y += 0.005;
+        knot.rotation.x += (STATE.debt * 0.2);
+        renderer.render(scene, camera);
+    }
     animate();
 
-    setInterval(checkMoon, 15000);
-    setTimeout(() => AI.speak("Aurum Sentinel online. I am monitoring the moon."), 2000);
+    function spawnNodes() {
+        const feed = document.getElementById('feed');
+        for(let i=1; i<=15; i++) {
+            const s = document.createElement('section');
+            s.className = "h-screen snap-start flex items-center justify-center p-6";
+            s.innerHTML = `<div class="glass p-8 w-full max-w-sm text-center border-t-4 border-[#FFD700]">
+                <iframe src='//ad.a-ads.com/${CONFIG.AD_ID}?size=300x250' style='width:300px; height:250px; border:0; overflow:hidden;'></iframe>
+                <button onclick="triggerSplit(${i})" class="vault-btn bg-[#FFD700] p-4 text-[12px]">SYNC_REVENUE_${i}</button>
+            </div>`;
+            feed.appendChild(s);
+        }
+    }
+    spawnNodes();
+    setTimeout(() => ORACLE.speak("Aurum Sentinel initialized. Treasury online."), 2000);
 </script>
 </body>
 </html>
