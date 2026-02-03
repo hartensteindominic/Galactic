@@ -1,173 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vault Sync • Live Terminal</title>
-  <script src="https://cdn.ethers.io/lib/ethers-6.13.2.umd.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vault Sync • Live</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <style>
-    :root {
-      --bg: #0a0a1a;
-      --card-bg: #15152e;
-      --accent: #00ffcc;
-      --text: #f0f0ff;
-      --error: #ff5555;
-    }
-    body {
-      margin: 0;
-      padding: 2rem;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    header { text-align: center; margin-bottom: 2rem; }
-    h1 { font-size: 2.5rem; color: var(--accent); margin: 0; text-transform: uppercase; letter-spacing: 2px; }
-    
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 2rem;
-      width: 100%;
-      max-width: 500px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      border: 1px solid #333366;
-    }
-    .price-display {
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin-bottom: 1.5rem;
-      padding: 10px;
-      background: #000;
-      border-radius: 8px;
-      text-align: center;
-      color: #00ff00;
-    }
-    .input-group { margin-bottom: 1.2rem; }
-    label { display: block; margin-bottom: 0.5rem; font-size: 0.9rem; color: #aaa; }
-    input[type="text"] {
-      width: 96%;
-      padding: 0.8rem;
-      background: #0a0a1a;
-      border: 1px solid #444;
-      border-radius: 6px;
-      color: white;
-      font-size: 1rem;
-    }
-
-    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 1rem; }
-    button {
-      padding: 0.8rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .btn-sync { background: var(--accent); color: #000; grid-column: span 2; font-size: 1.1rem; }
-    .btn-auto { background: #333; color: white; }
-    .btn-ai   { background: #6200ea; color: white; }
-    button:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    #console {
-      margin-top: 1.5rem;
-      background: #000;
-      padding: 1rem;
-      border-radius: 6px;
-      height: 120px;
-      font-family: monospace;
-      font-size: 0.85rem;
-      overflow-y: auto;
-      border: 1px solid #222;
-      color: #00ff00;
-    }
+    :root { --neon: #00ffcc; --bg: #050510; }
+    body { background: var(--bg); color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+    .container { background: #111125; padding: 2rem; border-radius: 15px; border: 1px solid #222244; width: 350px; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    h1 { color: var(--neon); font-size: 1.8rem; margin-top: 0; }
+    .price-box { background: #000; padding: 10px; border-radius: 8px; margin: 15px 0; border: 1px solid #333; }
+    #price { color: #0f0; font-weight: bold; }
+    input { width: 90%; padding: 10px; margin: 10px 0; background: #050510; border: 1px solid #444; color: #fff; border-radius: 5px; }
+    button { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+    .btn-main { background: var(--neon); color: #000; }
+    .btn-sec { background: #222244; color: #fff; }
+    #log { font-family: monospace; font-size: 0.75rem; color: #888; text-align: left; height: 80px; overflow-y: auto; background: #000; padding: 10px; margin-top: 15px; border-radius: 5px; }
   </style>
 </head>
 <body>
 
-<header>
-  <h1>Vault Sync</h1>
-</header>
+<div class="container">
+  <h1>VAULT SYNC</h1>
+  <div class="price-box">ETH/USD: <span id="price">---</span></div>
+  
+  <input type="text" id="target" placeholder="Recipient: 0x...">
+  <input type="number" id="amt" value="0.01" step="0.01">
 
-<div class="card">
-  <div class="price-display">ETH/USD: <span id="price">Fetching...</span></div>
+  <button class="btn-main" onclick="startSync()">CONNECT & SYNC</button>
+  <button class="btn-sec" onclick="toggleBot()">ACTIVATE BOT</button>
 
-  <div class="input-group">
-    <label>Target Vault Address (or ENS)</label>
-    <input type="text" id="target-addr" placeholder="0x000...">
-  </div>
-
-  <div class="input-group">
-    <label>Sync Amount (ETH)</label>
-    <input type="text" id="amt" value="0.01">
-  </div>
-
-  <div class="actions">
-    <button id="connectBtn" class="btn-sync" onclick="connectAndSync()">CONNECT WALLET & SYNC</button>
-    <button class="btn-auto" onclick="toggleAuto()">ENABLE BOT</button>
-    <button class="btn-ai" onclick="getAdvice()">AI PREDICTION</button>
-  </div>
-
-  <div id="console">System: Standing by...</div>
+  <div id="log">System: Ready</div>
 </div>
 
 <script>
-let provider;
-let signer;
-const logBox = document.getElementById('console');
+  const logger = document.getElementById('log');
+  function log(m) { logger.innerHTML += `<div>> ${m}</div>`; logger.scrollTop = logger.scrollHeight; }
 
-function log(msg, isError = false) {
-  const color = isError ? 'color: #ff5555;' : '';
-  logBox.innerHTML += `<div style="${color}">> ${msg}</div>`;
-  logBox.scrollTop = logBox.scrollHeight;
-}
+  // 1. Live Price
+  async function getPrice() {
+    try {
+      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
+      const d = await r.json();
+      document.getElementById('price').innerText = '$' + d.ethereum.usd;
+    } catch(e) { document.getElementById('price').innerText = 'Connection Error'; }
+  }
+  setInterval(getPrice, 10000); getPrice();
 
-// 1. Live Price Engine
-async function updatePrice() {
-  try {
-    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-    const data = await res.json();
-    document.getElementById('price').textContent = `$${data.ethereum.usd.toLocaleString()}`;
-  } catch (e) { document.getElementById('price').textContent = "Offline"; }
-}
-setInterval(updatePrice, 15000);
-updatePrice();
+  // 2. Real MetaMask Transaction
+  async function startSync() {
+    if (!window.ethereum) return log("MetaMask not found!");
+    
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const addr = await signer.getAddress();
+      log("Connected: " + addr.slice(0,6));
 
-// 2. Web3 Connection Logic
-async function connectAndSync() {
-  if (!window.ethereum) {
-    log("Error: MetaMask not detected!", true);
-    return;
+      const txAmt = ethers.parseEther(document.getElementById('amt').value);
+      const target = document.getElementById('target').value;
+      
+      if(!ethers.isAddress(target)) return log("Invalid Address", true);
+
+      log("Sending Sync Transaction...");
+      const tx = await signer.sendTransaction({
+        to: target,
+        value: txAmt
+      });
+      log("Pending: " + tx.hash.slice(0,10));
+      await tx.wait();
+      log("Sync Successful!");
+    } catch(e) { log("Error: " + e.message.slice(0,30)); }
   }
 
-  try {
-    log("Requesting account access...");
-    provider = new ethers.BrowserProvider(window.ethereum);
-    signer = await provider.getSigner();
-    const address = await signer.getAddress();
-    
-    log(`Connected: ${address.substring(0,6)}...${address.substring(38)}`);
-    document.getElementById('connectBtn').textContent = "INITIATING SYNC...";
-    
-    // Simulate transaction
-    const amount = document.getElementById('amt').value;
-    log(`Preparing sync for ${amount} ETH...`);
-    
-    // In a real app, this is where you'd call signer.sendTransaction()
-    setTimeout(() => {
-        log("Success: Vault synchronized with mainnet.", false);
-        document.getElementById('connectBtn').textContent = "SYNC COMPLETE";
-    }, 1500);
-
-  } catch (err) {
-    log(`User rejected or error: ${err.message}`, true);
-  }
-}
-
-function toggleAuto() { log("Bot initialized. Monitoring gas prices..."); }
-function getAdvice() { log("AI Signal: Moderate Volatility. Recommend 0.5% slippage."); }
+  function toggleBot() { log("Bot monitoring local node..."); }
 </script>
 
 </body>
