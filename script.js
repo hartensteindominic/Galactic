@@ -360,15 +360,16 @@ async function processPayment() {
         statusDiv.innerHTML = '<p>Processing payment...</p>';
         statusDiv.style.background = 'rgba(0, 242, 255, 0.2)';
         
-        // Convert ETH to Wei (1 ETH = 10^18 Wei)
-        const amountInWei = '0x' + Math.floor(parseFloat(currentPaymentAmount) * 1e18).toString(16);
+        // Convert ETH to Wei (1 ETH = 10^18 Wei) using BigInt for precision
+        const amountInWei = '0x' + BigInt(Math.floor(parseFloat(currentPaymentAmount) * 1e18)).toString(16);
         
-        // Send transaction
+        // Send transaction (in production, use proper contract/recipient address)
+        // TODO: Replace with actual recipient address or smart contract
         const transactionHash = await window.ethereum.request({
             method: 'eth_sendTransaction',
             params: [{
                 from: walletAddress,
-                to: walletAddress, // In production, this would be the contract address
+                to: walletAddress, // DEMO ONLY - Replace with actual recipient address
                 value: amountInWei,
             }],
         });

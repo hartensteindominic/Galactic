@@ -29,10 +29,12 @@ cd galactic-backend
 npm install
 ```
 
-3. Configure environment variables (already set in `.env`):
+3. Configure environment variables:
+   - Copy `.env.example` to `.env`
+   - Set your xAI API key in `.env`:
 ```
 PORT=3000
-XAI_API_KEY=xai-G7JvL16cDlnBbKrHUxKcwEcsexkOTgFP2phHhGGbkM3ug4uLI2pajIDncuAG3E4IhVyKXVVnrOBglVCs
+XAI_API_KEY=your_actual_xai_api_key_here
 ```
 
 4. Start the server:

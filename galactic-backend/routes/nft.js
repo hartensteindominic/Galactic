@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-// In-memory storage for NFT data (in production, use a database)
+// In-memory storage for NFT data (DEMO ONLY - use a database in production)
+// WARNING: All data will be lost on server restart
 const nftGardens = new Map();
 let tokenIdCounter = 1;
 
@@ -18,7 +19,8 @@ function calculateRarity(gardenData) {
     return 'Common';
 }
 
-// Helper function to generate mock IPFS hash
+// Helper function to generate mock IPFS hash (DEMO ONLY)
+// WARNING: This creates fake IPFS URIs. Implement real IPFS integration for production.
 function generateIPFSHash() {
     const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     let hash = 'Qm';

@@ -6,6 +6,6 @@ services:
     startCommand: cd galactic-backend && npm start
     envVars:
       - key: XAI_API_KEY
-        value: xai-G7JvL16cDlnBbKrHUxKcwEcsexkOTgFP2phHhGGbkM3ug4uLI2pajIDncuAG3E4IhVyKXVVnrOBglVCs
+        sync: false
       - key: PORT
         value: 3000
