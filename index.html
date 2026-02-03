@@ -1,27 +1,212 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Galactic Neural Garden - VR/AR Experience</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%); color: white; overflow-x: hidden; }
+        header { position: fixed; top: 0; width: 100%; background: rgba(10, 10, 15, 0.95); backdrop-filter: blur(20px); padding: 20px 40px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; border-bottom: 2px solid rgba(0, 242, 255, 0.3); }
+        .logo { font-size: 24px; font-weight: bold; background: linear-gradient(135deg, #00f2ff, #7b2ff7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #connectWallet { padding: 12px 25px; background: linear-gradient(135deg, #00f2ff, #7b2ff7); border: none; border-radius: 25px; color: #0a0a0f; font-weight: bold; cursor: pointer; font-size: 16px; }
+        #connectWallet:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0, 242, 255, 0.5); }
+        #gardenCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        .content { position: relative; z-index: 10; padding-top: 100px; }
+        .subscription-status { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: rgba(0, 255, 136, 0.2); border: 2px solid #00ff88; padding: 10px 30px; border-radius: 20px; z-index: 1001; display: none; }
+        .hero { text-align: center; margin-bottom: 50px; background: rgba(10, 10, 15, 0.8); padding: 40px; backdrop-filter: blur(10px); }
+        .hero h1 { font-size: 48px; background: linear-gradient(135deg, #00f2ff, #7b2ff7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; }
+        .hero-buttons { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .btn { padding: 15px 35px; background: linear-gradient(135deg, #ff006e, #7b2ff7); border: none; border-radius: 30px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .pricing-section { margin: 80px 40px; background: rgba(10, 10, 15, 0.9); padding: 40px; border-radius: 20px; backdrop-filter: blur(10px); }
+        .section-title { text-align: center; font-size: 42px; background: linear-gradient(135deg, #00f2ff, #7b2ff7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 50px; }
+        .pricing-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+        .pricing-card { background: rgba(26, 26, 46, 0.8); border: 2px solid rgba(0, 242, 255, 0.2); border-radius: 20px; padding: 35px 25px; text-align: center; }
+        .pricing-card h3 { font-size: 24px; color: #00f2ff; margin-bottom: 15px; }
+        .price { font-size: 36px; color: #7b2ff7; font-weight: bold; margin: 20px 0; }
+        .subscribe-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #00f2ff, #7b2ff7); border: none; border-radius: 20px; color: #0a0a0f; font-weight: bold; font-size: 14px; cursor: pointer; margin-top: 15px; }
+        .subscribe-btn.active { background: linear-gradient(135deg, #00ff88, #00cc66); }
+        .neural-panel { position: fixed; bottom: 30px; right: 30px; width: 320px; background: rgba(10, 10, 15, 0.95); border: 2px solid #ff006e; border-radius: 20px; padding: 20px; z-index: 999; }
+        .neural-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .neural-close { background: none; border: none; color: #ff006e; font-size: 24px; cursor: pointer; padding: 0; line-height: 1; }
+        .neural-info { font-size: 11px; color: #a0a0b0; margin-bottom: 15px; line-height: 1.4; }
+        #brainwaveCanvas { width: 100%; height: 80px; background: rgba(26, 26, 46, 0.8); border-radius: 10px; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: #1a1a2e; border: 2px solid #00f2ff; border-radius: 20px; padding: 40px; max-width: 500px; width: 90%; text-align: center; }
+        .modal-close { float: right; font-size: 30px; cursor: pointer; color: #00f2ff; }
+        #transactionStatus { margin-top: 20px; padding: 15px; border-radius: 10px; }
+        .ar-view, .vr-view { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3000; background: black; }
+        .exit-btn { position: absolute; top: 20px; left: 20px; padding: 15px 30px; background: linear-gradient(135deg, #ff006e, #7b2ff7); border: none; border-radius: 25px; color: white; font-size: 16px; font-weight: bold; cursor: pointer; z-index: 3001; }
+    </style>
 </head>
 <body>
     <header>
-        <h1>Welcome to Galactic</h1>
+        <div class="logo">🧠 GALACTIC NEURAL GARDEN</div>
+        <button id="connectWallet">Connect MetaMask</button>
     </header>
-    <main>
-        <section id="features">
-            <h2>Features</h2>
-            <ul>
-                <li>Feature 1: Interstellar Travel</li>
-                <li>Feature 2: Alien Encounters</li>
-                <li>Feature 3: Galactic Trade</li>
-            </ul>
-        </section>
-    </main>
-    <footer>
-        <p>&copy; 2026 Galactic Inc.</p>
-    </footer>
+    <div id="subscriptionStatusBanner" class="subscription-status"></div>
+    <div id="gardenCanvas"></div>
+    <div class="content">
+        <div class="hero">
+            <h1>Neural-Controlled AR/VR Garden</h1>
+            <div class="hero-buttons">
+                <button class="btn" id="vrButton" onclick="launchVR()">Enter VR Mode</button>
+                <button class="btn" id="arButton" onclick="launchAR()">Launch AR Mode</button>
+                <button class="btn" id="neuralButton" onclick="toggleNeural()">Connect Neuralink</button>
+            </div>
+        </div>
+        <div class="pricing-section">
+            <h2 class="section-title">Access Levels</h2>
+            <div class="pricing-grid">
+                <div class="pricing-card"><h3>Free Explorer</h3><div class="price">FREE</div><button class="subscribe-btn active" id="btn-free">✅ Active</button></div>
+                <div class="pricing-card"><h3>AR Access</h3><div class="price">0.0001 ETH</div><button class="subscribe-btn" id="btn-ar" onclick="openPayment('AR Access', '0.0001')">Subscribe</button></div>
+                <div class="pricing-card"><h3>VR Experience</h3><div class="price">0.0005 ETH</div><button class="subscribe-btn" id="btn-vr" onclick="openPayment('VR Experience', '0.0005')">Subscribe</button></div>
+                <div class="pricing-card"><h3>Neural Premium</h3><div class="price">0.001 ETH</div><button class="subscribe-btn" id="btn-neural" onclick="openPayment('Neural Premium', '0.001')">Subscribe</button></div>
+                <div class="pricing-card"><h3>Quantum Elite</h3><div class="price">0.005 ETH</div><button class="subscribe-btn" id="btn-quantum" onclick="openPayment('Quantum Elite', '0.005')">Subscribe</button></div>
+            </div>
+        </div>
+    </div>
+    <div class="neural-panel" id="neuralPanel" style="display: none;">
+        <div class="neural-panel-header">
+            <div style="font-weight: bold;">🧠 Neural Interface Active</div>
+            <button class="neural-close" onclick="closeNeural()">✕</button>
+        </div>
+        <div class="neural-info">Real-time brainwave monitoring • EEG pattern detection • Theta/Alpha/Beta wave analysis</div>
+        <canvas id="brainwaveCanvas"></canvas>
+    </div>
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h2>Complete Payment</h2>
+            <div id="paymentDetails"></div>
+            <div id="transactionStatus"></div>
+        </div>
+    </div>
+    <div id="arView" class="ar-view">
+        <button class="exit-btn" onclick="exitAR()">← Exit AR</button>
+        <a-scene embedded arjs>
+            <a-box position='0 0.5 -3' rotation='0 45 0' color='#00f2ff'></a-box>
+            <a-sphere position='2 1 -3' radius='0.5' color='#7b2ff7'></a-sphere>
+            <a-cylinder position='-2 0.75 -3' radius='0.5' height='1.5' color='#ff006e'></a-cylinder>
+            <a-entity camera></a-entity>
+        </a-scene>
+    </div>
+    <div id="vrView" class="vr-view">
+        <button class="exit-btn" onclick="exitVR()">← Exit VR</button>
+        <a-scene embedded>
+            <a-sky color="#0a0a0f"></a-sky>
+            <a-box position='0 0.5 -3' rotation='0 45 0' color='#00f2ff'></a-box>
+            <a-sphere position='2 1 -3' radius='0.5' color='#7b2ff7'></a-sphere>
+            <a-cylinder position='-2 0.75 -3' radius='0.5' height='1.5' color='#ff006e'></a-cylinder>
+            <a-plane position='0 0 -4' rotation='-90 0 0' width='10' height='10' color='#2d5016'></a-plane>
+            <a-entity camera look-controls wasd-controls></a-entity>
+        </a-scene>
+    </div>
+    <script>
+        const WALLET_ADDRESS = '0x02f93c7547309ca50eeab446daebe8ce8e694cbb';
+        let userWallet = null; let scene, camera, renderer; let neuralActive = false;
+        function checkSubscriptions() {
+            const subscriptions = JSON.parse(localStorage.getItem('galacticSubscriptions') || '[]');
+            const statusBanner = document.getElementById('subscriptionStatusBanner');
+            if (subscriptions.length > 0) {
+                statusBanner.textContent = '✅ Active: ' + subscriptions.join(', ');
+                statusBanner.style.display = 'block';
+                subscriptions.forEach(sub => {
+                    const btnId = 'btn-' + sub.toLowerCase().replace(' ', '').replace('access', '').replace('experience', '').replace('premium', 'neural').replace('elite', 'quantum');
+                    const btn = document.getElementById(btnId);
+                    if (btn) { btn.textContent = '✅ Active'; btn.classList.add('active'); btn.onclick = null; }
+                });
+            }
+        }
+        function saveSubscription(plan) {
+            let subscriptions = JSON.parse(localStorage.getItem('galacticSubscriptions') || '[]');
+            if (!subscriptions.includes(plan)) { subscriptions.push(plan); localStorage.setItem('galacticSubscriptions', JSON.stringify(subscriptions)); }
+            checkSubscriptions();
+        }
+        function launchAR() {
+            const subs = JSON.parse(localStorage.getItem('galacticSubscriptions') || '[]');
+            if (subs.includes('AR Access') || subs.includes('Neural Premium') || subs.includes('Quantum Elite')) { document.getElementById('arView').style.display = 'block'; }
+            else { alert('⚠️ Subscribe to AR Access tier (0.0001 ETH) to unlock this feature!'); }
+        }
+        function exitAR() { document.getElementById('arView').style.display = 'none'; }
+        function launchVR() {
+            const subs = JSON.parse(localStorage.getItem('galacticSubscriptions') || '[]');
+            if (subs.includes('VR Experience') || subs.includes('Neural Premium') || subs.includes('Quantum Elite')) { document.getElementById('vrView').style.display = 'block'; }
+            else { alert('⚠️ Subscribe to VR Experience tier (0.0005 ETH) to unlock this feature!'); }
+        }
+        function exitVR() { document.getElementById('vrView').style.display = 'none'; }
+        function toggleNeural() {
+            neuralActive = !neuralActive;
+            const panel = document.getElementById('neuralPanel'); const button = document.getElementById('neuralButton');
+            if (neuralActive) { panel.style.display = 'block'; button.textContent = 'Disconnect Neuralink'; startBrainwave(); }
+            else { panel.style.display = 'none'; button.textContent = 'Connect Neuralink'; }
+        }
+        function closeNeural() { neuralActive = false; document.getElementById('neuralPanel').style.display = 'none'; document.getElementById('neuralButton').textContent = 'Connect Neuralink'; }
+        function initGarden() {
+            const container = document.getElementById('gardenCanvas');
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x0a0a0f); scene.fog = new THREE.Fog(0x0a0a0f, 10, 50);
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(window.innerWidth, window.innerHeight); container.appendChild(renderer.domElement);
+            const groundGeometry = new THREE.CircleGeometry(25, 32); const groundMaterial = new THREE.MeshPhongMaterial({ color: 0x2d5016 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial); ground.rotation.x = -Math.PI / 2; scene.add(ground);
+            for (let i = 0; i < 8; i++) {
+                const angle = (i / 8) * Math.PI * 2; const radius = 18;
+                const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.4, 4); const trunkMaterial = new THREE.MeshPhongMaterial({ color: 0x4a3520 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial); trunk.position.set(Math.cos(angle) * radius, 2, Math.sin(angle) * radius); scene.add(trunk);
+                const leavesGeometry = new THREE.SphereGeometry(2, 8, 8); const leavesMaterial = new THREE.MeshPhongMaterial({ color: 0x00ff44 });
+                const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial); leaves.position.set(Math.cos(angle) * radius, 5, Math.sin(angle) * radius); scene.add(leaves);
+            }
+            for (let i = 0; i < 25; i++) {
+                const flowerGeometry = new THREE.SphereGeometry(0.3, 8, 8); const colors = [0xff006e, 0x00f2ff, 0x7b2ff7, 0xffff00];
+                const flowerMaterial = new THREE.MeshPhongMaterial({ color: colors[Math.floor(Math.random() * colors.length)] });
+                const flower = new THREE.Mesh(flowerGeometry, flowerMaterial); flower.position.set((Math.random() - 0.5) * 40, 0.3, (Math.random() - 0.5) * 40); scene.add(flower);
+            }
+            const fountainGeometry = new THREE.CylinderGeometry(2, 2, 1); const fountainMaterial = new THREE.MeshPhongMaterial({ color: 0x00f2ff, transparent: true, opacity: 0.7 });
+            const fountain = new THREE.Mesh(fountainGeometry, fountainMaterial); fountain.position.y = 0.5; scene.add(fountain);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5); scene.add(ambientLight);
+            const sunLight = new THREE.DirectionalLight(0xffffee, 0.8); sunLight.position.set(10, 20, 10); scene.add(sunLight);
+            camera.position.set(0, 5, 25); camera.lookAt(0, 0, 0); animate();
+        }
+        function animate() { requestAnimationFrame(animate); camera.position.x = Math.sin(Date.now() * 0.0003) * 25; camera.position.z = Math.cos(Date.now() * 0.0003) * 25; camera.lookAt(0, 2, 0); renderer.render(scene, camera); }
+        document.getElementById('connectWallet').addEventListener('click', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                try { const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' }); userWallet = accounts[0]; const shortAddress = `${userWallet.substring(0, 6)}...${userWallet.substring(38)}`; document.getElementById('connectWallet').textContent = `✓ ${shortAddress}`; alert('✅ Wallet connected: ' + shortAddress); }
+                catch (error) { alert('❌ Failed to connect wallet'); }
+            } else { alert('⚠️ Please install MetaMask!'); }
+        });
+        function startBrainwave() {
+            const canvas = document.getElementById('brainwaveCanvas'); const ctx = canvas.getContext('2d'); canvas.width = canvas.offsetWidth; canvas.height = 80;
+            let offset = 0;
+            function draw() {
+                if (!neuralActive) return;
+                ctx.fillStyle = 'rgba(26, 26, 46, 0.3)'; ctx.fillRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = '#ff006e'; ctx.lineWidth = 2; ctx.beginPath();
+                for (let x = 0; x < canvas.width; x++) { const y = canvas.height / 2 + Math.sin((x + offset) * 0.05) * 15 + Math.sin((x + offset) * 0.1) * 8; if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+                ctx.stroke(); offset += 2; requestAnimationFrame(draw);
+            }
+            draw();
+        }
+        function openPayment(plan, price) {
+            if (!userWallet) { alert('⚠️ Please connect MetaMask first!'); return; }
+            const subs = JSON.parse(localStorage.getItem('galacticSubscriptions') || '[]');
+            if (subs.includes(plan)) { alert('✅ You already have this subscription!'); return; }
+            const modal = document.getElementById('paymentModal'); const details = document.getElementById('paymentDetails');
+            details.innerHTML = `<h3>${plan}</h3><p style="font-size: 32px; color: #00f2ff; margin: 20px 0;">${price} ETH</p><p style="color: #a0a0b0;">To: ${WALLET_ADDRESS}</p><button class="subscribe-btn" onclick="processPayment('${price}', '${plan}')">💳 Confirm Payment</button>`;
+            modal.classList.add('active');
+        }
+        function closeModal() { document.getElementById('paymentModal').classList.remove('active'); }
+        async function processPayment(amount, plan) {
+            const statusDiv = document.getElementById('transactionStatus'); statusDiv.style.background = 'rgba(0, 242, 255, 0.1)'; statusDiv.style.color = '#00f2ff'; statusDiv.textContent = '⏳ Processing...';
+            try {
+                const txHash = await window.ethereum.request({ method: 'eth_sendTransaction', params: [{ to: WALLET_ADDRESS, from: userWallet, value: '0x' + Math.floor(parseFloat(amount) * 1e18).toString(16) }] });
+                saveSubscription(plan); statusDiv.style.background = 'rgba(0, 255, 136, 0.1)'; statusDiv.style.color = '#00ff88'; statusDiv.textContent = `✅ Success! ${plan} activated!`; setTimeout(() => closeModal(), 3000);
+            } catch (error) { statusDiv.style.background = 'rgba(255, 0, 110, 0.1)'; statusDiv.style.color = '#ff006e'; statusDiv.textContent = '❌ Payment failed'; }
+        }
+        window.addEventListener('load', () => { initGarden(); checkSubscriptions(); });
+        window.addEventListener('resize', () => { if (camera && renderer) { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); } });
+    </script>
 </body>
 </html>
