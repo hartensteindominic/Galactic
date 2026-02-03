@@ -3,129 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vault Pro • Live Trader</title>
+    <title>Vault Sync Pro</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
-        :root { --neon: #00ffcc; --dark: #050510; --card: #111125; --buy: #00ffcc; --sell: #ff4466; }
-        body { background: var(--dark); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-        .app-container { width: 380px; background: var(--card); border: 1px solid #222244; border-radius: 20px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
-        
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .live-tag { font-size: 0.7rem; background: rgba(0,255,204,0.1); color: var(--neon); padding: 4px 8px; border-radius: 4px; font-weight: bold; border: 1px solid var(--neon); }
-        
-        .price-display { text-align: center; margin-bottom: 25px; }
-        .price-display div { font-size: 0.8rem; color: #888; text-transform: uppercase; }
-        .price-display span { font-size: 2.2rem; font-weight: 800; color: #fff; }
-
-        .form-group { margin-bottom: 15px; }
-        label { font-size: 0.75rem; color: #666; display: block; margin-bottom: 6px; }
-        input { width: 100%; box-sizing: border-box; background: #000; border: 1px solid #333; padding: 12px; color: #fff; border-radius: 8px; font-family: monospace; }
-        
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
-        button { border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
-        .buy { background: var(--buy); color: #000; }
-        .sell { background: var(--sell); color: #fff; }
-        .full { grid-column: span 2; background: #222244; color: #fff; border: 1px solid #444; }
-        button:hover { transform: scale(1.02); opacity: 0.9; }
-
-        #terminal { background: #000; margin-top: 20px; padding: 12px; border-radius: 8px; height: 100px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; color: #0f0; border: 1px solid #1a1a1a; }
+        body { background: #050510; color: #00ffcc; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .box { border: 2px solid #00ffcc; padding: 30px; border-radius: 10px; background: #0a0a1f; width: 350px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: #00ffcc; border: none; font-weight: bold; cursor: pointer; }
+        #log { font-size: 0.7rem; color: #888; margin-top: 15px; height: 50px; overflow: auto; border-top: 1px solid #222; padding-top: 10px; }
     </style>
 </head>
 <body>
-
-<div class="app-container">
-    <div class="header">
-        <div style="font-weight: 900; letter-spacing: 1px;">VAULT<span style="color:var(--neon)">SYNC</span></div>
-        <div class="live-tag">MAINNET ACTIVE</div>
+    <div class="box">
+        <h2>VAULT TRADER</h2>
+        <input type="text" id="t" placeholder="Token Address" value="0x6B175474E89094C44Da98b954EEDEAC495271d0F">
+        <input type="number" id="a" value="0.01">
+        <button onclick="trade()">CONNECT & TRADE</button>
+        <div id="log">> Ready for Mainnet</div>
     </div>
-
-    <div class="price-display">
-        <div>Ethereum Price</div>
-        <span id="price-val">$0,000.00</span>
-    </div>
-
-    <div class="form-group">
-        <label>Token Contract Address</label>
-        <input type="text" id="token-addr" value="0x6B175474E89094C44Da98b954EEDEAC495271d0F">
-    </div>
-
-    <div class="form-group">
-        <label>ETH Amount</label>
-        <input type="number" id="eth-amt" value="0.01" step="0.01">
-    </div>
-
-    <div class="btn-grid">
-        <button class="buy" onclick="runTrade('buy')">Execute Buy</button>
-        <button class="sell" onclick="runTrade('sell')">Execute Sell</button>
-        <button class="full" id="connect-btn" onclick="connect()">Connect Mainnet Wallet</button>
-    </div>
-
-    <div id="terminal">> Awaiting interaction...</div>
-</div>
-
 <script>
-    const ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
-    const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
-    const ABI = [
-        "function swapExactETHForTokens(uint min, address[] path, address to, uint dead) external payable",
-        "function swapExactTokensForETH(uint in, uint min, address[] path, address to, uint dead) external"
-    ];
-
-    let signer, account;
-
-    function log(m) {
-        const t = document.getElementById('terminal');
-        t.innerHTML = `<div>[${new Date().toLocaleTimeString([], {hour12:false})}] ${m}</div>` + t.innerHTML;
-    }
-
-    async function getPrice() {
-        try {
-            const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT');
-            const d = await r.json();
-            document.getElementById('price-val').innerText = `$${parseFloat(d.price).toLocaleString()}`;
-        } catch(e) {}
-    }
-    setInterval(getPrice, 5000); getPrice();
-
-    async function connect() {
-        if (!window.ethereum) return log("Error: MetaMask required.");
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        
-        // Force Mainnet
-        try {
-            await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
-        } catch(e) { log("Please switch to Mainnet manually."); }
-
-        signer = await provider.getSigner();
-        account = await signer.getAddress();
-        document.getElementById('connect-btn').innerText = account.slice(0,6) + "..." + account.slice(-4);
-        log("Wallet linked: " + account);
-    }
-
-    async function runTrade(mode) {
-        if (!signer) return log("Connect wallet first!");
-        
-        const token = document.getElementById('token-addr').value;
-        const amount = document.getElementById('eth-amt').value;
-        const dead = Math.floor(Date.now() / 1000) + 1200; // 20m
-        const contract = new ethers.Contract(ROUTER, ABI, signer);
-
-        try {
-            log(`Initiating ${mode.toUpperCase()} signature...`);
-            let tx;
-            if(mode === 'buy') {
-                tx = await contract.swapExactETHForTokens(0, [WETH, token], account, dead, { value: ethers.parseEther(amount) });
-            } else {
-                tx = await contract.swapExactTokensForETH(ethers.parseUnits(amount, 18), 0, [token, WETH], account, dead);
-            }
-            log("Transaction Sent! Hash: " + tx.hash.slice(0,10));
-            await tx.wait();
-            log("BLOCK CONFIRMED. Sync Complete.");
-        } catch(e) {
-            log("FAILED: " + (e.reason || "User rejected"));
-        }
+    async function trade() {
+        if (!window.ethereum) return alert("Install MetaMask");
+        const p = new ethers.BrowserProvider(window.ethereum);
+        await p.send("eth_requestAccounts", []);
+        const s = await p.getSigner();
+        document.getElementById('log').innerText = "> Connected: " + (await s.getAddress()).slice(0,10);
+        // Trade logic here
     }
 </script>
-
 </body>
 </html>
