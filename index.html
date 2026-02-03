@@ -3,84 +3,127 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Galactic Leap • Vault Sync</title>
-  <script src="https://cdn.ethers.io/lib/ethers-6.13.2.umd.min.js"></script>
+  <title>Vault Sync • Test Deploy</title>
   <style>
-    :root {
-      --bg: #0a0a1f;
-      --text: #e0e0ff;
-      --primary: #00ffaa;
-      --accent: #00ccff;
-      --warning: #ff6600;
-      --purple: #aa00ff;
-      --card: rgba(30,30,60,0.8);
-    }
-    * { box-sizing: border-box; margin:0; padding:0; }
     body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: system-ui, -apple-system, sans-serif;
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #0a0a1f;
+      color: #e0e0ff;
       min-height: 100vh;
-      padding: 1rem;
-      line-height: 1.5;
+      padding: 2rem;
+      line-height: 1.6;
     }
     header {
       text-align: center;
-      padding: 1.5rem 0 2rem;
-      background: linear-gradient(135deg, #1a1a3a, #0f0f2a);
-      border-radius: 0 0 20px 20px;
-      margin-bottom: 1.5rem;
+      margin-bottom: 2rem;
     }
     h1 {
-      font-size: 2.2rem;
-      background: linear-gradient(90deg, var(--primary), var(--accent));
+      font-size: 2.8rem;
+      background: linear-gradient(90deg, #00ffaa, #00ccff);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
     .card {
-      background: var(--card);
+      max-width: 800px;
+      margin: 0 auto;
+      background: rgba(30,30,60,0.85);
       border-radius: 16px;
-      padding: 1.8rem;
-      margin-bottom: 1.5rem;
-      border: 1px solid rgba(100,100,255,0.15);
-      backdrop-filter: blur(8px);
+      padding: 2rem;
+      border: 1px solid #4444ff66;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
     .status {
-      font-family: monospace;
       background: #000022;
-      padding: 1rem;
+      padding: 1.2rem;
       border-radius: 10px;
-      min-height: 140px;
-      overflow-y: auto;
-      margin: 1rem 0;
-      font-size: 0.95rem;
-      border: 1px solid #222255;
-    }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
       margin: 1.5rem 0;
+      font-family: monospace;
+      font-size: 1rem;
+      min-height: 120px;
+      overflow-y: auto;
+      border: 1px solid #222266;
     }
     button {
       padding: 0.9rem 1.8rem;
-      font-size: 1rem;
-      font-weight: 600;
+      margin: 0.5rem;
+      font-size: 1.1rem;
+      font-weight: bold;
       border: none;
       border-radius: 10px;
       cursor: pointer;
-      transition: all 0.18s;
+      color: white;
     }
-    button:hover { transform: translateY(-1px); }
-    .sync    { background: linear-gradient(90deg, var(--primary), var(--accent)); color: #000; }
-    .auto    { background: linear-gradient(90deg, var(--warning), #ff8800); }
-    .ai      { background: linear-gradient(90deg, var(--purple), #8800ff); }
-    .loading { color: #888; font-style: italic; }
-    input[type="text"] {
-      padding: 0.7rem;
-      background: #111133;
-      border: 1
+    .sync-btn { background: linear-gradient(90deg, #00ff99, #00ccff); }
+    .auto-btn { background: linear-gradient(90deg, #ff6600, #ff9900); }
+    .ai-btn   { background: linear-gradient(90deg, #aa00ff, #6600ff); }
+    .loading { color: #aaaaff; font-style: italic; }
+    #conn { font-weight: bold; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Vault Sync • Deploy Test</h1>
+  <p style="color:#aaaaff; margin-top:0.5rem;">This page should show content immediately. If not → hard refresh (Ctrl+Shift+R)</p>
+</header>
+
+<div class="card">
+  <p><strong>ETH Price:</strong> <span id="eth-price" class="loading">Loading...</span></p>
+
+  <div style="margin:1.5rem 0;">
+    <label>Risk: <span id="risk-val">1x</span></label><br>
+    <input type="range" min="1" max="10" value="1" step="0.5" id="risk">
+  </div>
+
+  <div style="margin:1.5rem 0;">
+    Amount: <input type="text" id="amt" value="0.00001" style="width:140px; padding:0.6rem; background:#111133; border:1px solid #444; border-radius:6px; color:white;">
+  </div>
+
+  <div>
+    <button class="sync-btn" onclick="startSync()">SYNC VAULT</button>
+    <button class="auto-btn" onclick="toggleAuto()">AUTO MODE</button>
+    <button class="ai-btn"   onclick="askAI()">AI ADVICE</button>
+  </div>
+
+  <div id="conn">Wallet: Not connected</div>
+
+  <div id="status" class="status">
+    Page loaded successfully ✓<br>
+    Waiting for user interaction or wallet...
+  </div>
+</div>
+
+<script>
+// Basic status logger
+const status = document.getElementById('status');
+function addLog(msg, err=false) {
+  const color = err ? 'color:#ff6666;' : '';
+  status.innerHTML += `<span style="${color}">> ${msg}</span><br>`;
+  status.scrollTop = status.scrollHeight;
+}
+
+// Update price
+fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
+  .then(r => r.json())
+  .then(d => document.getElementById('eth-price').textContent = '$' + d.ethereum.usd.toLocaleString())
+  .catch(() => document.getElementById('eth-price').textContent = 'N/A (offline)');
+
+// Risk slider
+document.getElementById('risk').oninput = e => {
+  document.getElementById('risk-val').textContent = e.target.value + 'x';
+};
+
+// Wallet connect stub (real logic would go here)
+async function connect() {
+  if (!window.ethereum) {
+    addLog("No wallet detected (MetaMask?)", true);
+    document.getElementById('conn').textContent = "Wallet: Not found";
+    return null;
+  }
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const addr = (await provider.getSigner()).getAddress();
+    addLog("Connected: " + addr);
+    document
