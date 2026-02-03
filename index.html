@@ -2,74 +2,99 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Grok Audible Sentinel</title>
+    <title>Grok Audible Sentinel v2.0</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        :root { --neon: #00f2ff; --bg: #000; }
-        body { background: var(--bg); color: #444; font-family: 'Courier New', monospace; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        :root { --neon: #00f2ff; --bg: #050505; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
         
-        /* The Visual Core */
-        #core { width: 150px; height: 150px; border-radius: 50%; border: 2px solid #222; overflow: hidden; margin-bottom: 20px; transition: 0.3s; }
-        video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.5) grayscale(1); }
-
-        /* Audio HUD */
-        #audio-status { font-size: 0.7rem; color: var(--neon); letter-spacing: 2px; margin-bottom: 20px; }
-        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px 30px; cursor: pointer; font-weight: bold; }
-        .pulse { box-shadow: 0 0 30px var(--neon); border-color: var(--neon) !important; }
+        /* 3D Container */
+        #canvas-container { width: 300px; height: 300px; position: relative; }
+        
+        #audio-status { font-size: 0.8rem; letter-spacing: 3px; margin-top: 20px; text-shadow: 0 0 10px var(--neon); }
+        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px 30px; cursor: pointer; font-weight: bold; margin-top: 20px; transition: 0.3s; z-index: 10; }
+        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
+        
+        #webcam-feed { position: absolute; bottom: 20px; right: 20px; width: 150px; border: 1px solid #333; opacity: 0.5; }
     </style>
 </head>
 <body>
 
-<div id="core">
-    <video id="webcam" autoplay playsinline muted></video>
-</div>
+<div id="canvas-container"></div>
+<video id="webcam-feed" autoplay playsinline muted></video>
 
-<div id="audio-status">AUDIO: STANDBY (WAITING FOR USER)</div>
-
-<button id="startBtn" class="btn">ACTIVATE VOICE & VISION</button>
+<div id="audio-status">SYSTEM: STANDBY</div>
+<button id="startBtn" class="btn">INITIALIZE SENTINEL</button>
 
 <script>
-    const video = document.getElementById('webcam');
+    let scene, camera, renderer, sphere;
     const status = document.getElementById('audio-status');
-    const core = document.getElementById('core');
 
-    // 1. FORCED SPEECH INITIALIZATION
-    function forceWakeSpeech() {
-        const msg = new SpeechSynthesisUtterance("Speech system synchronized.");
-        msg.volume = 1;
-        msg.rate = 1;
-        msg.pitch = 0.8;
+    // 1. Initialize 3D Environment
+    function init3D() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(300, 300);
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        // Create a wireframe "Agent" sphere
+        const geometry = new THREE.IcosahedronGeometry(1.5, 2);
+        const material = new THREE.MeshBasicMaterial({ color: 0x00f2ff, wireframe: true });
+        sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        camera.position.z = 4;
+        animate();
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        sphere.rotation.x += 0.005;
+        sphere.rotation.y += 0.01;
+        
+        // Pulse effect if speaking
+        if (window.speechSynthesis.speaking) {
+            const scale = 1 + Math.sin(Date.now() * 0.01) * 0.2;
+            sphere.scale.set(scale, scale, scale);
+        } else {
+            sphere.scale.set(1, 1, 1);
+        }
+        
+        renderer.render(scene, camera);
+    }
+
+    // 2. Speech Agent Logic
+    function speak(text) {
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.pitch = 0.5; // Deeper, robotic tone
+        msg.rate = 0.9;
         window.speechSynthesis.speak(msg);
     }
 
-    async function init() {
+    // 3. Main Activation
+    async function activate() {
+        document.getElementById('startBtn').style.display = 'none';
+        status.innerText = "SYSTEM: BOOTING...";
+
         try {
-            // Start Camera
+            // Camera feed
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            
-            // Start Speech
-            forceWakeSpeech();
-            
-            status.innerText = "AUDIO: SYNCHRONIZED";
-            core.classList.add('pulse');
-            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('webcam-feed').srcObject = stream;
 
-            // Loop to check if Grok should talk
+            init3D();
+            speak("Sentinel online. Vision and audio systems synchronized. Monitoring environment.");
+            
             setInterval(() => {
-                if(window.speechSynthesis.speaking) {
-                    status.innerText = "AUDIO: TRANSMITTING...";
-                } else {
-                    status.innerText = "AUDIO: LISTENING...";
-                }
-            }, 1000);
+                status.innerText = window.speechSynthesis.speaking ? "STATUS: TRANSMITTING" : "STATUS: MONITORING";
+            }, 500);
 
-        } catch (e) {
-            status.innerText = "ERROR: SYSTEM BLOCKED";
-            status.style.color = "red";
+        } catch (err) {
+            status.innerText = "ERROR: PERMISSION DENIED";
         }
     }
 
-    document.getElementById('startBtn').onclick = init;
+    document.getElementById('startBtn').onclick = activate;
 </script>
 </body>
 </html>
