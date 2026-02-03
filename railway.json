@@ -1,0 +1,11 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS",
+    "buildCommand": "cd galactic-backend && npm install"
+  },
+  "deploy": {
+    "startCommand": "cd galactic-backend && npm start",
+    "restartPolicyType": "ON_FAILURE"
+  }
+}

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: galactic-backend
+    env: node
+    buildCommand: cd galactic-backend && npm install
+    startCommand: cd galactic-backend && npm start
+    envVars:
+      - key: XAI_API_KEY
+        value: xai-G7JvL16cDlnBbKrHUxKcwEcsexkOTgFP2phHhGGbkM3ug4uLI2pajIDncuAG3E4IhVyKXVVnrOBglVCs
+      - key: PORT
+        value: 3000
