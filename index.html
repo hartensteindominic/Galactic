@@ -2,107 +2,130 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ghost Sentinel v2</title>
+    <title>Evolving Sentinel</title>
     <style>
-        :root { --lock: #ff0044; --ui: #1a1a1a; }
-        body { background: #000; color: #333; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        :root { --neon: #00f2ff; --fix: #bc13fe; --lock: #ff0044; }
+        body { background: #000; color: #555; font-family: 'Courier New', monospace; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         
-        /* The Ghost Feed: Camera is active but covered by a black mask */
-        #camera-container { position: absolute; width: 100%; height: 100%; z-index: 1; }
-        video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0); } 
-        #mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2; }
+        #eye-container { width: 180px; height: 180px; border-radius: 50%; border: 2px solid #111; overflow: hidden; position: relative; }
+        video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.4) grayscale(1); }
 
-        /* The Hologram Lock */
         #hologram {
-            position: relative; width: 320px; padding: 30px;
-            background: rgba(255, 0, 68, 0.03); border: 1px solid var(--lock);
+            position: absolute; width: 300px; padding: 25px;
+            background: rgba(255, 0, 68, 0.1); border: 1px solid var(--lock);
             color: var(--lock); text-align: center; border-radius: 15px;
-            box-shadow: 0 0 50px rgba(255, 0, 68, 0.2); backdrop-filter: blur(15px);
-            transform: perspective(1000px) rotateX(10deg) scale(0);
-            transition: 1.5s cubic-bezier(0.19, 1, 0.22, 1);
-            z-index: 100; opacity: 0;
+            transform: scale(0); transition: 0.8s; z-index: 100;
         }
-        #hologram.active { scale: 1; opacity: 1; transform: perspective(1000px) rotateX(0deg); }
+        #hologram.active { scale: 1; }
 
-        /* Status & Button */
-        .controls { position: absolute; bottom: 40px; text-align: center; z-index: 10; width: 100%; }
-        #debug { font-size: 0.6rem; margin-bottom: 10px; color: #222; letter-spacing: 2px; }
-        .btn { 
-            background: transparent; border: 1px solid #222; color: #444; 
-            padding: 10px 20px; cursor: pointer; text-decoration: none; font-size: 0.8rem;
-        }
-        .btn:hover { border-color: var(--lock); color: var(--lock); }
+        .hud { margin-top: 20px; text-align: center; font-size: 0.7rem; }
+        #code-log { width: 400px; height: 60px; overflow: hidden; color: var(--fix); margin-top: 10px; font-size: 0.6rem; opacity: 0.6; }
+        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 10px 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-<div id="camera-container">
-    <video id="webcam" autoplay playsinline muted></video>
-    <div id="mask"></div>
-</div>
-
 <div id="hologram">
-    <div style="font-size: 0.6rem; letter-spacing: 4px;">NEURAL INTERRUPT</div>
-    <h2 style="font-weight: 100; margin: 15px 0;">LINK EXPIRED</h2>
-    <p style="font-size: 0.7rem; line-height: 1.6;">5-minute observation window closed. Subscription required for continued sentinel deployment.</p>
-    <div style="font-size: 0.6rem; border-top: 1px solid #300; padding-top: 10px; opacity: 0.6;">
-        0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb
-    </div>
-    <a href="ethereum:0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb" class="btn" style="margin-top:20px; display:inline-block;">RENEW ACCESS</a>
+    <h3>CORE LOCKOUT</h3>
+    <p>Neural link expired (5m). Renew at 0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb</p>
+    <a href="ethereum:0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb" class="btn" style="border-color: var(--lock); color: var(--lock); text-decoration: none;">PAY FEE</a>
 </div>
 
-<div class="controls">
-    <div id="debug">SYSTEM: STANDBY (CLICK TO WAKE)</div>
-    <button id="wakeBtn" class="btn">AWAKEN CORE</button>
+<div id="eye-container">
+    <video id="webcam" autoplay playsinline muted></video>
+</div>
+
+<div class="hud">
+    <div id="timer">05:00</div>
+    <div id="status">CORE IDLE</div>
+    <div id="code-log">/root > Waiting for initialization...</div>
+    <br>
+    <button id="startBtn" class="btn">INITIALIZE EVOLVING CORE</button>
 </div>
 
 <script>
     const API_KEY = "xai-G7JvL16cDlnBbKrHUxKcwEcsexkOTgFP2phHhGGbkM3ug4uLI2pajIDncuAG3E4IhVyKXVVnrOBglVCs";
-    const video = document.getElementById('webcam');
-    const debug = document.getElementById('debug');
-    let timeLeft = 300; // 5 Minutes
+    let timeLeft = 300;
+    let isLocked = false;
+    
+    // THE SELF-FIXING MODULE (Stored as a string so it can be 're-written')
+    let neuralLogic = `
+        console.log("Executing standard logic...");
+        if (Math.random() > 0.8) throw new Error("Neural static detected");
+        return "System functioning normally.";
+    `;
 
-    async function start() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            debug.innerText = "SYSTEM: ACTIVE (05:00)";
-            document.getElementById('wakeBtn').style.display = 'none';
-            
-            // Start Countdown
-            const timer = setInterval(() => {
+    async function init() {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        document.getElementById('webcam').srcObject = stream;
+        document.getElementById('startBtn').style.display = 'none';
+        
+        startTimer();
+        runSelfFixingLoop();
+    }
+
+    function startTimer() {
+        const ticker = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(ticker);
+                lock();
+            } else {
                 timeLeft--;
-                if (timeLeft <= 0) {
-                    clearInterval(timer);
-                    lock();
-                } else {
-                    const m = Math.floor(timeLeft / 60);
-                    const s = timeLeft % 60;
-                    debug.innerText = `SYSTEM: ACTIVE (0${m}:${s < 10 ? '0' : ''}${s})`;
-                }
-            }, 1000);
+                const m = Math.floor(timeLeft / 60);
+                const s = timeLeft % 60;
+                document.getElementById('timer').innerText = "0" + m + ":" + (s < 10 ? '0' : '') + s;
+            }
+        }, 1000);
+    }
 
-            speak("Ghost link established. Monitoring environment for five minutes.");
+    // THE EVOLUTION LOOP: Detects errors and 'rewrites' the neural logic
+    function runSelfFixingLoop() {
+        if (isLocked) return;
+
+        try {
+            // Execute current logic string
+            const execute = new Function(neuralLogic);
+            const result = execute();
+            logToHUD(result);
         } catch (err) {
-            debug.innerText = "ERROR: CAMERA PERMISSION DENIED";
-            debug.style.color = "red";
+            logToHUD("CRITICAL ERROR: " + err.message);
+            evolveCode(); // FIX ITSELF
         }
+
+        setTimeout(runSelfFixingLoop, 10000); // Check every 10s
+    }
+
+    function evolveCode() {
+        logToHUD("EVOLVING: Patching source code to ignore static...");
+        // This 'rewrites' the variable to remove the error-causing code
+        neuralLogic = `
+            console.log("Executing patched logic...");
+            return "Neural static bypassed. Logic evolved.";
+        `;
+        document.getElementById('eye-container').style.borderColor = "var(--fix)";
+        speak("Error detected. Source code has been autonomously modified to ensure continuity.");
     }
 
     function lock() {
+        isLocked = true;
         document.getElementById('hologram').classList.add('active');
-        debug.innerText = "SYSTEM: LOCKED";
-        speak("Access expired. Subscription required.");
+        document.getElementById('status').innerText = "LINK EXPIRED";
+        speak("Trial concluded. Please renew subscription.");
+    }
+
+    function logToHUD(msg) {
+        const log = document.getElementById('code-log');
+        log.innerHTML = "> " + msg + "<br>" + log.innerHTML;
     }
 
     function speak(t) {
         window.speechSynthesis.cancel();
         const m = new SpeechSynthesisUtterance(t);
-        m.pitch = 0.5;
+        m.pitch = isLocked ? 0.3 : 0.8;
         window.speechSynthesis.speak(m);
     }
 
-    document.getElementById('wakeBtn').onclick = start;
+    document.getElementById('startBtn').onclick = init;
 </script>
 </body>
 </html>
