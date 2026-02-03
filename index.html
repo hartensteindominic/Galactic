@@ -4,51 +4,81 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Galactic</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="metamask.js"></script>
 </head>
 <body>
-    <h1>Welcome to Galactic</h1>
-    <button id="connectWallet">Connect Wallet</button>
-    <div id="walletAddress"></div>
+    <header>
+        <img src="logo.png" alt="Logo" class="logo">
+        <button id="connectWallet">Connect MetaMask</button>
+    </header>
 
-    <h2>Pricing</h2>
-    <p>AR Access: 0.0001 ETH</p>
-    <p>VR Experience: 0.0005 ETH</p>
-    <p>Neural Premium: 0.001 ETH</p>
-    <p>Quantum Elite: 0.005 ETH</p>
+    <section class="hero">
+        <h1>Welcome to Galactic!</h1>
+        <button id="vrButton">Enter VR</button>
+        <button id="arButton">Enter AR</button>
+    </section>
+
+    <div id="gardenCanvas"></div>
+    <div id="neuralPanel" class="panel">
+        <h2>Neural Interface</h2>
+        <p>Brainwave Monitor: <span id="brainwaveData">Loading...</span></p>
+    </div>
+
+    <div class="pricing">
+        <div class="pricing-card">
+            <h3>Free Explorer</h3>
+            <p>FREE</p>
+        </div>
+        <div class="pricing-card">
+            <h3>AR Access</h3>
+            <p>0.0001 ETH</p>
+        </div>
+        <div class="pricing-card">
+            <h3>VR Experience</h3>
+            <p>0.0005 ETH</p>
+        </div>
+        <div class="pricing-card">
+            <h3>Neural Premium</h3>
+            <p>0.001 ETH</p>
+        </div>
+        <div class="pricing-card">
+            <h3>Quantum Elite</h3>
+            <p>0.005 ETH</p>
+        </div>
+    </div>
+
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Complete Your Payment</h2>
+            <p>Send payment to: 0x02f93c7547309ca50eeab446daebe8ce8e694cbb</p>
+            <button id="confirmPayment">Confirm Payment</button>
+        </div>
+    </div>
 
     <script>
-        let walletAddress = '';
+        // Three.js scene initialization code
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('gardenCanvas').appendChild(renderer.domElement);
 
-        document.getElementById('connectWallet').addEventListener('click', async () => {
-            if (typeof window.ethereum !== 'undefined') {
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    walletAddress = accounts[0];
-                    document.getElementById('walletAddress').innerText = `Connected: ${walletAddress}`;
-                } catch (error) {
-                    console.error('Error connecting to wallet:', error);
-                }
-            } else {
-                alert('Please install MetaMask!');
-            }
-        });
-
-        async function processPayment(amount) {
-            const transactionParameters = {
-                to: '0x02f93c7547309ca50eeab446daebe8ce8e694cbb', // recipient address
-                from: walletAddress, // the user's active address
-                value: amount.toString(16) // hexadecimal representation of the amount
-            };
-
-            try {
-                await window.ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [transactionParameters],
-                });
-            } catch (error) {
-                console.error('Payment failed:', error);
-            }
+        // Animate the scene
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
         }
+        animate();
+
+        // Connect MetaMask wallet
+        document.getElementById('connectWallet').onclick = async () => {
+            // Wallet connection logic...
+        };
+
+        // Payment modal logic...
     </script>
 </body>
 </html>
