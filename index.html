@@ -3,73 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AR Garden Experience</title>
-    <style>
-        body {margin: 0; overflow: hidden;}
-        canvas {display: block;}
-        h1 {text-align: center; color: #fff;}
-        .neon {text-shadow: 0 0 5px #ffffff, 0 0 10px #ff00ff, 0 0 15px #ff00ff;}
-    </style>
-    <script src="https://threejs.org/build/three.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.0.0-beta.139/ethers.min.js"></script>
+    <title>VR/AR Garden Experience</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-    <h1 class="neon">Welcome to the AR Garden Experience</h1>
+    <h1>Neuralink Brain Chip Integrated VR/AR Garden Experience</h1>
+    <div id="garden" style="width: 100%; height: 100vh;"></div>
     <script>
-        // WebXR API integration for Meta Quest/Oculus support
-        if (navigator.xr) {
-            navigator.xr.isSessionSupported('immersive-vr').then((isSupported) => {
-                if (isSupported) {
-                    // VR mode button logic here
-                }
-            });
-        }
-
-        // Setting up Three.js for 3D rendering
+        // Initialize three.js scene for 3D garden
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
+        document.getElementById('garden').appendChild(renderer.domElement);
 
-        // Initialize 3D Garden with animated plants, trees, flowers
-        const gardenElements = []; // Add code to create garden elements
+        // Add trees, flowers, fountain
+        // (Simplified for example purposes)
+
+        // Brainwave monitoring and neural interface connection implementation
+        function monitorBrainwaves() {
+            // Placeholder for brainwave monitoring logic
+        }
+
+        // Thought-based navigation logic
+        function navigateWithThoughts() {
+            // Placeholder for navigation based on thoughts
+        }
+
+        // Meta Quest / Oculus VR integration
+        // WebXR API setup
+
+        function connectWallet() {
+            // Connection via MetaMask
+            if (typeof window.ethereum !== 'undefined') {
+                // Request account access
+            }
+        }
+
+        // Payment processing for access levels
+        function processPayment(level) {
+            let cost;
+            switch(level) {
+                case 'Free': cost = 0;
+                case 'AR Access': cost = 0.05;
+                case 'VR Experience': cost = 0.1;
+                case 'Neural Premium': cost = 0.2;
+                case 'Quantum Elite': cost = 1.0;
+            }
+            // Processing payment logic addressing 0x02f93c7547309ca50eeab446daebe8ce8e694cbb
+        }
+
         function animate() {
             requestAnimationFrame(animate);
-            // Add animation logic here
             renderer.render(scene, camera);
         }
+
+        connectWallet();
+        monitorBrainwaves();
         animate();
-
-        // AR Garden mode: after payment logic
-        function accessARGarden() {
-            // Payment verification and logic here
-        }
-
-        // Wallet connection with payment gates
-        const paymentAddress = "0x02f93c7547309ca50eeab446daebe8ce8e694cbb";
-        async function payForARAccess() {
-            // Ethers.js payment integration example
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            await provider.send("eth_requestAccounts", []);
-            const signer = provider.getSigner();
-            const tx = await signer.sendTransaction({
-                to: paymentAddress,
-                value: ethers.utils.parseEther("0.05")
-            });
-            console.log(tx);
-        }
-
-        // Interactive garden elements
-        function makeInteractive() {
-            // Add interactive elements logic
-        }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
