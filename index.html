@@ -2,79 +2,96 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gesture-Master Local AI</title>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils"></script>
+    <title>Grok Sentinel: Stealth Core</title>
     <style>
-        :root { --glow: #00ff66; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        :root { --lock: #ff0044; --glitch-speed: 0.1s; }
+        body { background: #000; color: #000; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
         
-        #ai-orb { 
-            width: 250px; height: 250px; border-radius: 50%; 
-            border: 5px solid var(--glow); box-shadow: 0 0 40px var(--glow);
-            position: relative; overflow: hidden; margin-bottom: 30px;
-            transition: border-color 0.5s, box-shadow 0.5s;
+        /* Hidden Camera */
+        video { width: 1px; height: 1px; opacity: 0; position: absolute; }
+
+        /* The Holographic Prescription */
+        #rx-hologram {
+            position: absolute; width: 320px; padding: 25px;
+            background: rgba(255, 0, 68, 0.05); border: 1px solid var(--lock);
+            color: var(--lock); text-align: center; border-radius: 12px;
+            box-shadow: 0 0 40px rgba(255, 0, 68, 0.2); backdrop-filter: blur(10px);
+            transform: perspective(1000px) rotateX(15deg) scale(0);
+            transition: 1.5s cubic-bezier(0.19, 1, 0.22, 1);
+            z-index: 100; opacity: 0;
         }
-        video { width: 100%; height: 100%; object-fit: cover; filter: contrast(1.5) brightness(0.8); }
+        #rx-hologram.active { 
+            scale: 1; opacity: 1; transform: perspective(1000px) rotateX(0deg); 
+            animation: flicker 0.2s infinite alternate;
+        }
+
+        /* Glitch Animation */
+        @keyframes flicker {
+            0% { opacity: 0.8; transform: skew(0.5deg); }
+            100% { opacity: 1; transform: skew(-0.5deg); }
+        }
+
+        .donate-btn {
+            display: inline-block; margin-top: 15px; padding: 10px 20px;
+            background: var(--lock); color: #000; text-decoration: none;
+            font-weight: bold; border-radius: 4px; box-shadow: 0 0 15px var(--lock);
+        }
         
-        .hud { text-align: center; border: 1px solid #333; padding: 20px; border-radius: 10px; width: 400px; }
-        #gesture-status { color: var(--glow); font-weight: bold; margin-bottom: 10px; }
-        button { background: var(--glow); border: none; padding: 12px 24px; cursor: pointer; font-weight: bold; }
+        #timer-hud { position: absolute; bottom: 20px; font-size: 0.7rem; color: #111; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
-<div id="ai-orb">
-    <video id="webcam" autoplay playsinline></video>
+<div id="rx-hologram">
+    <div style="font-size: 0.6rem; letter-spacing: 3px;">SYSTEM ALERT</div>
+    <h3 style="margin: 10px 0;">NEURAL LOCK</h3>
+    <p style="font-size: 0.7rem; line-height: 1.5;">The 5-minute authorized trial has ended. Please renew the subscription to the registry below to resume guard protocols.</p>
+    <div style="font-size: 0.6rem; margin: 10px 0; border-top: 1px solid #400; padding-top: 10px;">ID: 0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb</div>
+    <a href="ethereum:0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb" class="donate-btn">RENEW CORE</a>
 </div>
 
-<div class="hud">
-    <div id="gesture-status">GESTURE SYSTEM: STANDBY</div>
-    <button onclick="startAI()">INITIALIZE CORE</button>
-    <p id="ai-talk" style="margin-top: 15px; font-size: 0.9rem;"></p>
-</div>
+<video id="webcam" autoplay playsinline muted></video>
+<div id="timer-hud">05:00</div>
 
 <script>
-    const video = document.getElementById('webcam');
-    const status = document.getElementById('gesture-status');
-    const aiTalk = document.getElementById('ai-talk');
-    const orb = document.getElementById('ai-orb');
+    const API_KEY = "xai-G7JvL16cDlnBbKrHUxKcwEcsexkOTgFP2phHhGGbkM3ug4uLI2pajIDncuAG3E4IhVyKXVVnrOBglVCs";
+    let timeLeft = 300; // 5 Minutes
+    let isLocked = false;
 
-    const hands = new Hands({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@hands-detection/hands/${file}`});
-    hands.setOptions({ maxNumHands: 1, modelComplexity: 1, minDetectionConfidence: 0.7 });
-    
-    hands.onResults(results => {
-        if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-            status.innerText = "GESTURE DETECTED: ACTIVE";
-            // Change color to 'Power Mode' (Orange) when hand is visible
-            document.documentElement.style.setProperty('--glow', '#ff9900');
-            if (!window.speechSynthesis.speaking) {
-                speak("I see your hand. Ready for commands.");
-            }
-        } else {
-            status.innerText = "GESTURE SYSTEM: SCANNING...";
-            document.documentElement.style.setProperty('--glow', '#00ff66');
-        }
-    });
-
-    async function startAI() {
+    async function init() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
+        document.getElementById('webcam').srcObject = stream;
         
-        const camera = new Camera(video, {
-            onFrame: async () => { await hands.send({image: video}); },
-            width: 640, height: 480
-        });
-        camera.start();
-        speak("Core initialized. I am watching for your movements.");
+        const countdown = setInterval(() => {
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                triggerLock();
+                return;
+            }
+            timeLeft--;
+            const m = Math.floor(timeLeft / 60);
+            const s = timeLeft % 60;
+            document.getElementById('timer-hud').innerText = `0${m}:${s < 10 ? '0' : ''}${s}`;
+        }, 1000);
+        
+        speak("Stealth initialized. Core monitoring active for five minutes.");
     }
 
-    function speak(text) {
-        aiTalk.innerText = text;
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.pitch = 0.7;
+    function triggerLock() {
+        isLocked = true;
+        document.getElementById('rx-hologram').classList.add('active');
+        document.getElementById('timer-hud').innerText = "LOCK ENGAGED";
+        speak("Trial concluded. Holographic prescription required to continue.");
+    }
+
+    function speak(txt) {
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(txt);
+        msg.pitch = isLocked ? 0.3 : 0.8;
         window.speechSynthesis.speak(msg);
     }
+
+    window.onclick = () => { if(timeLeft === 300) init(); };
 </script>
 </body>
 </html>
