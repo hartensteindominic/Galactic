@@ -4,45 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Galactic</title>
-    <script>
-        // Check localStorage for existing subscriptions on page load
-        window.onload = function() {
-            const activeTier = localStorage.getItem('activeSubscription');
-            if (activeTier) {
-                document.getElementById('subscriptionStatus').innerText = `Active Subscription: ${activeTier}`;
-                document.getElementById('subscribeButton' + activeTier).innerText = '✅ Active';
-                // Enable AR/VR mode buttons if relevant
-                toggleARVRButtons(activeTier);
-            }
-        };
-
-        function handlePaymentSuccess(tier) {
-            // Save subscription data after successful transaction
-            localStorage.setItem('activeSubscription', tier);
-            document.getElementById('subscriptionStatus').innerText = `Active Subscription: ${tier}`;
-            document.getElementById('subscribeButton' + tier).innerText = '✅ Active';
-            // Enable AR/VR mode buttons if relevant
-            toggleARVRButtons(tier);
+    <style>
+        body {
+            background: linear-gradient(rgba(10, 10, 15, 0.95), rgba(10, 10, 15, 0.95));
+            font-family: Arial, sans-serif;
+            color: white;
         }
-
-        function toggleARVRButtons(tier) {
-            // Example of enabling buttons, implement logic per tier
-            if (tier === 'AR') {
-                document.getElementById('arButton').disabled = false;
-            } else if (tier === 'VR') {
-                document.getElementById('vrButton').disabled = false;
-            }
+        header {
+            background-color: rgba(10, 10, 15, 0.95);
+            padding: 20px;
+            text-align: center;
         }
-    </script>
+        /* Additional styles for components can be added here */
+    </style>
+    <!-- Include Three.js and other libraries here -->
 </head>
 <body>
-    <!-- Existing 3D garden and MetaMask connection code would go here -->
-    <div id="subscriptionStatus" style="font-weight: bold;"></div>
-    <button id="subscribeButtonAR" onclick="handlePaymentSuccess('AR')">Subscribe to AR</button>
-    <button id="subscribeButtonVR" onclick="handlePaymentSuccess('VR')">Subscribe to VR</button>
-    <button id="subscribeButtonPremium" onclick="handlePaymentSuccess('Premium')">Subscribe to Premium</button>
-    <button id="arButton" disabled>AR Mode</button>
-    <button id="vrButton" disabled>VR Mode</button>
-    <!-- Payment processing modal code would be here -->
+<header>
+    <h1>Welcome to Galactic</h1>
+</header>
+<div id="3d-garden"></div>
+<div id="wallet-connection"></div>
+<div id="pricing-cards">
+    <div class="card">Free Explorer</div>
+    <div class="card">AR Access 0.0001 ETH</div>
+    <div class="card">VR Experience 0.0005 ETH</div>
+    <div class="card">Neural Premium 0.001 ETH</div>
+    <div class="card">Quantum Elite 0.005 ETH</div>
+</div>
+<div id="payment-modal">
+    <!-- Payment modal details go here -->
+</div>
+<div id="neural-panel">
+    <canvas id="brainwave-canvas"></canvas>
+</div>
+<script>
+    // Initialize Three.js 3D garden with animated camera
+    // Add trees, flowers, and fountain
+    // MetaMask wallet connection logic
+
+    // Subscription tracking logic using localStorage
+    function checkSubscription() {
+        const tier = localStorage.getItem('subscriptionTier');
+        if (tier) {
+            document.getElementById('subscription-status').innerText = `Active Tier: ${tier}`;
+        }
+    }
+
+    function updateSubscriptionButton(tier) {
+        const buttons = document.querySelectorAll('.subscribe-button');
+        buttons.forEach(button => {
+            if (button.dataset.tier === tier) {
+                button.innerText = '✅ Active';
+            }
+        });
+    }
+
+    function processPayment(tier) {
+        // Payment processing logic here
+        // After payment, save tier to localStorage
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        checkSubscription();
+    });
+</script>
 </body>
 </html>
