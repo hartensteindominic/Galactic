@@ -3,44 +3,84 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Galactic Leap - Vault Sync</title>
+  <title>Galactic Leap • Vault Sync</title>
   <script src="https://cdn.ethers.io/lib/ethers-6.13.2.umd.min.js"></script>
   <style>
     :root {
+      --bg: #0a0a1f;
+      --text: #e0e0ff;
       --primary: #00ffaa;
-      --accent: #00aaff;
+      --accent: #00ccff;
       --warning: #ff6600;
       --purple: #aa00ff;
+      --card: rgba(30,30,60,0.8);
     }
+    * { box-sizing: border-box; margin:0; padding:0; }
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0a0a1f;
-      color: #e0e0ff;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
       min-height: 100vh;
+      padding: 1rem;
+      line-height: 1.5;
     }
-    .header {
-      height: 100px;
-      background: linear-gradient(90deg, var(--primary), var(--accent), #ffaa00);
-      border-radius: 0 0 50% 50% / 0 0 100% 100%;
-      position: relative;
-      overflow: hidden;
+    header {
+      text-align: center;
+      padding: 1.5rem 0 2rem;
+      background: linear-gradient(135deg, #1a1a3a, #0f0f2a);
+      border-radius: 0 0 20px 20px;
+      margin-bottom: 1.5rem;
     }
-    .orb {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 180px;
-      height: 180px;
-      background: radial-gradient(circle, #00ffcc88, transparent 70%);
-      border-radius: 50%;
-      filter: blur(35px);
+    h1 {
+      font-size: 2.2rem;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
     .container {
-      max-width: 920px;
-      margin: 20px auto;
-      padding: 20px;
-      background: rgba(20,20,50,0.75);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .card {
+      background: var(--card);
       border-radius: 16px;
-      border: 1px solid #4444ff44
+      padding: 1.8rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(100,100,255,0.15);
+      backdrop-filter: blur(8px);
+    }
+    .status {
+      font-family: monospace;
+      background: #000022;
+      padding: 1rem;
+      border-radius: 10px;
+      min-height: 140px;
+      overflow-y: auto;
+      margin: 1rem 0;
+      font-size: 0.95rem;
+      border: 1px solid #222255;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+    button {
+      padding: 0.9rem 1.8rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.18s;
+    }
+    button:hover { transform: translateY(-1px); }
+    .sync    { background: linear-gradient(90deg, var(--primary), var(--accent)); color: #000; }
+    .auto    { background: linear-gradient(90deg, var(--warning), #ff8800); }
+    .ai      { background: linear-gradient(90deg, var(--purple), #8800ff); }
+    .loading { color: #888; font-style: italic; }
+    input[type="text"] {
+      padding: 0.7rem;
+      background: #111133;
+      border: 1
