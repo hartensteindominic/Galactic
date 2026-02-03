@@ -1,129 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Legit AI Crypto Trading</title>
-<style>
-  body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
-  .container { max-width: 700px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; }
-  h1 { margin-bottom: 20px; text-align: center; }
-  button { padding: 12px 20px; margin: 10px; font-size: 1em; border: none; border-radius: 4px; cursor: pointer; }
-  #startBtn { background-color: #28a745; color: #fff; }
-  #stopBtn { background-color: #dc3545; color: #fff; }
-  #status { margin-top: 20px; font-weight: bold; font-size: 1.2em; }
-  small { display: block; margin-top: 10px; font-size: 0.9em; color: #555; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Make Money from My Wallet Crypto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        nav {
+            background-color: #333;
+            overflow: hidden;
+        }
+        nav a {
+            float: left;
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+        nav a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+        .container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+        .section h2 {
+            color: #4CAF50;
+        }
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+    </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>AI Crypto Trading Platform</h1>
-  <p style="text-align:center;">Control your AI trading bot</p>
-  
-  <div style="text-align:center;">
-    <button id="startBtn">Start Trading</button>
-    <button id="stopBtn">Stop Trading</button>
-  </div>
-  
-  <div id="status">Status: Idle</div>
-  
-  <small>
-    This controls your backend trading API to perform real trades on Binance.  
-    Make sure your backend server is running securely.
-  </small>
-</div>
+    <header>
+        <h1>I Make Money from My Wallet Crypto</h1>
+        <p>Your guide to earning passive income through cryptocurrency wallets</p>
+    </header>
 
-<script>
-  // Change this URL to your backend server
-  const API_URL = 'http://localhost:3000';
+    <nav>
+        <a href="#home">Home</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#strategies">Strategies</a>
+        <a href="#contact">Contact</a>
+    </nav>
 
-  document.getElementById('startBtn').onclick = async () => {
-    try {
-      const res = await fetch(`${API_URL}/start`, { method: 'POST' });
-      const data = await res.json();
-      document.getElementById('status').innerText = data.message;
-    } catch (err) {
-      document.getElementById('status').innerText = 'Error: ' + err.message;
-    }
-  };
+    <div class="container">
+        <div id="home" class="section">
+            <h2>Welcome</h2>
+            <p>Discover how you can turn your crypto wallet into a money-making machine. Whether through staking, lending, or yield farming, we'll show you the ropes.</p>
+        </div>
 
-  document.getElementById('stopBtn').onclick = async () => {
-    try {
-      const res = await fetch(`${API_URL}/stop`, { method: 'POST' });
-      const data = await res.json();
-      document.getElementById('status').innerText = data.message;
-    } catch (err) {
-      document.getElementById('status').innerText = 'Error: ' + err.message;
-    }
-  };
-</script>
+        <div id="how-it-works" class="section">
+            <h2>How It Works</h2>
+            <p>Crypto wallets aren't just for storing assets—they can generate income. Learn about decentralized finance (DeFi) protocols that reward holders with interest or tokens.</p>
+            <ul>
+                <li>Staking: Lock your coins to support the network and earn rewards.</li>
+                <li>Lending: Provide liquidity to borrowers and collect fees.</li>
+                <li>Yield Farming: Optimize returns by moving assets between protocols.</li>
+            </ul>
+        </div>
 
-<!-- =========================
-Backend server code (Node.js + Express)
-Save this as 'server.js' and run separately!
-========================= -->
+        <div id="strategies" class="section">
+            <h2>Top Strategies</h2>
+            <p>Here are some proven ways to maximize your earnings:</p>
+            <ol>
+                <li>Choose high-yield stablecoins for low-risk income.</li>
+                <li>Diversify across multiple chains to reduce risk.</li>
+                <li>Monitor gas fees to avoid unnecessary costs.</li>
+            </ol>
+        </div>
 
-<!--
-const express = require('express');
-require('dotenv').config();
-const Binance = require('node-binance-api');
+        <div id="contact" class="section">
+            <h2>Contact Us</h2>
+            <p>If you have questions or want personalized advice, reach out via email: info@walletcryptoearn.com</p>
+        </div>
+    </div>
 
-const app = express();
-app.use(express.json());
-
-const binance = new Binance().options({
-  APIKEY: process.env.BINANCE_API_KEY,
-  APISECRET: process.env.BINANCE_API_SECRET
-});
-
-app.post('/start', async (req, res) => {
-  try {
-    // Execute a buy order as an example
-    const response = await binance.marketBuy('BTCUSDT', 0.001);
-    console.log('Trade executed:', response);
-    res.json({ message: 'Trading started. Bought 0.001 BTC.' });
-  } catch (err) {
-    console.error('Trade error:', err);
-    res.status(500).json({ message: 'Error executing trade' });
-  }
-});
-
-app.post('/stop', (req, res) => {
-  res.json({ message: 'Trading stopped.' });
-});
-
-app.listen(3000, () => console.log('Server running on http://localhost:3000'));
--->
-
-<!-- =========================
-Backend trading script (Node.js)
-Save as 'trading_bot.js' and run separately!
-Requires 'node-binance-api' and 'dotenv'
-========================= -->
-
-<!--
-require('dotenv').config();
-const Binance = require('node-binance-api');
-
-const binance = new Binance().options({
-  APIKEY: process.env.BINANCE_API_KEY,
-  APISECRET: process.env.BINANCE_API_SECRET
-});
-
-async function buyBTC(amount) {
-  try {
-    const response = await binance.marketBuy('BTCUSDT', amount);
-    console.log('Bought BTC:', response);
-  } catch (err) {
-    console.error('Trade error:', err);
-  }
-}
-
-// Run manually: node trading_bot.js
-// buyBTC(0.001);
--->
-</script>
+    <footer>
+        <p>&copy; 2026 I Make Money from My Wallet Crypto. All rights reserved.</p>
+    </footer>
 
 </body>
 </html>
