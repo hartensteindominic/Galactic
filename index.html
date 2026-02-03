@@ -1,112 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Infinite Procedurally Generated Garden</title>
     <style>
-        body {
-            background: linear-gradient(to right, #f8cdda, #1d2b64);
-            color: white;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-        }
-        header {
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            position: fixed;
-            width: 100%;
-            z-index: 10;
-        }
-        #neuralink-panel {
-            display: none;
-            position: fixed;
-            top: 10%;
-            right: 10%;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 20px;
-            border-radius: 10px;
-        }
-        /* Add responsive design here */
-        #loading-indicator {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            display: none;
-        }
+        body { font-family: Arial, sans-serif; }
+        #ui-panel { display: none; }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to Your Infinite Garden</h1>
-        <div id="pricing-tiers">
-            <button>Free Explorer</button>
-            <button>AR Access - 0.0001 ETH</button>
-            <button>VR Experience - 0.0005 ETH</button>
-            <button>Neural Premium - 0.001 ETH</button>
-            <button>Quantum Elite - 0.005 ETH</button>
-        </div>
-        <button onclick="toggleNeuralinkPanel()">Neuralink</button>
-    </header>
-    <div id="loading-indicator">Loading...</div>
-    <script src="https://threejs.org/build/three.min.js"></script>
+    <h1>Welcome to the Infinite Garden</h1>
+    <div id="ui-panel">
+        <h2>UI Panel</h2>
+        <p>Subscription Tier: <span id="subscription-tier"></span></p>
+        <button onclick="toggleUIPanel()">Toggle UI Panel</button>
+    </div>
     <script>
-        let scene, camera, renderer;
-        let controls;
-        const chunkSize = 16;
-        const loadedChunks = new Set();
-
-        function init() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            document.body.appendChild(renderer.domElement);
-            controls = new THREE.PointerLockControls(camera, document.body);
-            document.body.addEventListener('click', () => { controls.lock(); });
-            window.addEventListener('resize', onWindowResize);
-            createGarden();
-            animate();
-        }
-
-        function createGarden() {
-            for (let x = -chunkSize; x <= chunkSize; x++) {
-                for (let z = -chunkSize; z <= chunkSize; z++) {
-                    loadChunk(x, z);
-                }
+        // WASD controls for movement
+        document.addEventListener('keydown', function(event) {
+            switch(event.key) {
+                case 'w': // Move forward
+                    moveForward();
+                    break;
+                case 'a': // Move left
+                    moveLeft();
+                    break;
+                case 's': // Move backward
+                    moveBackward();
+                    break;
+                case 'd': // Move right
+                    moveRight();
+                    break;
+                case 'e': // Toggle UI Panel
+                    toggleUIPanel();
+                    break;
             }
-        }
+        });
 
-        function loadChunk(x, z) {
-            const chunkKey = `${x},${z}`;
-            if (loadedChunks.has(chunkKey)) return;
-            loadedChunks.add(chunkKey);
-            const geometry = new THREE.PlaneBufferGeometry(1, 1);
-            const material = new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff });
-            const plane = new THREE.Mesh(geometry, material);
-            plane.position.set(x, 0, z);
-            scene.add(plane);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            controls.moveForward(0.1);
-            renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function toggleNeuralinkPanel() {
-            const panel = document.getElementById('neuralink-panel');
+        function toggleUIPanel() {
+            const panel = document.getElementById('ui-panel');
             panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
         }
 
-        init();
+        // Initialize chunk generation and controls
+        function initializeGarden() {
+            generateTerrain();
+            setupControls();
+        }
+
+        function generateTerrain() {
+            // Chunk-based terrain generation logic here
+        }
+
+        function moveForward() { /* logic */ }
+        function moveLeft() { /* logic */ }
+        function moveBackward() { /* logic */ }
+        function moveRight() { /* logic */ }
+
+        // MetaMask integration for payments
+        async function subscribe() {
+            if (typeof window.ethereum !== 'undefined') {
+                const provider = window.ethereum;
+                await provider.request({ method: 'eth_requestAccounts' });
+                // Payment logic here
+            }
+        }
+
+        // Neuralink brainwave visualization
+        function visualizeBrainwaves(data) {
+            // Visualization logic here
+        }
+
+        // Optimization functions
+        function optimizeChunks() {
+            // Optimized object disposal for distant chunks logic here
+        }
+
+        // Execute initialization
+        initializeGarden();
     </script>
 </body>
 </html>
