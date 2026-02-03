@@ -3,72 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic 3D Garden</title>
+    <title>3D Garden</title>
     <style>
-        body { margin: 0; font-family: Arial, sans-serif; }
-        .pricing-card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; }
-        .card-container { display: flex; justify-content: center; }
-        /* Additional CSS styles */
+        body { margin: 0; overflow: hidden; }
+        header { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; padding: 10px; background: rgba(255, 255, 255, 0.8); }
+        #logo { font-size: 24px; font-weight: bold; }
+        #wallet-btn { padding: 5px 10px; border: none; background-color: #007bff; color: white; cursor: pointer; }
+        #neural-panel { position: fixed; bottom: 20px; right: 20px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        #garden { width: 100%; height: 100vh; }
+        .card { border: 1px solid #ccc; border-radius: 8px; padding: 10px; margin: 5px; text-align: center; }
+        .pricing-cards { display: flex; justify-content: space-around; position: fixed; top: 60px; width: 100%; }
     </style>
 </head>
 <body>
-    <h1>Welcome to the Galactic 3D Garden</h1>
-    
-    <!-- MetaMask connection -->
+    <header>
+        <div id="logo">3D Garden</div>
+        <button id="wallet-btn" onclick="connectWallet()">Connect Wallet</button>
+    </header>
+    <div id="pricing" class="pricing-cards">
+        <div class="card">FREE</div>
+        <div class="card">0.0001 ETH</div>
+        <div class="card">0.0005 ETH</div>
+        <div class="card">0.001 ETH</div>
+        <div class="card">0.005 ETH</div>
+    </div>
+    <div id="neural-panel">
+        <h3>Brainwave Monitor</h3>
+        <div id="brainwave-animation">Animation here...</div>
+    </div>
+    <canvas id="garden"></canvas>
+    <script src="https://threejs.org/build/three.js"></script>
     <script>
-        async function connectWallet() {
-            if (window.ethereum) {
-                try {
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    console.log("Wallet connected!");
-                } catch (error) {
-                    console.error("Error connecting to MetaMask: ", error);
-                }
-            } else {
-                alert("Please install MetaMask!");
-            }
+        let scene, camera, renderer;
+        function init() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('garden') });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            addGardenElements();
+            animate();
         }
-    </script>
-    
-    <button onclick="connectWallet()">Connect MetaMask</button>
-    
-    <!-- Three.js setup (basic) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script>
-        // Basic Three.js scene setup
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.body.appendChild(renderer.domElement);
 
-        // Adding placeholder objects (trees, flowers, fountain)
-        // You will need to use appropriate Three.js code here
+        function addGardenElements() {
+            // Add 8 trees
+            for (let i = 0; i < 8; i++) {
+                let trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2, 8), new THREE.MeshBasicMaterial({ color: '#8B4513' }));
+                let leaves = new THREE.Mesh(new THREE.ConeGeometry(1, 2, 8), new THREE.MeshBasicMaterial({ color: '#228B22' }));
+                trunk.position.set(i, 1, i);
+                leaves.position.set(i, 2, i);
+                scene.add(trunk);
+                scene.add(leaves);
+            }
+            // Add 25 colorful flowers
+            for (let i = 0; i < 25; i++) {
+                let flower = new THREE.Mesh(new THREE.SphereGeometry(0.1, 8, 8), new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff }));
+                flower.position.set(Math.random() * 10, 0.1, Math.random() * 10);
+                scene.add(flower);
+            }
+            // Add central fountain
+            let fountain = new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: '#ADD8E6' }));
+            fountain.position.set(5, 0.5, 5);
+            scene.add(fountain);
+            
+            camera.position.z = 10;
+        }
 
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
+            camera.rotation.x += 0.01;
+            camera.rotation.y += 0.01;
         }
-        animate();
-    </script>
 
-    <div class="card-container">
-        <div class="pricing-card">FREE</div>
-        <div class="pricing-card">0.0001 ETH</div>
-        <div class="pricing-card">0.0005 ETH</div>
-        <div class="pricing-card">0.001 ETH</div>
-        <div class="pricing-card">0.005 ETH</div>
-    </div>
-
-    <!-- Buttons for VR/AR mode -->
-    <button onclick="alert('VR Mode Coming Soon!')">Enter VR</button>
-    <button onclick="alert('AR Mode Coming Soon!')">Enter AR</button>
-
-    <!-- Payment processing function (simplified) -->
-    <script>
-        async function processPayment() {
-            // Logic for processing payments to the specified wallet address with error handling
+        // Connect wallet function
+        async function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                alert('Connected: ' + accounts[0]);
+            } else {
+                alert('MetaMask is not installed!');
+            }
         }
+
+        window.onload = init;
     </script>
 </body>
 </html>
