@@ -1,81 +1,139 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vault Sync • Live</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
-  <style>
-    :root { --neon: #00ffcc; --bg: #050510; }
-    body { background: var(--bg); color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-    .container { background: #111125; padding: 2rem; border-radius: 15px; border: 1px solid #222244; width: 350px; text-align: center; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-    h1 { color: var(--neon); font-size: 1.8rem; margin-top: 0; }
-    .price-box { background: #000; padding: 10px; border-radius: 8px; margin: 15px 0; border: 1px solid #333; }
-    #price { color: #0f0; font-weight: bold; }
-    input { width: 90%; padding: 10px; margin: 10px 0; background: #050510; border: 1px solid #444; color: #fff; border-radius: 5px; }
-    button { width: 100%; padding: 12px; margin: 5px 0; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-    .btn-main { background: var(--neon); color: #000; }
-    .btn-sec { background: #222244; color: #fff; }
-    #log { font-family: monospace; font-size: 0.75rem; color: #888; text-align: left; height: 80px; overflow-y: auto; background: #000; padding: 10px; margin-top: 15px; border-radius: 5px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault Sync • Mainnet Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+    <style>
+        :root { --neon: #00ffcc; --dark: #0a0a1f; --card: #12122b; --sell: #ff4466; --text: #e0e0ff; }
+        body { background: var(--dark); color: var(--text); font-family: 'Inter', system-ui, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .terminal { width: 420px; background: var(--card); border-radius: 16px; border: 1px solid #222244; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; display: inline-block; margin-right: 5px; }
+        .online { background: var(--neon); box-shadow: 0 0 10px var(--neon); }
+        
+        .price-hero { background: #000; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 20px; border: 1px solid #111; }
+        .price-hero span { font-size: 1.8rem; font-weight: 800; color: var(--neon); }
+
+        .input-box { background: #050515; border: 1px solid #333355; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
+        label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        input { width: 100%; background: transparent; border: none; color: white; font-size: 1rem; outline: none; margin-top: 5px; }
+
+        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        button { border: none; border-radius: 8px; padding: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-size: 0.85rem; }
+        .btn-buy { background: var(--neon); color: #000; }
+        .btn-sell { background: var(--sell); color: #fff; }
+        .btn-full { grid-column: span 2; background: #222244; color: white; }
+        button:hover { opacity: 0.8; transform: translateY(-1px); }
+
+        #console { background: #000; padding: 12px; border-radius: 8px; height: 100px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; color: #00ff88; margin-top: 20px; border: 1px solid #111; }
+        .setting-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: #666; margin-bottom: 10px; }
+    </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>VAULT SYNC</h1>
-  <div class="price-box">ETH/USD: <span id="price">---</span></div>
-  
-  <input type="text" id="target" placeholder="Recipient: 0x...">
-  <input type="number" id="amt" value="0.01" step="0.01">
+<div class="terminal">
+    <div class="header">
+        <div style="font-weight: bold; letter-spacing: 1px;">VAULT SYNC <small style="color:var(--neon)">PRO</small></div>
+        <div><span id="dot" class="status-dot"></span><small id="net-name">OFFLINE</small></div>
+    </div>
 
-  <button class="btn-main" onclick="startSync()">CONNECT & SYNC</button>
-  <button class="btn-sec" onclick="toggleBot()">ACTIVATE BOT</button>
+    <div class="price-hero">
+        <label>ETH/USD LIVE</label><br>
+        <span id="eth-price">$---.--</span>
+    </div>
 
-  <div id="log">System: Ready</div>
+    <div class="input-box">
+        <label>Token Contract Address</label>
+        <input type="text" id="token-addr" value="0x6B175474E89094C44Da98b954EEDEAC495271d0F">
+    </div>
+
+    <div class="input-box">
+        <label>Trade Amount (ETH)</label>
+        <input type="number" id="trade-amt" value="0.01" step="0.01">
+    </div>
+
+    <div class="setting-row">
+        <span>Slippage Tolerance: <b style="color:white">0.5%</b></span>
+        <span>Deadline: <b style="color:white">20m</b></span>
+    </div>
+
+    <div class="grid-buttons">
+        <button class="btn-buy" onclick="trade('buy')">Buy Token</button>
+        <button class="btn-sell" onclick="trade('sell')">Sell Token</button>
+        <button class="btn-full" onclick="connectWallet()">Connect Mainnet Wallet</button>
+    </div>
+
+    <div id="console">> System initialized. Awaiting wallet...</div>
 </div>
 
 <script>
-  const logger = document.getElementById('log');
-  function log(m) { logger.innerHTML += `<div>> ${m}</div>`; logger.scrollTop = logger.scrollHeight; }
+    const ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
+    const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
+    const ABI = [
+        "function swapExactETHForTokens(uint minOut, address[] path, address to, uint dead) external payable",
+        "function swapExactTokensForETH(uint amtIn, uint minOut, address[] path, address to, uint dead) external",
+        "function approve(address spender, uint amt) external returns (bool)"
+    ];
 
-  // 1. Live Price
-  async function getPrice() {
-    try {
-      const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd');
-      const d = await r.json();
-      document.getElementById('price').innerText = '$' + d.ethereum.usd;
-    } catch(e) { document.getElementById('price').innerText = 'Connection Error'; }
-  }
-  setInterval(getPrice, 10000); getPrice();
+    let provider, signer, account;
 
-  // 2. Real MetaMask Transaction
-  async function startSync() {
-    if (!window.ethereum) return log("MetaMask not found!");
-    
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const addr = await signer.getAddress();
-      log("Connected: " + addr.slice(0,6));
+    function log(m) {
+        const c = document.getElementById('console');
+        c.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${m}</div>` + c.innerHTML;
+    }
 
-      const txAmt = ethers.parseEther(document.getElementById('amt').value);
-      const target = document.getElementById('target').value;
-      
-      if(!ethers.isAddress(target)) return log("Invalid Address", true);
+    async function fetchPrice() {
+        try {
+            const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT');
+            const d = await r.json();
+            document.getElementById('eth-price').innerText = `$${parseFloat(d.price).toLocaleString()}`;
+        } catch(e) {}
+    }
+    setInterval(fetchPrice, 5000); fetchPrice();
 
-      log("Sending Sync Transaction...");
-      const tx = await signer.sendTransaction({
-        to: target,
-        value: txAmt
-      });
-      log("Pending: " + tx.hash.slice(0,10));
-      await tx.wait();
-      log("Sync Successful!");
-    } catch(e) { log("Error: " + e.message.slice(0,30)); }
-  }
+    async function connectWallet() {
+        if (!window.ethereum) return log("Error: Install MetaMask");
+        provider = new ethers.BrowserProvider(window.ethereum);
+        const net = await provider.getNetwork();
+        if (net.chainId !== 1n) {
+            log("Wrong Network! Switching to Mainnet...");
+            await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
+        }
+        signer = await provider.getSigner();
+        account = await signer.getAddress();
+        document.getElementById('dot').classList.add('online');
+        document.getElementById('net-name').innerText = "MAINNET: " + account.slice(0,6);
+        log("Wallet Connected: " + account);
+    }
 
-  function toggleBot() { log("Bot monitoring local node..."); }
+    async function trade(type) {
+        if (!signer) await connectWallet();
+        const token = document.getElementById('token-addr').value;
+        const amt = document.getElementById('trade-amt').value;
+        const contract = new ethers.Contract(ROUTER, ABI, signer);
+        const dead = Math.floor(Date.now() / 1000) + 60 * 20;
+
+        try {
+            if (type === 'buy') {
+                log(`Swapping ${amt} ETH for token...`);
+                const tx = await contract.swapExactETHForTokens(0, [WETH, token], account, dead, { value: ethers.parseEther(amt) });
+                log("TX Sent: " + tx.hash.slice(0,15));
+                await tx.wait();
+                log("Trade Complete!");
+            } else {
+                log("Note: Sell requires Token Approval first.");
+                // For a sell, you'd first need to call approve() on the token contract
+                log("Requesting Sell Signature...");
+                const tx = await contract.swapExactTokensForETH(ethers.parseUnits(amt, 18), 0, [token, WETH], account, dead);
+                await tx.wait();
+                log("Sell Successful!");
+            }
+        } catch (e) {
+            log("Error: " + e.message.slice(0, 40));
+        }
+    }
 </script>
-
 </body>
 </html>
