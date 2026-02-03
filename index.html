@@ -3,64 +3,199 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Garden Experience</title>
+    <title>Galactic Neural Garden</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background: linear-gradient(to right, #1e1e1e, #4e4e4e);
+            background: radial-gradient(circle, #0a0a0f, #000000);
+            color: #fff;
+            font-family: Arial, sans-serif;
         }
-        /* Add your CSS styling here */
-        .neon {
-            color: #39ff14;
-            text-shadow: 0 0 20px #39ff14, 0 0 30px #39ff14;
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            background: rgba(0, 0, 0, 0.7);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        h1 {
+            color: cyan;
+            margin: 0;
+        }
+        .wallet-button {
+            background: linear-gradient(90deg, #00f2ff, #7b2ff7);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .wallet-button:hover {
+            transform: scale(1.1);
+        }
+        .garden {
+            position: absolute;
+            top: 60px;
+            width: 100%;
+            height: calc(100% - 60px);
+        }
+        .neural-interface {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            color: #fff;
+        }
+        .card {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+        .button {
+            background: linear-gradient(90deg, #ff006e, #7b2ff7);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .button:hover {
+            transform: scale(1.1);
         }
     </style>
 </head>
 <body>
-    <h1 class="neon">Welcome to the 3D Garden</h1>
-    <div id="garden"></div>
-    <script src="https://cdn.rawgit.com/mrdoob/three.js/r128/build/three.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/ethers/dist/ethers.min.js"></script>
+    <header>
+        <h1>🧠 GALACTIC NEURAL GARDEN</h1>
+        <button class="wallet-button">Connect Wallet</button>
+    </header>
+    <div class="garden" id="garden"></div>
+    <div class="neural-interface">
+        <div class="brain-icon">🧠</div>
+        <div>Connect Neuralink: <span id="neural-status">Disconnected</span></div>
+        <canvas id="brainwave-monitor" width="200" height="100"></canvas>
+        <div>
+            <button class="button">Move forward</button>
+            <button class="button">Look around</button>
+            <button class="button">Select item</button>
+            <button class="button">Pay now</button>
+            <button class="button">Exit</button>
+        </div>
+    </div>
+    <div id="pricing-cards">
+        <div class="card">Free Explorer (FREE) <button class="button">Subscribe</button></div>
+        <div class="card">AR Access (0.05 ETH) <button class="button">Subscribe</button></div>
+        <div class="card">VR Experience (0.1 ETH) <button class="button">Subscribe</button></div>
+        <div class="card">Neural Premium (0.2 ETH) <button class="button">Subscribe</button></div>
+        <div class="card">Quantum Elite (1.0 ETH) <button class="button">Subscribe</button></div>
+    </div>
     <script>
-        // Initialize Three.js scene for the garden
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('garden').appendChild(renderer.domElement);
-        // Add your 3D garden code here (trees, flowers, fountain)
+        let scene, camera, renderer;
+        const brainwaveCanvas = document.getElementById('brainwave-monitor');
+        const neuralStatus = document.getElementById('neural-status');
 
-        // MetaMask connection
-        async function connectWallet() {
-            if (typeof window.ethereum !== 'undefined') {
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                await provider.send('eth_requestAccounts', []);
-                const signer = provider.getSigner();
-                // Wallet connected
-                console.log('Wallet connected');
-            } else {
-                console.log('Please install MetaMask!');
+        function init() {
+            // Three.js scene setup
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight - 60);
+            document.getElementById('garden').appendChild(renderer.domElement);
+
+            // Ground
+            const groundGeometry = new THREE.CircleGeometry(50, 32);
+            const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            scene.add(ground);
+
+            // Trees
+            for (let i = 0; i < 8; i++) {
+                const trunkGeometry = new THREE CylinderGeometry(0.5, 0.5, 5);
+                const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x8B4513 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.set(Math.cos(i * Math.PI / 4) * 20, 2.5, Math.sin(i * Math.PI / 4) * 20);
+                scene.add(trunk);
+
+                const leavesGeometry = new THREE.SphereGeometry(2);
+                const leavesMaterial = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+                const leaves = new THREE.Mesh(leavesGeometry, leavesMaterial);
+                leaves.position.y = 7;
+                trunk.add(leaves);
             }
+
+            // Flowers
+            for (let i = 0; i < 20; i++) {
+                const flowerGeometry = new THREE.SphereGeometry(0.4);
+                const flowerMaterial = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
+                const flower = new THREE.Mesh(flowerGeometry, flowerMaterial);
+                flower.position.set(Math.random() * 40 - 20, 0.2, Math.random() * 40 - 20);
+                scene.add(flower);
+            }
+
+            // Central Fountain
+            const fountainGeometry = new THREE.CylinderGeometry(1, 1, 5);
+            const fountainMaterial = new THREE.MeshStandardMaterial({ color: 0x00f2ff });
+            const fountain = new THREE.Mesh(fountainGeometry, fountainMaterial);
+            fountain.position.y = 2.5;
+            scene.add(fountain);
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 1, 1).normalize();
+            scene.add(directionalLight);
+
+            camera.position.z = 60;
+            camera.position.y = 20;
+
+            animate();
         }
 
-        // Payment processing function
-        async function processPayment(amount) {
-            const provider = new ethers.providers.Web3Provider(window.ethereum);
-            const signer = provider.getSigner();
-            const transaction = {
-                to: '0x02f93c7547309ca50eeab446daebe8ce8e694cbb',
-                value: ethers.utils.parseEther(amount) 
-            };
-            await signer.sendTransaction(transaction);
-        }
-
-        camera.position.z = 5;
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
+            camera.position.x = Math.sin(Date.now() * 0.001) * 60;
+            camera.position.z = Math.cos(Date.now() * 0.001) * 60;
+            camera.lookAt(scene.position);
+            drawBrainwave();
         }
-        animate();
+
+        function drawBrainwave() {
+            const ctx = brainwaveCanvas.getContext('2d');
+            ctx.clearRect(0, 0, brainwaveCanvas.width, brainwaveCanvas.height);
+            ctx.fillStyle = 'rgba(255,0,0,0.5)';
+            ctx.fillRect(0, Math.random() * 40, 200, 10);
+        }
+
+        function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                window.ethereum.request({ method: 'eth_requestAccounts' }).then(accounts => {
+                    neuralStatus.textContent = accounts[0].slice(0, 6) + '...';
+                });
+            }
+        }
+
+        document.querySelector('.wallet-button').addEventListener('click', connectWallet);
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight - 60);
+        });
+
+        init();
     </script>
 </body>
 </html>
