@@ -2,100 +2,123 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Sentinel v6.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sentinel AI v7.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        :root { --neon: #00f2ff; --bg: #000; --err: #ff4444; }
-        body { background: var(--bg); color: var(--neon); font-family: monospace; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        #v { position: absolute; top: 10px; right: 10px; width: 80px; height: 60px; border: 1px solid #333; transform: scaleX(-1); border-radius: 4px; }
-        #canvas-container { width: 300px; height: 300px; }
-        .controls { position: absolute; bottom: 40px; width: 85%; display: flex; flex-direction: column; gap: 12px; }
-        .btn { background: #111; border: 2px solid var(--neon); color: var(--neon); padding: 18px; font-weight: bold; font-size: 1rem; cursor: pointer; border-radius: 2px; }
-        #msg { font-size: 0.75rem; text-align: center; min-height: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        .err-text { color: var(--err); border-color: var(--err); }
+        :root { --neon: #00f2ff; --bg: #000; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        
+        #canvas-container { width: 320px; height: 320px; touch-action: none; }
+        
+        /* HUD UI */
+        #hud-overlay { position: absolute; width: 100%; height: 100%; pointer-events: none; border: 1px solid rgba(0, 242, 255, 0.1); box-sizing: border-box; }
+        #status-bar { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 0.7rem; letter-spacing: 2px; }
+        
+        .btn { 
+            background: rgba(0,0,0,0.8); border: 2px solid var(--neon); color: var(--neon); 
+            padding: 20px 40px; font-weight: bold; cursor: pointer; z-index: 100;
+            text-transform: uppercase; box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+        }
+        
+        /* Tiny Camera Feed */
+        #v { position: absolute; top: 15px; left: 15px; width: 80px; height: 60px; border: 1px solid #222; transform: scaleX(-1); border-radius: 4px; background: #111; }
     </style>
 </head>
 <body>
 
+<div id="hud-overlay"></div>
 <video id="v" autoplay playsinline muted></video>
+<div id="status-bar">SYSTEM: DISCONNECTED</div>
+
 <div id="canvas-container"></div>
 
-<div class="controls">
-    <div id="msg">AWAITING SYSTEM INITIALIZATION</div>
-    <button id="mainBtn" class="btn">ACTIVATE SENTINEL</button>
-</div>
+<button id="activateBtn" class="btn">Connect Neural Link</button>
 
 <script>
-    const btn = document.getElementById('mainBtn');
-    const msg = document.getElementById('msg');
-    let sphere;
+    let scene, camera, renderer, sphere, clock;
+    const status = document.getElementById('status-bar');
 
-    // 1. Setup Graphics
     function init3D() {
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(300, 300);
+        clock = new THREE.Clock();
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(320, 320);
         document.getElementById('canvas-container').appendChild(renderer.domElement);
-        const geo = new THREE.IcosahedronGeometry(1.5, 3);
-        const mat = new THREE.MeshBasicMaterial({ color: 0x00f2ff, wireframe: true });
-        sphere = new THREE.Mesh(geo, mat);
+
+        // Advanced Icosahedron (Reactive Mesh)
+        const geometry = new THREE.IcosahedronGeometry(1.5, 3);
+        const material = new THREE.MeshBasicMaterial({ 
+            color: 0x00f2ff, 
+            wireframe: true,
+            transparent: true,
+            opacity: 0.7 
+        });
+        sphere = new THREE.Mesh(geometry, material);
         scene.add(sphere);
-        camera.position.z = 3.5;
-        const animate = () => {
-            requestAnimationFrame(animate);
-            sphere.rotation.y += 0.01;
-            if (window.speechSynthesis.speaking) {
-                let s = 1.1 + Math.random() * 0.2;
-                sphere.scale.set(s,s,s);
-            } else { sphere.scale.set(1,1,1); }
-            renderer.render(scene, camera);
-        };
+
+        camera.position.z = 4;
         animate();
     }
 
-    // 2. The AI Voice "Prime" (Vital for Mobile)
-    function speak(text) {
-        window.speechSynthesis.cancel();
-        const ssu = new SpeechSynthesisUtterance(text);
-        // iOS 26 requires a very specific voice property check
-        const voices = window.speechSynthesis.getVoices();
-        if (voices.length > 0) {
-            ssu.voice = voices.find(v => v.lang.includes('en')) || voices[0];
+    function animate() {
+        requestAnimationFrame(animate);
+        const t = clock.getElapsedTime();
+        
+        sphere.rotation.y += 0.005;
+        sphere.rotation.z += 0.002;
+
+        // Visual Reaction logic
+        if (window.speechSynthesis.speaking) {
+            // Pulse effect when the AI is talking
+            const pulse = 1 + Math.sin(t * 20) * 0.15;
+            sphere.scale.set(pulse, pulse, pulse);
+            sphere.material.opacity = 1;
+        } else {
+            sphere.scale.set(1, 1, 1);
+            sphere.material.opacity = 0.5;
         }
-        ssu.pitch = 0.6;
-        ssu.rate = 0.8;
-        window.speechSynthesis.speak(ssu);
+        
+        renderer.render(scene, camera);
     }
 
-    // 3. Activation Flow
-    btn.onclick = async () => {
-        msg.innerText = "INITIALIZING...";
-        
-        // A. Start Audio First (Unlocks browser)
-        speak("Sentinel online. Bio-link confirmed.");
-        
-        // B. Start 3D
-        if (!sphere) init3D();
+    // iPhone-specific Audio Unlock
+    function aiSpeak(text) {
+        window.speechSynthesis.cancel();
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.pitch = 0.4;
+        msg.rate = 0.85;
+        msg.volume = 1;
+        window.speechSynthesis.speak(msg);
+    }
 
-        // C. Start Camera with specific Mobile constraints
+    document.getElementById('activateBtn').addEventListener('click', async function() {
+        this.style.display = 'none';
+        status.innerText = "INITIALIZING CORE...";
+
+        // 1. Force Audio Unlock (Handshake)
+        aiSpeak("Sentinel protocol engaged. I am monitoring your location.");
+
+        // 2. Start 3D
+        init3D();
+
+        // 3. Request Sensors (Camera)
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "user", width: 320 } 
+                video: { facingMode: "user" },
+                audio: false 
             });
             document.getElementById('v').srcObject = stream;
-            msg.innerText = "SYSTEM: FULLY OPERATIONAL";
-            btn.innerText = "RE-CALIBRATE AUDIO"; // Change button to audio fix
-        } catch (e) {
-            msg.innerText = "ERROR: " + (window.isSecureContext ? "CAMERA BLOCKED" : "HTTPS REQUIRED");
-            msg.classList.add('err-text');
-            btn.innerText = "RETRY SENSORS";
+            status.innerText = "SENTINEL ONLINE - MONITORING ACTIVE";
+        } catch (err) {
+            status.innerText = "SENSORS BLOCKED: CHECK SETTINGS";
+            status.style.color = "#ff4444";
         }
-    };
+    });
 
-    // Pre-warm the voice list
-    window.speechSynthesis.onvoiceschanged = () => { console.log("Voices Ready"); };
+    // Warm up the voices for iOS Safari
+    window.speechSynthesis.getVoices();
 </script>
 </body>
 </html>
