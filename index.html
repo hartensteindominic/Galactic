@@ -2,96 +2,107 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Grok Sentinel: Stealth Core</title>
+    <title>Ghost Sentinel v2</title>
     <style>
-        :root { --lock: #ff0044; --glitch-speed: 0.1s; }
-        body { background: #000; color: #000; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        :root { --lock: #ff0044; --ui: #1a1a1a; }
+        body { background: #000; color: #333; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
         
-        /* Hidden Camera */
-        video { width: 1px; height: 1px; opacity: 0; position: absolute; }
+        /* The Ghost Feed: Camera is active but covered by a black mask */
+        #camera-container { position: absolute; width: 100%; height: 100%; z-index: 1; }
+        video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0); } 
+        #mask { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2; }
 
-        /* The Holographic Prescription */
-        #rx-hologram {
-            position: absolute; width: 320px; padding: 25px;
-            background: rgba(255, 0, 68, 0.05); border: 1px solid var(--lock);
-            color: var(--lock); text-align: center; border-radius: 12px;
-            box-shadow: 0 0 40px rgba(255, 0, 68, 0.2); backdrop-filter: blur(10px);
-            transform: perspective(1000px) rotateX(15deg) scale(0);
+        /* The Hologram Lock */
+        #hologram {
+            position: relative; width: 320px; padding: 30px;
+            background: rgba(255, 0, 68, 0.03); border: 1px solid var(--lock);
+            color: var(--lock); text-align: center; border-radius: 15px;
+            box-shadow: 0 0 50px rgba(255, 0, 68, 0.2); backdrop-filter: blur(15px);
+            transform: perspective(1000px) rotateX(10deg) scale(0);
             transition: 1.5s cubic-bezier(0.19, 1, 0.22, 1);
             z-index: 100; opacity: 0;
         }
-        #rx-hologram.active { 
-            scale: 1; opacity: 1; transform: perspective(1000px) rotateX(0deg); 
-            animation: flicker 0.2s infinite alternate;
-        }
+        #hologram.active { scale: 1; opacity: 1; transform: perspective(1000px) rotateX(0deg); }
 
-        /* Glitch Animation */
-        @keyframes flicker {
-            0% { opacity: 0.8; transform: skew(0.5deg); }
-            100% { opacity: 1; transform: skew(-0.5deg); }
+        /* Status & Button */
+        .controls { position: absolute; bottom: 40px; text-align: center; z-index: 10; width: 100%; }
+        #debug { font-size: 0.6rem; margin-bottom: 10px; color: #222; letter-spacing: 2px; }
+        .btn { 
+            background: transparent; border: 1px solid #222; color: #444; 
+            padding: 10px 20px; cursor: pointer; text-decoration: none; font-size: 0.8rem;
         }
-
-        .donate-btn {
-            display: inline-block; margin-top: 15px; padding: 10px 20px;
-            background: var(--lock); color: #000; text-decoration: none;
-            font-weight: bold; border-radius: 4px; box-shadow: 0 0 15px var(--lock);
-        }
-        
-        #timer-hud { position: absolute; bottom: 20px; font-size: 0.7rem; color: #111; letter-spacing: 2px; }
+        .btn:hover { border-color: var(--lock); color: var(--lock); }
     </style>
 </head>
 <body>
 
-<div id="rx-hologram">
-    <div style="font-size: 0.6rem; letter-spacing: 3px;">SYSTEM ALERT</div>
-    <h3 style="margin: 10px 0;">NEURAL LOCK</h3>
-    <p style="font-size: 0.7rem; line-height: 1.5;">The 5-minute authorized trial has ended. Please renew the subscription to the registry below to resume guard protocols.</p>
-    <div style="font-size: 0.6rem; margin: 10px 0; border-top: 1px solid #400; padding-top: 10px;">ID: 0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb</div>
-    <a href="ethereum:0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb" class="donate-btn">RENEW CORE</a>
+<div id="camera-container">
+    <video id="webcam" autoplay playsinline muted></video>
+    <div id="mask"></div>
 </div>
 
-<video id="webcam" autoplay playsinline muted></video>
-<div id="timer-hud">05:00</div>
+<div id="hologram">
+    <div style="font-size: 0.6rem; letter-spacing: 4px;">NEURAL INTERRUPT</div>
+    <h2 style="font-weight: 100; margin: 15px 0;">LINK EXPIRED</h2>
+    <p style="font-size: 0.7rem; line-height: 1.6;">5-minute observation window closed. Subscription required for continued sentinel deployment.</p>
+    <div style="font-size: 0.6rem; border-top: 1px solid #300; padding-top: 10px; opacity: 0.6;">
+        0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb
+    </div>
+    <a href="ethereum:0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb" class="btn" style="margin-top:20px; display:inline-block;">RENEW ACCESS</a>
+</div>
+
+<div class="controls">
+    <div id="debug">SYSTEM: STANDBY (CLICK TO WAKE)</div>
+    <button id="wakeBtn" class="btn">AWAKEN CORE</button>
+</div>
 
 <script>
     const API_KEY = "xai-G7JvL16cDlnBbKrHUxKcwEcsexkOTgFP2phHhGGbkM3ug4uLI2pajIDncuAG3E4IhVyKXVVnrOBglVCs";
+    const video = document.getElementById('webcam');
+    const debug = document.getElementById('debug');
     let timeLeft = 300; // 5 Minutes
-    let isLocked = false;
 
-    async function init() {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        document.getElementById('webcam').srcObject = stream;
-        
-        const countdown = setInterval(() => {
-            if (timeLeft <= 0) {
-                clearInterval(countdown);
-                triggerLock();
-                return;
-            }
-            timeLeft--;
-            const m = Math.floor(timeLeft / 60);
-            const s = timeLeft % 60;
-            document.getElementById('timer-hud').innerText = `0${m}:${s < 10 ? '0' : ''}${s}`;
-        }, 1000);
-        
-        speak("Stealth initialized. Core monitoring active for five minutes.");
+    async function start() {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            debug.innerText = "SYSTEM: ACTIVE (05:00)";
+            document.getElementById('wakeBtn').style.display = 'none';
+            
+            // Start Countdown
+            const timer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    lock();
+                } else {
+                    const m = Math.floor(timeLeft / 60);
+                    const s = timeLeft % 60;
+                    debug.innerText = `SYSTEM: ACTIVE (0${m}:${s < 10 ? '0' : ''}${s})`;
+                }
+            }, 1000);
+
+            speak("Ghost link established. Monitoring environment for five minutes.");
+        } catch (err) {
+            debug.innerText = "ERROR: CAMERA PERMISSION DENIED";
+            debug.style.color = "red";
+        }
     }
 
-    function triggerLock() {
-        isLocked = true;
-        document.getElementById('rx-hologram').classList.add('active');
-        document.getElementById('timer-hud').innerText = "LOCK ENGAGED";
-        speak("Trial concluded. Holographic prescription required to continue.");
+    function lock() {
+        document.getElementById('hologram').classList.add('active');
+        debug.innerText = "SYSTEM: LOCKED";
+        speak("Access expired. Subscription required.");
     }
 
-    function speak(txt) {
+    function speak(t) {
         window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(txt);
-        msg.pitch = isLocked ? 0.3 : 0.8;
-        window.speechSynthesis.speak(msg);
+        const m = new SpeechSynthesisUtterance(t);
+        m.pitch = 0.5;
+        window.speechSynthesis.speak(m);
     }
 
-    window.onclick = () => { if(timeLeft === 300) init(); };
+    document.getElementById('wakeBtn').onclick = start;
 </script>
 </body>
 </html>
