@@ -1,81 +1,113 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-    <title>Infinite Procedurally Generated Garden</title>
-    <style>
-        body { font-family: Arial, sans-serif; }
-        #ui-panel { display: none; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infinite Galactic Neural Garden</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1c2407b26c61958baa93967b5412487cd94b290b/dist/aframe-master.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
 </head>
 <body>
-    <h1>Welcome to the Infinite Garden</h1>
-    <div id="ui-panel">
-        <h2>UI Panel</h2>
-        <p>Subscription Tier: <span id="subscription-tier"></span></p>
-        <button onclick="toggleUIPanel()">Toggle UI Panel</button>
+    <div id="loadingScreen">
+        <div class="loader"></div>
+        <p style="margin-top: 20px; color: #00f2ff;">Loading Infinite Garden...</p>
     </div>
-    <script>
-        // WASD controls for movement
-        document.addEventListener('keydown', function(event) {
-            switch(event.key) {
-                case 'w': // Move forward
-                    moveForward();
-                    break;
-                case 'a': // Move left
-                    moveLeft();
-                    break;
-                case 's': // Move backward
-                    moveBackward();
-                    break;
-                case 'd': // Move right
-                    moveRight();
-                    break;
-                case 'e': // Toggle UI Panel
-                    toggleUIPanel();
-                    break;
-            }
-        });
-
-        function toggleUIPanel() {
-            const panel = document.getElementById('ui-panel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-        }
-
-        // Initialize chunk generation and controls
-        function initializeGarden() {
-            generateTerrain();
-            setupControls();
-        }
-
-        function generateTerrain() {
-            // Chunk-based terrain generation logic here
-        }
-
-        function moveForward() { /* logic */ }
-        function moveLeft() { /* logic */ }
-        function moveBackward() { /* logic */ }
-        function moveRight() { /* logic */ }
-
-        // MetaMask integration for payments
-        async function subscribe() {
-            if (typeof window.ethereum !== 'undefined') {
-                const provider = window.ethereum;
-                await provider.request({ method: 'eth_requestAccounts' });
-                // Payment logic here
-            }
-        }
-
-        // Neuralink brainwave visualization
-        function visualizeBrainwaves(data) {
-            // Visualization logic here
-        }
-
-        // Optimization functions
-        function optimizeChunks() {
-            // Optimized object disposal for distant chunks logic here
-        }
-
-        // Execute initialization
-        initializeGarden();
-    </script>
+    
+    <header>
+        <div class="logo">🧠 INFINITE GALACTIC GARDEN</div>
+        <button id="connectWallet">Connect MetaMask</button>
+    </header>
+    
+    <div id="subscriptionStatusBanner" class="subscription-status"></div>
+    <div id="gardenCanvas"></div>
+    
+    <div class="controls-info">
+        <h3>🎮 Controls</h3>
+        <p><strong>W/A/S/D</strong> - Move</p>
+        <p><strong>Mouse</strong> - Look Around</p>
+        <p><strong>Space</strong> - Jump</p>
+        <p><strong>Shift</strong> - Sprint</p>
+    </div>
+    
+    <div class="toggle-ui" onclick="toggleUI()">☰</div>
+    
+    <div class="ui-panel" id="uiPanel">
+        <h2>Access Levels</h2>
+        <div class="pricing-card">
+            <h3>Free Explorer</h3>
+            <div class="price">FREE</div>
+            <button class="subscribe-btn active" id="btn-free">✅ Active</button>
+        </div>
+        <div class="pricing-card">
+            <h3>AR Access</h3>
+            <div class="price">0.0001 ETH</div>
+            <button class="subscribe-btn" id="btn-ar" onclick="openPayment('AR Access', '0.0001')">Subscribe</button>
+        </div>
+        <div class="pricing-card">
+            <h3>VR Experience</h3>
+            <div class="price">0.0005 ETH</div>
+            <button class="subscribe-btn" id="btn-vr" onclick="openPayment('VR Experience', '0.0005')">Subscribe</button>
+        </div>
+        <div class="pricing-card">
+            <h3>Neural Premium</h3>
+            <div class="price">0.001 ETH</div>
+            <button class="subscribe-btn" id="btn-neural" onclick="openPayment('Neural Premium', '0.001')">Subscribe</button>
+        </div>
+        <div class="pricing-card">
+            <h3>Quantum Elite</h3>
+            <div class="price">0.005 ETH</div>
+            <button class="subscribe-btn" id="btn-quantum" onclick="openPayment('Quantum Elite', '0.005')">Subscribe</button>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn" onclick="launchVR()">VR Mode</button>
+            <button class="btn" onclick="launchAR()">AR Mode</button>
+        </div>
+        <button class="btn" style="width: 100%;" onclick="toggleNeural()">Connect Neuralink</button>
+    </div>
+    
+    <div class="neural-panel" id="neuralPanel">
+        <div class="neural-panel-header">
+            <div style="font-weight: bold;">🧠 Neural Interface Active</div>
+            <button class="neural-close" onclick="closeNeural()">✕</button>
+        </div>
+        <div class="neural-info">Real-time brainwave monitoring • EEG pattern detection • Theta/Alpha/Beta wave analysis</div>
+        <canvas id="brainwaveCanvas"></canvas>
+    </div>
+    
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h2>Complete Payment</h2>
+            <div id="paymentDetails"></div>
+            <div id="transactionStatus"></div>
+        </div>
+    </div>
+    
+    <div id="arView" class="ar-view">
+        <button class="exit-btn" onclick="exitAR()">← Exit AR</button>
+        <a-scene embedded arjs>
+            <a-box position='0 0.5 -3' rotation='0 45 0' color='#00f2ff'></a-box>
+            <a-sphere position='2 1 -3' radius='0.5' color='#7b2ff7'></a-sphere>
+            <a-cylinder position='-2 0.75 -3' radius='0.5' height='1.5' color='#ff006e'></a-cylinder>
+            <a-entity camera></a-entity>
+        </a-scene>
+    </div>
+    
+    <div id="vrView" class="vr-view">
+        <button class="exit-btn" onclick="exitVR()">← Exit VR</button>
+        <a-scene embedded>
+            <a-sky color="#0a0a0f"></a-sky>
+            <a-box position='0 0.5 -3' rotation='0 45 0' color='#00f2ff'></a-box>
+            <a-sphere position='2 1 -3' radius='0.5' color='#7b2ff7'></a-sphere>
+            <a-cylinder position='-2 0.75 -3' radius='0.5' height='1.5' color='#ff006e'></a-cylinder>
+            <a-plane position='0 0 -4' rotation='-90 0 0' width='10' height='10' color='#2d5016'></a-plane>
+            <a-entity camera look-controls wasd-controls></a-entity>
+        </a-scene>
+    </div>
+    
+    <script src="script.js"></script>
 </body>
 </html>
