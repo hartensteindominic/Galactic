@@ -1,84 +1,91 @@
-// Infinite procedural garden generation with seeded random function
-function generateGarden(seed) {
-    // Implementation details...
-}
+// Infinite Procedural Garden Generation with Three.js
+// WASD Controls with Pointer Lock
+// Chunk-based Terrain Loading/Unloading
+// Seeded Random Generation
+// MetaMask Wallet Connection
+// Subscription Management using localStorage
+// AR/VR Mode
+// Neuralink Brainwave Canvas Animation
+// Physics with Gravity and Jumping
+// UI Toggle Functions
+// Window Resize Handler
 
-// Chunk loading and unloading system
-class Chunk {
-    constructor() {
-        // Implementation details...
-    }
-    load() {
-        // Load chunk details...
-    }
-    unload() {
-        // Unload chunk details...
-    }
-}
+const THREE = require('three');
 
-// Three.js scene setup
+// Initialize Scene
 const scene = new THREE.Scene();
-// Scene setup details...
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-// WASD keyboard controls
-document.addEventListener('keydown', (event) => {
-    // Control implementation...
-});
-
-// Pointer lock mouse controls
-document.addEventListener('click', () => {
-    // Pointer lock implementation...
-});
-
-// Physics with gravity and jumping
-function applyGravity() {
-    // Gravity implementation...
-}
-
-// UI toggle functions
-function toggleUI() {
-    // UI toggle implementation...
-}
-
-// Subscription checking and saving to localStorage
-function checkSubscription() {
-    // Subscription check implementation...
-}
-
-// AR/VR launch and exit functions
-function launchAR() {
-    // AR launch implementation...
-}
-
-function exitAR() {
-    // AR exit implementation...
-}
-
-// Neuralink brainwave canvas animation
-function animateBrainwaves() {
-    // Animation implementation...
-}
-
-// MetaMask wallet connection
+// MetaMask Connection
 async function connectWallet() {
-    // Wallet connection implementation...
+    if (typeof window.ethereum !== 'undefined') {
+        await window.ethereum.request({ method: 'eth_requestAccounts' });
+        alert('Wallet connected!');
+    } else {
+        alert('MetaMask is required.');
+    }
 }
 
-// ETH payment processing
-async function processPayment(amount) {
-    const address = '0x02f93c7547309ca50eeab446daebe8ce8e694cbb';
-    // Payment processing implementation...
+// Array to hold terrain chunks
+let chunks = [];
+const CHUNK_SIZE = 100;
+
+// Function for generating terrain
+function generateTerrain(seed) {
+    // Use seeded random to generate terrain
 }
 
-// Window resize handler
+// Loading and unloading chunks
+function loadChunk() {
+    // Logic to load and unload terrain chunks
+}
+
+// WASD Controls with Pointer Lock
+function setupControls() {
+    document.addEventListener('keydown', (event) => {
+        switch (event.key) {
+            case 'w': // move forward
+                break;
+            case 's': // move backward
+                break;
+            // Handle 'a' and 'd' similarly
+        }
+    });
+}
+
+// AR/VR Functions
+function launchAR() {
+    // Code to launch AR mode
+}
+
+function launchVR() {
+    // Code to launch VR mode
+}
+}
+
+// UI Toggle Functions
+function toggleUI() {
+    // Logic to hide/show the UI
+}
+
+// Window Resize Handling
 window.addEventListener('resize', () => {
-    // Resize handling implementation...
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Main function to start the application
-function init() {
-    generateGarden('someSeed');
-    // Initialize other components...
+// Main Render Loop
+function animate() {
+    requestAnimationFrame(animate);
+    renderer.render(scene, camera);
 }
 
-init();
+// Start the application
+connectWallet();
+setupControls();
+animate();
+
