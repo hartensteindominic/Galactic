@@ -1,107 +1,84 @@
-// Infinite Procedural Garden Generation Script
-
-// Seeded Random Function for Procedural Generation
-function seededRandom(seed) {
-    // Seed random number generator with a seed value
+// Infinite procedural garden generation with seeded random function
+function generateGarden(seed) {
+    // Implementation details...
 }
 
-// Generate Chunk Function
-function generateChunk(chunkData) {
-    // Logic for generating a terrain chunk
+// Chunk loading and unloading system
+class Chunk {
+    constructor() {
+        // Implementation details...
+    }
+    load() {
+        // Load chunk details...
+    }
+    unload() {
+        // Unload chunk details...
+    }
 }
 
-// Unload Chunk Function
-function unloadChunk(chunkData) {
-    // Logic for unloading a terrain chunk
+// Three.js scene setup
+const scene = new THREE.Scene();
+// Scene setup details...
+
+// WASD keyboard controls
+document.addEventListener('keydown', (event) => {
+    // Control implementation...
+});
+
+// Pointer lock mouse controls
+document.addEventListener('click', () => {
+    // Pointer lock implementation...
+});
+
+// Physics with gravity and jumping
+function applyGravity() {
+    // Gravity implementation...
 }
 
-// Update Chunks for Dynamic Terrain
-function updateChunks() {
-    // Logic to update currently loaded terrain chunks
-}
-
-// Initialize Garden with Three.js Scene Setup
-function initGarden() {
-    // Setup Three.js scene, camera, renderer
-}
-
-// Keyboard and Mouse Controls (WASD + Pointer Lock)
-function setupControls() {
-    // WASD controls setup
-    // Pointer lock initialization
-}
-
-// Animate Loop with Physics
-function animate() {
-    // Main animation loop with physics calculations
-}
-
-// Toggle UI Function
+// UI toggle functions
 function toggleUI() {
-    // Logic to show/hide UI elements
+    // UI toggle implementation...
 }
 
-// Check Subscriptions
-function checkSubscriptions() {
-    // Logic to check user subscription status
+// Subscription checking and saving to localStorage
+function checkSubscription() {
+    // Subscription check implementation...
 }
 
-// Save Subscription to Local Storage
-function saveSubscription(subscriptionData) {
-    // Logic to save subscription info in local storage
-}
-
-// Launch AR / Exit AR Functions
+// AR/VR launch and exit functions
 function launchAR() {
-    // Logic to enter AR mode
+    // AR launch implementation...
 }
 
 function exitAR() {
-    // Logic to exit AR mode
+    // AR exit implementation...
 }
 
-// Launch VR / Exit VR Functions
-function launchVR() {
-    // Logic to enter VR mode
+// Neuralink brainwave canvas animation
+function animateBrainwaves() {
+    // Animation implementation...
 }
 
-function exitVR() {
-    // Logic to exit VR mode
+// MetaMask wallet connection
+async function connectWallet() {
+    // Wallet connection implementation...
 }
 
-// Toggle Neural and Start Brainwave Visualization
-function toggleNeural() {
-    // Logic to toggle Neuralink brainwave visualization
+// ETH payment processing
+async function processPayment(amount) {
+    const address = '0x02f93c7547309ca50eeab446daebe8ce8e694cbb';
+    // Payment processing implementation...
 }
 
-function startBrainwave() {
-    // Canvas animation logic for brainwave visualization
+// Window resize handler
+window.addEventListener('resize', () => {
+    // Resize handling implementation...
+});
+
+// Main function to start the application
+function init() {
+    generateGarden('someSeed');
+    // Initialize other components...
 }
 
-// MetaMask Connection Handler
-async function connectMetaMask() {
-    // Logic to connect to MetaMask wallet
-}
-
-// Open Payment and Process Payment for ETH Transactions
-async function openPayment(amount) {
-    // Logic to open ETH payment window
-}
-
-async function processPayment(transactionData) {
-    // Logic to process ETH payment
-}
-
-// Window Resize Handler
-function onWindowResize() {
-    // Logic to handle window resizing
-}
-
-// Initialization on Page Load
-window.onload = function() {
-    initGarden();
-    setupControls();
-    checkSubscriptions();
-    // Additional initialization code
-    window.addEventListener('resize', onWindowResize);
-};
+init();
