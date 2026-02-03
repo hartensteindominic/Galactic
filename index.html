@@ -3,82 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="metamask.js"></script>
+    <title>Galactic 3D Garden</title>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        .pricing-card { border: 1px solid #ccc; padding: 10px; margin: 10px; display: inline-block; }
+        .card-container { display: flex; justify-content: center; }
+        /* Additional CSS styles */
+    </style>
 </head>
 <body>
-    <header>
-        <img src="logo.png" alt="Logo" class="logo">
-        <button id="connectWallet">Connect MetaMask</button>
-    </header>
-
-    <section class="hero">
-        <h1>Welcome to Galactic!</h1>
-        <button id="vrButton">Enter VR</button>
-        <button id="arButton">Enter AR</button>
-    </section>
-
-    <div id="gardenCanvas"></div>
-    <div id="neuralPanel" class="panel">
-        <h2>Neural Interface</h2>
-        <p>Brainwave Monitor: <span id="brainwaveData">Loading...</span></p>
-    </div>
-
-    <div class="pricing">
-        <div class="pricing-card">
-            <h3>Free Explorer</h3>
-            <p>FREE</p>
-        </div>
-        <div class="pricing-card">
-            <h3>AR Access</h3>
-            <p>0.0001 ETH</p>
-        </div>
-        <div class="pricing-card">
-            <h3>VR Experience</h3>
-            <p>0.0005 ETH</p>
-        </div>
-        <div class="pricing-card">
-            <h3>Neural Premium</h3>
-            <p>0.001 ETH</p>
-        </div>
-        <div class="pricing-card">
-            <h3>Quantum Elite</h3>
-            <p>0.005 ETH</p>
-        </div>
-    </div>
-
-    <div id="paymentModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Complete Your Payment</h2>
-            <p>Send payment to: 0x02f93c7547309ca50eeab446daebe8ce8e694cbb</p>
-            <button id="confirmPayment">Confirm Payment</button>
-        </div>
-    </div>
-
+    <h1>Welcome to the Galactic 3D Garden</h1>
+    
+    <!-- MetaMask connection -->
     <script>
-        // Three.js scene initialization code
+        async function connectWallet() {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    console.log("Wallet connected!");
+                } catch (error) {
+                    console.error("Error connecting to MetaMask: ", error);
+                }
+            } else {
+                alert("Please install MetaMask!");
+            }
+        }
+    </script>
+    
+    <button onclick="connectWallet()">Connect MetaMask</button>
+    
+    <!-- Three.js setup (basic) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Basic Three.js scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('gardenCanvas').appendChild(renderer.domElement);
+        document.body.appendChild(renderer.domElement);
 
-        // Animate the scene
+        // Adding placeholder objects (trees, flowers, fountain)
+        // You will need to use appropriate Three.js code here
+
         function animate() {
             requestAnimationFrame(animate);
             renderer.render(scene, camera);
         }
         animate();
+    </script>
 
-        // Connect MetaMask wallet
-        document.getElementById('connectWallet').onclick = async () => {
-            // Wallet connection logic...
-        };
+    <div class="card-container">
+        <div class="pricing-card">FREE</div>
+        <div class="pricing-card">0.0001 ETH</div>
+        <div class="pricing-card">0.0005 ETH</div>
+        <div class="pricing-card">0.001 ETH</div>
+        <div class="pricing-card">0.005 ETH</div>
+    </div>
 
-        // Payment modal logic...
+    <!-- Buttons for VR/AR mode -->
+    <button onclick="alert('VR Mode Coming Soon!')">Enter VR</button>
+    <button onclick="alert('AR Mode Coming Soon!')">Enter AR</button>
+
+    <!-- Payment processing function (simplified) -->
+    <script>
+        async function processPayment() {
+            // Logic for processing payments to the specified wallet address with error handling
+        }
     </script>
 </body>
 </html>
