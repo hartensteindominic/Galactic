@@ -1,8 +1,17 @@
-// Main JavaScript file for Galactic Platform
+// script.js
 
-// Particle animation
-const canvas = document.getElementById('particle-canvas');
-const ctx = canvas.getContext('2d');
-const particles = [];
+// Particle canvas animation code
 
-// Smooth scrolling and other functionalities...
+// Smooth scrolling behavior
+
+// Category filtering
+
+// Navigation highlighting
+
+// Card animations logic
+
+// Intersection observer for lazy loading
+
+// Mobile menu toggle
+
+// Demo button handlers

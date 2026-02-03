@@ -1,19 +1,18 @@
-:root {
-    --primary: #00f2ff;
-    --secondary: #7b2ff7;
-    --accent: #ff006e;
-    --quantum: #00ff88;
-}
+/**
+ * styles.css
+ */
 body {
-    background-color: #000;
-    color: #fff;
+    background-color: #121212;
+    color: #FFFFFF;
+    font-family: Arial, sans-serif;
 }
-/* Wallet banner styling */
-#wallet-banner {
-    position: fixed;
-    top: 0;
-    right: 0;
-    background: rgba(0, 0, 0, 0.8);
-    padding: 10px;
+.wallet-banner {
+    background: linear-gradient(90deg, rgba(0,255,255,1) 0%, rgba(249,0,159,1) 100%);
 }
-/* Additional styling... */
+.card {
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: scale(1.05);
+}
+/* Responsive design and other styles... */
