@@ -2,139 +2,74 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Grok-4 Hyper-Sentinel</title>
+    <title>Grok Audible Sentinel</title>
     <style>
-        :root { --neon: #00f2ff; --lock: #ff0044; --bg: #050505; }
-        body { background: var(--bg); color: white; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        :root { --neon: #00f2ff; --bg: #000; }
+        body { background: var(--bg); color: #444; font-family: 'Courier New', monospace; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
         
-        /* 3D Hologram Stage */
-        #stage { position: absolute; perspective: 1200px; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; pointer-events: none; }
-        
-        #hologram {
-            width: 320px; padding: 30px; background: rgba(0, 242, 255, 0.05);
-            border: 1px solid var(--neon); color: var(--neon); text-align: center;
-            backdrop-filter: blur(10px); border-radius: 20px;
-            transform: rotateY(-25deg) rotateX(15deg);
-            animation: float 5s ease-in-out infinite;
-            opacity: 0; transition: 1s; z-index: 100;
-        }
-        
-        @keyframes float {
-            0%, 100% { transform: rotateY(-25deg) rotateX(15deg) translateY(0px); }
-            50% { transform: rotateY(-15deg) rotateX(5deg) translateY(-30px); }
-        }
+        /* The Visual Core */
+        #core { width: 150px; height: 150px; border-radius: 50%; border: 2px solid #222; overflow: hidden; margin-bottom: 20px; transition: 0.3s; }
+        video { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.5) grayscale(1); }
 
-        #eye { width: 220px; height: 220px; border-radius: 50%; border: 2px solid #111; overflow: hidden; position: relative; transition: 0.5s; }
-        video { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) brightness(0.4); }
-
-        .hud { position: absolute; bottom: 30px; text-align: center; }
-        #status { font-size: 0.6rem; letter-spacing: 3px; color: #333; margin-bottom: 10px; }
-        .active-glow { border-color: var(--neon) !important; box-shadow: 0 0 30px var(--neon); }
+        /* Audio HUD */
+        #audio-status { font-size: 0.7rem; color: var(--neon); letter-spacing: 2px; margin-bottom: 20px; }
+        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px 30px; cursor: pointer; font-weight: bold; }
+        .pulse { box-shadow: 0 0 30px var(--neon); border-color: var(--neon) !important; }
     </style>
 </head>
 <body>
 
-<div id="stage">
-    <div id="hologram">
-        <div id="holo-title" style="font-size: 0.7rem; margin-bottom: 10px;">NEURAL DATA STREAM</div>
-        <div id="holo-content" style="font-size: 0.9rem; line-height: 1.4;">Waiting for voice input...</div>
-        <hr style="border: 0.5px solid var(--neon); margin: 20px 0;">
-        <div id="lock-msg" style="display:none; color: var(--lock);">
-            ACCESS EXPIRED<br>0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb
-        </div>
-    </div>
-</div>
-
-<div id="eye">
+<div id="core">
     <video id="webcam" autoplay playsinline muted></video>
 </div>
 
-<div class="hud">
-    <div id="status">CORE STANDBY</div>
-    <button id="startBtn" style="padding: 10px 30px; background: transparent; border: 1px solid var(--neon); color: var(--neon); cursor: pointer;">WAKE SENTINEL</button>
-</div>
+<div id="audio-status">AUDIO: STANDBY (WAITING FOR USER)</div>
+
+<button id="startBtn" class="btn">ACTIVATE VOICE & VISION</button>
 
 <script>
-    const API_KEY = "xai-G7JvL16cDlnBbKrHUxKcwEcsexkOTgFP2phHhGGbkM3ug4uLI2pajIDncuAG3E4IhVyKXVVnrOBglVCs";
     const video = document.getElementById('webcam');
-    const hologram = document.getElementById('hologram');
-    const holoContent = document.getElementById('holo-content');
-    
-    let timeLeft = 300; 
-    let isLocked = false;
+    const status = document.getElementById('audio-status');
+    const core = document.getElementById('core');
 
-    // --- 1. VOICE RECOGNITION (The "Ear") ---
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.continuous = true;
-    recognition.interimResults = false;
-
-    recognition.onresult = (event) => {
-        const text = event.results[event.results.length - 1][0].transcript;
-        if (!isLocked) processCommand(text);
-    };
-
-    // --- 2. AI PROCESSING (The "Brain") ---
-    async function processCommand(input) {
-        document.getElementById('status').innerText = "THINKING...";
-        hologram.style.opacity = "1";
-        
-        try {
-            const res = await fetch("https://api.x.ai/v1/chat/completions", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${API_KEY}` },
-                body: JSON.stringify({
-                    model: "grok-4",
-                    messages: [
-                        { role: "system", content: "You are an advanced holographic AI sentinel. Keep responses witty and under 20 words." },
-                        { role: "user", content: input }
-                    ]
-                })
-            });
-            const data = await res.json();
-            const reply = data.choices[0].message.content;
-            
-            holoContent.innerText = reply;
-            speak(reply);
-        } catch (e) {
-            holoContent.innerText = "Link Error: Check API Key.";
-        }
-        document.getElementById('status').innerText = "LISTENING...";
-    }
-
-    // --- 3. SPEECH SYNTHESIS (The "Voice") ---
-    function speak(text) {
-        window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.pitch = isLocked ? 0.3 : 0.8;
+    // 1. FORCED SPEECH INITIALIZATION
+    function forceWakeSpeech() {
+        const msg = new SpeechSynthesisUtterance("Speech system synchronized.");
+        msg.volume = 1;
+        msg.rate = 1;
+        msg.pitch = 0.8;
         window.speechSynthesis.speak(msg);
     }
 
-    // --- 4. THE 5-MINUTE LOCK ---
-    function startLockdown() {
-        const timer = setInterval(() => {
-            timeLeft--;
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                isLocked = true;
-                hologram.style.borderColor = "var(--lock)";
-                hologram.style.color = "var(--lock)";
-                hologram.style.opacity = "1";
-                holoContent.innerText = "Neural session terminated.";
-                document.getElementById('lock-msg').style.display = "block";
-                speak("Access expired. Subscription required to the registered wallet.");
-            }
-        }, 1000);
+    async function init() {
+        try {
+            // Start Camera
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            
+            // Start Speech
+            forceWakeSpeech();
+            
+            status.innerText = "AUDIO: SYNCHRONIZED";
+            core.classList.add('pulse');
+            document.getElementById('startBtn').style.display = 'none';
+
+            // Loop to check if Grok should talk
+            setInterval(() => {
+                if(window.speechSynthesis.speaking) {
+                    status.innerText = "AUDIO: TRANSMITTING...";
+                } else {
+                    status.innerText = "AUDIO: LISTENING...";
+                }
+            }, 1000);
+
+        } catch (e) {
+            status.innerText = "ERROR: SYSTEM BLOCKED";
+            status.style.color = "red";
+        }
     }
 
-    document.getElementById('startBtn').onclick = async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        recognition.start();
-        startLockdown();
-        document.getElementById('startBtn').style.display = 'none';
-        document.getElementById('eye').classList.add('active-glow');
-        speak("Sentinel online. Speak your command.");
-    };
+    document.getElementById('startBtn').onclick = init;
 </script>
 </body>
 </html>
