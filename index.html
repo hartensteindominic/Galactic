@@ -3,137 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vault Sync • Mainnet Pro</title>
+    <title>Vault Pro • Live Trader</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
     <style>
-        :root { --neon: #00ffcc; --dark: #0a0a1f; --card: #12122b; --sell: #ff4466; --text: #e0e0ff; }
-        body { background: var(--dark); color: var(--text); font-family: 'Inter', system-ui, sans-serif; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .terminal { width: 420px; background: var(--card); border-radius: 16px; border: 1px solid #222244; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; display: inline-block; margin-right: 5px; }
-        .online { background: var(--neon); box-shadow: 0 0 10px var(--neon); }
+        :root { --neon: #00ffcc; --dark: #050510; --card: #111125; --buy: #00ffcc; --sell: #ff4466; }
+        body { background: var(--dark); color: #fff; font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .app-container { width: 380px; background: var(--card); border: 1px solid #222244; border-radius: 20px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.7); }
         
-        .price-hero { background: #000; padding: 15px; border-radius: 12px; text-align: center; margin-bottom: 20px; border: 1px solid #111; }
-        .price-hero span { font-size: 1.8rem; font-weight: 800; color: var(--neon); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .live-tag { font-size: 0.7rem; background: rgba(0,255,204,0.1); color: var(--neon); padding: 4px 8px; border-radius: 4px; font-weight: bold; border: 1px solid var(--neon); }
+        
+        .price-display { text-align: center; margin-bottom: 25px; }
+        .price-display div { font-size: 0.8rem; color: #888; text-transform: uppercase; }
+        .price-display span { font-size: 2.2rem; font-weight: 800; color: #fff; }
 
-        .input-box { background: #050515; border: 1px solid #333355; border-radius: 8px; padding: 12px; margin-bottom: 15px; }
-        label { font-size: 0.7rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        input { width: 100%; background: transparent; border: none; color: white; font-size: 1rem; outline: none; margin-top: 5px; }
+        .form-group { margin-bottom: 15px; }
+        label { font-size: 0.75rem; color: #666; display: block; margin-bottom: 6px; }
+        input { width: 100%; box-sizing: border-box; background: #000; border: 1px solid #333; padding: 12px; color: #fff; border-radius: 8px; font-family: monospace; }
+        
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+        button { border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; }
+        .buy { background: var(--buy); color: #000; }
+        .sell { background: var(--sell); color: #fff; }
+        .full { grid-column: span 2; background: #222244; color: #fff; border: 1px solid #444; }
+        button:hover { transform: scale(1.02); opacity: 0.9; }
 
-        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        button { border: none; border-radius: 8px; padding: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; text-transform: uppercase; font-size: 0.85rem; }
-        .btn-buy { background: var(--neon); color: #000; }
-        .btn-sell { background: var(--sell); color: #fff; }
-        .btn-full { grid-column: span 2; background: #222244; color: white; }
-        button:hover { opacity: 0.8; transform: translateY(-1px); }
-
-        #console { background: #000; padding: 12px; border-radius: 8px; height: 100px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; color: #00ff88; margin-top: 20px; border: 1px solid #111; }
-        .setting-row { display: flex; justify-content: space-between; font-size: 0.75rem; color: #666; margin-bottom: 10px; }
+        #terminal { background: #000; margin-top: 20px; padding: 12px; border-radius: 8px; height: 100px; overflow-y: auto; font-family: monospace; font-size: 0.7rem; color: #0f0; border: 1px solid #1a1a1a; }
     </style>
 </head>
 <body>
 
-<div class="terminal">
+<div class="app-container">
     <div class="header">
-        <div style="font-weight: bold; letter-spacing: 1px;">VAULT SYNC <small style="color:var(--neon)">PRO</small></div>
-        <div><span id="dot" class="status-dot"></span><small id="net-name">OFFLINE</small></div>
+        <div style="font-weight: 900; letter-spacing: 1px;">VAULT<span style="color:var(--neon)">SYNC</span></div>
+        <div class="live-tag">MAINNET ACTIVE</div>
     </div>
 
-    <div class="price-hero">
-        <label>ETH/USD LIVE</label><br>
-        <span id="eth-price">$---.--</span>
+    <div class="price-display">
+        <div>Ethereum Price</div>
+        <span id="price-val">$0,000.00</span>
     </div>
 
-    <div class="input-box">
+    <div class="form-group">
         <label>Token Contract Address</label>
         <input type="text" id="token-addr" value="0x6B175474E89094C44Da98b954EEDEAC495271d0F">
     </div>
 
-    <div class="input-box">
-        <label>Trade Amount (ETH)</label>
-        <input type="number" id="trade-amt" value="0.01" step="0.01">
+    <div class="form-group">
+        <label>ETH Amount</label>
+        <input type="number" id="eth-amt" value="0.01" step="0.01">
     </div>
 
-    <div class="setting-row">
-        <span>Slippage Tolerance: <b style="color:white">0.5%</b></span>
-        <span>Deadline: <b style="color:white">20m</b></span>
+    <div class="btn-grid">
+        <button class="buy" onclick="runTrade('buy')">Execute Buy</button>
+        <button class="sell" onclick="runTrade('sell')">Execute Sell</button>
+        <button class="full" id="connect-btn" onclick="connect()">Connect Mainnet Wallet</button>
     </div>
 
-    <div class="grid-buttons">
-        <button class="btn-buy" onclick="trade('buy')">Buy Token</button>
-        <button class="btn-sell" onclick="trade('sell')">Sell Token</button>
-        <button class="btn-full" onclick="connectWallet()">Connect Mainnet Wallet</button>
-    </div>
-
-    <div id="console">> System initialized. Awaiting wallet...</div>
+    <div id="terminal">> Awaiting interaction...</div>
 </div>
 
 <script>
     const ROUTER = "0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D";
     const WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
     const ABI = [
-        "function swapExactETHForTokens(uint minOut, address[] path, address to, uint dead) external payable",
-        "function swapExactTokensForETH(uint amtIn, uint minOut, address[] path, address to, uint dead) external",
-        "function approve(address spender, uint amt) external returns (bool)"
+        "function swapExactETHForTokens(uint min, address[] path, address to, uint dead) external payable",
+        "function swapExactTokensForETH(uint in, uint min, address[] path, address to, uint dead) external"
     ];
 
-    let provider, signer, account;
+    let signer, account;
 
     function log(m) {
-        const c = document.getElementById('console');
-        c.innerHTML = `<div>[${new Date().toLocaleTimeString()}] ${m}</div>` + c.innerHTML;
+        const t = document.getElementById('terminal');
+        t.innerHTML = `<div>[${new Date().toLocaleTimeString([], {hour12:false})}] ${m}</div>` + t.innerHTML;
     }
 
-    async function fetchPrice() {
+    async function getPrice() {
         try {
             const r = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=ETHUSDT');
             const d = await r.json();
-            document.getElementById('eth-price').innerText = `$${parseFloat(d.price).toLocaleString()}`;
+            document.getElementById('price-val').innerText = `$${parseFloat(d.price).toLocaleString()}`;
         } catch(e) {}
     }
-    setInterval(fetchPrice, 5000); fetchPrice();
+    setInterval(getPrice, 5000); getPrice();
 
-    async function connectWallet() {
-        if (!window.ethereum) return log("Error: Install MetaMask");
-        provider = new ethers.BrowserProvider(window.ethereum);
-        const net = await provider.getNetwork();
-        if (net.chainId !== 1n) {
-            log("Wrong Network! Switching to Mainnet...");
+    async function connect() {
+        if (!window.ethereum) return log("Error: MetaMask required.");
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        
+        // Force Mainnet
+        try {
             await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x1' }] });
-        }
+        } catch(e) { log("Please switch to Mainnet manually."); }
+
         signer = await provider.getSigner();
         account = await signer.getAddress();
-        document.getElementById('dot').classList.add('online');
-        document.getElementById('net-name').innerText = "MAINNET: " + account.slice(0,6);
-        log("Wallet Connected: " + account);
+        document.getElementById('connect-btn').innerText = account.slice(0,6) + "..." + account.slice(-4);
+        log("Wallet linked: " + account);
     }
 
-    async function trade(type) {
-        if (!signer) await connectWallet();
+    async function runTrade(mode) {
+        if (!signer) return log("Connect wallet first!");
+        
         const token = document.getElementById('token-addr').value;
-        const amt = document.getElementById('trade-amt').value;
+        const amount = document.getElementById('eth-amt').value;
+        const dead = Math.floor(Date.now() / 1000) + 1200; // 20m
         const contract = new ethers.Contract(ROUTER, ABI, signer);
-        const dead = Math.floor(Date.now() / 1000) + 60 * 20;
 
         try {
-            if (type === 'buy') {
-                log(`Swapping ${amt} ETH for token...`);
-                const tx = await contract.swapExactETHForTokens(0, [WETH, token], account, dead, { value: ethers.parseEther(amt) });
-                log("TX Sent: " + tx.hash.slice(0,15));
-                await tx.wait();
-                log("Trade Complete!");
+            log(`Initiating ${mode.toUpperCase()} signature...`);
+            let tx;
+            if(mode === 'buy') {
+                tx = await contract.swapExactETHForTokens(0, [WETH, token], account, dead, { value: ethers.parseEther(amount) });
             } else {
-                log("Note: Sell requires Token Approval first.");
-                // For a sell, you'd first need to call approve() on the token contract
-                log("Requesting Sell Signature...");
-                const tx = await contract.swapExactTokensForETH(ethers.parseUnits(amt, 18), 0, [token, WETH], account, dead);
-                await tx.wait();
-                log("Sell Successful!");
+                tx = await contract.swapExactTokensForETH(ethers.parseUnits(amount, 18), 0, [token, WETH], account, dead);
             }
-        } catch (e) {
-            log("Error: " + e.message.slice(0, 40));
+            log("Transaction Sent! Hash: " + tx.hash.slice(0,10));
+            await tx.wait();
+            log("BLOCK CONFIRMED. Sync Complete.");
+        } catch(e) {
+            log("FAILED: " + (e.reason || "User rejected"));
         }
     }
 </script>
+
 </body>
 </html>
