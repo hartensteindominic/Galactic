@@ -3,72 +3,943 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D AI Assistant</title>
+    <title>Galactic AI Art Gallery - Immersive 3D AR Experience</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.1/annyang.min.js"></script>
-    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-three.prod.js"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Orbitron', 'Courier New', monospace;
+            background: radial-gradient(circle at center, #0a0a0f 0%, #000000 100%);
+            color: #ffffff;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Animated Background */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        /* Header */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 40px;
+            background: rgba(10, 10, 15, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+            border-bottom: 2px solid rgba(0, 242, 255, 0.3);
+            box-shadow: 0 4px 30px rgba(0, 242, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00f2ff, #7b2ff7, #ff006e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 10px rgba(0, 242, 255, 0.5)); }
+            50% { filter: drop-shadow(0 0 20px rgba(123, 47, 247, 0.8)); }
+        }
+
+        .wallet-btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #00f2ff, #7b2ff7);
+            border: none;
+            border-radius: 25px;
+            color: #0a0a0f;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .wallet-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 242, 255, 0.5);
+        }
+
+        /* Main Container */
+        .container {
+            margin-top: 100px;
+            padding: 40px;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            background: linear-gradient(135deg, #00f2ff, #7b2ff7, #ff006e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            animation: slideDown 1s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: #a0a0b0;
+            margin-bottom: 30px;
+        }
+
+        .ar-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #ff006e, #7b2ff7);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+
+        .ar-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(255, 0, 110, 0.6);
+        }
+
+        /* 3D Gallery Container */
+        #gallery-3d {
+            width: 100%;
+            height: 600px;
+            background: linear-gradient(180deg, rgba(10, 10, 15, 0.8) 0%, rgba(26, 26, 46, 0.8) 100%);
+            border-radius: 20px;
+            border: 2px solid rgba(0, 242, 255, 0.3);
+            margin: 40px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 242, 255, 0.3);
+        }
+
+        /* AI Assistant */
+        .ai-assistant {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 350px;
+            background: rgba(10, 10, 15, 0.95);
+            border: 2px solid #00f2ff;
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 999;
+            box-shadow: 0 0 40px rgba(0, 242, 255, 0.4);
+        }
+
+        .ai-avatar {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 15px;
+            background: radial-gradient(circle, #00f2ff, #7b2ff7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(0, 242, 255, 0.5); }
+            50% { transform: scale(1.1); box-shadow: 0 0 40px rgba(123, 47, 247, 0.8); }
+        }
+
+        .ai-status {
+            text-align: center;
+            color: #00f2ff;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .voice-btn {
+            flex: 1;
+            padding: 10px;
+            background: rgba(0, 242, 255, 0.1);
+            border: 1px solid #00f2ff;
+            border-radius: 10px;
+            color: #00f2ff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 12px;
+        }
+
+        .voice-btn:hover {
+            background: #00f2ff;
+            color: #0a0a0f;
+        }
+
+        .voice-btn.active {
+            background: #00f2ff;
+            color: #0a0a0f;
+            animation: btnPulse 1s infinite;
+        }
+
+        @keyframes btnPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Art Gallery Grid */
+        .art-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .art-card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid rgba(0, 242, 255, 0.2);
+            border-radius: 15px;
+            overflow: hidden;
+            transition: all 0.4s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .art-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: #00f2ff;
+            box-shadow: 0 20px 60px rgba(0, 242, 255, 0.4);
+        }
+
+        .art-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #00f2ff, #7b2ff7, #ff006e);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .art-image::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+        }
+
+        .art-info {
+            padding: 20px;
+        }
+
+        .art-title {
+            font-size: 20px;
+            color: #00f2ff;
+            margin-bottom: 10px;
+        }
+
+        .art-desc {
+            color: #a0a0b0;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .art-price {
+            font-size: 24px;
+            color: #7b2ff7;
+            font-weight: bold;
+        }
+
+        /* Pricing Section */
+        .pricing-section {
+            margin: 80px 0;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 48px;
+            background: linear-gradient(135deg, #00f2ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 50px;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .price-card {
+            background: rgba(26, 26, 46, 0.8);
+            border: 2px solid rgba(0, 242, 255, 0.2);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.4s;
+        }
+
+        .price-card:hover {
+            transform: translateY(-15px);
+            border-color: #00f2ff;
+            box-shadow: 0 25px 70px rgba(0, 242, 255, 0.4);
+        }
+
+        .price-card h3 {
+            font-size: 28px;
+            color: #00f2ff;
+            margin-bottom: 20px;
+        }
+
+        .price {
+            font-size: 42px;
+            color: #7b2ff7;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        .features {
+            list-style: none;
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .features li {
+            padding: 10px 0;
+            color: #a0a0b0;
+            border-bottom: 1px solid rgba(0, 242, 255, 0.1);
+        }
+
+        .subscribe-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #00f2ff, #7b2ff7);
+            border: none;
+            border-radius: 25px;
+            color: #0a0a0f;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .subscribe-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 242, 255, 0.6);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1a1a2e;
+            border: 2px solid #00f2ff;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            animation: modalAppear 0.5s;
+        }
+
+        @keyframes modalAppear {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-close {
+            float: right;
+            font-size: 30px;
+            cursor: pointer;
+            color: #00f2ff;
+        }
+
+        #transaction-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        /* AR Container */
+        #ar-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3000;
+            background: #000;
+        }
+
+        #ar-container.active {
+            display: block;
+        }
+
+        .ar-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: rgba(255, 0, 110, 0.9);
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 3001;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 36px; }
+            #gallery-3d { height: 400px; }
+            .ai-assistant { width: 90%; right: 5%; }
+        }
+    </style>
 </head>
 <body>
-    <div id="app">
-        <h1>Welcome to Your 3D AI Assistant</h1>
-        <div id="avatar"></div>
-        <div id="subscription-prices">
-            <h2>Subscription Prices:</h2>
-            <ul>
-                <li>0.05 ETH</li>
-                <li>0.2 ETH</li>
-                <li>1.0 ETH</li>
-            </ul>
+    <!-- Animated Background -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">🌌 GALACTIC AI ART GALLERY</div>
+        <button class="wallet-btn" id="connectWallet">🔐 Connect Wallet</button>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Hero Section -->
+        <div class="hero">
+            <h1>Immersive 3D AI Art Experience</h1>
+            <p>Step into a virtual gallery powered by augmented reality and artificial intelligence</p>
+            <button class="ar-btn" onclick="enter3DGallery()">🎨 Enter 3D Gallery</button>
+            <button class="ar-btn" onclick="startAR()">📱 Launch AR Mode</button>
         </div>
-        <button id="connect-wallet">Connect Wallet</button>
-        <div id="payment-modal" style="display:none;">
-            <h2>Payment Modal</h2>
-            <p>Select your subscription plan.</p>
-            <button>Pay 0.05 ETH</button>
-            <button>Pay 0.2 ETH</button>
-            <button>Pay 1.0 ETH</button>
+
+        <!-- 3D Gallery -->
+        <div id="gallery-3d"></div>
+
+        <!-- Art Gallery Grid -->
+        <h2 class="section-title">Featured AI Artworks</h2>
+        <div class="art-grid">
+            <div class="art-card" onclick="viewArt('Neural Dreams')">
+                <div class="art-image">🎨</div>
+                <div class="art-info">
+                    <div class="art-title">Neural Dreams</div>
+                    <div class="art-desc">AI-generated surreal landscapes from deep neural networks</div>
+                    <div class="art-price">0.05 ETH</div>
+                </div>
+            </div>
+
+            <div class="art-card" onclick="viewArt('Quantum Visions')">
+                <div class="art-image">🌈</div>
+                <div class="art-info">
+                    <div class="art-title">Quantum Visions</div>
+                    <div class="art-desc">Abstract art inspired by quantum computing patterns</div>
+                    <div class="art-price">0.08 ETH</div>
+                </div>
+            </div>
+
+            <div class="art-card" onclick="viewArt('Digital Consciousness')">
+                <div class="art-image">🧠</div>
+                <div class="art-info">
+                    <div class="art-title">Digital Consciousness</div>
+                    <div class="art-desc">Exploring the intersection of mind and machine</div>
+                    <div class="art-price">0.12 ETH</div>
+                </div>
+            </div>
+
+            <div class="art-card" onclick="viewArt('Cosmic Synthesis')">
+                <div class="art-image">✨</div>
+                <div class="art-info">
+                    <div class="art-title">Cosmic Synthesis</div>
+                    <div class="art-desc">Generative art from astronomical data visualization</div>
+                    <div class="art-price">0.15 ETH</div>
+                </div>
+            </div>
+
+            <div class="art-card" onclick="viewArt('Cybernetic Poetry')">
+                <div class="art-image">🤖</div>
+                <div class="art-info">
+                    <div class="art-title">Cybernetic Poetry</div>
+                    <div class="art-desc">Visual representations of AI-generated poetry</div>
+                    <div class="art-price">0.10 ETH</div>
+                </div>
+            </div>
+
+            <div class="art-card" onclick="viewArt('Fractal Universe')">
+                <div class="art-image">🌀</div>
+                <div class="art-info">
+                    <div class="art-title">Fractal Universe</div>
+                    <div class="art-desc">Infinite patterns generated by recursive algorithms</div>
+                    <div class="art-price">0.20 ETH</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pricing Section -->
+        <div class="pricing-section">
+            <h2 class="section-title">Gallery Membership</h2>
+            <div class="pricing-grid">
+                <div class="price-card">
+                    <h3>Visitor</h3>
+                    <div class="price">FREE</div>
+                    <ul class="features">
+                        <li>✓ View public gallery</li>
+                        <li>✓ 3D navigation</li>
+                        <li>✓ Basic AI assistant</li>
+                        <li>✗ AR features</li>
+                        <li>✗ Purchase artwork</li>
+                    </ul>
+                    <button class="subscribe-btn" onclick="alert('Free tier active!')">Current Plan</button>
+                </div>
+
+                <div class="price-card">
+                    <h3>Collector</h3>
+                    <div class="price">0.05 ETH</div>
+                    <ul class="features">
+                        <li>✓ Full gallery access</li>
+                        <li>✓ AR viewing mode</li>
+                        <li>✓ Purchase artworks</li>
+                        <li>✓ Voice assistant</li>
+                        <li>✓ Monthly exclusives</li>
+                    </ul>
+                    <button class="subscribe-btn" onclick="openPaymentModal('Collector', '0.05')">Subscribe</button>
+                </div>
+
+                <div class="price-card">
+                    <h3>Curator</h3>
+                    <div class="price">0.2 ETH</div>
+                    <ul class="features">
+                        <li>✓ Everything in Collector</li>
+                        <li>✓ Custom AI art generation</li>
+                        <li>✓ Private exhibitions</li>
+                        <li>✓ NFT minting</li>
+                        <li>✓ Revenue sharing</li>
+                    </ul>
+                    <button class="subscribe-btn" onclick="openPaymentModal('Curator', '0.2')">Subscribe</button>
+                </div>
+
+                <div class="price-card">
+                    <h3>Patron</h3>
+                    <div class="price">1.0 ETH</div>
+                    <ul class="features">
+                        <li>✓ Everything in Curator</li>
+                        <li>✓ Exclusive AI models</li>
+                        <li>✓ VIP gallery events</li>
+                        <li>✓ Personal AI artist</li>
+                        <li>✓ Lifetime access</li>
+                    </ul>
+                    <button class="subscribe-btn" onclick="openPaymentModal('Patron', '1.0')">Subscribe</button>
+                </div>
+            </div>
         </div>
     </div>
+
+    <!-- AI Assistant -->
+    <div class="ai-assistant">
+        <div class="ai-avatar">🤖</div>
+        <div class="ai-status" id="aiStatus">AI Gallery Assistant Ready</div>
+        <div style="color: #a0a0b0; font-size: 12px; text-align: center; margin-bottom: 10px;">
+            Ask me about artworks, pricing, or gallery features
+        </div>
+        <div class="voice-controls">
+            <button class="voice-btn" id="listenBtn">🎤 Listen</button>
+            <button class="voice-btn" id="speakBtn">🔊 Speak</button>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <h2>Complete Subscription</h2>
+            <div id="paymentDetails"></div>
+            <div id="transaction-status"></div>
+        </div>
+    </div>
+
+    <!-- AR Container -->
+    <div id="ar-container">
+        <button class="ar-close" onclick="closeAR()">Exit AR</button>
+    </div>
+
     <script>
-        // 3D Avatar code using Three.js
-        const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer();
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById('avatar').appendChild(renderer.domElement);
+        // Constants
+        const WALLET_ADDRESS = '0x02f93c7547309ca50eeab446daebe8ce8e694cbb';
+        let userWallet = null;
+        let provider = null;
+        let signer = null;
+        let scene, camera, renderer, gallery;
+        let recognition = null;
+        let synthesis = window.speechSynthesis;
 
-        const geometry = new THREE.BoxGeometry();
-        const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-        const cube = new THREE.Mesh(geometry, material);
-        scene.add(cube);
+        // Animated Background
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        bgCanvas.width = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
 
-        camera.position.z = 5;
+        const particles = [];
+        for (let i = 0; i < 100; i++) {
+            particles.push({
+                x: Math.random() * bgCanvas.width,
+                y: Math.random() * bgCanvas.height,
+                vx: (Math.random() - 0.5) * 2,
+                vy: (Math.random() - 0.5) * 2,
+                radius: Math.random() * 2
+            });
+        }
 
-        function animate() {
-            requestAnimationFrame(animate);
-            cube.rotation.x += 0.01;
-            cube.rotation.y += 0.01;
+        function animateBackground() {
+            bgCtx.fillStyle = 'rgba(10, 10, 15, 0.1)';
+            bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+
+            particles.forEach(p => {
+                p.x += p.vx;
+                p.y += p.vy;
+
+                if (p.x < 0 || p.x > bgCanvas.width) p.vx *= -1;
+                if (p.y < 0 || p.y > bgCanvas.height) p.vy *= -1;
+
+                bgCtx.fillStyle = '#00f2ff';
+                bgCtx.beginPath();
+                bgCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                bgCtx.fill();
+            });
+
+            requestAnimationFrame(animateBackground);
+        }
+        animateBackground();
+
+        // 3D Gallery Setup
+        function init3DGallery() {
+            const container = document.getElementById('gallery-3d');
+            scene = new THREE.Scene();
+            scene.fog = new THREE.Fog(0x0a0a0f, 10, 50);
+
+            camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            container.appendChild(renderer.domElement);
+
+            // Create Gallery Room
+            const floorGeometry = new THREE.PlaneGeometry(50, 50);
+            const floorMaterial = new THREE.MeshPhongMaterial({ 
+                color: 0x1a1a2e, 
+                shininess: 50,
+                emissive: 0x0a0a0f
+            });
+            const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.rotation.x = -Math.PI / 2;
+            scene.add(floor);
+
+            // Add Art Frames
+            for (let i = 0; i < 6; i++) {
+                const frameGeometry = new THREE.PlaneGeometry(3, 4);
+                const frameMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x00f2ff,
+                    emissive: 0x7b2ff7,
+                    shininess: 100
+                });
+                const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+                
+                const angle = (i / 6) * Math.PI * 2;
+                frame.position.x = Math.cos(angle) * 10;
+                frame.position.z = Math.sin(angle) * 10;
+                frame.position.y = 2;
+                frame.lookAt(0, 2, 0);
+                
+                scene.add(frame);
+            }
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+            scene.add(ambientLight);
+
+            const spotLight = new THREE.SpotLight(0x00f2ff, 1);
+            spotLight.position.set(0, 10, 0);
+            scene.add(spotLight);
+
+            camera.position.set(0, 2, 15);
+
+            animate3DGallery();
+        }
+
+        function animate3DGallery() {
+            requestAnimationFrame(animate3DGallery);
+            camera.position.x = Math.sin(Date.now() * 0.0005) * 15;
+            camera.position.z = Math.cos(Date.now() * 0.0005) * 15;
+            camera.lookAt(0, 2, 0);
             renderer.render(scene, camera);
         }
-        animate();
 
-        // Voice interaction setup
-        if (annyang) {
-            const commands = {
-                'hello': function() { alert('Hello! How can I assist you today?'); },
-                'show subscription prices': function() { alert('Subscription prices are: 0.05 ETH, 0.2 ETH, 1.0 ETH'); }
-                // Add more voice commands as needed
-            };
-            annyang.addCommands(commands);
-            annyang.start();
+        // Initialize on load
+        window.addEventListener('load', () => {
+            init3DGallery();
+        });
+
+        function enter3DGallery() {
+            document.getElementById('gallery-3d').scrollIntoView({ behavior: 'smooth' });
+            aiSpeak('Welcome to the three D gallery. You can explore our AI generated artworks in this immersive virtual space.');
         }
 
-        // Connect Wallet button event
-        document.getElementById('connect-wallet').onclick = function() {
-            // MetaMask integration code here
-            alert('Wallet Connected!');
-            document.getElementById('payment-modal').style.display = 'block';
-        };
+        // AR Mode
+        function startAR() {
+            const arContainer = document.getElementById('ar-container');
+            arContainer.classList.add('active');
+            
+            // Initialize AR (simplified version)
+            const arScene = new THREE.Scene();
+            const arCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            const arRenderer = new THREE.WebGLRenderer({ alpha: true });
+            arRenderer.setSize(window.innerWidth, window.innerHeight);
+            arContainer.appendChild(arRenderer.domElement);
+
+            // Add AR content
+            const geometry = new THREE.BoxGeometry(2, 2, 2);
+            const material = new THREE.MeshPhongMaterial({ color: 0x00f2ff, emissive: 0x7b2ff7 });
+            const cube = new THREE.Mesh(geometry, material);
+            cube.position.z = -5;
+            arScene.add(cube);
+
+            const arLight = new THREE.AmbientLight(0xffffff);
+            arScene.add(arLight);
+
+            function animateAR() {
+                requestAnimationFrame(animateAR);
+                cube.rotation.x += 0.01;
+                cube.rotation.y += 0.01;
+                arRenderer.render(arScene, arCamera);
+            }
+            animateAR();
+
+            aiSpeak('Augmented reality mode activated. Point your device at a flat surface to place artwork.');
+        }
+
+        function closeAR() {
+            document.getElementById('ar-container').classList.remove('active');
+            document.getElementById('ar-container').innerHTML = '<button class="ar-close" onclick="closeAR()">Exit AR</button>';
+        }
+
+        // Wallet Connection
+        document.getElementById('connectWallet').addEventListener('click', async () => {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    await provider.send('eth_requestAccounts', []);
+                    signer = provider.getSigner();
+                    userWallet = await signer.getAddress();
+                    
+                    const shortAddress = `${userWallet.substring(0, 6)}...${userWallet.substring(38)}`;
+                    document.getElementById('connectWallet').textContent = `✓ ${shortAddress}`;
+                    
+                    aiSpeak('Wallet connected successfully! You can now purchase artworks and subscribe to premium membership.');
+                } catch (error) {
+                    alert('Failed to connect wallet: ' + error.message);
+                }
+            } else {
+                alert('Please install MetaMask to use crypto features!');
+            }
+        });
+
+        // Speech Recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                processVoiceCommand(transcript);
+            };
+
+            recognition.onerror = (event) => {
+                document.getElementById('aiStatus').textContent = 'Error: ' + event.error;
+            };
+
+            recognition.onend = () => {
+                document.getElementById('listenBtn').classList.remove('active');
+                document.getElementById('aiStatus').textContent = 'AI Gallery Assistant Ready';
+            };
+        }
+
+        document.getElementById('listenBtn').addEventListener('click', () => {
+            if (recognition) {
+                recognition.start();
+                document.getElementById('listenBtn').classList.add('active');
+                document.getElementById('aiStatus').textContent = '🎤 Listening...';
+            }
+        });
+
+        document.getElementById('speakBtn').addEventListener('click', () => {
+            aiSpeak('Welcome to the Galactic AI Art Gallery. I can help you explore artworks, explain pricing, or guide you through our three D and augmented reality experiences.');
+        });
+
+        function processVoiceCommand(command) {
+            const lower = command.toLowerCase();
+            let response = '';
+
+            if (lower.includes('price') || lower.includes('cost')) {
+                response = 'We have memberships starting at 0.05 ETH for Collectors, 0.2 ETH for Curators, and 1 ETH for Patrons.';
+            } else if (lower.includes('art') || lower.includes('artwork')) {
+                response = 'Our gallery features AI-generated artworks including Neural Dreams, Quantum Visions, and Digital Consciousness. Each piece is unique and blockchain verified.';
+            } else if (lower.includes('ar') || lower.includes('augmented')) {
+                response = 'You can activate augmented reality mode to view artworks in your physical space. Just click the Launch AR Mode button.';
+            } else if (lower.includes('3d') || lower.includes('gallery')) {
+                response = 'The three D gallery lets you walk through a virtual space and view artworks from all angles. Click Enter three D Gallery to begin.';
+            } else {
+                response = 'I can help you with artwork information, pricing, three D gallery tours, and augmented reality features. What would you like to know?';
+            }
+
+            document.getElementById('aiStatus').textContent = response;
+            aiSpeak(response);
+        }
+
+        function aiSpeak(text) {
+            synthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 0.9;
+            utterance.pitch = 1.1;
+            synthesis.speak(utterance);
+        }
+
+        function viewArt(title) {
+            aiSpeak(`Viewing ${title}. This is an AI generated artwork. Would you like to view it in augmented reality or purchase it with Ethereum?`);
+        }
+
+        // Payment Modal
+        function openPaymentModal(plan, price) {
+            if (!userWallet) {
+                alert('Please connect your wallet first!');
+                return;
+            }
+
+            const modal = document.getElementById('paymentModal');
+            const details = document.getElementById('paymentDetails');
+            
+            details.innerHTML = `
+                <h3>${plan} Membership</h3>
+                <p style="font-size: 36px; color: #00f2ff; margin: 20px 0;">${price} ETH</p>
+                <p>Payment to: ${WALLET_ADDRESS}</p>
+                <button class="subscribe-btn" onclick="processPayment('${price}', '${plan}')">Confirm Payment</button>
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('paymentModal').classList.remove('active');
+        }
+
+        async function processPayment(amount, plan) {
+            const statusDiv = document.getElementById('transaction-status');
+            statusDiv.style.background = 'rgba(0, 242, 255, 0.1)';
+            statusDiv.style.color = '#00f2ff';
+            statusDiv.textContent = 'Processing payment...';
+
+            try {
+                const tx = {
+                    to: WALLET_ADDRESS,
+                    value: ethers.utils.parseEther(amount)
+                };
+
+                const transaction = await signer.sendTransaction(tx);
+                statusDiv.textContent = 'Transaction sent! Waiting for confirmation...';
+                
+                const receipt = await transaction.wait();
+                
+                if (receipt.status === 1) {
+                    statusDiv.style.background = 'rgba(0, 255, 136, 0.1)';
+                    statusDiv.style.color = '#00ff88';
+                    statusDiv.textContent = '✅ Payment successful! Membership activated!';
+                    
+                    setTimeout(() => {
+                        closeModal();
+                        aiSpeak(`Congratulations! Your ${plan} membership is now active. Enjoy full access to our AI art gallery!`);
+                    }, 2000);
+                } else {
+                    throw new Error('Transaction failed');
+                }
+            } catch (error) {
+                statusDiv.style.background = 'rgba(255, 0, 110, 0.1)';
+                statusDiv.style.color = '#ff006e';
+                statusDiv.textContent = '❌ Payment failed: ' + error.message;
+            }
+        }
+
+        // Responsive
+        window.addEventListener('resize', () => {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            
+            if (renderer) {
+                const container = document.getElementById('gallery-3d');
+                camera.aspect = container.offsetWidth / container.offsetHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+            }
+        });
     </script>
 </body>
 </html>
