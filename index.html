@@ -1,1 +1,121 @@
-<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <meta name="description" content="Galactic Experience">\n    <title>Galactic Experience</title>\n    <style>\n        body { margin: 0; font-family: Arial, sans-serif; background: linear-gradient(180deg, #1c1c1c, #3c3c3c); color: white; }\n        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; }\n        .logo { font-size: 24px; font-weight: bold; }\n        .wallet-btn { background-color: #ff4081; border: none; color: white; padding: 10px 20px; border-radius: 5px; cursor: pointer; }\n        .garden { width: 100vw; height: 100vh; position: relative; }\n        .neural-panel { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.8); padding: 20px; border-radius: 10px; }\n        .card { background: rgba(255, 255, 255, 0.1); margin: 15px; padding: 20px; border-radius: 8px; }\n        .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); }\n        @media (max-width: 600px) {\n            .card-grid { grid-template-columns: 1fr; }\n        }\n    </style>\n</head>\n<body>\n    <div class="header">\n        <div class="logo">Galactic</div>\n        <button class="wallet-btn" id="connectButton">Connect Wallet</button>\n    </div>\n    <div class="garden" id="garden">\n        <!-- 3D garden coding with trees, flowers, and fountain goes here-->\n    </div>\n    <div class="neural-panel" id="neuralPanel">\n        <button id="togglePanel">Toggle Neural Panel</button>\n        <canvas id="brainwaveMonitor"></canvas>\n        <div id="commands">\n            <button>Neural Button 1</button>\n            <button>Neural Button 2</button>\n        </div>\n        <div id="pulsingBrainIcon">🧠</div>\n    </div>\n    <div class="card-grid">\n        <div class="card">Free Explorer (FREE) <button>Subscribe</button></div>\n        <div class="card">AR Access (0.0001 ETH) <button>Subscribe</button></div>\n        <div class="card">VR Experience (0.0005 ETH) <button>Subscribe</button></div>\n        <div class="card">Neural Premium (0.001 ETH) <button>Subscribe</button></div>\n        <div class="card">Quantum Elite (0.005 ETH) <button>Subscribe</button></div>\n    </div>\n    <div id="paymentModal" style="display: none;">\n        <h2>Payment Details</h2>\n        <p id="planDetails"></p>\n        <p id="planPrice"></p>\n        <button id="confirmPayment">Confirm Payment</button>\n        <button id="closeModal">X</button>\n        <p id="transactionStatus"></p>\n    </div>\n    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>\n    <script>\n        let gardenElement = document.getElementById('garden');\n        let web3;\n        let account;\n        async function connectWallet() {\n            if (typeof window.ethereum !== 'undefined') {\n                web3 = new Web3(window.ethereum);\n                try {\n                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });\n                    account = accounts[0];\n                    alert('Connected: ' + account);\n                } catch (error) {\n                    console.error('User denied account access');\n                }\n            } else {\n                alert('MetaMask is not installed!');\n            }\n        }\n        document.getElementById('connectButton').addEventListener('click', connectWallet);\n        document.getElementById('togglePanel').addEventListener('click', function() {\n            const panel = document.getElementById('neuralPanel');\n            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';\n        });\n        // Payment functionality logic would go here.\n    </script>\n</body>\n</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic Neural Garden</title>
+    <style>
+      body {
+          margin: 0;
+          overflow: hidden;
+          background: linear-gradient(to bottom, #1e1e2d, #4a2c91);
+          color: white;
+      }
+      header {
+          position: fixed;
+          width: 100%;
+          background: rgba(0,0,0,0.7);
+          padding: 15px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+      header h1 {
+          margin: 0;
+      }
+      .connect-btn {
+          background: #4e6ff9;
+          border: none;
+          padding: 10px 20px;
+          cursor: pointer;
+      }
+      .hero {
+          position: relative;
+          top: 60px;
+          text-align: center;
+          padding: 100px 20px;
+      }
+      .pricing-cards {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          margin-top: 50px;
+      }
+      .card {
+          background: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.2);
+          margin: 15px;
+          padding: 20px;
+          border-radius: 10px;
+          width: 200px;
+      }
+      footer {
+          position: fixed;
+          bottom: 0;
+          right: 0;
+          margin: 10px;
+      }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🧠 GALACTIC NEURAL GARDEN</h1>
+        <button class="connect-btn" onclick="connectWallet()">Connect Wallet</button>
+    </header>
+    <div class="hero">
+        <h2>Welcome to the Galactic Neural Garden</h2>
+        <p>Experience the beauty of our 3D garden and connect your neural interface.</p>
+        <button>Enter VR Mode</button>
+        <button>Enter AR Mode</button>
+        <button>Connect Neuralink</button>
+    </div>
+
+    <div class="pricing-cards">
+        <div class="card">
+            <h3>Free Explorer</h3>
+            <p>Free</p>
+            <button class="subscribe-btn">Subscribe</button>
+        </div>
+        <div class="card">
+            <h3>AR Access</h3>
+            <p>0.0001 ETH</p>
+            <button class="subscribe-btn">Subscribe</button>
+        </div>
+        <div class="card">
+            <h3>VR Experience</h3>
+            <p>0.0005 ETH</p>
+            <button class="subscribe-btn">Subscribe</button>
+        </div>
+        <div class="card">
+            <h3>Neural Premium</h3>
+            <p>0.001 ETH</p>
+            <button class="subscribe-btn">Subscribe</button>
+        </div>
+        <div class="card">
+            <h3>Quantum Elite</h3>
+            <p>0.005 ETH</p>
+            <button class="subscribe-btn">Subscribe</button>
+        </div>
+    </div>
+
+    <footer>
+        <div id="neural-panel">
+            <canvas id="brainwave-monitor"></canvas>
+            <!-- Animated brain, buttons, etc. -->
+        </div>
+    </footer>
+
+    <script src="https://threejs.org/build/three.min.js"></script>
+    <script>
+      async function connectWallet() {
+          if (window.ethereum) {
+              const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+              console.log('Connected account:', accounts[0]);
+          } else {
+              alert('MetaMask is not installed!');
+          }
+      }
+      // Add Three.js scene setup, camera animation, etc.
+    </script>
+</body>
+</html>
