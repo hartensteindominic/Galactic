@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Galactic Leap - Vault Sync</title>
+  <script src="https://cdn.ethers.io/lib/ethers-6.13.2.umd.min.js"></script>
+  <style>
+    :root {
+      --primary: #00ffaa;
+      --accent: #00aaff;
+      --warning: #ff6600;
+      --purple: #aa00ff;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0a0a1f;
+      color: #e0e0ff;
+      min-height: 100vh;
+    }
+    .header {
+      height: 100px;
+      background: linear-gradient(90deg, var(--primary), var(--accent), #ffaa00);
+      border-radius: 0 0 50% 50% / 0 0 100% 100%;
+      position: relative;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, #00ffcc88, transparent 70%);
+      border-radius: 50%;
+      filter: blur(35px);
+    }
+    .container {
+      max-width: 920px;
+      margin: 20px auto;
+      padding: 20px;
+      background: rgba(20,20,50,0.75);
+      border-radius: 16px;
+      border: 1px solid #4444ff44
