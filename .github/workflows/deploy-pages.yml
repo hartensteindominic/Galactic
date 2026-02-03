@@ -1,0 +1,46 @@
+# .github/workflows/deploy-pages.yml
+
+name: Deploy to GitHub Pages
+
+on:
+  # Run automatically on pushes to main
+  push:
+    branches: ["main"]
+  # Allow manual trigger from Actions tab
+  workflow_dispatch:
+
+# These permissions are needed to interact with Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent multiple concurrent deployments
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Single job that handles everything (no build needed for plain HTML)
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact (static files)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Deploy everything from the repo root
+          # (GitHub Pages will serve index.html automatically)
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
