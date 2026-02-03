@@ -3,127 +3,123 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Vault Sync • Test Deploy</title>
+  <title>Vault Sync • Live</title>
+  <script src="https://cdn.ethers.io/lib/ethers-6.13.2.umd.min.js"></script>
   <style>
     body {
       margin: 0;
-      font-family: system-ui, sans-serif;
-      background: #0a0a1f;
-      color: #e0e0ff;
-      min-height: 100vh;
       padding: 2rem;
-      line-height: 1.6;
+      font-family: system-ui, sans-serif;
+      background: #0f0f25;
+      color: #f0f0ff;
+      min-height: 100vh;
     }
     header {
       text-align: center;
       margin-bottom: 2rem;
     }
     h1 {
-      font-size: 2.8rem;
-      background: linear-gradient(90deg, #00ffaa, #00ccff);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 3rem;
+      color: #00ffcc;
+      margin-bottom: 0.5rem;
+    }
+    .intro {
+      font-size: 1.3rem;
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      color: #d0d0ff;
     }
     .card {
-      max-width: 800px;
-      margin: 0 auto;
-      background: rgba(30,30,60,0.85);
+      background: rgba(40,40,80,0.9);
       border-radius: 16px;
       padding: 2rem;
-      border: 1px solid #4444ff66;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      max-width: 800px;
+      margin: 0 auto 2rem;
+      border: 1px solid #4444ff80;
     }
-    .status {
-      background: #000022;
+    #status {
+      background: #000011;
       padding: 1.2rem;
       border-radius: 10px;
-      margin: 1.5rem 0;
+      min-height: 160px;
       font-family: monospace;
-      font-size: 1rem;
-      min-height: 120px;
+      font-size: 1.05rem;
       overflow-y: auto;
-      border: 1px solid #222266;
+      border: 1px solid #333366;
+      margin: 1.5rem 0;
     }
     button {
-      padding: 0.9rem 1.8rem;
-      margin: 0.5rem;
+      padding: 1rem 2rem;
+      margin: 0.8rem 0.5rem;
       font-size: 1.1rem;
       font-weight: bold;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       cursor: pointer;
       color: white;
     }
-    .sync-btn { background: linear-gradient(90deg, #00ff99, #00ccff); }
-    .auto-btn { background: linear-gradient(90deg, #ff6600, #ff9900); }
-    .ai-btn   { background: linear-gradient(90deg, #aa00ff, #6600ff); }
+    .btn-sync { background: linear-gradient(90deg, #00ffaa, #00ddff); color: #000; }
+    .btn-auto { background: linear-gradient(90deg, #ff7700, #ffaa00); }
+    .btn-ai   { background: linear-gradient(90deg, #bb00ff, #7700ff); }
     .loading { color: #aaaaff; font-style: italic; }
-    #conn { font-weight: bold; margin: 1rem 0; }
   </style>
 </head>
 <body>
 
 <header>
-  <h1>Vault Sync • Deploy Test</h1>
-  <p style="color:#aaaaff; margin-top:0.5rem;">This page should show content immediately. If not → hard refresh (Ctrl+Shift+R)</p>
+  <h1>Vault Sync</h1>
+  <p class="intro">If you see this text → deployment works. Black screen fixed by visible fallback content.</p>
 </header>
 
 <div class="card">
-  <p><strong>ETH Price:</strong> <span id="eth-price" class="loading">Loading...</span></p>
+  <p><strong>ETH Price:</strong> <span id="price" class="loading">Loading...</span></p>
 
   <div style="margin:1.5rem 0;">
     <label>Risk: <span id="risk-val">1x</span></label><br>
-    <input type="range" min="1" max="10" value="1" step="0.5" id="risk">
+    <input type="range" min="1" max="10" value="1" step="0.5" id="risk-slider">
   </div>
 
   <div style="margin:1.5rem 0;">
-    Amount: <input type="text" id="amt" value="0.00001" style="width:140px; padding:0.6rem; background:#111133; border:1px solid #444; border-radius:6px; color:white;">
+    Amount: <input type="text" id="amt" value="0.00001" style="padding:0.7rem; background:#111122; border:1px solid #444; border-radius:8px; color:white; width:160px;">
   </div>
 
   <div>
-    <button class="sync-btn" onclick="startSync()">SYNC VAULT</button>
-    <button class="auto-btn" onclick="toggleAuto()">AUTO MODE</button>
-    <button class="ai-btn"   onclick="askAI()">AI ADVICE</button>
+    <button class="btn-sync" onclick="syncNow()">SYNC VAULT</button>
+    <button class="btn-auto" onclick="toggleAuto()">AUTO MODE</button>
+    <button class="btn-ai"   onclick="getAdvice()">AI ADVICE</button>
   </div>
 
-  <div id="conn">Wallet: Not connected</div>
-
-  <div id="status" class="status">
-    Page loaded successfully ✓<br>
-    Waiting for user interaction or wallet...
-  </div>
+  <div id="status">Status: Page loaded • Waiting for actions...</div>
 </div>
 
 <script>
-// Basic status logger
-const status = document.getElementById('status');
-function addLog(msg, err=false) {
-  const color = err ? 'color:#ff6666;' : '';
-  status.innerHTML += `<span style="${color}">> ${msg}</span><br>`;
-  status.scrollTop = status.scrollHeight;
+// Simple logger
+const st = document.getElementById('status');
+function log(txt, err = false) {
+  const c = err ? 'color:#ff7777;' : '';
+  st.innerHTML += `<span style="${c}">> ${txt}</span><br>`;
+  st.scrollTop = st.scrollHeight;
 }
 
-// Update price
+// Price fallback
 fetch('https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd')
   .then(r => r.json())
-  .then(d => document.getElementById('eth-price').textContent = '$' + d.ethereum.usd.toLocaleString())
-  .catch(() => document.getElementById('eth-price').textContent = 'N/A (offline)');
+  .then(d => document.getElementById('price').textContent = '$' + d.ethereum.usd)
+  .catch(() => document.getElementById('price').textContent = 'Offline');
 
-// Risk slider
-document.getElementById('risk').oninput = e => {
+// Risk update
+document.getElementById('risk-slider').oninput = e => {
   document.getElementById('risk-val').textContent = e.target.value + 'x';
 };
 
-// Wallet connect stub (real logic would go here)
-async function connect() {
-  if (!window.ethereum) {
-    addLog("No wallet detected (MetaMask?)", true);
-    document.getElementById('conn').textContent = "Wallet: Not found";
-    return null;
-  }
-  try {
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    const addr = (await provider.getSigner()).getAddress();
-    addLog("Connected: " + addr);
-    document
+// Placeholder actions (add your real code later)
+function syncNow()     { log("Sync clicked – connect wallet here"); }
+function toggleAuto()  { log("Auto mode toggled"); }
+function getAdvice()   { log("AI advice requested"); }
+
+// Confirm load
+log("Core page ready. Interact with buttons.");
+</script>
+
+</body>
+</html>
