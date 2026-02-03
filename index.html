@@ -2,99 +2,114 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Grok Audible Sentinel v2.0</title>
+    <title>Sentinel Debug v3.0</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
-        :root { --neon: #00f2ff; --bg: #050505; }
-        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        :root { --neon: #00f2ff; --bg: #050505; --red: #ff3e3e; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; height: 100vh; }
         
-        /* 3D Container */
-        #canvas-container { width: 300px; height: 300px; position: relative; }
+        #canvas-container { width: 350px; height: 350px; border-radius: 50%; box-shadow: inset 0 0 50px var(--neon); }
         
-        #audio-status { font-size: 0.8rem; letter-spacing: 3px; margin-top: 20px; text-shadow: 0 0 10px var(--neon); }
-        .btn { background: transparent; border: 1px solid var(--neon); color: var(--neon); padding: 15px 30px; cursor: pointer; font-weight: bold; margin-top: 20px; transition: 0.3s; z-index: 10; }
-        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 20px var(--neon); }
+        /* Debug Console Overlay */
+        #debug-log { position: absolute; left: 20px; top: 20px; width: 250px; height: 80vh; font-size: 0.7rem; color: #555; overflow: hidden; pointer-events: none; }
+        .log-entry { margin-bottom: 5px; border-left: 2px solid #222; padding-left: 5px; }
+        .log-error { color: var(--red); border-color: var(--red); }
         
-        #webcam-feed { position: absolute; bottom: 20px; right: 20px; width: 150px; border: 1px solid #333; opacity: 0.5; }
+        .btn { background: transparent; border: 2px solid var(--neon); color: var(--neon); padding: 20px 50px; cursor: pointer; font-weight: bold; font-size: 1.2rem; transition: 0.3s; }
+        .btn:hover { background: var(--neon); color: #000; box-shadow: 0 0 30px var(--neon); }
+        
+        #webcam-view { position: absolute; bottom: 20px; right: 20px; width: 180px; height: 120px; background: #111; border: 1px solid #333; }
+        video { width: 100%; height: 100%; object-fit: cover; filter: sepia(100%) hue-rotate(140deg) brightness(1.2); }
     </style>
 </head>
 <body>
 
+<div id="debug-log"></div>
 <div id="canvas-container"></div>
-<video id="webcam-feed" autoplay playsinline muted></video>
-
-<div id="audio-status">SYSTEM: STANDBY</div>
-<button id="startBtn" class="btn">INITIALIZE SENTINEL</button>
+<div id="webcam-view"><video id="v" autoplay playsinline muted></video></div>
+<button id="startBtn" class="btn">ACTIVATE AI CORE</button>
 
 <script>
+    const logger = document.getElementById('debug-log');
+    function log(msg, isError = false) {
+        const div = document.createElement('div');
+        div.className = isError ? 'log-entry log-error' : 'log-entry';
+        div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+        logger.prepend(div);
+        console.log(msg);
+    }
+
     let scene, camera, renderer, sphere;
-    const status = document.getElementById('audio-status');
 
-    // 1. Initialize 3D Environment
     function init3D() {
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(300, 300);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-        // Create a wireframe "Agent" sphere
-        const geometry = new THREE.IcosahedronGeometry(1.5, 2);
-        const material = new THREE.MeshBasicMaterial({ color: 0x00f2ff, wireframe: true });
-        sphere = new THREE.Mesh(geometry, material);
-        scene.add(sphere);
-
-        camera.position.z = 4;
-        animate();
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-        sphere.rotation.x += 0.005;
-        sphere.rotation.y += 0.01;
-        
-        // Pulse effect if speaking
-        if (window.speechSynthesis.speaking) {
-            const scale = 1 + Math.sin(Date.now() * 0.01) * 0.2;
-            sphere.scale.set(scale, scale, scale);
-        } else {
-            sphere.scale.set(1, 1, 1);
-        }
-        
-        renderer.render(scene, camera);
-    }
-
-    // 2. Speech Agent Logic
-    function speak(text) {
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.pitch = 0.5; // Deeper, robotic tone
-        msg.rate = 0.9;
-        window.speechSynthesis.speak(msg);
-    }
-
-    // 3. Main Activation
-    async function activate() {
-        document.getElementById('startBtn').style.display = 'none';
-        status.innerText = "SYSTEM: BOOTING...";
-
         try {
-            // Camera feed
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            document.getElementById('webcam-feed').srcObject = stream;
-
-            init3D();
-            speak("Sentinel online. Vision and audio systems synchronized. Monitoring environment.");
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(350, 350);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
             
-            setInterval(() => {
-                status.innerText = window.speechSynthesis.speaking ? "STATUS: TRANSMITTING" : "STATUS: MONITORING";
-            }, 500);
-
-        } catch (err) {
-            status.innerText = "ERROR: PERMISSION DENIED";
-        }
+            const geo = new THREE.IcosahedronGeometry(1.5, 4);
+            const mat = new THREE.MeshBasicMaterial({ color: 0x00f2ff, wireframe: true });
+            sphere = new THREE.Mesh(geo, mat);
+            scene.add(sphere);
+            camera.position.z = 3.5;
+            
+            function render() {
+                requestAnimationFrame(render);
+                sphere.rotation.y += 0.01;
+                if (window.speechSynthesis.speaking) {
+                    let s = 1 + (Math.random() * 0.2);
+                    sphere.scale.set(s,s,s);
+                }
+                renderer.render(scene, camera);
+            }
+            render();
+            log("3D RENDERER INITIALIZED");
+        } catch(e) { log("3D ERROR: " + e.message, true); }
     }
 
-    document.getElementById('startBtn').onclick = activate;
+    function speak(txt) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(txt);
+        utterance.pitch = 0.5;
+        utterance.rate = 0.8;
+        
+        // Fix for Chrome: Voices must be loaded
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) utterance.voice = voices[0];
+        
+        window.speechSynthesis.speak(utterance);
+        log("AI SPEAKING: " + txt);
+    }
+
+    async function start() {
+        document.getElementById('startBtn').style.display = 'none';
+        log("BOOT SEQUENCE INITIATED...");
+        
+        init3D();
+
+        // Check Permissions
+        try {
+            log("REQUESTING SENSOR ACCESS...");
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            document.getElementById('v').srcObject = stream;
+            log("VISION SENSORS ONLINE");
+        } catch (err) {
+            log("VISION ERROR: " + err.name, true);
+            log("FIX: Run this on a local server or HTTPS!", true);
+        }
+
+        setTimeout(() => {
+            speak("Sentinel online. Monitoring local environment for anomalies.");
+        }, 1000);
+    }
+
+    // Pre-load voices for Chrome
+    window.speechSynthesis.onvoiceschanged = () => log("VOICE ENGINE READY");
+    document.getElementById('startBtn').onclick = start;
+    
+    log("SYSTEM STANDBY. AWAITING USER COMMAND.");
 </script>
 </body>
 </html>
