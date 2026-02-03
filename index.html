@@ -2,123 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sentinel AI v7.0</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        :root { --neon: #00f2ff; --bg: #000; }
-        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
-        
-        #canvas-container { width: 320px; height: 320px; touch-action: none; }
-        
-        /* HUD UI */
-        #hud-overlay { position: absolute; width: 100%; height: 100%; pointer-events: none; border: 1px solid rgba(0, 242, 255, 0.1); box-sizing: border-box; }
-        #status-bar { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 0.7rem; letter-spacing: 2px; }
-        
-        .btn { 
-            background: rgba(0,0,0,0.8); border: 2px solid var(--neon); color: var(--neon); 
-            padding: 20px 40px; font-weight: bold; cursor: pointer; z-index: 100;
-            text-transform: uppercase; box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
-        }
-        
-        /* Tiny Camera Feed */
-        #v { position: absolute; top: 15px; left: 15px; width: 80px; height: 60px; border: 1px solid #222; transform: scaleX(-1); border-radius: 4px; background: #111; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galactic AI Platform</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.6.0.min.js"></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-<div id="hud-overlay"></div>
-<video id="v" autoplay playsinline muted></video>
-<div id="status-bar">SYSTEM: DISCONNECTED</div>
-
-<div id="canvas-container"></div>
-
-<button id="activateBtn" class="btn">Connect Neural Link</button>
-
-<script>
-    let scene, camera, renderer, sphere, clock;
-    const status = document.getElementById('status-bar');
-
-    function init3D() {
-        clock = new THREE.Clock();
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(320, 320);
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-        // Advanced Icosahedron (Reactive Mesh)
-        const geometry = new THREE.IcosahedronGeometry(1.5, 3);
-        const material = new THREE.MeshBasicMaterial({ 
-            color: 0x00f2ff, 
-            wireframe: true,
-            transparent: true,
-            opacity: 0.7 
-        });
-        sphere = new THREE.Mesh(geometry, material);
-        scene.add(sphere);
-
-        camera.position.z = 4;
-        animate();
-    }
-
-    function animate() {
-        requestAnimationFrame(animate);
-        const t = clock.getElapsedTime();
-        
-        sphere.rotation.y += 0.005;
-        sphere.rotation.z += 0.002;
-
-        // Visual Reaction logic
-        if (window.speechSynthesis.speaking) {
-            // Pulse effect when the AI is talking
-            const pulse = 1 + Math.sin(t * 20) * 0.15;
-            sphere.scale.set(pulse, pulse, pulse);
-            sphere.material.opacity = 1;
-        } else {
-            sphere.scale.set(1, 1, 1);
-            sphere.material.opacity = 0.5;
-        }
-        
-        renderer.render(scene, camera);
-    }
-
-    // iPhone-specific Audio Unlock
-    function aiSpeak(text) {
-        window.speechSynthesis.cancel();
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.pitch = 0.4;
-        msg.rate = 0.85;
-        msg.volume = 1;
-        window.speechSynthesis.speak(msg);
-    }
-
-    document.getElementById('activateBtn').addEventListener('click', async function() {
-        this.style.display = 'none';
-        status.innerText = "INITIALIZING CORE...";
-
-        // 1. Force Audio Unlock (Handshake)
-        aiSpeak("Sentinel protocol engaged. I am monitoring your location.");
-
-        // 2. Start 3D
-        init3D();
-
-        // 3. Request Sensors (Camera)
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { facingMode: "user" },
-                audio: false 
-            });
-            document.getElementById('v').srcObject = stream;
-            status.innerText = "SENTINEL ONLINE - MONITORING ACTIVE";
-        } catch (err) {
-            status.innerText = "SENSORS BLOCKED: CHECK SETTINGS";
-            status.style.color = "#ff4444";
-        }
-    });
-
-    // Warm up the voices for iOS Safari
-    window.speechSynthesis.getVoices();
-</script>
+    <div id="wallet-banner">Connect your wallet</div>
+    <nav>
+       ...  <!-- Navigation code here -->
+    </nav>
+    <header>
+        <canvas id="particle-canvas"></canvas>
+    </header>
+    <main>
+       ...  <!-- Main content with AI innovations mega grid -->
+    </main>
+    <footer>
+        <p>Crypto address: 0x02f93c7547309ca50eeab446daebe8ce8e694cbb</p>
+    </footer>
+    <script src="script.js"></script>
 </body>
 </html>
