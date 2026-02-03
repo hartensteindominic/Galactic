@@ -3,32 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vault Sync Pro</title>
+    <title>Cognis Trade AI | Vault Trader</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { background: #050510; color: #00ffcc; font-family: monospace; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .box { border: 2px solid #00ffcc; padding: 30px; border-radius: 10px; background: #0a0a1f; width: 350px; text-align: center; }
-        input { width: 100%; padding: 10px; margin: 10px 0; background: #000; border: 1px solid #333; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: #00ffcc; border: none; font-weight: bold; cursor: pointer; }
-        #log { font-size: 0.7rem; color: #888; margin-top: 15px; height: 50px; overflow: auto; border-top: 1px solid #222; padding-top: 10px; }
+        :root {
+            --neon-cyan: #00f2ff;
+            --dark-bg: #030712;
+            --glass: rgba(10, 20, 40, 0.8);
+        }
+        body { 
+            background: radial-gradient(circle at center, #0a192f 0%, #030712 100%);
+            color: #e0f2f1; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar / Active Bots */
+        .sidebar { background: var(--glass); border-right: 1px solid #1e293b; padding: 20px; }
+        .bot-card { background: #0f172a; padding: 10px; margin-bottom: 10px; border-radius: 8px; border-left: 3px solid var(--neon-cyan); font-size: 0.85rem; }
+        .bot-card span { color: #10b981; float: right; }
+
+        /* Main Trading Center */
+        .main-content { padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1e293b; padding-bottom: 10px; }
+        
+        .trade-panel { 
+            background: var(--glass); 
+            border: 1px solid var(--neon-cyan); 
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.1);
+            padding: 30px; 
+            border-radius: 15px; 
+            text-align: center; 
+        }
+
+        input { 
+            width: 100%; padding: 12px; margin: 10px 0; 
+            background: #020617; border: 1px solid #334155; 
+            color: var(--neon-cyan); border-radius: 5px; font-family: monospace;
+        }
+
+        button { 
+            width: 100%; padding: 15px; background: var(--neon-cyan); 
+            color: #000; font-weight: bold; border: none; border-radius: 5px;
+            cursor: pointer; transition: 0.3s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        button:hover { box-shadow: 0 0 15px var(--neon-cyan); transform: translateY(-2px); }
+
+        /* AI Metrics Section */
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .metric-box { background: #0f172a; padding: 15px; border-radius: 10px; border: 1px solid #1e293b; }
+        .chart-container { height: 150px; position: relative; }
+
+        /* Right Panel / Global Market */
+        .market-list { background: var(--glass); border-left: 1px solid #1e293b; padding: 20px; font-size: 0.8rem; overflow-y: auto; }
+        .market-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; }
+        .up { color: #10b981; } .down { color: #ef4444; }
+
+        #log { color: #64748b; font-size: 0.75rem; margin-top: 10px; font-family: 'Courier New', Courier, monospace; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>VAULT TRADER</h2>
-        <input type="text" id="t" placeholder="Token Address" value="0x6B175474E89094C44Da98b954EEDEAC495271d0F">
-        <input type="number" id="a" value="0.01">
-        <button onclick="trade()">CONNECT & TRADE</button>
-        <div id="log">> Ready for Mainnet</div>
+
+    <div class="sidebar">
+        <h3 style="color: var(--neon-cyan)">ACTIVE BOTS</h3>
+        <div class="bot-card">ALFA_OMEGA <span>+12.4%</span><br><small>ETH/USDC Arbitrage</small></div>
+        <div class="bot-card">QUANTUM_STRIKE <span>+5.1%</span><br><small>High-Freq Scalp</small></div>
+        <div class="bot-card">NEURAL_SENTIMENT <span>+8.9%</span><br><small>News-Based Long</small></div>
     </div>
+
+    <div class="main-content">
+        <div class="header">
+            <h2 style="margin:0; letter-spacing: 2px;">COGNIS TRADE <span style="font-weight:100; color:var(--neon-cyan)">AI</span></h2>
+            <div id="wallet-status" style="font-size: 0.8rem;">● DISCONNECTED</div>
+        </div>
+
+        <div class="trade-panel">
+            <h1 style="margin-top:0; font-size: 1.2rem; color: var(--neon-cyan);">VAULT TRADER</h1>
+            <label style="float:left; font-size: 0.7rem; color: #94a3b8;">TOKEN ADDRESS</label>
+            <input type="text" id="t" value="0x6B175474E89094C44Da98b954EEDEAC495271d0F">
+            <label style="float:left; font-size: 0.7rem; color: #94a3b8;">AMOUNT (ETH)</label>
+            <input type="number" id="a" value="0.01">
+            <button onclick="trade()">Connect & Initialize Trade</button>
+            <div id="log">> SYSTEM STANDBY... READY FOR MAINNET</div>
+        </div>
+
+        <div class="metrics-grid">
+            <div class="metric-box">
+                <div style="font-size: 0.7rem; margin-bottom: 5px;">AI CONFIDENCE SCORE</div>
+                <div style="font-size: 1.5rem; color: var(--neon-cyan);">94.2%</div>
+            </div>
+            <div class="metric-box">
+                <div style="font-size: 0.7rem; margin-bottom: 5px;">ESTIMATED GAS</div>
+                <div style="font-size: 1.5rem;">24 Gwei</div>
+            </div>
+        </div>
+
+        <div class="metric-box chart-container">
+            <canvas id="performanceChart"></canvas>
+        </div>
+    </div>
+
+    <div class="market-list">
+        <h4 style="margin-top:0">MARKET PULSE</h4>
+        <div class="market-row"><span>BTC/USDT</span><span class="up">+2.4%</span></div>
+        <div class="market-row"><span>ETH/USDT</span><span class="up">+1.8%</span></div>
+        <div class="market-row"><span>SOL/USDT</span><span class="down">-0.5%</span></div>
+        <div class="market-row"><span>LINK/USDT</span><span class="up">+4.1%</span></div>
+        <div class="market-row"><span>UNI/USDT</span><span class="down">-1.2%</span></div>
+    </div>
+
 <script>
+    // Initialize AI Performance Chart
+    const ctx = document.getElementById('performanceChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: ['1h', '2h', '3h', '4h', '5h', '6h'],
+            datasets: [{
+                label: 'AI Performance',
+                data: [12, 19, 15, 25, 22, 30],
+                borderColor: '#00f2ff',
+                tension: 0.4,
+                borderWidth: 2,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { x: { display: false }, y: { display: false } }
+        }
+    });
+
     async function trade() {
         if (!window.ethereum) return alert("Install MetaMask");
         const p = new ethers.BrowserProvider(window.ethereum);
         await p.send("eth_requestAccounts", []);
         const s = await p.getSigner();
-        document.getElementById('log').innerText = "> Connected: " + (await s.getAddress()).slice(0,10);
-        // Trade logic here
+        const addr = await s.getAddress();
+        
+        document.getElementById('wallet-status').innerText = "● " + addr.slice(0,6) + "..." + addr.slice(-4);
+        document.getElementById('wallet-status').style.color = "#10b981";
+        document.getElementById('log').innerText = "> AI ANALYZING LIQUIDITY POOLS...";
+        
+        // Simulate AI Thinking
+        setTimeout(() => {
+            document.getElementById('log').innerText = "> TRADE ROUTE OPTIMIZED. EXECUTING...";
+        }, 1500);
     }
 </script>
 </body>
