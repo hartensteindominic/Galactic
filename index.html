@@ -3,56 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galactic - AI Platform</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="script.js" defer></script>
-    <script src="web3-integration.js" defer></script>
+    <title>AI Platform</title>
 </head>
 <body>
-    <div id="wallet-banner">Wallet Address: <span>0x02f93c7547309ca50eeab446daebe8ce8e694cbb</span></div>
+    <div class="wallet-banner">
+        <button id="connect-button">Connect Wallet</button>
+    </div>
     <nav>
-      <!-- Navigation links -->
+        <ul>
+            <li><a href="#hero">Home</a></li>
+            <li><a href="#models">AI Models</a></li>
+            <li><a href="#pricing">Pricing</a></li>
+            <li><a href="#demo">Demo</a></li>
+            <li><a href="#features">Features</a></li>
+        </ul>
     </nav>
-    <header>
-        <h1>Welcome to Galactic AI</h1>
-    </header>
-    <section id="innovations">
-        <div class="card-grid">
-            <!-- 20 AI Model Cards -->
+    <section id="hero">
+        <h1>Welcome to the AI Platform</h1>
+        <div class="hero-stats">
+            <p>20+ AI Models</p>
         </div>
     </section>
-    <section id="neural-models">
-        <!-- Neural Models Section -->
+    <section id="models">
+        <div class="model-cards">
+            <!-- AI Model Cards go here -->
+            <div class="model-card">
+                <h2>Model 1</h2>
+                <button>Learn More</button>
+            </div>
+            <!-- Repeat for 20 models -->
+        </div>
     </section>
     <section id="pricing">
-        <div class="pricing-card">
-            <h2>Free</h2>
-            <p>Pricing details here</p>
-        </div>
-        <div class="pricing-card">
-            <h2>Pro - 0.05 ETH</h2>
-            <p>Pricing details here</p>
-        </div>
-        <div class="pricing-card">
-            <h2>Enterprise - 0.2 ETH</h2>
-            <p>Pricing details here</p>
-        </div>
-        <div class="pricing-card">
-            <h2>Quantum - 1.0 ETH</h2>
-            <p>Pricing details here</p>
+        <div class="pricing-cards">
+            <div class="pricing-card">
+                <h2>Subscribe for AI Model 1</h2>
+                <button>Subscribe</button>
+            </div>
+            <!-- Repeat for pricing options -->
         </div>
     </section>
     <section id="demo">
-        <!-- Demo Section -->
+        <h2>Try our models</h2>
+        <button>Demo</button>
     </section>
     <section id="features">
-        <!-- Features Section -->
+        <h2>Features</h2>
+        <!-- Features go here -->
     </section>
     <footer>
-        <p>Contact: <span>0x02f93c7547309ca50eeab446daebe8ce8e694cbb</span></p>
+        <p>© 2026 AI Platform</p>
     </footer>
-    <div id="payment-modal">
-        <!-- Payment Modal HTML -->
-    </div>
+    <script src="script.js"></script>
 </body>
 </html>

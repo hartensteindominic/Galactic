@@ -1,17 +1,26 @@
-// script.js
+// Particle canvas animation code here
 
-// Particle canvas animation code
+function initParticles() {
+    // Init particle settings
+}
 
-// Smooth scrolling behavior
+function smoothScroll(target) {
+    // Smooth scroll functionality
+}
 
-// Category filtering
+function highlightNav() {
+    // Highlight the current navigation based on scroll position
+}
 
-// Navigation highlighting
+function toggleMobileMenu() {
+    // Toggle mobile menu visibility
+}
 
-// Card animations logic
+function handleDemoButton() {
+    // Handle demo button click
+}
 
-// Intersection observer for lazy loading
-
-// Mobile menu toggle
-
-// Demo button handlers
+// Event listeners
+document.getElementById('connect-button').addEventListener('click', function() {
+    // Connect wallet logic
+});

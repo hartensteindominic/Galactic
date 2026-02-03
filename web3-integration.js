@@ -1,13 +1,19 @@
-// web3-integration.js
+// Web3 integration code
 
-// MetaMask wallet connection setup
+async function connectToMetaMask() {
+    if (typeof window.ethereum !== 'undefined') {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        console.log('Connected to', accounts[0]);
+    }
+}
 
-// Ethereum payment processing to address 0x02f93c7547309ca50eeab446daebe8ce8e694cbb
+async function processPayment(amount) {
+    // Ethereum payment logic here
+}
 
-// Subscription management using localStorage
+function manageSubscription() {
+    // Subscription management logic
+}
 
-// Transaction status updates
-
-// Modal control logic
-
-// Account change handlers
+// Event handlers for modal control and account change
+window.ethereum.on('accountsChanged', manageSubscription);
