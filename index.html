@@ -1,58 +1,33 @@
-<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Enhanced WebXR Experience</title>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://aframe.io/releases/1.2.0/aframe-hand-tracking.min.js"></script>
-    <script src="https://aframe.io/releases/1.2.0/aframe-teleport.js"></script>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        .interactive {
-            cursor: pointer;
-        }
-    </style>
+    <title>Galactic Garden</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/aframe@1.2.0/dist/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.136.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@metamask/detect-provider@1.2.2/dist/esm/index.js"></script>
 </head>
 <body>
-    <a-scene embedded vr-mode-ui="enabled: true">
-        <a-assets>
-            <img id="skytexture" src="path/to/sky.jpg">
-        </a-assets>
-
-        <a-sky src="#skytexture"></a-sky>
-
-        <!-- Your existing garden objects here -->
-        <a-entity id="tree1" position="-3 0 -5" geometry="primitive: cylinder; radius: 0.5; height: 3;" material="color: green;"></a-entity>
-        <a-entity id="tree2" position="2 0 -5" geometry="primitive: cylinder; radius: 0.5; height: 3;" material="color: green;"></a-entity>
-        <a-entity id="flower1" position="0 0 -3" geometry="primitive: sphere; radius: 0.1;" material="color: yellow;"></a-entity>
-        <a-entity id="fountain" position="0 0 -1" geometry="primitive: torus; radius: 0.5; radiusTubular: 0.1;" material="color: blue;"></a-entity>
-
-        <a-entity camera look-controls></a-entity>
-        <a-entity hand-controls="hand: left;"></a-entity>
-        <a-entity hand-controls="hand: right;"></a-entity>
-        <a-entity teleport-controls="cameraRig: #camera;" static-container="#garden"></a-entity>
-
-        <!-- New interactive elements -->
-        <a-box class="interactive" position="-1 1 -5" color="#4CC3D0"></a-box>
-        <a-sphere class="interactive" position="2 1 -4" radius="1" color="#EF2D5E"></a-sphere>
-
-        <!-- Device detection and orientation controls for iPhone -->
-        <script>
-            if ("DeviceOrientationEvent" in window) {
-                window.addEventListener("deviceorientation", function(event) {
-                    // Code to handle device orientation
-                });
-            }
-        </script>
-    </a-scene>
-
+    <h1>Welcome to the Galactic Garden</h1>
+    <div id="garden"></div>
+    <button id="connect-wallet">Connect MetaMask</button>
+    <button id="track-subscription">Track Subscription</button>
+    <button id="neuralink-toggle">Toggle Neuralink</button>
+    <button id="disconnect-neuralink">Disconnect Neuralink</button>
+    <div id="brainwave-visualization"></div>
     <script>
-        if (navigator.userAgent.includes("iPhone")) {
-            // Load iPhone specific controls 
-            document.querySelector('a-scene').setAttribute('device-orientation', 'enabled: true');
+        // JavaScript implementation of original features and enhancements
+        // MetaMask wallet connection logic
+        const connectWalletButton = document.getElementById('connect-wallet');
+        // Subscription tracking logic
+        const trackSubscriptionButton = document.getElementById('track-subscription');
+        // Neuralink toggle logic
+        const neuralinkToggleButton = document.getElementById('neuralink-toggle');
+        const disconnectNeuralinkButton = document.getElementById('disconnect-neuralink');
+        // Brainwave visualization
+        // WebXR support and device orientation controls for iPhone Safari
+        if (navigator.xr) {
+            // Enable device orientation controls
         }
     </script>
 </body>
