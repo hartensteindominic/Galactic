@@ -1,90 +1,83 @@
-// Infinite Garden Script
+// Initialize the scene and renderer
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
 
-// Infinite procedural generation
+// Ground plane and environment setup
+const groundGeometry = new THREE.PlaneGeometry(1000, 1000);
+const groundMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+// Function to generate garden
 function generateGarden() {
-    // Logic for procedural generation
+    // Code for generating trees and flowers with random placement
 }
 
-// WASD controls
-document.addEventListener('keydown', function(event) {
-    switch(event.key) {
-        case 'w': // Move forward
-            break;
-        case 'a': // Move left
-            break;
-        case 's': // Move backward
-            break;
-        case 'd': // Move right
-            break;
-    }
+// Event listeners for controls
+window.addEventListener('keydown', (event) => {
+    // Handle WASD controls
 });
 
-// MetaMask integration
-if (typeof window.ethereum !== 'undefined') {
-    // Request account access if needed
-}
+// Pointer lock for mouse controls
+const pointerLock = () => {
+    document.body.requestPointerLock();
+};
 
-// Chunk loading/unloading
-function loadChunks() {
-    // Logic for loading chunks
-}
-
-function unloadChunks() {
-    // Logic for unloading chunks
-}
-
-// Physics engine integration
-function applyPhysics() {
-    // Physics logic
-}
-
-// UI functions
-function updateUI() {
-    // Update user interface
-}
-
-// AR/VR modes
-function activateAR() {
-    // AR activation logic
-}
-
-function activateVR() {
-    // VR activation logic
-}
-
-// Neuralink brainwave integration
-function readBrainwaves() {
-    // Logic to read brainwaves
-}
-
-// NEW AI agent clouds
-function createClouds() {
-    // Create floating clouds
-    const clouds = [];
-    for (let i = 0; i < 10; i++) {
-        clouds.push(createCloudParticle());
+// MetaMask wallet connection
+async function connectWallet() {
+    if (window.ethereum) {
+        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        console.log('Connected account:', accounts[0]);
     }
-    return clouds;
 }
 
-function createCloudParticle() {
-    // Create individual cloud particle
+// Payment processing functions
+function openPayment() { /* open payment modal */ }
+function closeModal() { /* close modal */ }
+function processPayment() { /* handle payment processing */ }
+
+// Subscription management
+function saveSubscription() { localStorage.setItem('subscription', 'active'); }
+function checkSubscriptions() { return localStorage.getItem('subscription'); }
+
+// AR/VR launch functions
+function launchAR() { /* AR functionality here */ }
+function launchVR() { /* VR functionality here */ }
+
+// Neuralink brainwave canvas animation
+function startBrainwave() { /* start animation */ }
+
+// AI Agent clouds
+const clouds = [];
+function createClouds() {
+    // Code to create AI Agent clouds with respective colors
 }
 
-// Status panel for AI agents
-function updateStatusPanel(agentStatus) {
-    // Update panel with agent information
+// Status panel for AI Agent
+function updateStatusPanel() {
+    // Update panel with real-time tasks every 3 seconds
 }
 
-// Main game loop
-function updateGameLoop() {
-    generateGarden();
-    loadChunks();
-    applyPhysics();
-    updateUI();
-    updateStatusPanel();
-    requestAnimationFrame(updateGameLoop);
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+    // Update the scene, chunks and agent clouds
+    renderer.render(scene, camera);
 }
 
-// Start the game loop
-updateGameLoop();
+// Initialize all
+generateGarden();
+connectWallet();
+createClouds();
+animate();
+
+// Handle window resize
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
