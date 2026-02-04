@@ -2,121 +2,140 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Pro | AI Command Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Nexus Sovereign | Mobile Terminal</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
             --primary: #00f2fe;
-            --secondary: #4facfe;
-            --accent: #8b5cf6;
+            --secondary: #8b5cf6;
+            --success: #10b981;
             --bg: #020617;
             --card: #0f172a;
-            --border: rgba(255, 255, 255, 0.1);
+            --border: rgba(255, 255, 255, 0.08);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
             color: white;
             min-height: 100vh;
+            line-height: 1.4;
         }
 
-        /* Layout Elements */
-        nav { width: 100%; max-width: 1200px; margin: 0 auto; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 1.6rem; font-weight: 900; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        
-        .btn { padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: 0.3s ease; }
-        .btn-connect { background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); }
-        .btn-connect:hover { background: rgba(255,255,255,0.1); }
-        
-        /* Sections Visibility */
-        #landing-page { display: flex; flex-direction: column; align-items: center; padding: 80px 20px; }
-        #portal-page { display: none; max-width: 1100px; margin: 0 auto; padding: 40px 20px; animation: fadeIn 0.8s ease; }
-
-        /* Landing Design */
-        .hero-h1 { font-size: 4rem; text-align: center; margin-bottom: 20px; line-height: 1.1; }
-        .pricing-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            padding: 40px;
-            border-radius: 28px;
-            text-align: center;
-            max-width: 400px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+        /* Navigation */
+        nav {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: rgba(2, 6, 23, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        /* Portal Design */
-        .portal-grid { display: grid; grid-template-columns: 1fr 350px; gap: 30px; margin-top: 30px; }
-        .main-panel { background: var(--card); border-radius: 24px; border: 1px solid var(--border); padding: 30px; }
-        .side-panel { background: rgba(255,255,255,0.02); border-radius: 24px; border: 1px solid var(--border); padding: 25px; }
+        .logo { font-size: 1.2rem; font-weight: 900; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        /* Chat UI */
-        #chat-box { height: 300px; overflow-y: auto; background: #020617; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
-        .msg { margin-bottom: 10px; padding: 10px; border-radius: 8px; font-size: 0.9rem; }
-        .msg.bot { background: rgba(0, 242, 254, 0.1); color: var(--primary); }
-        .msg.user { background: rgba(255,255,255,0.05); text-align: right; }
+        /* Buttons */
+        .btn { padding: 14px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; font-size: 16px; transition: 0.2s; width: 100%; }
+        .btn-connect { width: auto; background: rgba(255,255,255,0.05); color: white; border: 1px solid var(--border); padding: 8px 16px; font-size: 14px; }
+
+        /* Landing Page */
+        #landing-page { padding: 40px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .hero-title { font-size: 2.5rem; font-weight: 900; margin-bottom: 15px; margin-top: 20px; }
+        .pricing-box { background: var(--card); border: 1px solid var(--border); padding: 30px; border-radius: 24px; width: 100%; max-width: 400px; margin-top: 20px; }
+
+        /* Portal Layout (Mobile First) */
+        #portal-page { display: none; padding: 20px; animation: fadeIn 0.5s ease; }
+        .dashboard-layout { display: flex; flex-direction: column; gap: 20px; }
         
-        input[type="text"], textarea {
-            width: 100%; background: #020617; border: 1px solid var(--border); 
-            padding: 12px; border-radius: 8px; color: white; margin-bottom: 10px;
+        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 20px; }
+
+        /* Chat UI - Optimized for Thumb Typing */
+        #chat-box { height: 250px; overflow-y: auto; margin-bottom: 15px; padding-right: 5px; }
+        .msg { margin-bottom: 10px; padding: 12px; border-radius: 12px; font-size: 15px; background: rgba(255,255,255,0.03); max-width: 90%; }
+        .msg.bot { border-left: 3px solid var(--primary); color: #e2e8f0; }
+        .msg.user { margin-left: auto; background: var(--secondary); color: white; border-radius: 12px 12px 0 12px; }
+
+        input { 
+            width: 100%; background: #000; border: 1px solid var(--border); 
+            padding: 16px; border-radius: 12px; color: white; font-size: 16px; /* 16px prevents iOS zoom */
+            outline: none;
         }
 
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        input:focus { border-color: var(--primary); }
+
+        /* Desktop Adjustments */
+        @media (min-width: 768px) {
+            .dashboard-layout { display: grid; grid-template-columns: 280px 1fr; }
+            .hero-title { font-size: 4rem; }
+            .panel-vault { grid-column: 1 / 2; }
+            .panel-chat { grid-column: 2 / 3; grid-row: 1 / 3; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <nav>
         <div class="logo">NEXUS PRO</div>
-        <button id="connectBtn" class="btn btn-connect">Connect Wallet</button>
+        <button id="connectBtn" class="btn btn-connect">Connect</button>
     </nav>
 
     <section id="landing-page">
-        <h1 class="hero-h1">AI Command Center <br><span style="color:var(--primary)">Unlocked via Web3</span></h1>
-        <p style="color: #9ca3af; margin-bottom: 40px; text-align: center; max-width: 600px;">Deploy high-level AI agents and market analytics. Secure access with a one-time blockchain verification.</p>
+        <h1 class="hero-title">AI Command <br><span style="color:var(--primary)">Terminal</span></h1>
+        <p style="color: #64748b;">Unlock industrial-grade tools and private signals instantly.</p>
         
-        <div class="pricing-card">
-            <div style="font-size: 0.8rem; letter-spacing: 2px; color: var(--primary); margin-bottom: 10px;">LIFETIME ACCESS</div>
-            <div style="font-size: 3.5rem; font-weight: 800; margin-bottom: 20px;">0.0005 <span style="font-size: 1.2rem; color: #475569;">ETH</span></div>
-            <button id="payBtn" class="btn" style="background:linear-gradient(45deg, var(--primary), var(--secondary)); color:black; width:100%; font-size:1.1rem;">Unlock Portal</button>
-            <div id="status" style="margin-top:20px; color: #64748b; font-size: 0.9rem;">Please connect wallet to begin.</div>
+        <div class="pricing-box">
+            <div style="font-size: 0.8rem; color: var(--primary); letter-spacing: 2px; margin-bottom: 10px;">LIFETIME PASS</div>
+            <div style="font-size: 3rem; font-weight: 800; margin-bottom: 20px;">0.0005 <span style="font-size: 1rem; opacity: 0.5;">ETH</span></div>
+            <button id="payBtn" class="btn" style="background:var(--primary); color:#000;">INITIALIZE ACCESS</button>
+            <p id="status" style="margin-top:20px; font-size: 14px; color: #475569;">Connect wallet to proceed</p>
         </div>
     </section>
 
     <section id="portal-page">
-        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-            <div>
-                <h2 style="font-size: 2rem;">Welcome, <span id="userDisp" class="gradient-text" style="color:var(--primary)">Agent</span></h2>
-                <p style="color: #9ca3af;">Portal Status: <span style="color:var(--success)">Verified Access</span></p>
-            </div>
-            <div style="background:rgba(16, 185, 129, 0.1); padding: 8px 15px; border-radius: 20px; color:#10b981; font-size:0.8rem; font-weight:bold;">● SYSTEM ONLINE</div>
+        <div style="margin-bottom: 25px;">
+            <h2 style="font-size: 1.5rem;">Console Ready</h2>
+            <p style="color: var(--success); font-size: 14px; font-weight: bold;">● SECURE CONNECTION ACTIVE</p>
         </div>
 
-        <div class="portal-grid">
-            <div class="main-panel">
-                <h3>Nexus AI Assistant</h3>
-                <p style="color:#9ca3af; font-size:0.85rem; margin-bottom:20px;">Ask anything or generate code snippets.</p>
-                <div id="chat-box">
-                    <div class="msg bot">Hello! I am Nexus AI. Your access is verified. How can I assist your workflow today?</div>
+        <div class="dashboard-layout">
+            <div class="panel">
+                <h3 style="font-size: 1rem; color: var(--primary); margin-bottom: 15px;">MARKET DATA</h3>
+                <div style="display:flex; justify-content:space-between; font-size:14px; margin-bottom:10px;">
+                    <span>ETH/USD</span><span style="color:var(--success)">+$142.10</span>
                 </div>
-                <div style="display:flex; gap:10px;">
-                    <input type="text" id="chatInput" placeholder="Type a command...">
-                    <button id="sendMsg" class="btn" style="background:var(--primary); color:black; padding:0 20px;">Send</button>
+                <div style="display:flex; justify-content:space-between; font-size:14px;">
+                    <span>GAS FEE</span><span style="color:var(--primary)">12 Gwei</span>
                 </div>
             </div>
 
-            <div class="side-panel">
-                <h3>Request Custom Build</h3>
-                <p style="color:#9ca3af; font-size:0.8rem; margin-bottom:15px;">Need a custom AI model or Web3 site? Submit your request here.</p>
-                <form id="requestForm">
-                    <label style="font-size:0.8rem; color:#9ca3af;">Project Name</label>
-                    <input type="text" placeholder="e.g. Trading Bot">
-                    <label style="font-size:0.8rem; color:#9ca3af;">Requirements</label>
-                    <textarea placeholder="Describe what you need..." rows="4"></textarea>
-                    <button type="button" class="btn" style="width:100%; border:1px solid var(--primary); color:var(--primary); background:transparent;">Submit Ticket</button>
-                </form>
+            <div class="panel panel-chat">
+                <h3 style="font-size: 1rem; margin-bottom: 15px;">AI ASSISTANT</h3>
+                <div id="chat-box">
+                    <div class="msg bot">Terminal ready. Type a command or ask me about current on-chain trends.</div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="chatInput" placeholder="Message AI..." autocomplete="off">
+                    <button id="sendMsg" class="btn" style="width: auto; background: var(--primary); color: #000; padding: 0 20px;">➔</button>
+                </div>
+            </div>
+
+            <div class="panel panel-vault">
+                <h3 style="font-size: 1rem; color: var(--secondary); margin-bottom: 15px;">ASSET VAULT</h3>
+                <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:10px; margin-bottom:10px; display:flex; justify-content:space-between; font-size:14px;">
+                    <span>Alpha_Report.pdf</span><span style="color:var(--primary)">↓</span>
+                </div>
+                <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:10px; display:flex; justify-content:space-between; font-size:14px;">
+                    <span>Tool_Kit.zip</span><span style="color:var(--primary)">↓</span>
+                </div>
             </div>
         </div>
     </section>
@@ -134,80 +153,68 @@
         const chatBox = document.getElementById('chat-box');
         const chatInput = document.getElementById('chatInput');
         const sendMsg = document.getElementById('sendMsg');
-        
-        let provider, signer, userAddress;
 
-        function showPortal() {
+        function openPortal() {
             landingPage.style.display = "none";
             portalPage.style.display = "block";
-            document.getElementById('userDisp').innerText = userAddress.substring(0,6);
+            window.scrollTo(0,0);
         }
 
-        // Connect Wallet
         async function connect() {
             if (window.ethereum) {
                 try {
-                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
-                    userAddress = accounts[0];
-                    connectBtn.innerText = userAddress.substring(0,6) + "..." + userAddress.substring(38);
+                    userAddress = accs[0];
+                    connectBtn.innerText = userAddress.substring(0,4) + "..";
                     
                     if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
-                        statusDiv.innerHTML = "✨ <b>Admin Access</b> (Free Unlock)";
-                        payBtn.innerText = "Enter Portal (Admin)";
-                        payBtn.style.background = "linear-gradient(45deg, #10b981, #059669)";
+                        statusDiv.innerHTML = "👑 <b style='color:var(--success)'>Admin Recognized</b>";
+                        payBtn.innerText = "BYPASS & ENTER";
+                        payBtn.style.background = "var(--success)";
                     } else {
-                        statusDiv.innerText = "Wallet Connected. Unlock for 0.0005 ETH.";
+                        statusDiv.innerText = "Wallet Synced. Awaiting Payment.";
                     }
                 } catch (e) { statusDiv.innerText = "Connection failed."; }
-            } else { statusDiv.innerText = "MetaMask not found."; }
+            } else { alert("Please use a Web3 Browser like MetaMask or Coinbase Wallet app."); }
         }
 
-        // Handle Payment or Admin Entry
-        async function handleAction() {
+        async function processEntry() {
             if (!signer) { await connect(); return; }
-            
-            if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
-                showPortal();
-                return;
-            }
+            if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) { openPortal(); return; }
 
             try {
                 payBtn.disabled = true;
-                statusDiv.innerText = "Waiting for payment...";
+                statusDiv.innerText = "Confirming in Wallet...";
                 const tx = { to: DESTINATION, value: ethers.utils.parseEther(AMOUNT) };
-                const response = await signer.sendTransaction(tx);
-                statusDiv.innerText = "Confirming on-chain...";
-                await response.wait();
-                showPortal();
+                const res = await signer.sendTransaction(tx);
+                statusDiv.innerText = "Confirming On-Chain...";
+                await res.wait();
+                openPortal();
             } catch (e) {
                 statusDiv.innerText = "Transaction failed.";
                 payBtn.disabled = false;
             }
         }
 
-        // Chat Box Logic
         sendMsg.addEventListener('click', () => {
             if (!chatInput.value) return;
-            const userMsg = document.createElement('div');
-            userMsg.className = "msg user";
-            userMsg.innerText = chatInput.value;
-            chatBox.appendChild(userMsg);
+            const u = document.createElement('div');
+            u.className = "msg user"; u.innerText = chatInput.value;
+            chatBox.appendChild(u);
             
             setTimeout(() => {
-                const botMsg = document.createElement('div');
-                botMsg.className = "msg bot";
-                botMsg.innerText = "Request received. I am processing your query: '" + chatInput.value + "'";
-                chatBox.appendChild(botMsg);
+                const b = document.createElement('div');
+                b.className = "msg bot"; b.innerText = "Nexus AI: Analyzing request... Action confirmed for '" + chatInput.value + "'.";
+                chatBox.appendChild(b);
                 chatBox.scrollTop = chatBox.scrollHeight;
-            }, 600);
-            
+            }, 500);
             chatInput.value = "";
         });
 
         connectBtn.addEventListener('click', connect);
-        payBtn.addEventListener('click', handleAction);
+        payBtn.addEventListener('click', processEntry);
     </script>
 </body>
 </html>
