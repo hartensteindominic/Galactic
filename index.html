@@ -56,12 +56,13 @@
         }
 
         #chat-box {
-            height: 400px;
+            height: 300px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 15px;
             margin-bottom: 20px;
+            padding-right: 10px;
         }
 
         .ai-log {
@@ -109,10 +110,11 @@
         .launch-btn {
             background: white; color: black; border: none;
             padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;
+            width: 100%;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -126,7 +128,7 @@
 
 <div id="chat-container">
     <div id="chat-box">
-        <div class="ai-log">System: Starlink Online. Direct API Access Active.</div>
+        <div class="ai-log">System: Starlink Online. Direct API Active.</div>
     </div>
 
     <div id="loading-spinner" class="hidden">
@@ -135,13 +137,13 @@
     </div>
 
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="Describe your site idea..." autocomplete="off">
+        <input type="text" id="user-input" placeholder="Describe your site architecture..." autocomplete="off">
         <button id="send-btn" onclick="processRequest()">Build</button>
     </div>
 </div>
 
 <script>
-    // 🔑 Your API Key from Google AI Studio
+    // 🔑 API Key from your Google AI Studio screenshot
     const API_KEY = "AIzaSyA1DV3pYPbZhulRAthhreH3cl7HfGm0zUg"; 
 
     async function processRequest() {
@@ -151,7 +153,7 @@
         
         if (!prompt) return;
 
-        logToChat("Generating: " + prompt);
+        logToChat("Requesting: " + prompt);
         spinner.classList.remove('hidden');
         inputField.value = ""; 
 
@@ -159,7 +161,7 @@
             const code = await generateAutonomousCode(prompt);
             displayCode(code, prompt);
         } catch (err) {
-            logToChat("Error: API Transmission failed. Please try again.");
+            logToChat("Error: Transmission failed. Try refreshing.");
             console.error(err);
         } finally {
             spinner.classList.add('hidden');
@@ -167,27 +169,21 @@
     }
 
     async function generateAutonomousCode(topic) {
-        // Direct call to Gemini 1.5 Flash
-        const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        // Direct call to Gemini 1.5 Flash for GitHub Pages compatibility
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
         
-        const response = await fetch(ENDPOINT, {
+        const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ 
-                    parts: [{ text: `Create a professional, high-quality single-file HTML/CSS webpage for: "${topic}". Include responsive design and modern styling. Return ONLY the code, no markdown or explanations.` }] 
-                }]
+                contents: [{ parts: [{ text: `Generate a professional single-file HTML/CSS webpage for: ${topic}. Include responsive CSS. Return ONLY the raw code.` }] }]
             })
         });
 
         const data = await response.json();
-        
-        if (data.error) {
-            throw new Error(data.error.message);
-        }
+        if (data.error) throw new Error(data.error.message);
 
         let raw = data.candidates[0].content.parts[0].text;
-        // Clean up markdown if the AI includes it
         return raw.replace(/```html|```/g, "").trim();
     }
 
@@ -207,7 +203,7 @@
 
         container.appendChild(launchBtn);
         box.appendChild(container);
-        logToChat("Build Complete. Ready for Launch.");
+        logToChat("Build Complete.");
         box.scrollTop = box.scrollHeight;
     }
 
@@ -219,22 +215,20 @@
         document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
     }
 
-    // --- Starfield Animation ---
+    // --- Background Animation ---
     const canvas = document.getElementById('starfield');
     const ctx = canvas.getContext('2d');
     let stars = [];
-
     function init() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        stars = Array.from({length: 150}, () => ({
+        stars = Array.from({length: 100}, () => ({
             x: Math.random() * canvas.width,
             y: Math.random() * canvas.height,
-            size: Math.random() * 1.5,
+            size: Math.random() * 2,
             speed: Math.random() * 0.5 + 0.1
         }));
     }
-
     function animate() {
         ctx.fillStyle = '#050505';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -248,7 +242,6 @@
         });
         requestAnimationFrame(animate);
     }
-
     window.addEventListener('resize', init);
     init(); animate();
 </script>
