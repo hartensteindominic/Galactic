@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Sovereign V3.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
+    <style>
+        :root { --bg: #000; --text: #fff; --prime: #3b82f6; --card: #111; --border: #333; }
+        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+        
+        /* Loading Screen to prevent "White Flash" */
+        #boot-screen { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: var(--prime); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #app { display: none; height: 100%; flex-direction: column; }
+        nav { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .main-layout { display: flex; flex: 1; overflow: hidden; }
+        
+        /* Sidebar and Content */
+        #sidebar { width: 250px; background: #050505; border-right: 1px solid var(--border); padding: 15px; overflow-y: auto; }
+        #forge { flex: 1; display: flex; flex-direction: column; position: relative; }
+        #editor-pane { flex: 1; background: #000; color: #10b981; font-family: monospace; padding: 20px; border: none; outline: none; resize: none; font-size: 14px; }
+        #preview-pane { flex: 1; background: #fff; border-left: 1px solid var(--border); }
+        iframe { width: 100%; height: 100%; border: none; }
+
+        /* Control Bar */
+        .controls { padding: 10px; background: var(--card); border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        button { background: var(--prime); color: #fff; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:disabled { opacity: 0.3; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <div id="boot-screen"><div class="spinner"></div></div>
+
+    <div id="app">
+        <nav>
+            <div style="font-weight:900;">NEXUS SOVEREIGN V3.0</div>
+            <div id="status">Ready</div>
+        </nav>
+        
+        <div class="main-layout">
+            <div id="sidebar">
+                <h4 style="color:#666; font-size:12px;">HISTORY</h4>
+                <div id="vault-list"></div>
+            </div>
+            <div id="forge">
+                <textarea id="editor-pane" placeholder="Your code will appear here..."></textarea>
+                <div class="controls">
+                    <button id="undoBtn">UNDO</button>
+                    <button id="redoBtn">REDO</button>
+                    <button id="rewriteBtn" style="background:#fff; color:#000;">REWRITE WITH AI</button>
+                    <button id="shareBtn" style="background:#1d9bf0;">SHARE TO X</button>
+                </div>
+            </div>
+            <div id="preview-pane">
+                <iframe id="live-frame"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. THE SAFETY BOOT ---
+        window.addEventListener('load', () => {
+            try {
+                if (typeof ethers === 'undefined') throw new Error("Ethers library failed to load.");
+                document.getElementById('boot-screen').style.display = 'none';
+                document.getElementById('app').style.display = 'flex';
+                initApp();
+            } catch (e) {
+                document.body.innerHTML = `<div style="padding:50px; color:red;"><h1>Fatal Error</h1><p>${e.message}</p><p>Check your internet connection or CDN links.</p></div>`;
+            }
+        });
+
+        // --- 2. THE CORE ENGINE ---
+        let history = [];
+        let redoStack = [];
+        let vault = [];
+
+        function initApp() {
+            const editor = document.getElementById('editor-pane');
+            const frame = document.getElementById('live-frame');
+
+            editor.addEventListener('input', () => {
+                updatePreview(editor.value);
+                saveState(editor.value);
+            });
+
+            document.getElementById('undoBtn').onclick = () => {
+                if (history.length > 1) {
+                    redoStack.push(history.pop());
+                    applyState(history[history.length - 1]);
+                }
+            };
+
+            document.getElementById('rewriteBtn').onclick = async () => {
+                const promptMsg = prompt("What changes should Grok-4 make?");
+                if (!promptMsg) return;
+                
+                document.getElementById('status').innerText = "Grok is thinking...";
+                // This is where you call your xAI API logic from previous versions
+                // For now, it acts as a placeholder for the logic we built.
+            };
+        }
+
+        function updatePreview(code) {
+            const frame = document.getElementById('live-frame');
+            const blob = new Blob([code], { type: 'text/html' });
+            frame.src = URL.createObjectURL(blob);
+        }
+
+        function applyState(code) {
+            document.getElementById('editor-pane').value = code;
+            updatePreview(code);
+        }
+
+        function saveState(code) {
+            if (history[history.length - 1] !== code) {
+                history.push(code);
+                if (history.length > 50) history.shift();
+                redoStack = [];
+            }
+        }
+    </script>
+</body>
+</html>
