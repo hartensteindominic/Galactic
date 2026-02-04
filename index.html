@@ -3,199 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elite AI Services | Low-Cost Web3</title>
+    <title>Nexus AI | Premium Web3 Services</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
-            --accent: #00f2fe;
-            --accent-dark: #4facfe;
-            --bg: #05070a;
-            --card: #111827;
-            --text: #ffffff;
+            --primary: #00f2fe;
+            --secondary: #4facfe;
+            --bg: #030712;
+            --glass: rgba(17, 24, 39, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: radial-gradient(circle at top right, #111827, #030712);
+            color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* Glassmorphism Header */
+        /* Navbar */
         nav {
             width: 100%;
-            max-width: 1200px;
+            max-width: 1100px;
+            padding: 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
+            backdrop-filter: blur(10px);
         }
 
         .logo {
-            font-size: 1.4rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-            background: linear-gradient(to right, var(--accent), var(--accent-dark));
+            font-size: 1.5rem;
+            font-weight: 900;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* Hero Section */
-        .hero {
+        /* Hero Container */
+        .container {
+            max-width: 900px;
             text-align: center;
-            padding: 80px 20px;
-            max-width: 800px;
+            padding: 60px 20px;
+            animation: fadeIn 1s ease-out;
         }
 
-        h1 {
-            font-size: clamp(2.5rem, 8vw, 4rem);
-            margin-bottom: 20px;
-            font-weight: 900;
-            line-height: 1.1;
-        }
+        h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); margin-bottom: 20px; line-height: 1; }
+        .gradient-text { color: var(--primary); }
 
-        .highlight { color: var(--accent); }
+        p.sub { color: #9ca3af; font-size: 1.2rem; margin-bottom: 40px; max-width: 600px; margin-inline: auto; }
 
-        p.description {
-            color: #9ca3af;
-            font-size: 1.2rem;
-            margin-bottom: 40px;
-        }
-
-        /* Pricing Card */
-        .pricing-card {
-            background: var(--card);
-            border: 1px solid #1f2937;
-            padding: 40px;
+        /* Pricing Card - Best in Class Design */
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--border);
             border-radius: 24px;
+            padding: 40px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            width: 100%;
-            max-width: 400px;
+            max-width: 420px;
+            margin: 0 auto;
             position: relative;
         }
 
-        .price {
-            font-size: 3rem;
-            font-weight: 800;
-            margin: 10px 0;
+        .card::before {
+            content: ''; position: absolute; top: -1px; left: -1px; right: -1px; bottom: -1px;
+            background: linear-gradient(45deg, var(--primary), transparent, var(--secondary));
+            border-radius: 24px; z-index: -1; opacity: 0.3;
         }
 
-        .price span { font-size: 1rem; color: #6b7280; }
+        .price { font-size: 3.5rem; font-weight: 800; margin: 15px 0; }
+        .price span { font-size: 1.2rem; color: #6b7280; font-weight: 400; }
 
+        /* Buttons */
         .btn {
             width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            border: none;
+            padding: 18px;
+            border-radius: 14px;
             font-size: 1.1rem;
             font-weight: 700;
             cursor: pointer;
-            transition: 0.3s;
-            margin-top: 15px;
+            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: none;
+            margin-top: 10px;
         }
 
-        .btn-main {
-            background: linear-gradient(45deg, var(--accent), var(--accent-dark));
-            color: #000;
+        .btn-connect { width: auto; background: #1f2937; color: white; padding: 10px 20px; }
+
+        #payBtn {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #030712;
+            box-shadow: 0 10px 20px -5px rgba(0, 242, 254, 0.4);
         }
 
-        .btn-main:hover { transform: scale(1.02); opacity: 0.9; }
+        #payBtn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -5px rgba(0, 242, 254, 0.6); }
+        
+        #payBtn:disabled { filter: grayscale(1); cursor: not-allowed; }
 
-        .btn-outline {
-            background: transparent;
-            color: var(--text);
-            border: 1px solid #374151;
-        }
+        #status { font-size: 0.9rem; color: var(--primary); margin-top: 20px; font-weight: 500; }
 
-        #status {
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: var(--accent-dark);
-            min-height: 20px;
-        }
-
-        .badge {
-            background: rgba(0, 242, 254, 0.1);
-            color: var(--accent);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
     <nav>
-        <div class="logo">CORE AI</div>
-        <button id="connectBtn" class="btn btn-outline" style="width: auto; padding: 10px 20px;">Connect Wallet</button>
+        <div class="logo">NEXUS</div>
+        <button id="connectBtn" class="btn btn-connect">Connect Wallet</button>
     </nav>
 
-    <section class="hero">
-        <span class="badge">Affordable Web3 Services</span>
-        <h1>Scale your vision <br><span class="highlight">without the high fees.</span></h1>
-        <p class="description">Access premium digital assets and AI tools instantly. Fast, secure, and low-cost transactions.</p>
+    <div class="container">
+        <h1>Premium Access <br><span class="gradient-text">Redefined.</span></h1>
+        <p class="sub">High-tier AI digital assets delivered instantly to your wallet. No subscriptions, just ownership.</p>
 
-        <div class="pricing-card" style="margin: 0 auto;">
-            <h3>Standard Access</h3>
+        <div class="card">
+            <div style="font-size: 0.8rem; letter-spacing: 2px; color: var(--primary); text-transform: uppercase;">Limited Offer</div>
             <div class="price">0.0005 <span>ETH</span></div>
-            <p style="color: #6b7280; margin-bottom: 30px;">~ $1.25 USD + Low Gas Fees</p>
+            <p style="color: #9ca3af; margin-bottom: 25px;">Affordable access on any network.</p>
             
-            <button id="payBtn" class="btn btn-main">Unlock Access Now</button>
-            <div id="status"></div>
+            <button id="payBtn" class="btn">Unlock Access</button>
+            <div id="status">Please connect your wallet to begin.</div>
         </div>
-    </section>
+    </div>
 
     <script>
-        // CONFIGURATION
+        const ADMIN_WALLET = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
         const DESTINATION = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
         const AMOUNT = "0.0005"; 
 
         const connectBtn = document.getElementById('connectBtn');
         const payBtn = document.getElementById('payBtn');
         const statusDiv = document.getElementById('status');
-        let provider, signer;
+        let provider, signer, userAddress;
+
+        async function updateUI(addr) {
+            userAddress = addr;
+            connectBtn.innerText = addr.substring(0,6) + "..." + addr.substring(38);
+            
+            if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
+                statusDiv.innerHTML = "✨ <b>Admin Mode:</b> Bypass active (Free)";
+                payBtn.innerText = "Enter Portal (Free)";
+                payBtn.style.background = "linear-gradient(45deg, #10b981, #059669)";
+            } else {
+                statusDiv.innerText = "Wallet connected. Ready for checkout.";
+            }
+        }
 
         async function connect() {
             if (window.ethereum) {
                 try {
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
-                    const addr = await signer.getAddress();
-                    connectBtn.innerText = addr.substring(0,6) + "..." + addr.substring(38);
-                    statusDiv.innerText = "Connected to Wallet";
-                } catch (e) { statusDiv.innerText = "Connection Denied"; }
-            } else { statusDiv.innerText = "Install MetaMask!"; }
+                    updateUI(accounts[0]);
+                } catch (e) { statusDiv.innerText = "Connection failed."; }
+            } else { statusDiv.innerText = "MetaMask not found."; }
         }
 
-        async function sendPayment() {
-            if (!signer) { statusDiv.innerText = "Please connect wallet first"; return; }
+        async function handleAction() {
+            if (!signer) { await connect(); return; }
             
+            if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
+                statusDiv.innerText = "Redirecting Admin...";
+                setTimeout(() => alert("Admin test success! Access granted."), 500);
+                return;
+            }
+
             try {
-                statusDiv.innerText = "Confirming transaction...";
-                const tx = {
-                    to: DESTINATION,
-                    value: ethers.utils.parseEther(AMOUNT)
-                };
+                payBtn.disabled = true;
+                statusDiv.innerText = "Waiting for wallet confirmation...";
+                const tx = { to: DESTINATION, value: ethers.utils.parseEther(AMOUNT) };
                 const response = await signer.sendTransaction(tx);
-                statusDiv.innerHTML = "Processing... <br> <small>Hash: " + response.hash.substring(0,10) + "...</small>";
+                statusDiv.innerText = "Transaction pending...";
                 await response.wait();
-                statusDiv.innerText = "✅ Payment Successful!";
+                statusDiv.innerText = "✅ Success! Access Unlocked.";
             } catch (e) {
-                statusDiv.innerText = "Transaction Failed";
-                console.log(e);
+                statusDiv.innerText = "Transaction cancelled.";
+                payBtn.disabled = false;
             }
         }
 
         connectBtn.addEventListener('click', connect);
-        payBtn.addEventListener('click', sendPayment);
+        payBtn.addEventListener('click', handleAction);
     </script>
 </body>
 </html>
