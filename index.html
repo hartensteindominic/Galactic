@@ -9,13 +9,13 @@
             --neon-blue: #00f2ff;
             --neon-purple: #bc13fe;
             --bg-dark: #050505;
-            --glass: rgba(255, 255, 255, 0.07);
+            --glass: rgba(255, 255, 255, 0.1);
         }
 
         body {
             background-color: var(--bg-dark);
             color: #e0e0e0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
@@ -30,29 +30,27 @@
             z-index: -1;
         }
 
-        header { padding: 30px 20px; text-align: center; z-index: 1; }
+        header { padding: 40px 20px; text-align: center; }
 
         h1 {
-            font-size: clamp(2rem, 8vw, 3.5rem);
-            letter-spacing: 10px;
+            font-size: clamp(2rem, 10vw, 4rem);
+            letter-spacing: 8px;
             text-transform: uppercase;
             background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin: 0;
-            filter: drop-shadow(0 0 15px rgba(0, 242, 255, 0.4));
         }
 
         #chat-container {
             width: 90%;
-            max-width: 850px;
+            max-width: 800px;
             background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 24px;
-            padding: 25px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.9);
-            z-index: 1;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(0, 242, 255, 0.2);
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 10;
         }
 
         #chat-box {
@@ -60,60 +58,35 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             margin-bottom: 20px;
-            padding-right: 10px;
         }
 
         .ai-log {
-            font-family: 'Courier New', monospace;
+            font-family: monospace;
             color: var(--neon-blue);
             background: rgba(0, 242, 255, 0.05);
-            padding: 12px;
+            padding: 10px;
             border-left: 3px solid var(--neon-blue);
-            border-radius: 6px;
-            font-size: 0.9rem;
-        }
-
-        #loading-spinner { margin: 15px 0; text-align: center; }
-        .spinner {
-            width: 35px; height: 35px; margin: 0 auto 8px;
-            border: 3px solid rgba(0, 242, 255, 0.1);
-            border-top-color: var(--neon-blue);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            border-radius: 4px;
+            font-size: 0.85rem;
         }
 
         .input-area { 
-            display: flex; gap: 12px; background: rgba(0,0,0,0.4);
-            padding: 8px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05);
+            display: flex; gap: 10px; 
         }
 
         input {
-            flex: 1; background: transparent; border: none;
-            padding: 12px; color: white; outline: none; font-size: 1rem;
+            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px; color: white; border-radius: 10px; outline: none;
         }
 
-        button#send-btn {
+        button {
             background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
             border: none; color: black; padding: 0 25px;
-            border-radius: 12px; font-weight: 800; cursor: pointer;
+            border-radius: 10px; font-weight: bold; cursor: pointer;
         }
 
-        .code-result {
-            background: rgba(0,0,0,0.7);
-            padding: 15px; border-radius: 12px;
-            border: 1px solid var(--neon-purple);
-            display: flex; flex-direction: column; gap: 10px;
-        }
-
-        .launch-btn {
-            background: white; color: black; border: none;
-            padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer;
-            width: 100%;
-        }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
     </style>
 </head>
@@ -123,126 +96,96 @@
 
 <header>
     <h1>GALACTIC</h1>
-    <p style="letter-spacing: 3px; font-size: 0.8rem; opacity: 0.6;">AUTONOMOUS AI ARCHITECT</p>
 </header>
 
 <div id="chat-container">
     <div id="chat-box">
-        <div class="ai-log">System: Starlink Online. Direct API Active.</div>
+        <div class="ai-log">> System: Ready for Architecture.</div>
     </div>
 
-    <div id="loading-spinner" class="hidden">
-        <div class="spinner"></div>
-        <p style="color: var(--neon-blue); font-size: 0.7rem; font-weight: bold;">ARCHITECTING MANIFEST...</p>
+    <div id="loading" class="hidden" style="color: var(--neon-blue); text-align: center; padding: 10px;">
+        Architecting...
     </div>
 
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="Describe your site architecture..." autocomplete="off">
-        <button id="send-btn" onclick="processRequest()">Build</button>
+        <input type="text" id="user-input" placeholder="Enter site idea...">
+        <button onclick="processRequest()">BUILD</button>
     </div>
 </div>
 
 <script>
-    // 🔑 API Key from your Google AI Studio screenshot
-    const API_KEY = "AIzaSyA1DV3pYPbZhulRAthhreH3cl7HfGm0zUg"; 
+    const API_KEY = "AIzaSyA1DV3pYPbZhulRAthhreH3cl7HfGm0zUg"; //
 
     async function processRequest() {
-        const inputField = document.getElementById('user-input');
-        const prompt = inputField.value.trim();
-        const spinner = document.getElementById('loading-spinner');
-        
-        if (!prompt) return;
+        const input = document.getElementById('user-input');
+        const topic = input.value.trim();
+        if (!topic) return;
 
-        logToChat("Requesting: " + prompt);
-        spinner.classList.remove('hidden');
-        inputField.value = ""; 
+        logToChat("Requesting: " + topic);
+        document.getElementById('loading').classList.remove('hidden');
 
         try {
-            const code = await generateAutonomousCode(prompt);
-            displayCode(code, prompt);
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+            
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: `Generate a full, single-file HTML/CSS webpage for: ${topic}. Return ONLY the raw code.` }] }]
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.error) throw new Error(data.error.message);
+            
+            const rawCode = data.candidates[0].content.parts[0].text.replace(/```html|```/g, "").trim();
+            
+            // Create preview button
+            const btn = document.createElement('button');
+            btn.textContent = "🚀 LAUNCH PREVIEW";
+            btn.style.width = "100%";
+            btn.style.marginTop = "10px";
+            btn.onclick = () => {
+                const win = window.open();
+                win.document.write(rawCode);
+                win.document.close();
+            };
+            document.getElementById('chat-box').appendChild(btn);
+            
+            logToChat("Build Complete.");
         } catch (err) {
-            logToChat("Error: Transmission failed. Try refreshing.");
+            logToChat("CRITICAL ERROR: " + err.message);
             console.error(err);
         } finally {
-            spinner.classList.add('hidden');
+            document.getElementById('loading').classList.add('hidden');
+            input.value = "";
         }
-    }
-
-    async function generateAutonomousCode(topic) {
-        // Direct call to Gemini 1.5 Flash for GitHub Pages compatibility
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: `Generate a professional single-file HTML/CSS webpage for: ${topic}. Include responsive CSS. Return ONLY the raw code.` }] }]
-            })
-        });
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
-
-        let raw = data.candidates[0].content.parts[0].text;
-        return raw.replace(/```html|```/g, "").trim();
-    }
-
-    function displayCode(code, topic) {
-        const box = document.getElementById('chat-box');
-        const container = document.createElement('div');
-        container.className = "code-result";
-        
-        const launchBtn = document.createElement('button');
-        launchBtn.className = "launch-btn";
-        launchBtn.textContent = "🚀 LAUNCH PREVIEW";
-        launchBtn.onclick = () => {
-            const win = window.open('', '_blank');
-            win.document.write(code);
-            win.document.close();
-        };
-
-        container.appendChild(launchBtn);
-        box.appendChild(container);
-        logToChat("Build Complete.");
-        box.scrollTop = box.scrollHeight;
     }
 
     function logToChat(msg) {
         const log = document.createElement('div');
         log.className = "ai-log";
-        log.textContent = `> ${msg}`;
-        document.getElementById('chat-box').appendChild(log);
-        document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+        log.textContent = "> " + msg;
+        const box = document.getElementById('chat-box');
+        box.appendChild(log);
+        box.scrollTop = box.scrollHeight;
     }
 
-    // --- Background Animation ---
+    // Starfield animation
     const canvas = document.getElementById('starfield');
     const ctx = canvas.getContext('2d');
     let stars = [];
     function init() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        stars = Array.from({length: 100}, () => ({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            size: Math.random() * 2,
-            speed: Math.random() * 0.5 + 0.1
-        }));
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        stars = Array.from({length: 100}, () => ({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2 }));
     }
     function animate() {
-        ctx.fillStyle = '#050505';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#050505'; ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.fillStyle = '#fff';
-        stars.forEach(s => {
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
-            ctx.fill();
-            s.y += s.speed;
-            if(s.y > canvas.height) s.y = 0;
-        });
+        stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill(); s.y = (s.y + 0.5) % canvas.height; });
         requestAnimationFrame(animate);
     }
-    window.addEventListener('resize', init);
     init(); animate();
 </script>
 </body>
