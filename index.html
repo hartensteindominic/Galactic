@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Nexus Pro | AI Assistant</title>
+    <title>Nexus Pro | AI Architect</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
@@ -17,30 +17,49 @@
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, sans-serif; background: var(--bg); color: white; min-height: 100vh; overflow-x: hidden; }
 
-        /* UI Shell */
         nav { padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: rgba(2, 6, 23, 0.9); backdrop-filter: blur(15px); position: sticky; top: 0; z-index: 100; border-bottom: 1px solid var(--border); }
         .logo { font-size: 1.2rem; font-weight: 900; background: linear-gradient(90deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        #portal-page { display: none; padding: 15px; max-width: 800px; margin: 0 auto; animation: fadeIn 0.4s ease; }
+        #portal-page { display: none; padding: 15px; max-width: 1000px; margin: 0 auto; animation: fadeIn 0.4s ease; }
         #landing-page { padding: 80px 20px; text-align: center; }
 
-        /* Chat UI */
-        .panel { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 20px; }
-        #chat-box { height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; scroll-behavior: smooth; padding-bottom: 10px; }
+        .dashboard-grid { display: flex; flex-direction: column; gap: 15px; }
+
+        /* Sidebar Style */
+        .history-panel { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 15px; }
+        .history-list { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+        .history-item { background: rgba(255,255,255,0.03); padding: 10px; border-radius: 10px; font-size: 13px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+        .history-item:hover { border-color: var(--primary); background: rgba(255,255,255,0.07); }
+
+        /* Main Chat Area */
+        .chat-panel { background: var(--card); border: 1px solid var(--border); border-radius: 24px; padding: 15px; flex: 1; }
+        #chat-box { height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px; scroll-behavior: smooth; }
         
-        .msg { padding: 14px 18px; border-radius: 20px; font-size: 16px; max-width: 85%; line-height: 1.5; position: relative; }
+        .msg { padding: 14px 18px; border-radius: 20px; font-size: 16px; max-width: 85%; line-height: 1.5; }
         .msg.bot { background: #1e293b; align-self: flex-start; border-bottom-left-radius: 4px; border-left: 3px solid var(--primary); }
         .msg.user { background: var(--secondary); align-self: flex-end; border-bottom-right-radius: 4px; }
 
-        /* Artifacts (Live Preview) */
-        .artifact { background: white; border-radius: 12px; margin-top: 12px; overflow: hidden; border: 4px solid #334155; }
-        .preview-label { background: #334155; color: white; font-size: 11px; padding: 4px 10px; text-transform: uppercase; font-weight: bold; }
-        iframe { width: 100%; height: 300px; border: none; }
+        /* Artifact Layout */
+        .artifact { background: #000; border-radius: 16px; margin-top: 12px; overflow: hidden; border: 1px solid var(--border); width: 100%; position: relative; }
+        .tab-bar { display: flex; background: #1e293b; padding: 5px; gap: 5px; }
+        .tab-btn { flex: 1; padding: 8px; border: none; background: transparent; color: #94a3b8; font-size: 11px; font-weight: bold; cursor: pointer; border-radius: 8px; }
+        .tab-btn.active { background: var(--card); color: var(--primary); }
+        
+        iframe { width: 100%; height: 350px; border: none; background: white; display: block; }
+        .code-view-container { position: relative; display: none; }
+        .code-view { width: 100%; height: 350px; background: #000; color: #00ff00; padding: 15px; font-family: monospace; font-size: 12px; overflow: auto; white-space: pre-wrap; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; background: var(--primary); color: #000; border: none; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; }
 
         /* Input Area */
-        .input-container { display: flex; gap: 10px; background: #000; padding: 10px; border-radius: 20px; border: 1px solid var(--border); }
+        .input-container { display: flex; gap: 8px; background: #000; padding: 8px; border-radius: 20px; border: 1px solid var(--border); }
         input { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; padding-left: 10px; }
-        #sendBtn { background: var(--primary); color: #000; width: 44px; height: 44px; border-radius: 15px; border: none; font-size: 20px; font-weight: bold; }
+        #sendBtn { background: var(--primary); color: #000; width: 44px; height: 44px; border-radius: 15px; border: none; font-size: 18px; font-weight: bold; }
+
+        /* Tablet/Desktop Side-by-Side */
+        @media (min-width: 768px) {
+            .dashboard-grid { flex-direction: row; align-items: flex-start; }
+            .history-panel { width: 250px; position: sticky; top: 80px; }
+        }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
@@ -49,27 +68,39 @@
 
     <nav>
         <div class="logo">NEXUS PRO</div>
-        <button id="connectBtn" style="background:none; border:1px solid var(--border); color:white; padding:8px 15px; border-radius:10px;">Connect</button>
+        <button id="connectBtn" style="background:none; border:1px solid var(--border); color:white; padding:8px 15px; border-radius:10px; font-size:12px;">Connect</button>
     </nav>
 
     <section id="landing-page">
         <h1 style="font-size: 2.5rem; margin-bottom: 10px;">Nexus Sovereign</h1>
-        <p style="color:#64748b; margin-bottom: 40px;">The Conversational Web3 Builder</p>
+        <p style="color:#64748b; margin-bottom: 40px;">Professional AI Architecture & Code</p>
         <div style="background:var(--card); padding:30px; border-radius:24px; max-width:350px; margin:0 auto; border:1px solid var(--border);">
             <div style="font-size:2.5rem; font-weight:800; margin-bottom:15px;">0.0005 ETH</div>
             <button id="payBtn" style="width:100%; padding:15px; border-radius:12px; background:var(--primary); border:none; font-weight:bold;">INITIALIZE SYSTEM</button>
+            <p id="status" style="margin-top:15px; font-size:12px; color:#64748b;">Complete verification to unlock AI generation.</p>
         </div>
     </section>
 
     <section id="portal-page">
-        <div class="panel">
-            <div id="chat-box">
-                <div class="msg bot">Nexus AI initialized. I can chat about your project or build a website for you instantly. What's on your mind?</div>
+        <div class="dashboard-grid">
+            
+            <div class="history-panel">
+                <h3 style="font-size: 14px; color: var(--primary); letter-spacing: 1px;">PROJECT HISTORY</h3>
+                <div id="historyList" class="history-list">
+                    <p id="emptyHistory" style="font-size: 12px; color: #475569; margin-top: 5px;">No projects yet.</p>
+                </div>
             </div>
-            <div class="input-container">
-                <input type="text" id="chatInput" placeholder="Chat or ask 'Make a website about...'" autocomplete="off">
-                <button id="sendBtn">➔</button>
+
+            <div class="chat-panel">
+                <div id="chat-box">
+                    <div class="msg bot">Nexus AI online. I can build websites or chat strategy.</div>
+                </div>
+                <div class="input-container">
+                    <input type="text" id="chatInput" placeholder="Make a website about..." autocomplete="off">
+                    <button id="sendBtn">➔</button>
+                </div>
             </div>
+
         </div>
     </section>
 
@@ -78,107 +109,155 @@
         const DESTINATION = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
         const AMOUNT = "0.0005";
 
-        const chatBox = document.getElementById('chat-box');
-        const chatInput = document.getElementById('chatInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const portalPage = document.getElementById('portal-page');
-        const landingPage = document.getElementById('landing-page');
+        let isSubscribed = false; 
+        let userAddress = "";
+        let provider, signer;
+        let projects = [];
 
-        let userAddress;
-
-        // --- CORE AI LOGIC ---
-        function getAIResponse(input) {
-            const query = input.toLowerCase();
-            
-            // 1. CHECK IF BUILD COMMAND
-            if (query.includes("make") || query.includes("build") || query.includes("create") || query.includes("website")) {
-                const topic = query.replace(/make|build|create|website|a|about|for|me/gi, "").trim() || "My Project";
-                return {
-                    type: "build",
-                    text: `Certainly. I'm spinning up a custom deployment for **${topic}**. Check the live preview below:`,
-                    code: `
-                        <html>
-                        <body style="margin:0; font-family:sans-serif; background:#f8fafc; color:#0f172a; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; text-align:center;">
-                            <div style="padding:40px; background:white; border-radius:20px; box-shadow:0 10px 25px rgba(0,0,0,0.05);">
-                                <h1 style="color:#8b5cf6; font-size:32px;">${topic}</h1>
-                                <p style="color:#64748b; font-size:18px;">Created by Nexus AI Sovereign</p>
-                                <button style="margin-top:20px; padding:12px 24px; border:none; background:#00f2fe; border-radius:10px; font-weight:bold;">Explore Now</button>
-                            </div>
-                        </body>
-                        </html>
-                    `
-                };
+        function switchTab(id, mode) {
+            const preview = document.getElementById(`prev-${id}`);
+            const codeCont = document.getElementById(`code-cont-${id}`);
+            const btnPrev = document.getElementById(`btn-prev-${id}`);
+            const btnCode = document.getElementById(`btn-code-${id}`);
+            if (mode === 'preview') {
+                preview.style.display = 'block'; codeCont.style.display = 'none';
+                btnPrev.classList.add('active'); btnCode.classList.remove('active');
+            } else {
+                preview.style.display = 'none'; codeCont.style.display = 'block';
+                btnPrev.classList.remove('active'); btnCode.classList.add('active');
             }
-
-            // 2. GENERAL CONVERSATION
-            const smallTalk = {
-                "hi": "Hello Operator. Systems are nominal. How can I help you build today?",
-                "hello": "Greetings. Ready for deployment instructions.",
-                "who are you": "I am Nexus Sovereign, an AI agent optimized for Web3 development and on-chain intelligence.",
-                "help": "I can build websites from scratch or answer questions about your current project. Just ask!",
-                "thanks": "You're welcome. Let's keep building.",
-                "ok": "Acknowledged. Standing by for your next command."
-            };
-
-            return {
-                type: "chat",
-                text: smallTalk[query] || "That's an interesting perspective. I'm recording that into our project context. Should we build something based on that?"
-            };
         }
 
-        function sendMessage() {
-            const text = chatInput.value.trim();
+        function copyCode(id) {
+            const codeText = document.getElementById(`code-${id}`).innerText;
+            navigator.clipboard.writeText(codeText);
+            const btn = event.target;
+            btn.innerText = "COPIED";
+            setTimeout(() => btn.innerText = "COPY CODE", 2000);
+        }
+
+        function scrollToProject(id) {
+            const element = document.getElementById(`artifact-${id}`);
+            if(element) element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function addBotMessage(text, htmlContent = null, topic = null) {
+            const botMsg = document.createElement('div');
+            botMsg.className = 'msg bot';
+            botMsg.innerHTML = text;
+            document.getElementById('chat-box').appendChild(botMsg);
+
+            if (htmlContent) {
+                const id = Date.now();
+                const blob = new Blob([htmlContent], { type: 'text/html' });
+                const blobUrl = URL.createObjectURL(blob);
+                
+                const art = document.createElement('div');
+                art.className = 'artifact';
+                art.id = `artifact-${id}`;
+                art.innerHTML = `
+                    <div class="tab-bar">
+                        <button class="tab-btn active" id="btn-prev-${id}" onclick="switchTab('${id}', 'preview')">PREVIEW</button>
+                        <button class="tab-btn" id="btn-code-${id}" onclick="switchTab('${id}', 'code')">SOURCE</button>
+                    </div>
+                    <iframe id="prev-${id}" src="${blobUrl}"></iframe>
+                    <div id="code-cont-${id}" class="code-view-container">
+                        <button class="copy-btn" onclick="copyCode('${id}')">COPY CODE</button>
+                        <div id="code-${id}" class="code-view">${htmlContent.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+                    </div>
+                `;
+                document.getElementById('chat-box').appendChild(art);
+
+                // Add to Sidebar
+                document.getElementById('emptyHistory').style.display = 'none';
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerText = `📂 ${topic}`;
+                item.onclick = () => scrollToProject(id);
+                document.getElementById('historyList').prepend(item);
+            }
+            document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+        }
+
+        function handleChat() {
+            if (!isSubscribed && userAddress.toLowerCase() !== ADMIN_WALLET.toLowerCase()) {
+                addBotMessage("⚠️ <b>Subscription Required.</b> Complete verification on the home screen to unlock builder tools.");
+                return;
+            }
+
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
             if (!text) return;
 
-            // Add User Message
             const userMsg = document.createElement('div');
             userMsg.className = 'msg user';
             userMsg.innerText = text;
-            chatBox.appendChild(userMsg);
-            chatInput.value = "";
-            chatBox.scrollTop = chatBox.scrollHeight;
+            document.getElementById('chat-box').appendChild(userMsg);
+            input.value = "";
+            document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
 
-            // Process AI Response
             setTimeout(() => {
-                const response = getAIResponse(text);
-                
-                // Add AI Text
-                const botMsg = document.createElement('div');
-                botMsg.className = 'msg bot';
-                botMsg.innerHTML = response.text;
-                chatBox.appendChild(botMsg);
-
-                // Add Artifact if it's a build
-                if (response.type === "build") {
-                    const art = document.createElement('div');
-                    art.className = 'artifact';
-                    art.innerHTML = `
-                        <div class="preview-label">Live Preview</div>
-                        <iframe srcdoc='${response.code}'></iframe>
-                    `;
-                    chatBox.appendChild(art);
+                const query = text.toLowerCase();
+                if (query.includes("make") || query.includes("build") || query.includes("website")) {
+                    const topic = text.replace(/make|build|create|website|a|about|for|me/gi, "").trim() || "Web Project";
+                    const webCode = `<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: sans-serif; background: #0f172a; color: white; margin: 0; display: flex; align-items: center; justify-content: center; height: 100vh; }
+        .box { background: #1e293b; padding: 40px; border-radius: 24px; text-align: center; border: 1px solid rgba(0,242,254,0.3); }
+        h1 { color: #00f2fe; margin: 0; }
+        p { color: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>${topic}</h1>
+        <p>Deployment generated by Nexus AI Architect.</p>
+    </div>
+</body>
+</html>`;
+                    addBotMessage(`Deployment for <b>${topic}</b> archived in history. Use the tabs below for preview or source code.`, webCode, topic);
+                } else {
+                    addBotMessage("I am conversational and technical. Ask me to build something or discuss Web3 strategy.");
                 }
-                
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 600);
+            }, 800);
         }
 
-        // --- BUTTONS & KEYS ---
-        sendBtn.addEventListener('click', sendMessage);
-        chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
-
-        // --- WALLET AUTH ---
-        async function handleAuth() {
+        async function connect() {
             if (window.ethereum) {
                 const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
                 userAddress = accs[0];
-                if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase() || confirm("Payment simulation: 0.0005 ETH confirmed?")) {
-                    landingPage.style.display = "none";
-                    portalPage.style.display = "block";
-                }
+                document.getElementById('connectBtn').innerText = userAddress.substring(0,6) + "..";
             }
         }
-        document.getElementById('payBtn').addEventListener('click', handleAuth);
+
+        async function processEntry() {
+            if (!signer) { await connect(); return; }
+            if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
+                isSubscribed = true;
+                document.getElementById('landing-page').style.display = "none";
+                document.getElementById('portal-page').style.display = "block";
+                return;
+            }
+
+            try {
+                const tx = { to: DESTINATION, value: ethers.utils.parseEther(AMOUNT) };
+                const res = await signer.sendTransaction(tx);
+                document.getElementById('status').innerText = "Verifying on blockchain...";
+                await res.wait();
+                isSubscribed = true;
+                document.getElementById('landing-page').style.display = "none";
+                document.getElementById('portal-page').style.display = "block";
+            } catch (e) { document.getElementById('status').innerText = "Access denied."; }
+        }
+
+        document.getElementById('sendBtn').addEventListener('click', handleChat);
+        document.getElementById('chatInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') handleChat(); });
+        document.getElementById('payBtn').addEventListener('click', processEntry);
+        document.getElementById('connectBtn').addEventListener('click', connect);
     </script>
 </body>
 </html>
