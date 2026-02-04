@@ -1,74 +1,139 @@
-async function processRequest() {
-    const inputField = document.getElementById('user-input');
-    const prompt = inputField.value.trim();
-    if (!prompt) return;
+<script>
+    // 🔑 YOUR API KEY FROM THE SCREENSHOT
+    const API_KEY = "YOUR_ACTUAL_API_KEY_HERE"; 
 
-    logToChat("User: " + prompt);
-    logToChat("AI: Thinking autonomously...");
+    document.getElementById('user-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') processRequest();
+    });
 
-    try {
-        // 1. Check local 'memory' (Self-Learning)
-        const learnedCode = localStorage.getItem(prompt.toLowerCase());
-        if (learnedCode) {
-            logToChat("AI: Retaining knowledge from previous session...");
-            displayCode(learnedCode);
-            return;
-        }
-
-        // 2. Architecting the response
-        logToChat("AI: Architecting UI components...");
-        const generatedCode = await generateAutonomousCode(prompt);
+    async function processRequest() {
+        const inputField = document.getElementById('user-input');
+        const prompt = inputField.value.trim();
+        const spinner = document.getElementById('loading-spinner');
         
-        // 3. Self-Correction Loop
-        logToChat("AI: Running internal syntax check...");
-        
-        // Fix: Check for <html> or the doctype
-        if (generatedCode.includes("<html") || generatedCode.includes("<!DOCTYPE")) {
-            logToChat("AI: Code verified. Saving to memory.");
-            localStorage.setItem(prompt.toLowerCase(), generatedCode);
-            displayCode(generatedCode);
-        } else {
-            throw new Error("Validation Failed");
-        }
+        if (!prompt) return;
 
-    } catch (err) {
-        logToChat("AI Error: Attempting self-repair...");
-        // Delaying the retry to prevent crashing the browser
-        setTimeout(() => processRequest(), 2000); 
+        logToChat("Generating Manifest for: " + prompt);
+        spinner.classList.remove('hidden');
+        inputField.value = ""; 
+
+        try {
+            const code = await generateAutonomousCode(prompt);
+            displayCode(code, prompt);
+            logToChat("Success: Architecture Compiled.");
+        } catch (err) {
+            console.error(err);
+            logToChat("Error: Transmission failed. Check API Key or Connection.");
+        } finally {
+            spinner.classList.add('hidden');
+        }
     }
-}
 
-async function generateAutonomousCode(topic) {
-    // Return a template literal (the "Seed")
-    return `<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #1a1a1a; color: white; text-align: center; padding: 50px; }
-        .card { background: #333; padding: 30px; border-radius: 15px; border: 1px solid #444; }
-        h1 { color: #00ffcc; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1>Welcome to the ${topic} Hub</h1>
-        <p>This page was generated autonomously by Gemini AI.</p>
-    </div>
-</body>
-</html>`;
-}
+    async function generateAutonomousCode(topic) {
+        // Using Gemini 1.5 Flash for speed and efficiency
+        const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+        
+        const response = await fetch(ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ 
+                    parts: [{ 
+                        text: `Write a complete, high-quality, professional single-file HTML/CSS webpage for the following topic: "${topic}". 
+                               Use modern CSS (Flexbox/Grid), include a navigation bar, a hero section, and responsive design. 
+                               Return ONLY the raw HTML code. No markdown formatting, no backticks, no explanations.` 
+                    }] 
+                }],
+                generationConfig: {
+                    temperature: 0.7,
+                    topP: 0.95,
+                    maxOutputTokens: 4096,
+                }
+            })
+        });
 
-function displayCode(code) {
-    const box = document.getElementById('chat-box');
-    // Using textContent inside a <pre> tag is safer than manual escaping for UI
-    const container = document.createElement('div');
-    container.style = "background: #000; color: #0f0; padding: 10px; margin-top: 10px; border-radius: 5px; text-align: left;";
-    container.innerHTML = `<strong>Generated Code:</strong>`;
-    
-    const pre = document.createElement('pre');
-    pre.style = "white-space: pre-wrap; word-wrap: break-word;";
-    pre.textContent = code; // Automatically escapes HTML
-    
-    container.appendChild(pre);
-    box.appendChild(container);
-}
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error.message);
+        }
+
+        let raw = data.candidates[0].content.parts[0].text;
+        
+        // Safety: Strip backticks if the model ignores instructions
+        return raw.replace(/```html|```/g, "").trim();
+    }
+
+    function displayCode(code, topic) {
+        const box = document.getElementById('chat-box');
+        const container = document.createElement('div');
+        container.className = "code-result";
+        
+        const launchBtn = document.createElement('button');
+        launchBtn.className = "launch-btn";
+        launchBtn.textContent = "🚀 LAUNCH PREVIEW";
+        launchBtn.onclick = () => {
+            const win = window.open('', '_blank');
+            win.document.write(code);
+            win.document.close();
+        };
+
+        const downloadBtn = document.createElement('button');
+        downloadBtn.className = "download-btn";
+        downloadBtn.textContent = "💾 DOWNLOAD FILE";
+        downloadBtn.onclick = () => {
+            const blob = new Blob([code], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${topic.replace(/\s+/g, '_')}.html`;
+            a.click();
+        };
+
+        container.appendChild(launchBtn);
+        container.appendChild(downloadBtn);
+        box.appendChild(container);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function logToChat(msg) {
+        const log = document.createElement('div');
+        log.className = "ai-log";
+        log.textContent = `> ${msg}`;
+        document.getElementById('chat-box').appendChild(log);
+        document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
+    }
+
+    // --- Starfield ---
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let stars = [];
+
+    function init() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        stars = Array.from({length: 150}, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 1.5,
+            speed: Math.random() * 0.5 + 0.1
+        }));
+    }
+
+    function animate() {
+        ctx.fillStyle = '#050505';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff';
+        stars.forEach(s => {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI*2);
+            ctx.fill();
+            s.y += s.speed;
+            if(s.y > canvas.height) s.y = 0;
+        });
+        requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', init);
+    init(); animate();
+</script>
