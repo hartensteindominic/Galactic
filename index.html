@@ -1,283 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Nexus Pro | Grok-4 History</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-    <style>
-        :root {
-            --primary: #ffffff;
-            --secondary: #3b82f6;
-            --bg: #000000;
-            --card: #161616;
-            --text: #e5e7eb;
-            --border: #262626;
-            --sidebar-w: 280px;
-        }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
 
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+<style>
+    /* THE FORGE: SPLIT-SCREEN LAYOUT */
+    #editor-view { display: none; height: 100%; flex-direction: column; background: #000; }
+    .forge-container { display: flex; flex: 1; overflow: hidden; border-top: 1px solid var(--border); }
+    
+    /* LEFT SIDE: THE CODE */
+    #code-editor-pane { flex: 1; border-right: 1px solid var(--border); background: #0a0a0a; position: relative; overflow: auto; }
+    
+    /* RIGHT SIDE: THE LIVE PREVIEW */
+    #preview-pane { flex: 1; background: white; position: relative; }
+    #live-iframe { width: 100%; height: 100%; border: none; }
 
-        /* HEADER */
-        nav { padding: 1rem; display: flex; justify-content: space-between; align-items: center; background: #000; z-index: 1000; border-bottom: 2px solid var(--border); height: 70px; }
-        .nav-left { display: flex; align-items: center; gap: 15px; }
-        .menu-btn { background: none; border: none; color: white; font-size: 24px; cursor: pointer; padding: 5px; }
-        .logo { font-size: 1.1rem; font-weight: 900; color: var(--primary); letter-spacing: -0.5px; }
-        .nav-info { display: flex; gap: 8px; }
-        .pill { background: var(--card); padding: 8px 12px; border-radius: 8px; font-size: 11px; color: var(--text); border: 1px solid var(--border); font-weight: 700; }
-        .bal-pill { border-color: var(--secondary); color: var(--secondary); display: none; }
+    /* REAL-TIME STATUS INDICATOR */
+    .status-bar { padding: 5px 15px; background: #161616; color: #737373; font-size: 10px; font-weight: 800; display: flex; justify-content: space-between; }
+    .sync-active { color: #10b981; } /* Green glow when syncing */
+</style>
 
-        /* SIDEBAR */
-        #sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: var(--sidebar-w); background: #0a0a0a; border-right: 2px solid var(--border); transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1100; padding: 20px; display: flex; flex-direction: column; }
-        #sidebar.open { transform: translateX(0); }
-        .sidebar-header { font-size: 14px; font-weight: 900; color: #737373; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 1px; }
-        .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .history-item { background: var(--card); padding: 15px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; font-size: 13px; transition: 0.2s; }
-        .history-item:hover { border-color: var(--secondary); }
-        .history-item .time { font-size: 10px; color: #737373; margin-top: 5px; display: block; }
-        .sidebar-close { margin-top: 20px; padding: 15px; background: var(--border); border: none; color: white; border-radius: 8px; font-weight: 800; cursor: pointer; }
+<script>
+    let editor; // Global editor instance
 
-        /* CONTENT AREAS */
-        main { flex: 1; position: relative; overflow: hidden; }
-        #landing-page { padding: 80px 20px; text-align: center; }
-        .gate-card { background: var(--card); padding: 40px; border-radius: 20px; border: 1px solid var(--border); max-width: 380px; margin: 0 auto; }
-        
-        #portal-page, #project-view { display: none; height: 100%; flex-direction: column; padding: 15px; max-width: 900px; margin: 0 auto; }
-        #chat-box { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; padding-bottom: 20px; }
-        
-        /* OVERLAY FOR SIDEBAR */
-        #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1050; }
+    // INITIALIZE THE FORGE
+    function openTheForge(code) {
+        document.getElementById('portal-page').style.display = 'none';
+        document.getElementById('project-view').style.display = 'none';
+        document.getElementById('editor-view').style.display = 'flex';
 
-        /* ARTIFACTS */
-        .artifact { width: 100%; border-radius: 12px; overflow: hidden; border: 2px solid var(--border); background: #fff; margin-top: 10px; }
-        .art-header { display: flex; background: #161616; padding: 8px; gap: 6px; }
-        .art-btn { flex: 1; padding: 10px; border: none; background: #262626; color: #a3a3a3; font-size: 11px; font-weight: 800; border-radius: 6px; cursor: pointer; }
-        .art-btn.active { background: var(--primary); color: #000; }
-        iframe { width: 100%; height: 500px; border: none; background: white; }
-        .code-view { height: 500px; padding: 20px; background: #000; color: #10b981; font-family: monospace; font-size: 13px; overflow: auto; display: none; }
-
-        /* INPUT */
-        .input-cont { display: flex; gap: 10px; background: var(--card); padding: 10px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 10px; }
-        input { flex: 1; background: transparent; border: none; color: white; font-size: 16px; outline: none; }
-        #sendBtn { background: var(--primary); color: #000; padding: 12px 25px; border-radius: 8px; border: none; font-weight: 900; }
-    </style>
-</head>
-<body>
-
-    <div id="overlay"></div>
-
-    <div id="sidebar">
-        <div class="sidebar-header">Build History</div>
-        <div class="history-list" id="historyList">
-            <div style="color:#737373; font-size: 12px; text-align: center; margin-top: 20px;">No builds yet.</div>
-        </div>
-        <button class="sidebar-close" onclick="toggleSidebar()">CLOSE</button>
-    </div>
-
-    <nav>
-        <div class="nav-left">
-            <button class="menu-btn" onclick="toggleSidebar()">☰</button>
-            <div class="logo">NEXUS / GROK-4</div>
-        </div>
-        <div class="nav-info">
-            <div id="balPill" class="pill bal-pill">0.00 ETH</div>
-            <div id="userPill" class="pill">OFFLINE</div>
-        </div>
-    </nav>
-
-    <main>
-        <section id="landing-page">
-            <div class="gate-card">
-                <h2>Access Protocol</h2>
-                <p style="color:#737373; margin-bottom: 30px; font-size: 13px;">0.0005 ETH to Unlock Grok-4 Architecture</p>
-                <button id="payBtn" style="width:100%; padding:18px; border-radius:10px; background:var(--primary); color:#000; border:none; font-weight: 900; cursor:pointer;">CONNECT & PAY</button>
-            </div>
-        </section>
-
-        <section id="portal-page">
-            <div id="chat-box">
-                <div style="background:var(--card); padding:15px; border-radius:12px; border:1px solid var(--border);">Grok-4 Reasoning Engine Online. What should we build?</div>
-            </div>
-            <div class="input-cont">
-                <input type="text" id="chatInput" placeholder="Build a high-end site for..." autocomplete="off">
-                <button id="sendBtn">SEND</button>
-            </div>
-        </section>
-
-        <section id="project-view">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3 id="projectTitle">Project View</h3>
-                <button onclick="showChat()" style="background:var(--secondary); border:none; color:white; padding:8px 15px; border-radius:6px; font-size:12px; font-weight:800;">BACK TO CHAT</button>
-            </div>
-            <div id="projectArtifactCont"></div>
-        </section>
-    </main>
-
-    <script>
-        const ADMIN = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
-        const ETH_VAL = 2088.13;
-        
-        let projectHistory = [];
-        let isSubscribed = false;
-        let userAddress = "";
-        let provider, signer;
-        let XAI_KEY = "";
-
-        function toggleSidebar() {
-            const sb = document.getElementById('sidebar');
-            const ov = document.getElementById('overlay');
-            const isOpen = sb.classList.toggle('open');
-            ov.style.display = isOpen ? 'block' : 'none';
-        }
-
-        function showChat() {
-            document.getElementById('portal-page').style.display = 'flex';
-            document.getElementById('project-view').style.display = 'none';
-        }
-
-        async function updateBalance() {
-            if(!provider || !userAddress) return;
-            const b = await provider.getBalance(userAddress);
-            const eth = ethers.utils.formatEther(b);
-            const usd = (parseFloat(eth) * ETH_VAL).toLocaleString('en-US', {style:'currency', currency:'USD'});
-            const p = document.getElementById('balPill');
-            p.innerText = `${parseFloat(eth).toFixed(4)} ETH (${usd})`;
-            p.style.display = 'block';
-        }
-
-        function downloadBuild(code, name) {
-            const blob = new Blob([code], {type:'text/html'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `${name.replace(/\s/g,'_')}.html`;
-            a.click();
-        }
-
-        function renderArtifact(code, topic, containerId) {
-            const id = Date.now();
-            const blob = new Blob([code], {type:'text/html'});
-            const url = URL.createObjectURL(blob);
-            const cont = document.getElementById(containerId);
-            cont.innerHTML = `
-                <div class="artifact">
-                    <div class="art-header">
-                        <button class="art-btn active" id="pB-${id}" onclick="tglArt('${id}','p')">Preview</button>
-                        <button class="art-btn" id="cB-${id}" onclick="tglArt('${id}','c')">Code</button>
-                        <button class="art-btn" style="background:var(--secondary);color:white" onclick="downloadBuild(\`${code.replace(/`/g, '\\`')}\`, '${topic}')">Download</button>
-                    </div>
-                    <iframe id="pI-${id}" src="${url}"></iframe>
-                    <div id="cI-${id}" class="code-view"><code>${code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code></div>
-                </div>
-            `;
-        }
-
-        function tglArt(id, mode) {
-            const p = document.getElementById(`pI-${id}`);
-            const c = document.getElementById(`cI-${id}`);
-            p.style.display = (mode === 'p') ? 'block' : 'none';
-            c.style.display = (mode === 'p') ? 'none' : 'block';
-            document.getElementById(`pB-${id}`).classList.toggle('active', mode === 'p');
-            document.getElementById(`cB-${id}`).classList.toggle('active', mode === 'c');
-        }
-
-        function viewHistory(index) {
-            const item = projectHistory[index];
-            document.getElementById('projectTitle').innerText = item.topic;
-            renderArtifact(item.code, item.topic, 'projectArtifactCont');
-            document.getElementById('portal-page').style.display = 'none';
-            document.getElementById('project-view').style.display = 'flex';
-            toggleSidebar();
-        }
-
-        function updateHistoryUI() {
-            const list = document.getElementById('historyList');
-            list.innerHTML = projectHistory.map((item, idx) => `
-                <div class="history-item" onclick="viewHistory(${idx})">
-                    <strong>${item.topic}</strong>
-                    <span class="time">${item.time}</span>
-                </div>
-            `).join('');
-        }
-
-        async function callGrok(txt) {
-            if(!XAI_KEY) { XAI_KEY = prompt("Enter xAI Key:"); if(!XAI_KEY) return "No Key"; }
-            try {
-                const res = await fetch("https://api.x.ai/v1/chat/completions", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${XAI_KEY}` },
-                    body: JSON.stringify({
-                        model: "grok-4",
-                        messages: [{role:"system", content:"Build a pro single-file HTML/CSS site. Return ONLY code."}, {role:"user", content:txt}]
-                    })
-                });
-                const d = await res.json();
-                return d.choices[0].message.content;
-            } catch(e) { return "Error: API fail."; }
-        }
-
-        async function handleChat() {
-            const input = document.getElementById('chatInput');
-            const val = input.value.trim();
-            if(!val) return;
+        // Set up the code editor if not already initialized
+        if (!editor) {
+            const editorEl = document.getElementById('code-editor-pane');
+            editorEl.innerHTML = ""; // Clear loader
             
-            const chatBox = document.getElementById('chat-box');
-            const userMsg = document.createElement('div');
-            userMsg.style = "background:var(--secondary); align-self:flex-end; padding:15px; border-radius:12px;";
-            userMsg.innerText = val;
-            chatBox.appendChild(userMsg);
-            input.value = "";
+            // Textarea-based sync for maximum stability across devices
+            editor = document.createElement('textarea');
+            editor.style = "width:100%; height:100%; background:transparent; color:#10b981; border:none; padding:20px; font-family:monospace; font-size:14px; outline:none; resize:none;";
+            editorEl.appendChild(editor);
 
-            const aiCode = await callGrok(val);
-            if(aiCode.includes("<!DOCTYPE html>")) {
-                const topic = val.substring(0,20) + "...";
-                const time = new Date().toLocaleTimeString();
-                projectHistory.unshift({ topic, code: aiCode, time });
-                updateHistoryUI();
-                
-                const botMsg = document.createElement('div');
-                botMsg.style = "background:var(--card); padding:15px; border-radius:12px; border:1px solid var(--border);";
-                botMsg.innerText = "Build Complete. Added to History.";
-                chatBox.appendChild(botMsg);
-                
-                const artDiv = document.createElement('div');
-                artDiv.id = "recent-" + Date.now();
-                chatBox.appendChild(artDiv);
-                renderArtifact(aiCode, topic, artDiv.id);
-                updateBalance();
-            }
-            chatBox.scrollTop = chatBox.scrollHeight;
+            // LIVE SYNC: Updates on every keystroke
+            editor.addEventListener('input', () => {
+                updateLivePreview(editor.value);
+            });
         }
 
-        async function connect() {
-            if (window.ethereum) {
-                const accs = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
-                userAddress = accs[0];
-                document.getElementById('userPill').innerText = userAddress.substring(0,6).toUpperCase();
-                updateBalance();
-            }
-        }
+        editor.value = code;
+        updateLivePreview(code);
+    }
 
-        async function pay() {
-            if(!signer) { await connect(); return; }
-            if(userAddress.toLowerCase() === ADMIN.toLowerCase()) { isSubscribed = true; }
-            else {
-                try {
-                    const tx = { to: ADMIN, value: ethers.utils.parseEther("0.0005") };
-                    const res = await signer.sendTransaction(tx);
-                    await res.wait();
-                    isSubscribed = true;
-                } catch(e) { return; }
-            }
-            document.getElementById('landing-page').style.display = "none";
-            document.getElementById('portal-page').style.display = "flex";
-        }
-
-        document.getElementById('sendBtn').onclick = handleChat;
-        document.getElementById('payBtn').onclick = pay;
-        document.getElementById('overlay').onclick = toggleSidebar;
-    </script>
-</body>
-</html>
+    function updateLivePreview(code) {
+        const iframe = document.getElementById('live-iframe');
+        const blob = new Blob([code], { type: 'text/html' });
+        iframe.src = URL.createObjectURL(blob);
+        
+        // Update Vault with the new manual tweaks
+        saveBuildToVault({ topic: "Manual Edit", code: code, time: new Date().toLocaleTimeString() });
+    }
+</script>
