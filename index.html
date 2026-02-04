@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elite AI Services | Low-Cost Web3</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --accent: #00f2fe;
+            --accent-dark: #4facfe;
+            --bg: #05070a;
+            --card: #111827;
+            --text: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Glassmorphism Header */
+        nav {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(to right, var(--accent), var(--accent-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 80px 20px;
+            max-width: 800px;
+        }
+
+        h1 {
+            font-size: clamp(2.5rem, 8vw, 4rem);
+            margin-bottom: 20px;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .highlight { color: var(--accent); }
+
+        p.description {
+            color: #9ca3af;
+            font-size: 1.2rem;
+            margin-bottom: 40px;
+        }
+
+        /* Pricing Card */
+        .pricing-card {
+            background: var(--card);
+            border: 1px solid #1f2937;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 10px 0;
+        }
+
+        .price span { font-size: 1rem; color: #6b7280; }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 15px;
+        }
+
+        .btn-main {
+            background: linear-gradient(45deg, var(--accent), var(--accent-dark));
+            color: #000;
+        }
+
+        .btn-main:hover { transform: scale(1.02); opacity: 0.9; }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid #374151;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--accent-dark);
+            min-height: 20px;
+        }
+
+        .badge {
+            background: rgba(0, 242, 254, 0.1);
+            color: var(--accent);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">CORE AI</div>
+        <button id="connectBtn" class="btn btn-outline" style="width: auto; padding: 10px 20px;">Connect Wallet</button>
+    </nav>
+
+    <section class="hero">
+        <span class="badge">Affordable Web3 Services</span>
+        <h1>Scale your vision <br><span class="highlight">without the high fees.</span></h1>
+        <p class="description">Access premium digital assets and AI tools instantly. Fast, secure, and low-cost transactions.</p>
+
+        <div class="pricing-card" style="margin: 0 auto;">
+            <h3>Standard Access</h3>
+            <div class="price">0.0005 <span>ETH</span></div>
+            <p style="color: #6b7280; margin-bottom: 30px;">~ $1.25 USD + Low Gas Fees</p>
+            
+            <button id="payBtn" class="btn btn-main">Unlock Access Now</button>
+            <div id="status"></div>
+        </div>
+    </section>
+
+    <script>
+        // CONFIGURATION
+        const DESTINATION = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
+        const AMOUNT = "0.0005"; 
+
+        const connectBtn = document.getElementById('connectBtn');
+        const payBtn = document.getElementById('payBtn');
+        const statusDiv = document.getElementById('status');
+        let provider, signer;
+
+        async function connect() {
+            if (window.ethereum) {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    const addr = await signer.getAddress();
+                    connectBtn.innerText = addr.substring(0,6) + "..." + addr.substring(38);
+                    statusDiv.innerText = "Connected to Wallet";
+                } catch (e) { statusDiv.innerText = "Connection Denied"; }
+            } else { statusDiv.innerText = "Install MetaMask!"; }
+        }
+
+        async function sendPayment() {
+            if (!signer) { statusDiv.innerText = "Please connect wallet first"; return; }
+            
+            try {
+                statusDiv.innerText = "Confirming transaction...";
+                const tx = {
+                    to: DESTINATION,
+                    value: ethers.utils.parseEther(AMOUNT)
+                };
+                const response = await signer.sendTransaction(tx);
+                statusDiv.innerHTML = "Processing... <br> <small>Hash: " + response.hash.substring(0,10) + "...</small>";
+                await response.wait();
+                statusDiv.innerText = "✅ Payment Successful!";
+            } catch (e) {
+                statusDiv.innerText = "Transaction Failed";
+                console.log(e);
+            }
+        }
+
+        connectBtn.addEventListener('click', connect);
+        payBtn.addEventListener('click', sendPayment);
+    </script>
+</body>
+</html>
