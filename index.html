@@ -190,6 +190,85 @@
 
         connectBtn.addEventListener('click', connect);
         payBtn.addEventListener('click', handleAction);
-    </script>
+    <script>
+    // --- CONFIGURATION ---
+    const ADMIN_WALLET = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
+    const DESTINATION = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
+    const AMOUNT = "0.0005"; 
+    
+    // CHANGE THIS TO WHERE YOU WANT PEOPLE TO GO AFTER PAYING
+    const SUCCESS_URL = "https://your-private-link-or-page.com";
+
+    const connectBtn = document.getElementById('connectBtn');
+    const payBtn = document.getElementById('payBtn');
+    const statusDiv = document.getElementById('status');
+    let provider, signer, userAddress;
+
+    async function updateUI(addr) {
+        userAddress = addr;
+        connectBtn.innerText = addr.substring(0,6) + "..." + addr.substring(38);
+        
+        if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
+            statusDiv.innerHTML = "✨ <b>Admin Mode:</b> Bypass active (Free)";
+            payBtn.innerText = "Enter Portal (Free)";
+            payBtn.style.background = "linear-gradient(45deg, #10b981, #059669)";
+        } else {
+            statusDiv.innerText = "Wallet connected. Ready for checkout.";
+            payBtn.innerText = "Unlock Access";
+        }
+    }
+
+    async function connect() {
+        if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
+                updateUI(accounts[0]);
+            } catch (e) { statusDiv.innerText = "Connection failed."; }
+        } else { statusDiv.innerText = "MetaMask not found."; }
+    }
+
+    async function handleAction() {
+        if (!signer) { await connect(); return; }
+        
+        // --- ADMIN REDIRECT ---
+        if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
+            statusDiv.innerText = "Admin verified. Redirecting...";
+            setTimeout(() => {
+                window.location.href = SUCCESS_URL; // Takes YOU to the link immediately
+            }, 1000);
+            return;
+        }
+
+        // --- USER PAYMENT & REDIRECT ---
+        try {
+            payBtn.disabled = true;
+            statusDiv.innerText = "Confirming payment in wallet...";
+            
+            const tx = { to: DESTINATION, value: ethers.utils.parseEther(AMOUNT) };
+            const response = await signer.sendTransaction(tx);
+            
+            statusDiv.innerText = "Payment pending on blockchain... please wait.";
+            
+            // Wait for 1 block confirmation (security check)
+            await response.wait();
+            
+            statusDiv.innerText = "✅ Success! Redirecting to your content...";
+            
+            setTimeout(() => {
+                window.location.href = SUCCESS_URL; // Takes THEM to the link after paying
+            }, 1500);
+
+        } catch (e) {
+            statusDiv.innerText = "Transaction cancelled or failed.";
+            payBtn.disabled = false;
+        }
+    }
+
+    connectBtn.addEventListener('click', connect);
+    payBtn.addEventListener('click', handleAction);
+</script>
+
 </body>
 </html>
