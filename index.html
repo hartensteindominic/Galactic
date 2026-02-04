@@ -9,148 +9,175 @@
         :root {
             --primary: #00f2fe;
             --secondary: #4facfe;
+            --success: #10b981;
             --bg: #030712;
-            --glass: rgba(17, 24, 39, 0.7);
+            --card: #111827;
+            --glass: rgba(17, 24, 39, 0.8);
             --border: rgba(255, 255, 255, 0.1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
             background: radial-gradient(circle at top right, #111827, #030712);
             color: white;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
+            line-height: 1.6;
         }
 
         /* Navbar */
         nav {
             width: 100%;
-            max-width: 1100px;
-            padding: 2rem;
+            max-width: 1200px;
+            padding: 1.5rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            backdrop-filter: blur(10px);
+            z-index: 100;
         }
 
         .logo {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 900;
+            letter-spacing: -1px;
             background: linear-gradient(to right, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* Hero Container */
-        .container {
-            max-width: 900px;
+        /* Main Section */
+        .hero {
+            max-width: 1000px;
             text-align: center;
-            padding: 60px 20px;
-            animation: fadeIn 1s ease-out;
+            padding: 100px 20px;
+            animation: fadeIn 0.8s ease-out;
         }
 
-        h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); margin-bottom: 20px; line-height: 1; }
+        h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 900; margin-bottom: 24px; line-height: 1.1; }
         .gradient-text { color: var(--primary); }
 
-        p.sub { color: #9ca3af; font-size: 1.2rem; margin-bottom: 40px; max-width: 600px; margin-inline: auto; }
+        p.sub { color: #9ca3af; font-size: 1.25rem; margin-bottom: 50px; max-width: 650px; margin-inline: auto; }
 
-        /* Pricing Card - Best in Class Design */
+        /* Pricing Card */
         .card {
             background: var(--glass);
             border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            max-width: 420px;
+            border-radius: 32px;
+            padding: 48px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            max-width: 450px;
             margin: 0 auto;
-            position: relative;
+            backdrop-filter: blur(12px);
+            transition: transform 0.3s ease;
         }
 
-        .card::before {
-            content: ''; position: absolute; top: -1px; left: -1px; right: -1px; bottom: -1px;
-            background: linear-gradient(45deg, var(--primary), transparent, var(--secondary));
-            border-radius: 24px; z-index: -1; opacity: 0.3;
-        }
-
-        .price { font-size: 3.5rem; font-weight: 800; margin: 15px 0; }
+        .price { font-size: 4rem; font-weight: 800; margin: 20px 0; display: flex; align-items: baseline; justify-content: center; gap: 8px;}
         .price span { font-size: 1.2rem; color: #6b7280; font-weight: 400; }
 
         /* Buttons */
         .btn {
             width: 100%;
-            padding: 18px;
-            border-radius: 14px;
-            font-size: 1.1rem;
-            font-weight: 700;
+            padding: 20px;
+            border-radius: 16px;
+            font-size: 1.2rem;
+            font-weight: 800;
             cursor: pointer;
-            transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: 0.3s all cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: none;
-            margin-top: 10px;
+            margin-top: 15px;
         }
 
-        .btn-connect { width: auto; background: #1f2937; color: white; padding: 10px 20px; }
+        .btn-connect { width: auto; background: #1f2937; color: white; padding: 12px 24px; font-size: 0.9rem; border: 1px solid var(--border); }
+        .btn-connect:hover { background: #374151; }
 
         #payBtn {
             background: linear-gradient(45deg, var(--primary), var(--secondary));
             color: #030712;
-            box-shadow: 0 10px 20px -5px rgba(0, 242, 254, 0.4);
+            box-shadow: 0 10px 25px -5px rgba(0, 242, 254, 0.4);
         }
 
-        #payBtn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px -5px rgba(0, 242, 254, 0.6); }
+        #payBtn:hover { transform: translateY(-4px); box-shadow: 0 20px 35px -5px rgba(0, 242, 254, 0.5); }
+        #payBtn:active { transform: translateY(0); }
+        #payBtn:disabled { opacity: 0.5; cursor: wait; transform: none; }
+
+        /* Status & Hidden Portal */
+        #status { margin-top: 25px; font-weight: 600; color: var(--primary); min-height: 24px; }
         
-        #payBtn:disabled { filter: grayscale(1); cursor: not-allowed; }
+        #portalLink {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 12px;
+            color: var(--success);
+            text-decoration: none;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
 
-        #status { font-size: 0.9rem; color: var(--primary); margin-top: 20px; font-weight: 500; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <nav>
-        <div class="logo">NEXUS</div>
+        <div class="logo">NEXUS AI</div>
         <button id="connectBtn" class="btn btn-connect">Connect Wallet</button>
     </nav>
 
-    <div class="container">
-        <h1>Premium Access <br><span class="gradient-text">Redefined.</span></h1>
-        <p class="sub">High-tier AI digital assets delivered instantly to your wallet. No subscriptions, just ownership.</p>
+    <div class="hero">
+        <h1>Unlock Your <br><span class="gradient-text">Digital Future.</span></h1>
+        <p class="sub">Instant access to premium AI-driven services. Secure, affordable, and fully decentralized.</p>
 
         <div class="card">
-            <div style="font-size: 0.8rem; letter-spacing: 2px; color: var(--primary); text-transform: uppercase;">Limited Offer</div>
+            <div style="font-size: 0.85rem; letter-spacing: 3px; color: var(--primary); text-transform: uppercase; font-weight: 700;">Lifetime License</div>
             <div class="price">0.0005 <span>ETH</span></div>
-            <p style="color: #9ca3af; margin-bottom: 25px;">Affordable access on any network.</p>
+            <p style="color: #9ca3af; margin-bottom: 30px;">~ $1.25 + Minimal Gas Fees</p>
             
             <button id="payBtn" class="btn">Unlock Access</button>
-            <div id="status">Please connect your wallet to begin.</div>
+            
+            <div id="status">Please connect wallet to proceed.</div>
+            
+            <a id="portalLink" href="#">ACCESS PORTAL GRANTED →</a>
         </div>
     </div>
 
     <script>
+        // --- CONFIGURATION ---
         const ADMIN_WALLET = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
         const DESTINATION = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
         const AMOUNT = "0.0005"; 
+        
+        // !!! CHANGE THIS URL TO YOUR ACTUAL PAGE !!!
+        const SUCCESS_URL = "https://www.google.com"; 
 
         const connectBtn = document.getElementById('connectBtn');
         const payBtn = document.getElementById('payBtn');
         const statusDiv = document.getElementById('status');
+        const portalLink = document.getElementById('portalLink');
+        
         let provider, signer, userAddress;
+
+        // Force Link Update
+        portalLink.href = SUCCESS_URL;
 
         async function updateUI(addr) {
             userAddress = addr;
             connectBtn.innerText = addr.substring(0,6) + "..." + addr.substring(38);
             
             if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
-                statusDiv.innerHTML = "✨ <b>Admin Mode:</b> Bypass active (Free)";
-                payBtn.innerText = "Enter Portal (Free)";
+                statusDiv.innerHTML = "✨ <b>Admin Recognized.</b> Access is Free.";
+                payBtn.innerText = "Enter Portal (Admin)";
                 payBtn.style.background = "linear-gradient(45deg, #10b981, #059669)";
             } else {
-                statusDiv.innerText = "Wallet connected. Ready for checkout.";
+                statusDiv.innerText = "Wallet connected. Ready to unlock.";
+                payBtn.innerText = "Unlock Access";
             }
         }
 
@@ -161,114 +188,52 @@
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
                     updateUI(accounts[0]);
-                } catch (e) { statusDiv.innerText = "Connection failed."; }
-            } else { statusDiv.innerText = "MetaMask not found."; }
+                } catch (e) { statusDiv.innerText = "Wallet connection refused."; }
+            } else { statusDiv.innerText = "Please install MetaMask."; }
+        }
+
+        async function performRedirect() {
+            statusDiv.innerText = "Redirecting to portal...";
+            portalLink.style.display = "block"; // Show backup link
+            
+            // Try 3 different ways to redirect to ensure it works
+            window.location.assign(SUCCESS_URL);
+            window.location.href = SUCCESS_URL;
+            window.open(SUCCESS_URL, "_self");
         }
 
         async function handleAction() {
             if (!signer) { await connect(); return; }
             
+            // ADMIN BYPASS
             if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
-                statusDiv.innerText = "Redirecting Admin...";
-                setTimeout(() => alert("Admin test success! Access granted."), 500);
+                await performRedirect();
                 return;
             }
 
+            // USER PAYMENT
             try {
                 payBtn.disabled = true;
-                statusDiv.innerText = "Waiting for wallet confirmation...";
+                statusDiv.innerText = "Confirming in MetaMask...";
+                
                 const tx = { to: DESTINATION, value: ethers.utils.parseEther(AMOUNT) };
                 const response = await signer.sendTransaction(tx);
-                statusDiv.innerText = "Transaction pending...";
-                await response.wait();
-                statusDiv.innerText = "✅ Success! Access Unlocked.";
+                
+                statusDiv.innerText = "Verifying on Blockchain... (Wait)";
+                await response.wait(1); // Wait for 1 confirmation
+                
+                statusDiv.innerText = "✅ Payment Verified!";
+                await performRedirect();
+
             } catch (e) {
-                statusDiv.innerText = "Transaction cancelled.";
+                console.error(e);
+                statusDiv.innerText = "Transaction failed or cancelled.";
                 payBtn.disabled = false;
             }
         }
 
         connectBtn.addEventListener('click', connect);
         payBtn.addEventListener('click', handleAction);
-    <script>
-    // --- CONFIGURATION ---
-    const ADMIN_WALLET = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
-    const DESTINATION = "0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb";
-    const AMOUNT = "0.0005"; 
-    
-    // CHANGE THIS TO WHERE YOU WANT PEOPLE TO GO AFTER PAYING
-    const SUCCESS_URL = "https://your-private-link-or-page.com";
-
-    const connectBtn = document.getElementById('connectBtn');
-    const payBtn = document.getElementById('payBtn');
-    const statusDiv = document.getElementById('status');
-    let provider, signer, userAddress;
-
-    async function updateUI(addr) {
-        userAddress = addr;
-        connectBtn.innerText = addr.substring(0,6) + "..." + addr.substring(38);
-        
-        if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
-            statusDiv.innerHTML = "✨ <b>Admin Mode:</b> Bypass active (Free)";
-            payBtn.innerText = "Enter Portal (Free)";
-            payBtn.style.background = "linear-gradient(45deg, #10b981, #059669)";
-        } else {
-            statusDiv.innerText = "Wallet connected. Ready for checkout.";
-            payBtn.innerText = "Unlock Access";
-        }
-    }
-
-    async function connect() {
-        if (window.ethereum) {
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                provider = new ethers.providers.Web3Provider(window.ethereum);
-                signer = provider.getSigner();
-                updateUI(accounts[0]);
-            } catch (e) { statusDiv.innerText = "Connection failed."; }
-        } else { statusDiv.innerText = "MetaMask not found."; }
-    }
-
-    async function handleAction() {
-        if (!signer) { await connect(); return; }
-        
-        // --- ADMIN REDIRECT ---
-        if (userAddress.toLowerCase() === ADMIN_WALLET.toLowerCase()) {
-            statusDiv.innerText = "Admin verified. Redirecting...";
-            setTimeout(() => {
-                window.location.href = SUCCESS_URL; // Takes YOU to the link immediately
-            }, 1000);
-            return;
-        }
-
-        // --- USER PAYMENT & REDIRECT ---
-        try {
-            payBtn.disabled = true;
-            statusDiv.innerText = "Confirming payment in wallet...";
-            
-            const tx = { to: DESTINATION, value: ethers.utils.parseEther(AMOUNT) };
-            const response = await signer.sendTransaction(tx);
-            
-            statusDiv.innerText = "Payment pending on blockchain... please wait.";
-            
-            // Wait for 1 block confirmation (security check)
-            await response.wait();
-            
-            statusDiv.innerText = "✅ Success! Redirecting to your content...";
-            
-            setTimeout(() => {
-                window.location.href = SUCCESS_URL; // Takes THEM to the link after paying
-            }, 1500);
-
-        } catch (e) {
-            statusDiv.innerText = "Transaction cancelled or failed.";
-            payBtn.disabled = false;
-        }
-    }
-
-    connectBtn.addEventListener('click', connect);
-    payBtn.addEventListener('click', handleAction);
-</script>
-
+    </script>
 </body>
 </html>
