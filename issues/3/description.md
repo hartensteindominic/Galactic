@@ -1,8 +1,16 @@
-Redesign and improve the Galactic website to follow best practices from top AR/VR platforms. For both AR and VR modes, the site should immediately launch users into an infinite garden environment—a seamless, endless natural world that allows continuous exploration and immersion. Incorporate:
-- Procedural garden generation for an infinite feel
-- Immediate infinite garden launch in both AR and VR
-- Enhanced spatial tracking and navigation
-- Modern UI/UX and optimized user flows
-- Subscription validation gating access
+### Proposal for Website Improvement
 
-Reference visual style and interactive features from leading AR/VR garden or exploration experiences to inspire the redesign. Aim for engagement, usability, and cross-device compatibility.
+To achieve a tenfold improvement of the Galactic website, we propose the following enhancements:
+
+- **Ultra-modern UI/UX**: Implement animated transitions, context-aware navigation, and expressive branding to create a visually stunning experience.
+- **Multi-device support**: Ensure compatibility for desktops, mobile devices, and headsets such as Meta Quest, Hololens, ARKit, WebXR, etc.
+- **Intuitive onboarding**: Introduce interactive tutorials that guide new users seamlessly through the platform.
+- **Community/social features**: Build features like chat, customizable avatars, community rooms, activity feeds, and sharing options to foster user engagement.
+- **Marketplace/asset library**: Develop a space for community creations, including mods, skins, and garden expansion packs.
+- **Performance optimization**: Strive for <100ms interaction latency, instant loading times, and persistent world states to enhance user experience.
+- **Accessibility**: Incorporate support for screen readers, voice commands, captions, and adaptable color schemes to ensure inclusivity.
+- **Gamification**: Introduce achievements, leaderboards, quests, and collectibles in the infinite garden to encourage exploration and interaction.
+- **AI-powered personalization**: Use AI to offer custom garden layouts, adaptive experiences, and tailored content recommendations.
+- **Advanced AR/VR tech features**: Integrate spatial audio, hand tracking, object recognition, and environmental blending to elevate the immersive experience.
+
+All features will emphasize launching AR and VR into an infinite garden, drawing inspiration from leading AR/VR platforms. Stretch goals will focus on subscription validation and maintaining seamless engagement throughout the user journey.
