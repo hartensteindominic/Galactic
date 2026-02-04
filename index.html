@@ -21,7 +21,7 @@
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            overflow-x: hidden;
+            overflow: hidden;
         }
 
         #starfield {
@@ -30,7 +30,11 @@
             z-index: -1;
         }
 
-        header { padding: 30px 20px; text-align: center; z-index: 1; }
+        header {
+            padding: 30px 20px;
+            text-align: center;
+            z-index: 1;
+        }
 
         h1 {
             font-size: clamp(2rem, 8vw, 3.5rem);
@@ -56,14 +60,17 @@
         }
 
         #chat-box {
-            height: 350px;
+            height: 400px;
             overflow-y: auto;
+            padding-right: 10px;
             display: flex;
             flex-direction: column;
             gap: 15px;
             margin-bottom: 20px;
-            padding-right: 10px;
         }
+
+        #chat-box::-webkit-scrollbar { width: 4px; }
+        #chat-box::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 10px; }
 
         .ai-log {
             font-family: 'Courier New', monospace;
@@ -73,7 +80,6 @@
             border-left: 3px solid var(--neon-blue);
             border-radius: 6px;
             font-size: 0.9rem;
-            word-wrap: break-word;
         }
 
         #loading-spinner { margin: 15px 0; text-align: center; }
@@ -99,6 +105,7 @@
             background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
             border: none; color: black; padding: 0 25px;
             border-radius: 12px; font-weight: 800; cursor: pointer;
+            text-transform: uppercase; letter-spacing: 1px;
         }
 
         .code-result {
@@ -114,7 +121,7 @@
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
-        .hidden { display: none !important; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -123,28 +130,29 @@
 
 <header>
     <h1>GALACTIC</h1>
-    <p style="letter-spacing: 3px; font-size: 0.8rem; opacity: 0.6;">AUTONOMOUS AI ARCHITECT</p>
+    <p style="letter-spacing: 3px; font-size: 0.8rem; opacity: 0.6;">AUTONOMOUS AI ARCHITECT (SECURE MODE)</p>
 </header>
 
 <div id="chat-container">
     <div id="chat-box">
-        <div class="ai-log">System: Starlink Active. Enter site parameters...</div>
+        <div class="ai-log">System: Starlink Active. Connected to Local Node.</div>
     </div>
 
     <div id="loading-spinner" class="hidden">
         <div class="spinner"></div>
-        <p style="color: var(--neon-blue); font-size: 0.7rem; font-weight: bold;">ARCHITECTING MANIFEST...</p>
+        <p style="color: var(--neon-blue); font-size: 0.7rem; font-weight: bold;">PROXYING REQUEST THROUGH NODE...</p>
     </div>
 
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="e.g., A luxury watch store with gold accents" autocomplete="off">
+        <input type="text" id="user-input" placeholder="Describe your architecture..." autocomplete="off">
         <button id="send-btn" onclick="processRequest()">Build</button>
     </div>
 </div>
 
 <script>
-    // 🔑 API Key from your screenshot
-    const API_KEY = "AIzaSyA1DV3pYPbZhulRAthhreH3cl7HfGm0zUg"; 
+    document.getElementById('user-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') processRequest();
+    });
 
     async function processRequest() {
         const inputField = document.getElementById('user-input');
@@ -153,7 +161,7 @@
         
         if (!prompt) return;
 
-        logToChat("Generating: " + prompt);
+        logToChat("Requesting: " + prompt);
         spinner.classList.remove('hidden');
         inputField.value = ""; 
 
@@ -161,31 +169,24 @@
             const code = await generateAutonomousCode(prompt);
             displayCode(code, prompt);
         } catch (err) {
-            logToChat("Error: Transmission failed. Check console for details.");
-            console.error(err);
+            logToChat("Error: Backend connection failed. Ensure server.js is running.");
         } finally {
             spinner.classList.add('hidden');
         }
     }
 
     async function generateAutonomousCode(topic) {
-        // Pointing to Gemini 1.5 Flash
-        const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
-        
-        const response = await fetch(ENDPOINT, {
+        // This targets your Node.js server instead of Google directly
+        const response = await fetch('http://localhost:3000/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ 
-                    parts: [{ text: `Create a professional, modern single-file HTML/CSS webpage for: "${topic}". Return ONLY the code, no markdown.` }] 
-                }]
-            })
+            body: JSON.stringify({ topic: topic })
         });
 
         const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
         
-        let raw = data.candidates[0].content.parts[0].text;
+        // Gemini's JSON structure usually nests the text here:
+        const raw = data.candidates[0].content.parts[0].text;
         return raw.replace(/```html|```/g, "").trim();
     }
 
@@ -196,7 +197,7 @@
         
         const launchBtn = document.createElement('button');
         launchBtn.className = "launch-btn";
-        launchBtn.textContent = "🚀 LAUNCH PREVIEW";
+        launchBtn.textContent = "🚀 LAUNCH ARCHITECTURE";
         launchBtn.onclick = () => {
             const win = window.open('', '_blank');
             win.document.write(code);
@@ -205,7 +206,7 @@
 
         container.appendChild(launchBtn);
         box.appendChild(container);
-        logToChat("Architecture Compiled successfully.");
+        logToChat("Manifest Received. Architecture Ready.");
         box.scrollTop = box.scrollHeight;
     }
 
@@ -217,7 +218,7 @@
         document.getElementById('chat-box').scrollTop = document.getElementById('chat-box').scrollHeight;
     }
 
-    // --- Starfield Background ---
+    // --- Starfield Animation ---
     const canvas = document.getElementById('starfield');
     const ctx = canvas.getContext('2d');
     let stars = [];
@@ -246,7 +247,7 @@
         });
         requestAnimationFrame(animate);
     }
-    
+
     window.addEventListener('resize', init);
     init(); animate();
 </script>
