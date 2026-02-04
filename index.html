@@ -3,126 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nexus Sovereign V3.0</title>
+    <title>Nexus Sovereign | Recursive Edition</title>
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.min.js"></script>
     <style>
-        :root { --bg: #000; --text: #fff; --prime: #3b82f6; --card: #111; --border: #333; }
-        body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; overflow: hidden; height: 100vh; }
+        :root { --bg: #000; --card: #111; --prime: #fff; --blue: #3b82f6; --text: #e5e7eb; --border: #262626; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
         
-        /* Loading Screen to prevent "White Flash" */
-        #boot-screen { position: fixed; inset: 0; background: #000; display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: var(--prime); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        /* HEADER & NAV */
+        nav { padding: 1rem 2rem; border-bottom: 2px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: #000; z-index: 10; }
+        .status-pill { background: var(--card); border: 1px solid var(--border); padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; color: #737373; }
+        .thinking { color: var(--blue); border-color: var(--blue); animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 
-        #app { display: none; height: 100%; flex-direction: column; }
-        nav { padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
-        .main-layout { display: flex; flex: 1; overflow: hidden; }
+        /* MAIN LAYOUT */
+        main { display: flex; flex: 1; overflow: hidden; }
+        #editor-container { flex: 1; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        #preview-container { flex: 1; background: #fff; position: relative; }
         
-        /* Sidebar and Content */
-        #sidebar { width: 250px; background: #050505; border-right: 1px solid var(--border); padding: 15px; overflow-y: auto; }
-        #forge { flex: 1; display: flex; flex-direction: column; position: relative; }
-        #editor-pane { flex: 1; background: #000; color: #10b981; font-family: monospace; padding: 20px; border: none; outline: none; resize: none; font-size: 14px; }
-        #preview-pane { flex: 1; background: #fff; border-left: 1px solid var(--border); }
+        /* FORGE (EDITOR) */
+        textarea { flex: 1; background: #000; color: #10b981; border: none; padding: 20px; font-family: 'Fira Code', monospace; font-size: 14px; outline: none; resize: none; line-height: 1.5; }
+        
+        /* CONTROLS */
+        .toolbar { padding: 10px; background: var(--card); border-top: 1px solid var(--border); display: flex; gap: 10px; }
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 900; cursor: pointer; font-size: 12px; transition: 0.2s; }
+        .btn-prime { background: var(--prime); color: #000; }
+        .btn-blue { background: var(--blue); color: #fff; }
+        .btn-ghost { background: transparent; color: #737373; border: 1px solid var(--border); }
+
         iframe { width: 100%; height: 100%; border: none; }
-
-        /* Control Bar */
-        .controls { padding: 10px; background: var(--card); border-top: 1px solid var(--border); display: flex; gap: 10px; }
-        button { background: var(--prime); color: #fff; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        button:disabled { opacity: 0.3; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
-    <div id="boot-screen"><div class="spinner"></div></div>
+    <nav>
+        <div style="font-weight:900; letter-spacing:-1px;">NEXUS / SOVEREIGN</div>
+        <div id="status" class="status-pill">ENGINE IDLE</div>
+    </nav>
 
-    <div id="app">
-        <nav>
-            <div style="font-weight:900;">NEXUS SOVEREIGN V3.0</div>
-            <div id="status">Ready</div>
-        </nav>
-        
-        <div class="main-layout">
-            <div id="sidebar">
-                <h4 style="color:#666; font-size:12px;">HISTORY</h4>
-                <div id="vault-list"></div>
-            </div>
-            <div id="forge">
-                <textarea id="editor-pane" placeholder="Your code will appear here..."></textarea>
-                <div class="controls">
-                    <button id="undoBtn">UNDO</button>
-                    <button id="redoBtn">REDO</button>
-                    <button id="rewriteBtn" style="background:#fff; color:#000;">REWRITE WITH AI</button>
-                    <button id="shareBtn" style="background:#1d9bf0;">SHARE TO X</button>
-                </div>
-            </div>
-            <div id="preview-pane">
-                <iframe id="live-frame"></iframe>
+    <main>
+        <div id="editor-container">
+            <textarea id="editor" placeholder="Grok's code will appear here..."></textarea>
+            <div class="toolbar">
+                <button class="btn btn-ghost" id="undoBtn">UNDO</button>
+                <button class="btn btn-prime" id="rewriteBtn">REPROGRAM (AI)</button>
+                <button class="btn btn-blue" onclick="downloadCode()">EXPORT</button>
             </div>
         </div>
-    </div>
+        <div id="preview-container">
+            <iframe id="preview"></iframe>
+        </div>
+    </main>
 
     <script>
-        // --- 1. THE SAFETY BOOT ---
-        window.addEventListener('load', () => {
-            try {
-                if (typeof ethers === 'undefined') throw new Error("Ethers library failed to load.");
-                document.getElementById('boot-screen').style.display = 'none';
-                document.getElementById('app').style.display = 'flex';
-                initApp();
-            } catch (e) {
-                document.body.innerHTML = `<div style="padding:50px; color:red;"><h1>Fatal Error</h1><p>${e.message}</p><p>Check your internet connection or CDN links.</p></div>`;
-            }
+        const editor = document.getElementById('editor');
+        const preview = document.getElementById('preview');
+        const status = document.getElementById('status');
+        let history = [];
+        let XAI_KEY = "Xai-G7JvL16cDlnBbKrHUxKcwEcsexkOTgFP2phHhGGbkM3ug4uLI2pajIDncuAG3E4IhVyKXVVnrOBglVCs"; 
+
+        // 1. UPDATE PREVIEW IN REAL-TIME
+        editor.addEventListener('input', () => {
+            const blob = new Blob([editor.value], { type: 'text/html' });
+            preview.src = URL.createObjectURL(blob);
         });
 
-        // --- 2. THE CORE ENGINE ---
-        let history = [];
-        let redoStack = [];
-        let vault = [];
+        // 2. SELF-REPROGRAMMING ENGINE (Grok-4 API Call)
+        async function reprogram(instruction) {
+            status.innerText = "GROK IS REPROGRAMMING...";
+            status.classList.add('thinking');
+            
+            const currentCode = editor.value;
+            
+            try {
+                const response = await fetch("https://api.x.ai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${XAI_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: "grok-4",
+                        messages: [
+                            { role: "system", content: "You are a recursive AI architect. You rewrite the provided code to fulfill the user's request. Return ONLY the full HTML code." },
+                            { role: "user", content: `CURRENT CODE:\n${currentCode}\n\nTASK:\n${instruction}` }
+                        ],
+                        temperature: 0.5
+                    })
+                });
 
-        function initApp() {
-            const editor = document.getElementById('editor-pane');
-            const frame = document.getElementById('live-frame');
+                const data = await response.json();
+                const newCode = data.choices[0].message.content;
 
-            editor.addEventListener('input', () => {
-                updatePreview(editor.value);
-                saveState(editor.value);
-            });
-
-            document.getElementById('undoBtn').onclick = () => {
-                if (history.length > 1) {
-                    redoStack.push(history.pop());
-                    applyState(history[history.length - 1]);
-                }
-            };
-
-            document.getElementById('rewriteBtn').onclick = async () => {
-                const promptMsg = prompt("What changes should Grok-4 make?");
-                if (!promptMsg) return;
+                // Clean up Markdown backticks if Grok adds them
+                const cleanCode = newCode.replace(/```html|```/g, "");
                 
-                document.getElementById('status').innerText = "Grok is thinking...";
-                // This is where you call your xAI API logic from previous versions
-                // For now, it acts as a placeholder for the logic we built.
-            };
-        }
-
-        function updatePreview(code) {
-            const frame = document.getElementById('live-frame');
-            const blob = new Blob([code], { type: 'text/html' });
-            frame.src = URL.createObjectURL(blob);
-        }
-
-        function applyState(code) {
-            document.getElementById('editor-pane').value = code;
-            updatePreview(code);
-        }
-
-        function saveState(code) {
-            if (history[history.length - 1] !== code) {
-                history.push(code);
-                if (history.length > 50) history.shift();
-                redoStack = [];
+                history.push(currentCode);
+                editor.value = cleanCode;
+                editor.dispatchEvent(new Event('input')); // Update preview
+                
+                status.innerText = "SUCCESS: SYSTEM EVOLVED";
+            } catch (e) {
+                status.innerText = "ERROR: LINK FAILED";
+                console.error(e);
+            } finally {
+                setTimeout(() => {
+                    status.classList.remove('thinking');
+                    if (status.innerText !== "ERROR: LINK FAILED") status.innerText = "ENGINE IDLE";
+                }, 3000);
             }
+        }
+
+        document.getElementById('rewriteBtn').onclick = () => {
+            const task = prompt("What should I reprogram?");
+            if (task) reprogram(task);
+        };
+
+        document.getElementById('undoBtn').onclick = () => {
+            if (history.length > 0) {
+                editor.value = history.pop();
+                editor.dispatchEvent(new Event('input'));
+            }
+        };
+
+        function downloadCode() {
+            const blob = new Blob([editor.value], {type:'text/html'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = "nexus_build.html";
+            a.click();
         }
     </script>
 </body>
