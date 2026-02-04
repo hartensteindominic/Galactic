@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GALACTIC | NFT Architect</title>
+    <title>GALACTIC | NFT Portal</title>
     <style>
         :root {
             --neon-blue: #00f2ff;
             --neon-purple: #bc13fe;
             --bg-dark: #050505;
-            --glass: rgba(255, 255, 255, 0.08);
         }
 
         body {
@@ -26,23 +25,15 @@
             justify-content: space-between; align-items: center; z-index: 10;
         }
 
-        .logo h1 {
-            font-size: 1.5rem; letter-spacing: 5px; margin: 0;
-            background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-
         #wallet-btn {
             background: transparent; border: 1px solid var(--neon-blue);
             color: var(--neon-blue); padding: 10px 20px; border-radius: 30px;
-            cursor: pointer; font-weight: bold; transition: 0.3s;
+            cursor: pointer; font-weight: bold;
         }
 
-        #wallet-btn:hover { background: var(--neon-blue); color: black; }
-
         #chat-container {
-            width: 90%; max-width: 800px; background: var(--glass);
-            backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 90%; max-width: 800px; background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
             border-radius: 24px; padding: 25px; margin-top: 20px; z-index: 1;
         }
 
@@ -75,21 +66,21 @@
 <canvas id="starfield"></canvas>
 
 <header>
-    <div class="logo"><h1>GALACTIC</h1></div>
+    <h1 style="background: linear-gradient(to right, var(--neon-blue), var(--neon-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 5px;">GALACTIC</h1>
     <button id="wallet-btn" onclick="connectWallet()">LINK WALLET</button>
 </header>
 
 <div id="chat-container">
     <div id="chat-box">
-        <div class="ai-log">System: NFT Engine Online. Describe your collection...</div>
+        <div class="ai-log">> System: NFT Protocols Active. Connect Wallet to begin.</div>
     </div>
 
     <div id="loading" class="hidden" style="text-align: center; color: var(--neon-blue); margin: 15px 0;">
-        Architecting NFT Portal...
+        Transmitting Architecture...
     </div>
 
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="e.g., A minting page for Space Pirates">
+        <input type="text" id="user-input" placeholder="e.g., A minting page for Pixel Cats">
         <button id="build-btn" onclick="processRequest()">BUILD</button>
     </div>
 </div>
@@ -98,21 +89,17 @@
 
 <script>
     const API_KEY = "AIzaSyA1DV3pYPbZhulRAthhreH3cl7HfGm0zUg"; 
-    let userAddress = null;
+    let walletAddress = null;
 
     async function connectWallet() {
         if (window.ethereum) {
             try {
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                userAddress = accounts[0];
-                document.getElementById('wallet-btn').textContent = userAddress.substring(0,6) + "..." + userAddress.slice(-4);
-                logToChat("Wallet Linked: " + userAddress);
-            } catch (err) {
-                logToChat("Link Denied.");
-            }
-        } else {
-            alert("MetaMask not found!");
-        }
+                walletAddress = accounts[0];
+                document.getElementById('wallet-btn').textContent = walletAddress.substring(0,6) + "..." + walletAddress.slice(-4);
+                logToChat("Wallet Connected: " + walletAddress);
+            } catch (err) { logToChat("Connection Denied."); }
+        } else { alert("Install MetaMask!"); }
     }
 
     async function processRequest() {
@@ -120,16 +107,14 @@
         const topic = input.value.trim();
         if (!topic) return;
 
-        logToChat("Generating: " + topic);
+        logToChat("Requesting: " + topic);
         document.getElementById('loading').classList.remove('hidden');
 
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
             
-            // Telling the AI to include Minting code
-            const prompt = `Create a single-file responsive HTML/CSS/JS NFT minting site for "${topic}".
-            Include a "Connect Wallet" button and a "Mint NFT" button. 
-            Use ethers.js for the logic. Display the wallet address: ${userAddress || 'Not Connected'}. 
+            const prompt = `Create a single-file HTML/CSS/JS NFT minting page for "${topic}".
+            Include a "Mint" button using ethers.js. Display the wallet address: ${walletAddress || 'None'}.
             Return ONLY raw code.`;
 
             const response = await fetch(url, {
@@ -143,21 +128,18 @@
 
             const rawCode = data.candidates[0].content.parts[0].text.replace(/```html|```/g, "").trim();
             
-            // Create Launch Button
             const btn = document.createElement('button');
             btn.textContent = "🚀 LAUNCH NFT PORTAL";
-            btn.style.cssText = "width:100%; padding:15px; margin-top:10px; border-radius:10px; cursor:pointer; background:white; color:black; font-weight:bold;";
+            btn.style.cssText = "width:100%; padding:15px; margin-top:10px; border-radius:10px; cursor:pointer; background:white; font-weight:bold;";
             btn.onclick = () => {
                 const win = window.open();
                 win.document.write(rawCode);
                 win.document.close();
             };
             document.getElementById('chat-box').appendChild(btn);
-            
             logToChat("Portal Ready.");
         } catch (err) {
-            logToChat("Transmission Error: Check Console (F12)");
-            console.error(err);
+            logToChat("Transmission Error. Check Console (F12)");
         } finally {
             document.getElementById('loading').classList.add('hidden');
             input.value = "";
@@ -173,7 +155,7 @@
         box.scrollTop = box.scrollHeight;
     }
 
-    // Starfield Animation
+    // Starfield
     const canvas = document.getElementById('starfield');
     const ctx = canvas.getContext('2d');
     let stars = [];
