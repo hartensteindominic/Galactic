@@ -1,15 +1,19 @@
 const express = require('express');
 const cors = require('cors');
-const fetch = require('node-fetch'); // Ensure you ran: npm install node-fetch@2
+const fetch = require('node-fetch'); // Install via: npm install node-fetch@2
 const app = express();
 
-app.use(cors()); // This tells the browser: "I allow external requests"
+app.use(cors());
 app.use(express.json());
 
-const API_KEY = "YOUR_ACTUAL_API_KEY_HERE"; 
+// 🔑 Your Secured API Key
+const API_KEY = "AIzaSyA1DV3pYPbZhulRAthhreH3cl7HfGm0zUg"; 
 
 app.post('/generate', async (req, res) => {
-    console.log("Received request for topic:", req.body.topic);
+    const { topic } = req.body;
+    console.log(`> Galactic Architect: Received request for "${topic}"`);
+
+    // Using Gemini 1.5 Flash
     const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
 
     try {
@@ -17,15 +21,31 @@ app.post('/generate', async (req, res) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: `Write a high-quality single-file HTML/CSS webpage for: "${req.body.topic}". Return ONLY raw code.` }] }]
+                contents: [{ 
+                    parts: [{ text: `Create a professional, high-quality single-file HTML/CSS webpage for: "${topic}". Include responsive design. Return ONLY the code.` }] 
+                }]
             })
         });
+
         const data = await response.json();
+        
+        if (data.error) {
+            console.error("Gemini Error:", data.error.message);
+            return res.status(500).json({ error: data.error.message });
+        }
+
         res.json(data);
     } catch (err) {
-        console.error("Gemini Error:", err);
-        res.status(500).json({ error: "Failed to connect to Gemini" });
+        console.error("Server Error:", err);
+        res.status(500).json({ error: "Transmission failed." });
     }
 });
 
-app.listen(3000, () => console.log('✅ Galactic Server running on http://localhost:3000'));
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`
+    🚀 GALACTIC BACKEND ACTIVE
+    Listening on: http://localhost:${PORT}
+    Project ID: gen-lang-client-0151934736
+    `);
+});
