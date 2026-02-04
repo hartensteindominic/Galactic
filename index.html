@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GALACTIC | AI Architect</title>
+    <title>GALACTIC | NFT Architect</title>
     <style>
         :root {
             --neon-blue: #00f2ff;
             --neon-purple: #bc13fe;
             --bg-dark: #050505;
-            --glass: rgba(255, 255, 255, 0.1);
+            --glass: rgba(255, 255, 255, 0.08);
         }
 
         body {
@@ -24,33 +24,47 @@
             overflow: hidden;
         }
 
-        #starfield {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1;
+        #starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+
+        header {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+            z-index: 10;
         }
 
-        header { padding: 40px 20px; text-align: center; }
-
-        h1 {
-            font-size: clamp(2rem, 10vw, 4rem);
-            letter-spacing: 8px;
-            text-transform: uppercase;
+        .logo-area h1 {
+            font-size: 1.5rem;
+            letter-spacing: 5px;
             background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             margin: 0;
         }
 
+        #wallet-btn {
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
         #chat-container {
             width: 90%;
             max-width: 800px;
             background: var(--glass);
-            backdrop-filter: blur(15px);
-            border: 1px solid rgba(0, 242, 255, 0.2);
-            border-radius: 20px;
-            padding: 20px;
-            z-index: 10;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 25px;
+            margin-top: 20px;
+            z-index: 1;
         }
 
         #chat-box {
@@ -58,7 +72,7 @@
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 15px;
             margin-bottom: 20px;
         }
 
@@ -66,25 +80,23 @@
             font-family: monospace;
             color: var(--neon-blue);
             background: rgba(0, 242, 255, 0.05);
-            padding: 10px;
+            padding: 12px;
             border-left: 3px solid var(--neon-blue);
-            border-radius: 4px;
-            font-size: 0.85rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
         }
 
-        .input-area { 
-            display: flex; gap: 10px; 
-        }
+        .input-area { display: flex; gap: 12px; }
 
         input {
-            flex: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-            padding: 15px; color: white; border-radius: 10px; outline: none;
+            flex: 1; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+            padding: 15px; color: white; border-radius: 12px; outline: none;
         }
 
-        button {
+        button#build-btn {
             background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
-            border: none; color: black; padding: 0 25px;
-            border-radius: 10px; font-weight: bold; cursor: pointer;
+            border: none; color: black; padding: 0 30px;
+            border-radius: 12px; font-weight: 800; cursor: pointer;
         }
 
         .hidden { display: none !important; }
@@ -95,72 +107,94 @@
 <canvas id="starfield"></canvas>
 
 <header>
-    <h1>GALACTIC</h1>
+    <div class="logo-area"><h1>GALACTIC</h1></div>
+    <button id="wallet-btn" onclick="connectWallet()">LINK WALLET</button>
 </header>
 
 <div id="chat-container">
     <div id="chat-box">
-        <div class="ai-log">> System: Ready for Architecture.</div>
+        <div class="ai-log">System: NFT Minting Protocol Active. Description required...</div>
     </div>
 
-    <div id="loading" class="hidden" style="color: var(--neon-blue); text-align: center; padding: 10px;">
-        Architecting...
+    <div id="loading" class="hidden" style="text-align: center; color: var(--neon-blue); margin-bottom: 15px;">
+        Compiling Smart Contract Interface...
     </div>
 
     <div class="input-area">
-        <input type="text" id="user-input" placeholder="Enter site idea...">
-        <button onclick="processRequest()">BUILD</button>
+        <input type="text" id="user-input" placeholder="e.g., A minting page for 3D Cyber Skulls">
+        <button id="build-btn" onclick="processRequest()">BUILD</button>
     </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
 <script>
     const API_KEY = "AIzaSyA1DV3pYPbZhulRAthhreH3cl7HfGm0zUg"; //
+    let userWallet = null;
+
+    async function connectWallet() {
+        if (window.ethereum) {
+            try {
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                const signer = provider.getSigner();
+                userWallet = await signer.getAddress();
+                document.getElementById('wallet-btn').textContent = userWallet.substring(0,6) + "..." + userWallet.slice(-4);
+                logToChat("Signer Verified: " + userWallet);
+            } catch (err) {
+                logToChat("Wallet connection rejected.");
+            }
+        } else {
+            alert("Please install MetaMask!");
+        }
+    }
 
     async function processRequest() {
         const input = document.getElementById('user-input');
         const topic = input.value.trim();
         if (!topic) return;
 
-        logToChat("Requesting: " + topic);
+        logToChat("Architecting NFT Portal: " + topic);
         document.getElementById('loading').classList.remove('hidden');
 
         try {
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
             
+            const context = `Task: Create a single-file HTML/CSS/JS NFT minting page for ${topic}. 
+            Important: Include a 'Mint' button that uses ethers.js to trigger a transaction. 
+            If wallet is connected (${userWallet || 'none'}), reference it. 
+            Return ONLY raw code.`;
+            
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `Generate a full, single-file HTML/CSS webpage for: ${topic}. Return ONLY the raw code.` }] }]
+                    contents: [{ parts: [{ text: context }] }]
                 })
             });
 
             const data = await response.json();
-            
-            if (data.error) throw new Error(data.error.message);
-            
             const rawCode = data.candidates[0].content.parts[0].text.replace(/```html|```/g, "").trim();
             
-            // Create preview button
-            const btn = document.createElement('button');
-            btn.textContent = "🚀 LAUNCH PREVIEW";
-            btn.style.width = "100%";
-            btn.style.marginTop = "10px";
-            btn.onclick = () => {
-                const win = window.open();
-                win.document.write(rawCode);
-                win.document.close();
-            };
-            document.getElementById('chat-box').appendChild(btn);
-            
-            logToChat("Build Complete.");
+            displayPreviewButton(rawCode);
+            logToChat("NFT Portal Compiled.");
         } catch (err) {
-            logToChat("CRITICAL ERROR: " + err.message);
-            console.error(err);
+            logToChat("Transmission failure.");
         } finally {
             document.getElementById('loading').classList.add('hidden');
             input.value = "";
         }
+    }
+
+    function displayPreviewButton(code) {
+        const btn = document.createElement('button');
+        btn.textContent = "🚀 LAUNCH NFT PORTAL";
+        btn.style.cssText = "width:100%; padding:15px; margin-top:10px; border-radius:10px; cursor:pointer; font-weight:bold; background:white; color:black;";
+        btn.onclick = () => {
+            const win = window.open();
+            win.document.write(code);
+            win.document.close();
+        };
+        document.getElementById('chat-box').appendChild(btn);
     }
 
     function logToChat(msg) {
@@ -172,18 +206,18 @@
         box.scrollTop = box.scrollHeight;
     }
 
-    // Starfield animation
+    // Starfield Background
     const canvas = document.getElementById('starfield');
     const ctx = canvas.getContext('2d');
     let stars = [];
     function init() {
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        stars = Array.from({length: 100}, () => ({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2 }));
+        stars = Array.from({length: 80}, () => ({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2 }));
     }
     function animate() {
         ctx.fillStyle = '#050505'; ctx.fillRect(0,0,canvas.width,canvas.height);
         ctx.fillStyle = '#fff';
-        stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill(); s.y = (s.y + 0.5) % canvas.height; });
+        stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.s, 0, Math.PI*2); ctx.fill(); s.y = (s.y + 0.3) % canvas.height; });
         requestAnimationFrame(animate);
     }
     init(); animate();
