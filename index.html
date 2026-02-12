@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Vault</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/@unlock-protocol/unlock-js@latest/dist/unlock.min.js"></script>
+
+<style>
+:root {
+  --bg: #040611;
+  --panel: rgba(18,22,45,0.85);
+  --neon: #4f9cff;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  background: radial-gradient(circle at top, #0b1025, var(--bg));
+  color: #e9ecf1;
+}
+
+header {
+  padding: 22px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  backdrop-filter: blur(14px);
+  background: rgba(10,14,30,0.75);
+}
+
+button {
+  background: linear-gradient(135deg, var(--neon), #7aa8ff);
+  border: none;
+  padding: 10px 20px;
+  border-radius: 999px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(79,156,255,0.4);
+}
+
+.grid {
+  padding: 32px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 26px;
+}
+
+.card {
+  background: var(--panel);
+  border-radius: 18px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.6);
+  transition: transform .3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+}
+
+video {
+  width: 100%;
+  height: 170px;
+  object-fit: cover;
+  background: black;
+}
+
+.locked {
+  position: absolute;
+  inset: 0;
+  background: rgba(5,8,25,0.7);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.info {
+  padding: 16px;
+}
+
+.info h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.info p {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.75;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h2>NEON VAULT</h2>
+  <button onclick="openCheckout()">Unlock Access</button>
+</header>
+
+<div class="grid" id="grid"></div>
+
+<script>
+/* ========= CONFIG ========= */
+const LOCK_ADDRESS = "PASTE_YOUR_LOCK_ADDRESS_HERE";
+const NETWORK = 8453; // Base
+/* ========================== */
+
+const unlock = new UnlockProtocol({
+  locks: {
+    [LOCK_ADDRESS]: { network: NETWORK }
+  }
+});
+
+/* VIDEO CATALOG (scales infinitely) */
+const videos = [
+  {
+    title: "Signal Drift",
+    desc: "Fragments from the edge of the network",
+    preview: "https://media.w3.org/2010/05/bunny/trailer.mp4",
+    full: "https://media.w3.org/2010/05/bunny/movie.mp4"
+  },
+  {
+    title: "Chrome City",
+    desc: "A run through electric streets",
+    preview: "https://media.w3.org/2010/05/sintel/trailer.mp4",
+    full: "https://media.w3.org/2010/05/sintel/trailer.mp4"
+  },
+  {
+    title: "Neural Bloom",
+    desc: "Patterns learning to breathe",
+    preview: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    full: "https://media.w3.org/2010/05/video/movie_300.mp4"
+  }
+];
+
+let hasAccess = false;
+
+unlock.on("authenticated", async () => {
+  hasAccess = await unlock.hasValidKey(LOCK_ADDRESS);
+  render();
+});
+
+function openCheckout() {
+  unlock.loadCheckoutModal();
+}
+
+function play(i) {
+  if (!hasAccess) return;
+  const v = document.getElementById("v" + i);
+  v.src = videos[i].full;
+  v.controls = true;
+  v.muted = false;
+  v.play();
+}
+
+function render() {
+  const grid = document.getElementById("grid");
+  grid.innerHTML = "";
+
+  videos.forEach((v, i) => {
+    grid.innerHTML += `
+      <div class="card">
+        <video id="v${i}"
+          src="${v.preview}"
+          muted loop playsinline
+          onmouseenter="this.play()"
+          onmouseleave="this.pause();this.currentTime=0">
+        </video>
+
+        ${!hasAccess ? `<div class="locked">LOCKED</div>` : ""}
+
+        <div class="info">
+          <h3>${v.title}</h3>
+          <p>${v.desc}</p>
+          ${
+            hasAccess
+              ? `<button onclick="play(${i})">Play Full</button>`
+              : `<button onclick="openCheckout()">Unlock</button>`
+          }
+        </div>
+      </div>
+    `;
+  });
+}
+
+render();
+</script>
+
+</body>
+</html>
