@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alien Frontier: Fight & Explore</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at top, #16203b, #05070f 60%);
+    }
+    #hud {
+      position: fixed;
+      top: 12px;
+      left: 12px;
+      z-index: 10;
+      background: rgba(5, 8, 20, 0.6);
+      border: 1px solid rgba(90, 220, 255, 0.35);
+      border-radius: 12px;
+      padding: 10px 14px;
+      backdrop-filter: blur(8px);
+      min-width: 240px;
+    }
+    #hud h1 {
+      margin: 0 0 6px;
+      font-size: 1rem;
+      letter-spacing: .04em;
+      color: #8fe9ff;
+    }
+    #hud p {
+      margin: 3px 0;
+      font-size: .84rem;
+      color: #d6f8ff;
+    }
+    #crosshair {
+      position: fixed;
+      inset: 50% auto auto 50%;
+      transform: translate(-50%, -50%);
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(164, 238, 255, .85);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9;
+      box-shadow: 0 0 20px rgba(109, 235, 255, .6);
+    }
+    #message {
+      position: fixed;
+      inset: auto 0 16px 0;
+      text-align: center;
+      color: #c1f8ff;
+      font-size: .9rem;
+      z-index: 10;
+      text-shadow: 0 0 12px #00bbff66;
+    }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <h1>Alien Frontier</h1>
+    <p><strong>Mission:</strong> Explore and defeat alien drones.</p>
+    <p><strong>Move:</strong> W A S D | <strong>Look:</strong> Mouse</p>
+    <p><strong>Shoot:</strong> Left Click | <strong>Sprint:</strong> Shift</p>
+    <p><strong>Enemies destroyed:</strong> <span id="score">0</span>/8</p>
+  </div>
+  <div id="crosshair"></div>
+  <p id="message">Click anywhere to lock controls and begin.</p>
+
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.164.1/build/three.module.js';
+    import { PointerLockControls } from 'https://unpkg.com/three@0.164.1/examples/jsm/controls/PointerLockControls.js';
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x060814, 25, 180);
+
+    const camera = new THREE.PerspectiveCamera(75, innerWidth / innerHeight, 0.1, 500);
+    camera.position.set(0, 2, 10);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+
+    const hemi = new THREE.HemisphereLight(0x88d1ff, 0x182028, 0.7);
+    scene.add(hemi);
+
+    const moon = new THREE.DirectionalLight(0x79d7ff, 1.2);
+    moon.position.set(35, 55, -5);
+    moon.castShadow = true;
+    moon.shadow.mapSize.set(1024, 1024);
+    scene.add(moon);
+
+    const ground = new THREE.Mesh(
+      new THREE.PlaneGeometry(420, 420, 80, 80),
+      new THREE.MeshStandardMaterial({ color: 0x162131, roughness: 0.95, metalness: 0.08 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+
+    const pos = ground.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const y = Math.sin(x * 0.08) * Math.cos(z * 0.06) * 1.5 + Math.sin(z * 0.15) * 0.5;
+      pos.setY(i, y);
+    }
+    ground.geometry.computeVertexNormals();
+    scene.add(ground);
+
+    const crystalGroup = new THREE.Group();
+    const crystalGeometry = new THREE.ConeGeometry(0.9, 5, 7);
+    for (let i = 0; i < 36; i++) {
+      const crystal = new THREE.Mesh(
+        crystalGeometry,
+        new THREE.MeshStandardMaterial({ color: new THREE.Color().setHSL(0.55 + Math.random() * 0.2, 0.9, 0.5), emissive: 0x0b1c2e, metalness: 0.5, roughness: 0.25 })
+      );
+      crystal.position.set((Math.random() - 0.5) * 300, 2.5, (Math.random() - 0.5) * 300);
+      crystal.rotation.y = Math.random() * Math.PI;
+      crystal.castShadow = true;
+      crystalGroup.add(crystal);
+    }
+    scene.add(crystalGroup);
+
+    const alienGeometry = new THREE.IcosahedronGeometry(1.4, 1);
+    const enemies = [];
+    const enemyCount = 8;
+    for (let i = 0; i < enemyCount; i++) {
+      const enemy = new THREE.Mesh(
+        alienGeometry,
+        new THREE.MeshStandardMaterial({ color: 0x89ff8a, emissive: 0x17490f, roughness: 0.35, metalness: 0.5 })
+      );
+      enemy.position.set((Math.random() - 0.5) * 90, 2.5 + Math.random() * 1.5, (Math.random() - 0.5) * 90);
+      enemy.castShadow = true;
+      enemy.userData.alive = true;
+      enemy.userData.velocity = new THREE.Vector3((Math.random() - 0.5) * 0.05, 0, (Math.random() - 0.5) * 0.05);
+      scene.add(enemy);
+      enemies.push(enemy);
+    }
+
+    const starsGeometry = new THREE.BufferGeometry();
+    const starCount = 3000;
+    const starVertices = new Float32Array(starCount * 3);
+    for (let i = 0; i < starCount * 3; i += 3) {
+      starVertices[i] = (Math.random() - 0.5) * 800;
+      starVertices[i + 1] = Math.random() * 250 + 20;
+      starVertices[i + 2] = (Math.random() - 0.5) * 800;
+    }
+    starsGeometry.setAttribute('position', new THREE.BufferAttribute(starVertices, 3));
+    const stars = new THREE.Points(starsGeometry, new THREE.PointsMaterial({ color: 0xb6e7ff, size: 0.8 }));
+    scene.add(stars);
+
+    const controls = new PointerLockControls(camera, document.body);
+    const message = document.getElementById('message');
+    document.body.addEventListener('click', () => controls.lock());
+    controls.addEventListener('lock', () => message.textContent = 'Explore the biome and eliminate the drones!');
+    controls.addEventListener('unlock', () => message.textContent = 'Paused. Click to lock controls and resume.');
+    scene.add(controls.getObject());
+
+    const keys = { w: false, a: false, s: false, d: false, shift: false };
+    addEventListener('keydown', (e) => {
+      if (e.code === 'KeyW') keys.w = true;
+      if (e.code === 'KeyA') keys.a = true;
+      if (e.code === 'KeyS') keys.s = true;
+      if (e.code === 'KeyD') keys.d = true;
+      if (e.code === 'ShiftLeft') keys.shift = true;
+    });
+    addEventListener('keyup', (e) => {
+      if (e.code === 'KeyW') keys.w = false;
+      if (e.code === 'KeyA') keys.a = false;
+      if (e.code === 'KeyS') keys.s = false;
+      if (e.code === 'KeyD') keys.d = false;
+      if (e.code === 'ShiftLeft') keys.shift = false;
+    });
+
+    let score = 0;
+    const scoreEl = document.getElementById('score');
+    const raycaster = new THREE.Raycaster();
+
+    addEventListener('mousedown', () => {
+      if (!controls.isLocked) return;
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const alive = enemies.filter((e) => e.userData.alive);
+      const hits = raycaster.intersectObjects(alive, false);
+      if (hits.length) {
+        const target = hits[0].object;
+        target.userData.alive = false;
+        target.material.color.set(0x243144);
+        target.material.emissive.set(0x05080f);
+        target.scale.setScalar(0.35);
+        score += 1;
+        scoreEl.textContent = score;
+        if (score === enemyCount) {
+          message.textContent = 'All drones neutralized. Sector secure.';
+        }
+      }
+    });
+
+    const direction = new THREE.Vector3();
+    const side = new THREE.Vector3();
+    const clock = new THREE.Clock();
+
+    function animate() {
+      const dt = Math.min(clock.getDelta(), 0.033);
+
+      if (controls.isLocked) {
+        const speed = keys.shift ? 18 : 11;
+
+        direction.set(0, 0, 0);
+        if (keys.w) direction.z -= 1;
+        if (keys.s) direction.z += 1;
+        if (keys.a) direction.x -= 1;
+        if (keys.d) direction.x += 1;
+
+        if (direction.lengthSq() > 0) {
+          direction.normalize();
+          controls.moveForward(direction.z * speed * dt);
+          controls.moveRight(direction.x * speed * dt);
+        }
+
+        const p = controls.getObject().position;
+        p.y = 2 + Math.sin(performance.now() * 0.005) * 0.02;
+      }
+
+      const t = performance.now() * 0.001;
+      for (const enemy of enemies) {
+        if (!enemy.userData.alive) continue;
+        enemy.position.add(enemy.userData.velocity);
+        enemy.position.y = 2.5 + Math.sin(t * 2.5 + enemy.id) * 0.8;
+        enemy.rotation.x += 0.015;
+        enemy.rotation.y += 0.022;
+
+        if (Math.abs(enemy.position.x) > 120) enemy.userData.velocity.x *= -1;
+        if (Math.abs(enemy.position.z) > 120) enemy.userData.velocity.z *= -1;
+
+        side.subVectors(controls.getObject().position, enemy.position);
+        if (side.length() < 15) {
+          enemy.userData.velocity.addScaledVector(side.normalize(), -0.0025);
+          enemy.userData.velocity.clampLength(0.02, 0.09);
+        }
+      }
+
+      crystalGroup.children.forEach((c, i) => {
+        c.rotation.y += 0.002 + (i % 5) * 0.0006;
+        c.position.y += Math.sin(t + i) * 0.003;
+      });
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+    });
+
+    animate();
+  </script>
+</body>
+</html>
