@@ -12,7 +12,7 @@
       top: 12px;
       left: 12px;
       z-index: 4;
-      background: rgba(5, 10, 22, 0.65);
+      background: linear-gradient(155deg, rgba(5, 10, 22, 0.86), rgba(6, 26, 41, 0.72));
       border: 1px solid rgba(91, 223, 255, 0.35);
       border-radius: 12px;
       padding: 10px 14px;
@@ -21,6 +21,19 @@
     }
     #hud h1 { margin: 0 0 6px; color: #9defff; font-size: 1rem; }
     #hud p { margin: 4px 0; font-size: 0.85rem; color: #d8f7ff; }
+    #hud .stat-grid {
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(120px, 1fr));
+      gap: 4px 12px;
+    }
+    #hud .stat-grid p {
+      margin: 2px 0;
+      font-size: 0.8rem;
+      color: #8de7ff;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
     #crosshair {
       position: fixed;
       left: 50%;
@@ -45,6 +58,20 @@
       text-shadow: 0 0 12px rgba(29, 196, 255, 0.55);
       font-size: 0.92rem;
     }
+    #scan {
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(125, 235, 255, 0.04) 0,
+        rgba(125, 235, 255, 0.04) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      pointer-events: none;
+      opacity: 0.35;
+      z-index: 2;
+    }
     canvas { display: block; }
   </style>
 </head>
@@ -55,8 +82,15 @@
     <p><strong>Aim:</strong> Mouse | <strong>Shoot:</strong> Left Click</p>
     <p><strong>Camera:</strong> Scroll wheel zoom</p>
     <p><strong>Drones destroyed:</strong> <span id="score">0</span>/8</p>
+    <div class="stat-grid">
+      <p>Shield: <span id="shield">100</span>%</p>
+      <p>Boost: <span id="boost">Ready</span></p>
+      <p>Biome Threat: <span id="threat">Low</span></p>
+      <p>Mode: Vanguard</p>
+    </div>
   </div>
   <div id="crosshair"></div>
+  <div id="scan"></div>
   <p id="message">Click in the game to lock mouse and control your 3D character.</p>
 
   <script src="https://unpkg.com/three@0.164.1/build/three.min.js"></script>
@@ -112,6 +146,18 @@
     }
     starsGeometry.setAttribute('position', new THREE.BufferAttribute(stars, 3));
     scene.add(new THREE.Points(starsGeometry, new THREE.PointsMaterial({ color: 0xb9e6ff, size: 0.82 })));
+
+    const skyline = new THREE.Group();
+    for (let i = 0; i < 30; i++) {
+      const tower = new THREE.Mesh(
+        new THREE.BoxGeometry(2 + Math.random() * 2.8, 8 + Math.random() * 26, 2 + Math.random() * 2.8),
+        new THREE.MeshStandardMaterial({ color: 0x173d5a, emissive: 0x0b2438, roughness: 0.45, metalness: 0.55 })
+      );
+      tower.position.set((Math.random() - 0.5) * 280, tower.geometry.parameters.height * 0.5, (Math.random() - 0.5) * 280);
+      tower.castShadow = true;
+      skyline.add(tower);
+    }
+    scene.add(skyline);
 
     const crystalGroup = new THREE.Group();
     const crystalGeometry = new THREE.ConeGeometry(0.9, 4.6, 7);
@@ -191,7 +237,13 @@
     });
 
     const scoreEl = document.getElementById('score');
+    const shieldEl = document.getElementById('shield');
+    const boostEl = document.getElementById('boost');
+    const threatEl = document.getElementById('threat');
     let score = 0;
+    let shield = 100;
+    let boostCooldown = 0;
+    let gameOver = false;
     const raycaster = new THREE.Raycaster();
     addEventListener('mousedown', () => {
       if (!controls.isLocked) return;
@@ -206,7 +258,10 @@
       target.scale.setScalar(0.34);
       score += 1;
       scoreEl.textContent = score;
-      if (score === enemyCount) message.textContent = 'All drones neutralized. Great run!';
+      if (score === enemyCount) {
+        message.textContent = 'All drones neutralized. Great run!';
+        threatEl.textContent = 'Clear';
+      }
     });
 
     let zoomDistance = 7.5;
@@ -231,8 +286,10 @@
       const dt = Math.min(clock.getDelta(), 0.033);
       const t = performance.now() * 0.001;
 
-      if (controls.isLocked) {
-        const speed = (keys.shift ? 14.5 : 9) * dt;
+      if (controls.isLocked && !gameOver) {
+        if (keys.shift && boostCooldown <= 0) boostCooldown = 1.7;
+        const sprinting = keys.shift && boostCooldown > 1.2;
+        const speed = (sprinting ? 17.2 : 9.2) * dt;
         moveVector.set(0, 0, 0);
 
         camera.getWorldDirection(cameraForward);
@@ -253,6 +310,9 @@
           player.rotation.y = Math.atan2(moveVector.x, moveVector.z);
         }
       }
+
+      if (boostCooldown > 0) boostCooldown = Math.max(0, boostCooldown - dt);
+      boostEl.textContent = boostCooldown > 0 ? `${(boostCooldown * 100 / 1.7).toFixed(0)}%` : 'Ready';
 
       const floor = groundHeightAt(player.position.x, player.position.z);
       player.position.y = floor + 0.05;
@@ -276,10 +336,24 @@
         if (Math.abs(enemy.position.z) > 125) enemy.userData.velocity.z *= -1;
 
         toEnemy.subVectors(player.position, enemy.position);
-        if (toEnemy.length() < 18) {
+        const distance = toEnemy.length();
+        if (distance < 18) {
           enemy.userData.velocity.addScaledVector(toEnemy.normalize(), -0.0022);
           enemy.userData.velocity.clampLength(0.018, 0.085);
         }
+        if (!gameOver && distance < 4.8) {
+          shield = Math.max(0, shield - dt * 11);
+          shieldEl.textContent = shield.toFixed(0);
+          threatEl.textContent = 'Critical';
+        }
+      }
+
+      if (!gameOver && shield <= 0) {
+        gameOver = true;
+        message.textContent = 'Shield depleted. Click to relock and refresh to redeploy.';
+        controls.unlock();
+      } else if (!gameOver && score < enemyCount) {
+        threatEl.textContent = shield < 30 ? 'High' : shield < 60 ? 'Medium' : 'Low';
       }
 
       crystalGroup.children.forEach((crystal, i) => {
