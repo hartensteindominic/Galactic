@@ -2,703 +2,234 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alien Frontier: Survivor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Galactic Bazaar – Keyboard Only</title>
   <style>
-    :root {
-      color-scheme: dark;
-      font-family: Inter, system-ui, sans-serif;
-      --bg: #030712;
-      --panel: rgba(5, 10, 22, 0.78);
-      --border: rgba(91, 223, 255, 0.35);
-      --text: #d8f7ff;
-      --accent: #9defff;
-      --good: #74ff8a;
-      --warn: #ffd166;
+    body { margin: 0; overflow: hidden; background: #000; font-family: Arial, sans-serif; color: #0f8; }
+    #ui {
+      position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 12px; border-radius: 8px;
+      font-size: 16px; pointer-events: none;
     }
-
-    html, body {
-      margin: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background: var(--bg);
+    #inventory {
+      position: absolute; top: 10px; right: 10px; background: rgba(0,20,40,0.8); padding: 12px; border-radius: 8px;
+      font-size: 18px; min-width: 180px;
     }
-
-    canvas {
-      display: block;
-      width: 100vw;
-      height: 100vh;
-      cursor: crosshair;
+    #trade-msg {
+      position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.8); color: #ffeb3b; font-size: 26px; padding: 16px 32px;
+      border-radius: 12px; border: 2px solid #0f8; display: none; pointer-events: none;
     }
-
-    .panel {
-      position: fixed;
-      z-index: 3;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 10px 14px;
-      backdrop-filter: blur(8px);
-      color: var(--text);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-    }
-
-    #hud {
-      top: 12px;
-      left: 12px;
-      min-width: 320px;
-      font-size: 0.9rem;
-    }
-
-    h1, h2, p {
-      margin: 4px 0;
-    }
-
-    h1 {
-      font-size: 1rem;
-      color: var(--accent);
-    }
-
-    h2 {
-      font-size: 0.95rem;
-      color: var(--accent);
-      margin-bottom: 8px;
-    }
-
-    #message {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 14px;
-      text-align: center;
-      color: #d7f5ff;
-      z-index: 3;
-      font-size: 0.92rem;
-      text-shadow: 0 0 8px rgba(29, 196, 255, 0.45);
-      padding: 0 10px;
-    }
-
-    .stat-good {
-      color: var(--good);
-      font-weight: 600;
-    }
-
-    .stat-warn {
-      color: var(--warn);
-      font-weight: 600;
+    .label {
+      position: absolute; background: rgba(0,0,0,0.6); color: #0ff; padding: 4px 10px;
+      border-radius: 6px; font-size: 13px; pointer-events: none; transform: translate(-50%, -60px);
+      white-space: nowrap;
     }
   </style>
 </head>
 <body>
-  <div id="hud" class="panel">
-    <h1>Alien Frontier</h1>
-    <p><strong>Move:</strong> W A S D &nbsp;|&nbsp; <strong>Shoot:</strong> Left Click &nbsp;|&nbsp; <strong>Restart:</strong> R</p>
-    <p><strong>Pause:</strong> P &nbsp;|&nbsp; <strong>Auto-AI Pilot:</strong> T</p>
-    <p><strong>HP:</strong> <span id="hp">100</span></p>
-    <p><strong>Wave:</strong> <span id="wave">1</span> &nbsp; <strong>Destroyed:</strong> <span id="score">0</span></p>
-    <p><strong>Enemies alive:</strong> <span id="alive">0</span></p>
-    <p><strong>Auto-AI:</strong> <span id="autopilot">OFF</span></p>
-  </div>
 
-  <p id="message">Game loaded. Survive waves and clear enemies. Press R anytime to restart.</p>
-  <canvas id="game"></canvas>
+  <div id="ui">
+    W A S D → move • Q E → rotate • R F → up/down • Space → trade with nearest alien
+  </div>
+  <div id="inventory">Inventory:<br>Crystals: <span id="crystals">10</span><br>Rares: <span id="rares">0</span></div>
+  <div id="trade-msg">Trade complete!</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.min.js"></script>
 
   <script>
-    const canvas = document.getElementById('game');
-    const ctx = canvas.getContext('2d');
-    const hpEl = document.getElementById('hp');
-    const scoreEl = document.getElementById('score');
-    const waveEl = document.getElementById('wave');
-    const aliveEl = document.getElementById('alive');
-    const autopilotEl = document.getElementById('autopilot');
-    const messageEl = document.getElementById('message');
+    // ─── SCENE ──────────────────────────────────────────────────────
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050014);
 
-    const brainName = 'FrontierSeed-v1';
+    const camera = new THREE.PerspectiveCamera(65, innerWidth / innerHeight, 0.1, 3000);
+    camera.position.set(0, 10, 35);
 
-    function resize() {
-      canvas.width = innerWidth;
-      canvas.height = innerHeight;
-    }
-    addEventListener('resize', resize);
-    resize();
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
 
-    const keys = new Set();
-    const mouse = { x: canvas.width / 2, y: canvas.height / 2, down: false };
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+    const light = new THREE.PointLight(0x88ccff, 3, 120);
+    light.position.set(15, 30, 15);
+    scene.add(light);
 
-    let stars = [];
-    let bullets = [];
-    let enemies = [];
-    let enemyBullets = [];
-    let particles = [];
+    // Floor / platform
+    const floor = new THREE.Mesh(
+      new THREE.CylinderGeometry(30, 30, 2, 48),
+      new THREE.MeshStandardMaterial({ color: 0x112244, metalness: 0.7, roughness: 0.5 })
+    );
+    floor.rotation.x = Math.PI / 2;
+    floor.position.y = -1;
+    scene.add(floor);
 
-    let player;
-    let score;
-    let wave;
-    let gameOver;
-    let paused;
-    let waveCooldown;
-    let autopilot;
-    let shootCooldown;
-    let aiEvolutionTimer;
+    // ─── ALIENS ─────────────────────────────────────────────────────
+    const aliens = [];
+    const alienNames = ["Veil Matriarch", "Drift Nomad", "Crystal Oracle", "Void Enforcer", "Spear Huntress", "Nebula Trader"];
+    const colors = [0x00ccff, 0x88ffee, 0xaaaaff, 0x3366ff, 0xff88cc, 0x88ffaa];
 
-    const localAi = {
-      corpus: [
-        'orbit the nearest threat and avoid dead corners',
-        'preserve hp before chasing score spikes',
-        'if pressure rises move first and shoot second',
-        'thin enemy clusters before they surround you',
-        'micro strafes keep escape vectors open',
-        'finish wounded enemies then reposition quickly'
-      ],
-      transitions: new Map(),
-      weights: {
-        survival: 1,
-        aggression: 0.6,
-        spacing: 1
-      },
-      trainingTicks: 0
-    };
+    for (let i = 0; i < 6; i++) {
+      const group = new THREE.Group();
 
-    function makeStars() {
-      stars = Array.from({ length: 180 }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        s: Math.random() * 1.8 + 0.2
-      }));
-    }
-
-    function rand(min, max) {
-      return Math.random() * (max - min) + min;
-    }
-
-    function resetGame() {
-      player = { x: canvas.width / 2, y: canvas.height / 2, r: 16, hp: 100, speed: 255, invuln: 0 };
-      bullets = [];
-      enemies = [];
-      enemyBullets = [];
-      particles = [];
-      score = 0;
-      wave = 1;
-      gameOver = false;
-      paused = false;
-      waveCooldown = 0;
-      autopilot = false;
-      shootCooldown = 0;
-      aiEvolutionTimer = 0;
-
-      makeStars();
-      spawnWave();
-      updateHud();
-      observeState('reset');
-      setMessage('Mission reset. Survive and clear each wave.');
-    }
-
-    function tokenize(text) {
-      return text
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .split(/\s+/)
-        .filter(Boolean);
-    }
-
-    function trainFromLine(line) {
-      const words = tokenize(line);
-      for (let i = 0; i < words.length - 1; i++) {
-        const key = words[i];
-        const next = words[i + 1];
-        const bucket = localAi.transitions.get(key) || new Map();
-        bucket.set(next, (bucket.get(next) || 0) + 1);
-        localAi.transitions.set(key, bucket);
-      }
-    }
-
-    function bootstrapLocalAi() {
-      localAi.transitions.clear();
-      for (const line of localAi.corpus) trainFromLine(line);
-    }
-
-    function observeState(tag = 'tick') {
-      const descriptor = [
-        `tag ${tag}`,
-        `wave ${wave}`,
-        `hp ${Math.max(0, Math.round(player.hp))}`,
-        `alive ${enemies.length}`,
-        `score ${score}`,
-        `auto ${autopilot ? 'on' : 'off'}`
-      ].join(' ');
-      trainFromLine(descriptor);
-      localAi.trainingTicks += 1;
-    }
-
-    function weightedPick(bucket) {
-      const entries = [...bucket.entries()];
-      const total = entries.reduce((sum, [, value]) => sum + value, 0);
-      let r = Math.random() * total;
-      for (const [word, value] of entries) {
-        r -= value;
-        if (r <= 0) return word;
-      }
-      return entries[entries.length - 1][0];
-    }
-
-    function generateSelfText(seed = 'wave') {
-      const words = [seed];
-      let current = seed;
-      const maxWords = 18;
-      for (let i = 0; i < maxWords; i++) {
-        const bucket = localAi.transitions.get(current);
-        if (!bucket) break;
-        const next = weightedPick(bucket);
-        words.push(next);
-        current = next;
-      }
-      return words.join(' ');
-    }
-
-    function evolveBrain() {
-      const hpRatio = Math.max(0, Math.min(1, player.hp / 100));
-      localAi.weights.survival = 0.75 + (1 - hpRatio) * 1.4;
-      localAi.weights.aggression = 0.45 + Math.min(score / (wave * 10 + 1), 1.25);
-      localAi.weights.spacing = 0.8 + Math.min(enemies.length / 14, 1.4);
-
-      const syntheticThought = [
-        `survival ${localAi.weights.survival.toFixed(2)}`,
-        `aggression ${localAi.weights.aggression.toFixed(2)}`,
-        `spacing ${localAi.weights.spacing.toFixed(2)}`,
-        `pressure ${enemies.length > 10 ? 'high' : 'moderate'}`
-      ].join(' ');
-
-      trainFromLine(syntheticThought);
-      localAi.corpus.push(syntheticThought);
-      if (Math.random() < 0.25) {
-        setMessage(`Self-evolving AI adapted: ${syntheticThought}`);
-      }
-    }
-
-    function setMessage(text) {
-      messageEl.textContent = text;
-    }
-
-    function updateHud() {
-      hpEl.textContent = Math.max(0, Math.ceil(player.hp));
-      scoreEl.textContent = score;
-      waveEl.textContent = wave;
-      aliveEl.textContent = enemies.length;
-      autopilotEl.textContent = autopilot ? 'ON' : 'OFF';
-      autopilotEl.className = autopilot ? 'stat-good' : 'stat-warn';
-    }
-
-    function spawnEnemy() {
-      const side = Math.floor(Math.random() * 4);
-      let x = 0;
-      let y = 0;
-      if (side === 0) { x = rand(0, canvas.width); y = -30; }
-      if (side === 1) { x = canvas.width + 30; y = rand(0, canvas.height); }
-      if (side === 2) { x = rand(0, canvas.width); y = canvas.height + 30; }
-      if (side === 3) { x = -30; y = rand(0, canvas.height); }
-
-      const speedScale = Math.min(1 + wave * 0.08, 2.5);
-      const fireRate = Math.max(1.4 - wave * 0.08, 0.55);
-      enemies.push({
-        x,
-        y,
-        r: rand(12, 17),
-        angle: rand(0, Math.PI * 2),
-        speed: rand(40, 90) * speedScale,
-        fireCooldown: rand(0.2, 1.4),
-        fireRate
+      // Body
+      const bodyGeo = new THREE.CylinderGeometry(1.1, 1.8, 3.2, 12);
+      const bodyMat = new THREE.MeshStandardMaterial({
+        color: colors[i],
+        emissive: colors[i],
+        emissiveIntensity: 0.25
       });
-    }
+      const body = new THREE.Mesh(bodyGeo, bodyMat);
+      body.position.y = 1.2;
+      group.add(body);
 
-    function spawnWave() {
-      const count = 6 + wave * 3;
-      for (let i = 0; i < count; i++) spawnEnemy();
-      setMessage(`Wave ${wave} started. Enemies detected: ${count}.`);
-      updateHud();
-    }
+      // Head
+      const head = new THREE.Mesh(
+        new THREE.SphereGeometry(0.9, 16, 16),
+        new THREE.MeshStandardMaterial({ color: 0x88ddff, emissive: 0x0044aa, emissiveIntensity: 0.5 })
+      );
+      head.position.y = 3.0;
+      group.add(head);
 
-    function shootFrom(entity, angle, speed, isEnemy = false) {
-      const projectile = {
-        x: entity.x,
-        y: entity.y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 1.5,
-        r: isEnemy ? 4 : 3.8
+      // Eyes
+      const eyeGeo = new THREE.SphereGeometry(0.18, 12, 12);
+      const eyeMat = new THREE.MeshBasicMaterial({ color: 0xffee00 });
+      const eyeL = new THREE.Mesh(eyeGeo, eyeMat);
+      eyeL.position.set(-0.35, 3.1, 0.7);
+      group.add(eyeL);
+      const eyeR = eyeL.clone();
+      eyeR.position.x = 0.35;
+      group.add(eyeR);
+
+      // Start position
+      const angle = i * (Math.PI * 2 / 6) + (Math.random() - 0.5) * 1.5;
+      const dist = 10 + Math.random() * 10;
+      group.position.set(Math.cos(angle) * dist, 1.6, Math.sin(angle) * dist);
+
+      group.userData = {
+        speed: 0.3 + Math.random() * 0.5,
+        angle: Math.random() * Math.PI * 2,
+        name: alienNames[i]
       };
-      if (isEnemy) enemyBullets.push(projectile);
-      else bullets.push(projectile);
+
+      scene.add(group);
+      aliens.push(group);
+
+      // Name label
+      const label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = alienNames[i];
+      document.body.appendChild(label);
+      group.userData.label = label;
     }
 
-    function explode(x, y, color = '#9bffb4', size = 10) {
-      for (let i = 0; i < size; i++) {
-        particles.push({
-          x,
-          y,
-          vx: rand(-95, 95),
-          vy: rand(-95, 95),
-          life: rand(0.25, 0.6),
-          color
-        });
-      }
+    // ─── PLAYER INVENTORY ───────────────────────────────────────────
+    let player = { crystals: 10, rares: 0 };
+
+    function updateInventory() {
+      document.getElementById('crystals').textContent = player.crystals;
+      document.getElementById('rares').textContent = player.rares;
     }
+    updateInventory();
 
-    function applyAutopilot(dt) {
-      if (!autopilot || gameOver || paused) return;
-      if (enemies.length === 0) return;
+    // ─── KEYBOARD CONTROLS ──────────────────────────────────────────
+    const keys = {};
+    window.addEventListener('keydown', e => { keys[e.key.toLowerCase()] = true; });
+    window.addEventListener('keyup',   e => { keys[e.key.toLowerCase()] = false; });
 
-      let nearest = null;
-      let nearestDist = Infinity;
-      for (const enemy of enemies) {
-        const d = Math.hypot(enemy.x - player.x, enemy.y - player.y);
-        if (d < nearestDist) {
-          nearestDist = d;
-          nearest = enemy;
+    // Trade when pressing Space and close to an alien
+    function tryTrade() {
+      let closest = null;
+      let minDist = Infinity;
+
+      aliens.forEach(alien => {
+        const dist = camera.position.distanceTo(alien.position);
+        if (dist < minDist) {
+          minDist = dist;
+          closest = alien;
+        }
+      });
+
+      if (minDist < 12) {   // trade range
+        if (player.crystals >= 3) {
+          player.crystals -= 3;
+          player.rares += 1;
+          updateInventory();
+
+          const msg = document.getElementById('trade-msg');
+          msg.textContent = `Traded with ${closest.userData.name}! +1 Rare`;
+          msg.style.display = 'block';
+          setTimeout(() => { msg.style.display = 'none'; }, 2800);
+        } else {
+          const msg = document.getElementById('trade-msg');
+          msg.textContent = "Not enough crystals…";
+          msg.style.display = 'block';
+          setTimeout(() => { msg.style.display = 'none'; }, 2200);
         }
       }
-
-      if (!nearest) return;
-
-      mouse.x = nearest.x;
-      mouse.y = nearest.y;
-
-      const awayX = player.x - nearest.x;
-      const awayY = player.y - nearest.y;
-      const dangerZone = nearestDist < 170;
-      let moveX = 0;
-      let moveY = 0;
-
-      if (dangerZone) {
-        const mag = Math.hypot(awayX, awayY) || 1;
-        moveX = awayX / mag;
-        moveY = awayY / mag;
-      } else {
-        const orbitAngle = Math.atan2(awayY, awayX) + Math.PI / 2;
-        moveX = Math.cos(orbitAngle) * 0.75;
-        moveY = Math.sin(orbitAngle) * 0.75;
-      }
-
-      player.x += moveX * player.speed * dt;
-      player.y += moveY * player.speed * dt;
-
-      if (shootCooldown <= 0) {
-        const angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
-        shootFrom(player, angle, 560, false);
-        shootCooldown = 0.12;
-      }
     }
 
-    function update(dt) {
-      if (gameOver || paused) return;
+    // ─── ANIMATION LOOP ─────────────────────────────────────────────
+    function animate() {
+      requestAnimationFrame(animate);
 
-      shootCooldown = Math.max(0, shootCooldown - dt);
-      player.invuln = Math.max(0, player.invuln - dt);
+      // Camera movement (keyboard only)
+      const moveSpeed = 0.25;
+      const rotSpeed = 0.025;
 
-      let dx = 0;
-      let dy = 0;
-      if (!autopilot) {
-        if (keys.has('KeyW')) dy -= 1;
-        if (keys.has('KeyS')) dy += 1;
-        if (keys.has('KeyA')) dx -= 1;
-        if (keys.has('KeyD')) dx += 1;
+      if (keys['w']) camera.translateZ(-moveSpeed);
+      if (keys['s']) camera.translateZ( moveSpeed);
+      if (keys['a']) camera.translateX(-moveSpeed);
+      if (keys['d']) camera.translateX( moveSpeed);
+      if (keys['r']) camera.position.y += moveSpeed;
+      if (keys['f']) camera.position.y -= moveSpeed;
 
-        if (dx !== 0 || dy !== 0) {
-          const mag = Math.hypot(dx, dy);
-          player.x += (dx / mag) * player.speed * dt;
-          player.y += (dy / mag) * player.speed * dt;
-        }
-      }
+      if (keys['q']) camera.rotation.y += rotSpeed;
+      if (keys['e']) camera.rotation.y -= rotSpeed;
 
-      applyAutopilot(dt);
+      // Auto-look at center-ish area
+      const center = new THREE.Vector3(0, 2, 0);
+      camera.lookAt(center);
 
-      player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x));
-      player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y));
+      // Alien wandering
+      aliens.forEach(alien => {
+        alien.userData.angle += 0.006 * alien.userData.speed;
+        alien.position.x += Math.cos(alien.userData.angle) * 0.04 * alien.userData.speed;
+        alien.position.z += Math.sin(alien.userData.angle) * 0.04 * alien.userData.speed;
 
-      for (const arr of [bullets, enemyBullets]) {
-        for (let i = arr.length - 1; i >= 0; i--) {
-          const b = arr[i];
-          b.x += b.vx * dt;
-          b.y += b.vy * dt;
-          b.life -= dt;
-          if (b.life <= 0 || b.x < -30 || b.x > canvas.width + 30 || b.y < -30 || b.y > canvas.height + 30) {
-            arr.splice(i, 1);
-          }
-        }
-      }
-
-      for (let i = enemies.length - 1; i >= 0; i--) {
-        const enemy = enemies[i];
-        const ex = player.x - enemy.x;
-        const ey = player.y - enemy.y;
-        const dist = Math.hypot(ex, ey) || 1;
-
-        enemy.x += (ex / dist) * enemy.speed * dt;
-        enemy.y += (ey / dist) * enemy.speed * dt;
-        enemy.angle = Math.atan2(ey, ex);
-        enemy.fireCooldown -= dt;
-
-        if (enemy.fireCooldown <= 0) {
-          const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x) + rand(-0.12, 0.12);
-          shootFrom(enemy, angle, 280 + wave * 8, true);
-          enemy.fireCooldown = enemy.fireRate;
+        const dist = Math.hypot(alien.position.x, alien.position.z);
+        if (dist > 35) {
+          alien.position.x *= 0.96;
+          alien.position.z *= 0.96;
         }
 
-        if (dist < player.r + enemy.r && player.invuln <= 0) {
-          player.hp -= 16;
-          player.invuln = 0.35;
-          explode(player.x, player.y, '#9defff', 14);
-        }
+        alien.rotation.y = alien.userData.angle * 0.4;
 
-        for (let j = bullets.length - 1; j >= 0; j--) {
-          const b = bullets[j];
-          if (Math.hypot(b.x - enemy.x, b.y - enemy.y) < b.r + enemy.r) {
-            bullets.splice(j, 1);
-            enemies.splice(i, 1);
-            score += 1;
-            explode(enemy.x, enemy.y, '#74ff8a', 9);
-            break;
-          }
-        }
+        // Update label
+        const pos = alien.position.clone();
+        pos.y += 5;
+        const screenPos = pos.project(camera);
+        const x = (screenPos.x * 0.5 + 0.5) * innerWidth;
+        const y = (-screenPos.y * 0.5 + 0.5) * innerHeight;
+        alien.userData.label.style.transform = `translate(${x}px, ${y}px)`;
+      });
+
+      // Trade input
+      if (keys[' ']) {
+        tryTrade();
+        keys[' '] = false; // prevent holding space spamming
       }
 
-      for (let i = enemyBullets.length - 1; i >= 0; i--) {
-        const b = enemyBullets[i];
-        if (Math.hypot(b.x - player.x, b.y - player.y) < b.r + player.r && player.invuln <= 0) {
-          enemyBullets.splice(i, 1);
-          player.hp -= 11;
-          player.invuln = 0.2;
-          explode(player.x, player.y, '#ffd166', 8);
-        }
-      }
-
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.life -= dt;
-        if (p.life <= 0) particles.splice(i, 1);
-      }
-
-      aiEvolutionTimer += dt;
-      if (aiEvolutionTimer > 2.5) {
-        aiEvolutionTimer = 0;
-        observeState('auto-evolve');
-        evolveBrain();
-        if (Math.random() < 0.35) saveAiSettings();
-      }
-
-      if (player.hp <= 0 && !gameOver) {
-        player.hp = 0;
-        gameOver = true;
-        setMessage(`Mission failed on wave ${wave}. Press R to restart.`);
-      }
-
-      if (!gameOver && enemies.length === 0) {
-        waveCooldown += dt;
-        if (waveCooldown > 1.1) {
-          wave += 1;
-          waveCooldown = 0;
-          spawnWave();
-        }
-      }
-
-      updateHud();
+      renderer.render(scene, camera);
     }
 
-    function draw() {
-      ctx.fillStyle = '#050915';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    animate();
 
-      for (const st of stars) {
-        ctx.fillStyle = 'rgba(145,214,255,0.13)';
-        ctx.fillRect(st.x, st.y, st.s, st.s);
-      }
-
-      for (const enemy of enemies) drawEnemyShip(enemy);
-
-      for (const b of enemyBullets) {
-        ctx.fillStyle = '#ffb367';
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      for (const b of bullets) {
-        ctx.fillStyle = '#d8f9ff';
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      for (const p of particles) {
-        ctx.fillStyle = p.color;
-        ctx.fillRect(p.x, p.y, 2.5, 2.5);
-      }
-
-      const blink = player.invuln > 0 ? (Math.floor(performance.now() / 60) % 2 === 0) : true;
-      if (blink) {
-        const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
-        drawPlayerShip(player.x, player.y, player.r, angle);
-      }
-
-      ctx.strokeStyle = 'rgba(194,247,255,0.75)';
-      ctx.beginPath();
-      ctx.arc(mouse.x, mouse.y, 9, 0, Math.PI * 2);
-      ctx.stroke();
-
-      if (paused) {
-        ctx.fillStyle = 'rgba(0,0,0,0.45)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#e8fbff';
-        ctx.font = 'bold 30px Inter, system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
-      }
-    }
-
-    function fallbackAdvice() {
-      if (gameOver) return 'Local AI: Restart and relearn the wave rhythm.';
-      if (player.hp < 30) return 'Local AI: HP critical, prioritize spacing and diagonal escapes.';
-      if (enemies.length > 12) return 'Local AI: Threat density high, split the pack and keep orbiting.';
-      return 'Local AI: Maintain momentum, pick the nearest target, and avoid corner lock.';
-    }
-
-    function askAiStrategy() {
-      observeState('request');
-      const seed = player.hp < 35 ? 'survival' : enemies.length > 8 ? 'pressure' : 'wave';
-      const generated = generateSelfText(seed);
-      const tacticalLine = fallbackAdvice();
-      setMessage(`${brainName}: ${generated}. ${tacticalLine}`);
-    }
-
-    function saveAiSettings() {
-      localStorage.setItem('af_brainName', brainName);
-      localStorage.setItem('af_brainCorpus', JSON.stringify(localAi.corpus.slice(-240)));
-      localStorage.setItem('af_brainWeights', JSON.stringify(localAi.weights));
-    }
-
-    function loadAiSettings() {
-      const savedCorpus = localStorage.getItem('af_brainCorpus');
-      const savedWeights = localStorage.getItem('af_brainWeights');
-      if (savedCorpus) {
-        try {
-          const parsed = JSON.parse(savedCorpus);
-          if (Array.isArray(parsed) && parsed.length > 3) {
-            localAi.corpus = parsed;
-          }
-        } catch {
-          // ignore invalid local corpus
-        }
-      }
-      if (savedWeights) {
-        try {
-          const parsed = JSON.parse(savedWeights);
-          localAi.weights = {
-            ...localAi.weights,
-            ...parsed
-          };
-        } catch {
-          // ignore invalid local weights
-        }
-      }
-      bootstrapLocalAi();
-    }
-
-    function drawPlayerShip(x, y, r, angle) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate(angle);
-
-      ctx.fillStyle = '#92e8ff';
-      ctx.beginPath();
-      ctx.moveTo(r * 1.25, 0);
-      ctx.lineTo(-r * 0.8, -r * 0.7);
-      ctx.lineTo(-r * 0.45, 0);
-      ctx.lineTo(-r * 0.8, r * 0.7);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#c8f7ff';
-      ctx.beginPath();
-      ctx.moveTo(r * 0.35, 0);
-      ctx.lineTo(-r * 0.2, -r * 0.25);
-      ctx.lineTo(-r * 0.2, r * 0.25);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = 'rgba(124, 236, 255, 0.65)';
-      ctx.fillRect(-r * 1.05, -r * 0.23, r * 0.5, r * 0.46);
-      ctx.restore();
-    }
-
-    function drawEnemyShip(enemy) {
-      ctx.save();
-      ctx.translate(enemy.x, enemy.y);
-      ctx.rotate(enemy.angle);
-
-      ctx.fillStyle = '#4fd783';
-      ctx.beginPath();
-      ctx.moveTo(enemy.r * 1.1, 0);
-      ctx.lineTo(-enemy.r * 0.9, -enemy.r * 0.75);
-      ctx.lineTo(-enemy.r * 0.2, -enemy.r * 0.18);
-      ctx.lineTo(-enemy.r * 0.2, enemy.r * 0.18);
-      ctx.lineTo(-enemy.r * 0.9, enemy.r * 0.75);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#89ffb4';
-      ctx.beginPath();
-      ctx.arc(enemy.r * 0.15, 0, enemy.r * 0.24, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    addEventListener('keydown', (e) => {
-      keys.add(e.code);
-      if (e.code === 'KeyR') resetGame();
-      if (e.code === 'KeyP' && !gameOver) {
-        paused = !paused;
-        setMessage(paused ? 'Paused. Press P to resume.' : 'Resumed.');
-      }
-      if (e.code === 'KeyT' && !gameOver) {
-        autopilot = !autopilot;
-        updateHud();
-        setMessage(`Auto-AI pilot ${autopilot ? 'enabled' : 'disabled'}.`);
-      }
+    window.addEventListener('resize', () => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
     });
-    addEventListener('keyup', (e) => keys.delete(e.code));
-
-    canvas.addEventListener('mousemove', (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-    });
-
-    canvas.addEventListener('mousedown', (e) => {
-      if (e.button !== 0 || gameOver || paused || autopilot) return;
-      mouse.down = true;
-      const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
-      shootFrom(player, angle, 560, false);
-    });
-
-    canvas.addEventListener('mouseup', () => {
-      mouse.down = false;
-    });
-
-    let last = performance.now();
-    function loop(now) {
-      const dt = Math.min((now - last) / 1000, 0.033);
-      last = now;
-      update(dt);
-      if (!paused && !gameOver && Math.random() < 0.08) observeState();
-      draw();
-      requestAnimationFrame(loop);
-    }
-
-    bootstrapLocalAi();
-    loadAiSettings();
-    resetGame();
-    requestAnimationFrame(loop);
   </script>
 </body>
 </html>
