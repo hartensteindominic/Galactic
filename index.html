@@ -162,16 +162,15 @@
   </div>
 
   <div id="aiPanel" class="panel">
-    <h2>AI Tactical Advisor</h2>
-    <div class="row"><label for="endpoint">Endpoint</label><input id="endpoint" value="https://api.openai.com/v1/chat/completions" /></div>
-    <div class="row"><label for="model">Model</label><input id="model" value="gpt-4o-mini" /></div>
-    <div class="row"><label for="apiKey">API Key</label><input id="apiKey" placeholder="sk-... (stored locally in this browser)" type="password" /></div>
+    <h2>Self-Evolving Local AI</h2>
+    <div class="row"><label for="brainName">Brain</label><input id="brainName" value="FrontierSeed-v1" /></div>
     <div class="row">
-      <button id="askAiBtn">Ask AI Strategy</button>
-      <button id="saveSettingsBtn">Save Settings</button>
+      <button id="askAiBtn">Generate Strategy</button>
+      <button id="trainAiBtn">Evolve Brain</button>
+      <button id="saveSettingsBtn">Save Brain</button>
     </div>
-    <div id="aiAdvice">AI advice will appear here. If API fails, local fallback advice is shown.</div>
-    <p class="tiny">Security note: key is kept only in localStorage for this browser profile.</p>
+    <div id="aiAdvice">This advisor is fully local. It self-generates tactics from gameplay and evolves with each match.</div>
+    <p class="tiny">No external AI providers are used. Knowledge stays in your browser.</p>
   </div>
 
   <p id="message">Game loaded. Survive waves and clear enemies. Press R anytime to restart.</p>
@@ -187,10 +186,9 @@
     const autopilotEl = document.getElementById('autopilot');
     const messageEl = document.getElementById('message');
 
-    const endpointEl = document.getElementById('endpoint');
-    const modelEl = document.getElementById('model');
-    const apiKeyEl = document.getElementById('apiKey');
+    const brainNameEl = document.getElementById('brainName');
     const askAiBtn = document.getElementById('askAiBtn');
+    const trainAiBtn = document.getElementById('trainAiBtn');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const aiAdviceEl = document.getElementById('aiAdvice');
 
@@ -218,6 +216,24 @@
     let waveCooldown;
     let autopilot;
     let shootCooldown;
+
+    const localAi = {
+      corpus: [
+        'orbit the nearest threat and avoid dead corners',
+        'preserve hp before chasing score spikes',
+        'if pressure rises move first and shoot second',
+        'thin enemy clusters before they surround you',
+        'micro strafes keep escape vectors open',
+        'finish wounded enemies then reposition quickly'
+      ],
+      transitions: new Map(),
+      weights: {
+        survival: 1,
+        aggression: 0.6,
+        spacing: 1
+      },
+      trainingTicks: 0
+    };
 
     function makeStars() {
       stars = Array.from({ length: 180 }, () => ({
@@ -248,7 +264,88 @@
       makeStars();
       spawnWave();
       updateHud();
+      observeState('reset');
       setMessage('Mission reset. Survive and clear each wave.');
+    }
+
+    function tokenize(text) {
+      return text
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter(Boolean);
+    }
+
+    function trainFromLine(line) {
+      const words = tokenize(line);
+      for (let i = 0; i < words.length - 1; i++) {
+        const key = words[i];
+        const next = words[i + 1];
+        const bucket = localAi.transitions.get(key) || new Map();
+        bucket.set(next, (bucket.get(next) || 0) + 1);
+        localAi.transitions.set(key, bucket);
+      }
+    }
+
+    function bootstrapLocalAi() {
+      localAi.transitions.clear();
+      for (const line of localAi.corpus) trainFromLine(line);
+    }
+
+    function observeState(tag = 'tick') {
+      const descriptor = [
+        `tag ${tag}`,
+        `wave ${wave}`,
+        `hp ${Math.max(0, Math.round(player.hp))}`,
+        `alive ${enemies.length}`,
+        `score ${score}`,
+        `auto ${autopilot ? 'on' : 'off'}`
+      ].join(' ');
+      trainFromLine(descriptor);
+      localAi.trainingTicks += 1;
+    }
+
+    function weightedPick(bucket) {
+      const entries = [...bucket.entries()];
+      const total = entries.reduce((sum, [, value]) => sum + value, 0);
+      let r = Math.random() * total;
+      for (const [word, value] of entries) {
+        r -= value;
+        if (r <= 0) return word;
+      }
+      return entries[entries.length - 1][0];
+    }
+
+    function generateSelfText(seed = 'wave') {
+      const words = [seed];
+      let current = seed;
+      const maxWords = 18;
+      for (let i = 0; i < maxWords; i++) {
+        const bucket = localAi.transitions.get(current);
+        if (!bucket) break;
+        const next = weightedPick(bucket);
+        words.push(next);
+        current = next;
+      }
+      return words.join(' ');
+    }
+
+    function evolveBrain() {
+      const hpRatio = Math.max(0, Math.min(1, player.hp / 100));
+      localAi.weights.survival = 0.75 + (1 - hpRatio) * 1.4;
+      localAi.weights.aggression = 0.45 + Math.min(score / (wave * 10 + 1), 1.25);
+      localAi.weights.spacing = 0.8 + Math.min(enemies.length / 14, 1.4);
+
+      const syntheticThought = [
+        `survival ${localAi.weights.survival.toFixed(2)}`,
+        `aggression ${localAi.weights.aggression.toFixed(2)}`,
+        `spacing ${localAi.weights.spacing.toFixed(2)}`,
+        `pressure ${enemies.length > 10 ? 'high' : 'moderate'}`
+      ].join(' ');
+
+      trainFromLine(syntheticThought);
+      localAi.corpus.push(syntheticThought);
+      aiAdviceEl.textContent = `Brain evolved (${brainNameEl.value.trim() || 'local'}).\n${syntheticThought}`;
     }
 
     function setMessage(text) {
@@ -530,75 +627,53 @@
     }
 
     function fallbackAdvice() {
-      if (gameOver) return 'Fallback AI: Restart with R, then keep moving diagonally to avoid swarm pressure.';
-      if (player.hp < 30) return 'Fallback AI: HP critical. Kite enemies in circles and avoid close collisions.';
-      if (enemies.length > 12) return 'Fallback AI: Thin the nearest cluster first, then create distance.';
-      return 'Fallback AI: Focus nearest enemy, keep strafing, and avoid stopping in corners.';
+      if (gameOver) return 'Local AI: Restart and relearn the wave rhythm.';
+      if (player.hp < 30) return 'Local AI: HP critical, prioritize spacing and diagonal escapes.';
+      if (enemies.length > 12) return 'Local AI: Threat density high, split the pack and keep orbiting.';
+      return 'Local AI: Maintain momentum, pick the nearest target, and avoid corner lock.';
     }
 
-    async function askAiStrategy() {
-      const endpoint = endpointEl.value.trim();
-      const model = modelEl.value.trim();
-      const apiKey = apiKeyEl.value.trim();
-
-      if (!endpoint || !model || !apiKey) {
-        aiAdviceEl.textContent = `Please fill endpoint, model, and API key.\n${fallbackAdvice()}`;
-        return;
-      }
-
-      aiAdviceEl.textContent = 'Contacting AI advisor...';
-
-      const state = {
-        hp: Math.round(player.hp),
-        wave,
-        enemiesAlive: enemies.length,
-        score,
-        autopilot,
-        playerPos: { x: Math.round(player.x), y: Math.round(player.y) }
-      };
-
-      const payload = {
-        model,
-        temperature: 0.4,
-        messages: [
-          { role: 'system', content: 'You are a concise tactical assistant for a top-down survival shooter. Give 2-3 short actionable tips.' },
-          { role: 'user', content: `Game state: ${JSON.stringify(state)}. Give immediate survival advice.` }
-        ]
-      };
-
-      try {
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`
-          },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const data = await res.json();
-        const text = data?.choices?.[0]?.message?.content?.trim();
-        aiAdviceEl.textContent = text || fallbackAdvice();
-      } catch (err) {
-        aiAdviceEl.textContent = `AI request failed (${err.message}).\n${fallbackAdvice()}`;
-      }
+    function askAiStrategy() {
+      observeState('request');
+      const seed = player.hp < 35 ? 'survival' : enemies.length > 8 ? 'pressure' : 'wave';
+      const generated = generateSelfText(seed);
+      const tacticalLine = fallbackAdvice();
+      aiAdviceEl.textContent = `${brainNameEl.value.trim() || 'Local Brain'}:\n${generated}\n${tacticalLine}`;
     }
 
     function saveAiSettings() {
-      localStorage.setItem('af_endpoint', endpointEl.value.trim());
-      localStorage.setItem('af_model', modelEl.value.trim());
-      localStorage.setItem('af_apiKey', apiKeyEl.value.trim());
-      aiAdviceEl.textContent = 'AI settings saved locally in this browser.';
+      localStorage.setItem('af_brainName', brainNameEl.value.trim());
+      localStorage.setItem('af_brainCorpus', JSON.stringify(localAi.corpus.slice(-240)));
+      localStorage.setItem('af_brainWeights', JSON.stringify(localAi.weights));
+      aiAdviceEl.textContent = 'Local brain saved in this browser profile.';
     }
 
     function loadAiSettings() {
-      endpointEl.value = localStorage.getItem('af_endpoint') || endpointEl.value;
-      modelEl.value = localStorage.getItem('af_model') || modelEl.value;
-      apiKeyEl.value = localStorage.getItem('af_apiKey') || '';
+      brainNameEl.value = localStorage.getItem('af_brainName') || brainNameEl.value;
+      const savedCorpus = localStorage.getItem('af_brainCorpus');
+      const savedWeights = localStorage.getItem('af_brainWeights');
+      if (savedCorpus) {
+        try {
+          const parsed = JSON.parse(savedCorpus);
+          if (Array.isArray(parsed) && parsed.length > 3) {
+            localAi.corpus = parsed;
+          }
+        } catch {
+          // ignore invalid local corpus
+        }
+      }
+      if (savedWeights) {
+        try {
+          const parsed = JSON.parse(savedWeights);
+          localAi.weights = {
+            ...localAi.weights,
+            ...parsed
+          };
+        } catch {
+          // ignore invalid local weights
+        }
+      }
+      bootstrapLocalAi();
     }
 
     addEventListener('keydown', (e) => {
@@ -633,6 +708,7 @@
     });
 
     askAiBtn.addEventListener('click', askAiStrategy);
+    trainAiBtn.addEventListener('click', evolveBrain);
     saveSettingsBtn.addEventListener('click', saveAiSettings);
 
     let last = performance.now();
@@ -640,10 +716,12 @@
       const dt = Math.min((now - last) / 1000, 0.033);
       last = now;
       update(dt);
+      if (!paused && !gameOver && Math.random() < 0.08) observeState();
       draw();
       requestAnimationFrame(loop);
     }
 
+    bootstrapLocalAi();
     loadAiSettings();
     resetGame();
     requestAnimationFrame(loop);
