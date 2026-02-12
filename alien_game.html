@@ -471,6 +471,109 @@
       updateHud();
     }
 
+    function drawPlayerShip(p) {
+      ctx.save();
+      const angle = Math.atan2(mouse.y - p.y, mouse.x - p.x);
+      ctx.translate(p.x, p.y);
+      ctx.rotate(angle);
+
+      const bodyGrad = ctx.createLinearGradient(-p.r, 0, p.r * 1.3, 0);
+      bodyGrad.addColorStop(0, '#69a6ff');
+      bodyGrad.addColorStop(0.58, '#a2f4ff');
+      bodyGrad.addColorStop(1, '#d9feff');
+      ctx.fillStyle = bodyGrad;
+      ctx.beginPath();
+      ctx.moveTo(p.r * 1.35, 0);
+      ctx.lineTo(-p.r * 0.9, -p.r * 0.78);
+      ctx.quadraticCurveTo(-p.r * 1.35, 0, -p.r * 0.9, p.r * 0.78);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#0b2742';
+      ctx.beginPath();
+      ctx.ellipse(p.r * 0.1, 0, p.r * 0.35, p.r * 0.26, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(145,235,255,0.7)';
+      ctx.beginPath();
+      ctx.moveTo(-p.r * 0.1, -p.r * 0.18);
+      ctx.lineTo(-p.r * 1.28, -p.r * 0.5);
+      ctx.lineTo(-p.r * 0.9, -p.r * 0.08);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(-p.r * 0.1, p.r * 0.18);
+      ctx.lineTo(-p.r * 1.28, p.r * 0.5);
+      ctx.lineTo(-p.r * 0.9, p.r * 0.08);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(114,241,255,0.65)';
+      ctx.beginPath();
+      ctx.moveTo(-p.r * 1.12, -p.r * 0.2);
+      ctx.lineTo(-p.r * 1.85 - Math.random() * 4, 0);
+      ctx.lineTo(-p.r * 1.12, p.r * 0.2);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawAlienUfo(enemy) {
+      ctx.save();
+      ctx.translate(enemy.x, enemy.y);
+      const pulse = Math.sin(performance.now() / 250 + enemy.x * 0.02) * 0.8;
+
+      const domeGrad = ctx.createRadialGradient(0, -enemy.r * 0.5, 1, 0, -enemy.r * 0.45, enemy.r * 1.1);
+      domeGrad.addColorStop(0, '#dbffe1');
+      domeGrad.addColorStop(1, '#95ffb7');
+      ctx.fillStyle = domeGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, -enemy.r * 0.4, enemy.r * 0.65, enemy.r * 0.48, 0, Math.PI, 0, true);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#63ce7f';
+      ctx.beginPath();
+      ctx.ellipse(0, 0, enemy.r * 1.1, enemy.r * 0.56 + pulse * 0.04, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#d5ff75';
+      ctx.beginPath();
+      ctx.arc(0, -enemy.r * 0.42, enemy.r * 0.23, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#102f16';
+      ctx.beginPath();
+      ctx.arc(-enemy.r * 0.08, -enemy.r * 0.46, enemy.r * 0.05, 0, Math.PI * 2);
+      ctx.arc(enemy.r * 0.08, -enemy.r * 0.46, enemy.r * 0.05, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = 'rgba(160,255,191,0.7)';
+      ctx.fillRect(-enemy.r * 0.15, -enemy.r * 0.22, enemy.r * 0.3, enemy.r * 0.06);
+
+      for (let i = -1; i <= 1; i++) {
+        ctx.fillStyle = `rgba(213,255,117,${0.55 + pulse * 0.08})`;
+        ctx.beginPath();
+        ctx.arc(i * enemy.r * 0.5, enemy.r * 0.38, enemy.r * 0.1, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+    function drawPlasmaBolt(b, enemyShot) {
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(Math.atan2(b.vy, b.vx));
+      ctx.fillStyle = enemyShot ? '#ff9a4a' : '#a4f4ff';
+      ctx.fillRect(-b.r * 1.2, -b.r * 0.4, b.r * 2.4, b.r * 0.8);
+      ctx.fillStyle = enemyShot ? '#ffe2b4' : '#edfdff';
+      ctx.fillRect(-b.r * 0.3, -b.r * 0.2, b.r * 1.1, b.r * 0.4);
+      ctx.restore();
+    }
+
     function draw() {
       ctx.fillStyle = '#050915';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -480,26 +583,11 @@
         ctx.fillRect(st.x, st.y, st.s, st.s);
       }
 
-      for (const enemy of enemies) {
-        ctx.fillStyle = '#74ff8a';
-        ctx.beginPath();
-        ctx.arc(enemy.x, enemy.y, enemy.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      for (const enemy of enemies) drawAlienUfo(enemy);
 
-      for (const b of enemyBullets) {
-        ctx.fillStyle = '#ffb367';
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      for (const b of enemyBullets) drawPlasmaBolt(b, true);
 
-      for (const b of bullets) {
-        ctx.fillStyle = '#d8f9ff';
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-        ctx.fill();
-      }
+      for (const b of bullets) drawPlasmaBolt(b, false);
 
       for (const p of particles) {
         ctx.fillStyle = p.color;
@@ -508,10 +596,7 @@
 
       const blink = player.invuln > 0 ? (Math.floor(performance.now() / 60) % 2 === 0) : true;
       if (blink) {
-        ctx.fillStyle = '#92e8ff';
-        ctx.beginPath();
-        ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-        ctx.fill();
+        drawPlayerShip(player);
       }
 
       ctx.strokeStyle = 'rgba(194,247,255,0.75)';
