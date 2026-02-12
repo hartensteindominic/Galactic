@@ -5,24 +5,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alien Frontier: Survivor</title>
   <style>
-    :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; }
-    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #030712; }
-    #hud {
+    :root {
+      color-scheme: dark;
+      font-family: Inter, system-ui, sans-serif;
+      --bg: #030712;
+      --panel: rgba(5, 10, 22, 0.78);
+      --border: rgba(91, 223, 255, 0.35);
+      --text: #d8f7ff;
+      --accent: #9defff;
+      --good: #74ff8a;
+      --warn: #ffd166;
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      cursor: crosshair;
+    }
+
+    .panel {
       position: fixed;
-      top: 12px;
-      left: 12px;
-      z-index: 2;
-      background: rgba(5, 10, 22, 0.72);
-      border: 1px solid rgba(91, 223, 255, 0.35);
+      z-index: 3;
+      background: var(--panel);
+      border: 1px solid var(--border);
       border-radius: 12px;
       padding: 10px 14px;
-      min-width: 250px;
       backdrop-filter: blur(8px);
-      color: #d8f7ff;
+      color: var(--text);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+    }
+
+    #hud {
+      top: 12px;
+      left: 12px;
+      min-width: 320px;
       font-size: 0.9rem;
     }
-    #hud p, #hud h1 { margin: 4px 0; }
-    #hud h1 { margin-bottom: 7px; color: #9defff; font-size: 1rem; }
+
+    #aiPanel {
+      right: 12px;
+      top: 12px;
+      width: min(360px, calc(100vw - 24px));
+      font-size: 0.84rem;
+    }
+
+    h1, h2, p {
+      margin: 4px 0;
+    }
+
+    h1 {
+      font-size: 1rem;
+      color: var(--accent);
+    }
+
+    h2 {
+      font-size: 0.95rem;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin: 6px 0;
+      flex-wrap: wrap;
+    }
+
+    .row label {
+      min-width: 72px;
+      opacity: 0.92;
+    }
+
+    input {
+      background: rgba(10, 20, 40, 0.8);
+      color: var(--text);
+      border: 1px solid rgba(157, 239, 255, 0.3);
+      border-radius: 8px;
+      padding: 5px 7px;
+      flex: 1;
+      min-width: 120px;
+    }
+
+    button {
+      background: rgba(18, 95, 118, 0.8);
+      color: #e6faff;
+      border: 1px solid rgba(157, 239, 255, 0.4);
+      border-radius: 8px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+
+    button:hover {
+      filter: brightness(1.1);
+    }
+
     #message {
       position: fixed;
       left: 0;
@@ -33,19 +120,61 @@
       z-index: 3;
       font-size: 0.92rem;
       text-shadow: 0 0 8px rgba(29, 196, 255, 0.45);
+      padding: 0 10px;
     }
-    canvas { display: block; width: 100vw; height: 100vh; cursor: crosshair; }
+
+    #aiAdvice {
+      margin-top: 8px;
+      min-height: 44px;
+      border-radius: 8px;
+      padding: 8px;
+      background: rgba(8, 18, 34, 0.65);
+      border: 1px solid rgba(157, 239, 255, 0.2);
+      line-height: 1.3;
+      white-space: pre-wrap;
+    }
+
+    .tiny {
+      font-size: 0.75rem;
+      opacity: 0.85;
+    }
+
+    .stat-good {
+      color: var(--good);
+      font-weight: 600;
+    }
+
+    .stat-warn {
+      color: var(--warn);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
-  <div id="hud">
+  <div id="hud" class="panel">
     <h1>Alien Frontier</h1>
-    <p><strong>Move:</strong> W A S D | <strong>Shoot:</strong> Left Click</p>
-    <p><strong>Eliminate all drones and survive.</strong></p>
+    <p><strong>Move:</strong> W A S D &nbsp;|&nbsp; <strong>Shoot:</strong> Left Click &nbsp;|&nbsp; <strong>Restart:</strong> R</p>
+    <p><strong>Pause:</strong> P &nbsp;|&nbsp; <strong>Auto-AI Pilot:</strong> T</p>
     <p><strong>HP:</strong> <span id="hp">100</span></p>
-    <p><strong>Drones destroyed:</strong> <span id="score">0</span>/<span id="total">0</span></p>
+    <p><strong>Wave:</strong> <span id="wave">1</span> &nbsp; <strong>Destroyed:</strong> <span id="score">0</span></p>
+    <p><strong>Enemies alive:</strong> <span id="alive">0</span></p>
+    <p><strong>Auto-AI:</strong> <span id="autopilot">OFF</span></p>
   </div>
-  <p id="message">Game loaded. Move with WASD and click to shoot.</p>
+
+  <div id="aiPanel" class="panel">
+    <h2>AI Tactical Advisor</h2>
+    <div class="row"><label for="endpoint">Endpoint</label><input id="endpoint" value="https://api.openai.com/v1/chat/completions" /></div>
+    <div class="row"><label for="model">Model</label><input id="model" value="gpt-4o-mini" /></div>
+    <div class="row"><label for="apiKey">API Key</label><input id="apiKey" placeholder="sk-... (stored locally in this browser)" type="password" /></div>
+    <div class="row">
+      <button id="askAiBtn">Ask AI Strategy</button>
+      <button id="saveSettingsBtn">Save Settings</button>
+    </div>
+    <div id="aiAdvice">AI advice will appear here. If API fails, local fallback advice is shown.</div>
+    <p class="tiny">Security note: key is kept only in localStorage for this browser profile.</p>
+  </div>
+
+  <p id="message">Game loaded. Survive waves and clear enemies. Press R anytime to restart.</p>
   <canvas id="game"></canvas>
 
   <script>
@@ -53,8 +182,17 @@
     const ctx = canvas.getContext('2d');
     const hpEl = document.getElementById('hp');
     const scoreEl = document.getElementById('score');
-    const totalEl = document.getElementById('total');
+    const waveEl = document.getElementById('wave');
+    const aliveEl = document.getElementById('alive');
+    const autopilotEl = document.getElementById('autopilot');
     const messageEl = document.getElementById('message');
+
+    const endpointEl = document.getElementById('endpoint');
+    const modelEl = document.getElementById('model');
+    const apiKeyEl = document.getElementById('apiKey');
+    const askAiBtn = document.getElementById('askAiBtn');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const aiAdviceEl = document.getElementById('aiAdvice');
 
     function resize() {
       canvas.width = innerWidth;
@@ -64,22 +202,66 @@
     resize();
 
     const keys = new Set();
-    addEventListener('keydown', (e) => keys.add(e.code));
-    addEventListener('keyup', (e) => keys.delete(e.code));
+    const mouse = { x: canvas.width / 2, y: canvas.height / 2, down: false };
 
-    const player = { x: canvas.width / 2, y: canvas.height / 2, r: 16, hp: 100, speed: 240 };
-    const bullets = [];
-    const enemies = [];
-    const particles = [];
-    const mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    let stars = [];
+    let bullets = [];
+    let enemies = [];
+    let enemyBullets = [];
+    let particles = [];
 
-    const enemyCount = 10;
-    totalEl.textContent = enemyCount;
-    let score = 0;
-    let gameOver = false;
+    let player;
+    let score;
+    let wave;
+    let gameOver;
+    let paused;
+    let waveCooldown;
+    let autopilot;
+    let shootCooldown;
+
+    function makeStars() {
+      stars = Array.from({ length: 180 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        s: Math.random() * 1.8 + 0.2
+      }));
+    }
 
     function rand(min, max) {
       return Math.random() * (max - min) + min;
+    }
+
+    function resetGame() {
+      player = { x: canvas.width / 2, y: canvas.height / 2, r: 16, hp: 100, speed: 255, invuln: 0 };
+      bullets = [];
+      enemies = [];
+      enemyBullets = [];
+      particles = [];
+      score = 0;
+      wave = 1;
+      gameOver = false;
+      paused = false;
+      waveCooldown = 0;
+      autopilot = false;
+      shootCooldown = 0;
+
+      makeStars();
+      spawnWave();
+      updateHud();
+      setMessage('Mission reset. Survive and clear each wave.');
+    }
+
+    function setMessage(text) {
+      messageEl.textContent = text;
+    }
+
+    function updateHud() {
+      hpEl.textContent = Math.max(0, Math.ceil(player.hp));
+      scoreEl.textContent = score;
+      waveEl.textContent = wave;
+      aliveEl.textContent = enemies.length;
+      autopilotEl.textContent = autopilot ? 'ON' : 'OFF';
+      autopilotEl.className = autopilot ? 'stat-good' : 'stat-warn';
     }
 
     function spawnEnemy() {
@@ -90,54 +272,132 @@
       if (side === 1) { x = canvas.width + 30; y = rand(0, canvas.height); }
       if (side === 2) { x = rand(0, canvas.width); y = canvas.height + 30; }
       if (side === 3) { x = -30; y = rand(0, canvas.height); }
-      enemies.push({ x, y, r: 14, speed: rand(45, 82), hp: 1 });
+
+      const speedScale = Math.min(1 + wave * 0.08, 2.5);
+      const fireRate = Math.max(1.4 - wave * 0.08, 0.55);
+      enemies.push({
+        x,
+        y,
+        r: rand(12, 17),
+        speed: rand(40, 90) * speedScale,
+        fireCooldown: rand(0.2, 1.4),
+        fireRate
+      });
     }
 
-    for (let i = 0; i < enemyCount; i++) spawnEnemy();
+    function spawnWave() {
+      const count = 6 + wave * 3;
+      for (let i = 0; i < count; i++) spawnEnemy();
+      setMessage(`Wave ${wave} started. Enemies detected: ${count}.`);
+      updateHud();
+    }
 
-    canvas.addEventListener('mousemove', (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-    });
+    function shootFrom(entity, angle, speed, isEnemy = false) {
+      const projectile = {
+        x: entity.x,
+        y: entity.y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1.5,
+        r: isEnemy ? 4 : 3.8
+      };
+      if (isEnemy) enemyBullets.push(projectile);
+      else bullets.push(projectile);
+    }
 
-    canvas.addEventListener('mousedown', (e) => {
-      if (e.button !== 0 || gameOver) return;
-      const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
-      bullets.push({
-        x: player.x,
-        y: player.y,
-        vx: Math.cos(angle) * 520,
-        vy: Math.sin(angle) * 520,
-        life: 1.1,
-        r: 4
-      });
-    });
+    function explode(x, y, color = '#9bffb4', size = 10) {
+      for (let i = 0; i < size; i++) {
+        particles.push({
+          x,
+          y,
+          vx: rand(-95, 95),
+          vy: rand(-95, 95),
+          life: rand(0.25, 0.6),
+          color
+        });
+      }
+    }
+
+    function applyAutopilot(dt) {
+      if (!autopilot || gameOver || paused) return;
+      if (enemies.length === 0) return;
+
+      let nearest = null;
+      let nearestDist = Infinity;
+      for (const enemy of enemies) {
+        const d = Math.hypot(enemy.x - player.x, enemy.y - player.y);
+        if (d < nearestDist) {
+          nearestDist = d;
+          nearest = enemy;
+        }
+      }
+
+      if (!nearest) return;
+
+      mouse.x = nearest.x;
+      mouse.y = nearest.y;
+
+      const awayX = player.x - nearest.x;
+      const awayY = player.y - nearest.y;
+      const dangerZone = nearestDist < 170;
+      let moveX = 0;
+      let moveY = 0;
+
+      if (dangerZone) {
+        const mag = Math.hypot(awayX, awayY) || 1;
+        moveX = awayX / mag;
+        moveY = awayY / mag;
+      } else {
+        const orbitAngle = Math.atan2(awayY, awayX) + Math.PI / 2;
+        moveX = Math.cos(orbitAngle) * 0.75;
+        moveY = Math.sin(orbitAngle) * 0.75;
+      }
+
+      player.x += moveX * player.speed * dt;
+      player.y += moveY * player.speed * dt;
+
+      if (shootCooldown <= 0) {
+        const angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
+        shootFrom(player, angle, 560, false);
+        shootCooldown = 0.12;
+      }
+    }
 
     function update(dt) {
-      if (gameOver) return;
+      if (gameOver || paused) return;
+
+      shootCooldown = Math.max(0, shootCooldown - dt);
+      player.invuln = Math.max(0, player.invuln - dt);
 
       let dx = 0;
       let dy = 0;
-      if (keys.has('KeyW')) dy -= 1;
-      if (keys.has('KeyS')) dy += 1;
-      if (keys.has('KeyA')) dx -= 1;
-      if (keys.has('KeyD')) dx += 1;
-      if (dx !== 0 || dy !== 0) {
-        const mag = Math.hypot(dx, dy);
-        player.x += (dx / mag) * player.speed * dt;
-        player.y += (dy / mag) * player.speed * dt;
+      if (!autopilot) {
+        if (keys.has('KeyW')) dy -= 1;
+        if (keys.has('KeyS')) dy += 1;
+        if (keys.has('KeyA')) dx -= 1;
+        if (keys.has('KeyD')) dx += 1;
+
+        if (dx !== 0 || dy !== 0) {
+          const mag = Math.hypot(dx, dy);
+          player.x += (dx / mag) * player.speed * dt;
+          player.y += (dy / mag) * player.speed * dt;
+        }
       }
+
+      applyAutopilot(dt);
 
       player.x = Math.max(player.r, Math.min(canvas.width - player.r, player.x));
       player.y = Math.max(player.r, Math.min(canvas.height - player.r, player.y));
 
-      for (let i = bullets.length - 1; i >= 0; i--) {
-        const b = bullets[i];
-        b.x += b.vx * dt;
-        b.y += b.vy * dt;
-        b.life -= dt;
-        if (b.life <= 0 || b.x < -20 || b.x > canvas.width + 20 || b.y < -20 || b.y > canvas.height + 20) {
-          bullets.splice(i, 1);
+      for (const arr of [bullets, enemyBullets]) {
+        for (let i = arr.length - 1; i >= 0; i--) {
+          const b = arr[i];
+          b.x += b.vx * dt;
+          b.y += b.vy * dt;
+          b.life -= dt;
+          if (b.life <= 0 || b.x < -30 || b.x > canvas.width + 30 || b.y < -30 || b.y > canvas.height + 30) {
+            arr.splice(i, 1);
+          }
         }
       }
 
@@ -146,31 +406,42 @@
         const ex = player.x - enemy.x;
         const ey = player.y - enemy.y;
         const dist = Math.hypot(ex, ey) || 1;
+
         enemy.x += (ex / dist) * enemy.speed * dt;
         enemy.y += (ey / dist) * enemy.speed * dt;
+        enemy.fireCooldown -= dt;
 
-        if (dist < player.r + enemy.r) {
-          player.hp = Math.max(0, player.hp - 25 * dt);
-          hpEl.textContent = Math.ceil(player.hp);
-          if (player.hp <= 0) {
-            gameOver = true;
-            messageEl.textContent = 'You were overrun. Refresh to try again.';
-          }
+        if (enemy.fireCooldown <= 0) {
+          const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x) + rand(-0.12, 0.12);
+          shootFrom(enemy, angle, 280 + wave * 8, true);
+          enemy.fireCooldown = enemy.fireRate;
+        }
+
+        if (dist < player.r + enemy.r && player.invuln <= 0) {
+          player.hp -= 16;
+          player.invuln = 0.35;
+          explode(player.x, player.y, '#9defff', 14);
         }
 
         for (let j = bullets.length - 1; j >= 0; j--) {
           const b = bullets[j];
-          const hitDist = Math.hypot(b.x - enemy.x, b.y - enemy.y);
-          if (hitDist < b.r + enemy.r) {
+          if (Math.hypot(b.x - enemy.x, b.y - enemy.y) < b.r + enemy.r) {
             bullets.splice(j, 1);
             enemies.splice(i, 1);
             score += 1;
-            scoreEl.textContent = score;
-            for (let p = 0; p < 8; p++) {
-              particles.push({ x: enemy.x, y: enemy.y, vx: rand(-70, 70), vy: rand(-70, 70), life: rand(0.2, 0.5) });
-            }
+            explode(enemy.x, enemy.y, '#74ff8a', 9);
             break;
           }
+        }
+      }
+
+      for (let i = enemyBullets.length - 1; i >= 0; i--) {
+        const b = enemyBullets[i];
+        if (Math.hypot(b.x - player.x, b.y - player.y) < b.r + player.r && player.invuln <= 0) {
+          enemyBullets.splice(i, 1);
+          player.hp -= 11;
+          player.invuln = 0.2;
+          explode(player.x, player.y, '#ffd166', 8);
         }
       }
 
@@ -182,21 +453,31 @@
         if (p.life <= 0) particles.splice(i, 1);
       }
 
-      if (!gameOver && score === enemyCount) {
+      if (player.hp <= 0 && !gameOver) {
+        player.hp = 0;
         gameOver = true;
-        messageEl.textContent = 'All drones neutralized. Great run! Refresh to play again.';
+        setMessage(`Mission failed on wave ${wave}. Press R to restart.`);
       }
+
+      if (!gameOver && enemies.length === 0) {
+        waveCooldown += dt;
+        if (waveCooldown > 1.1) {
+          wave += 1;
+          waveCooldown = 0;
+          spawnWave();
+        }
+      }
+
+      updateHud();
     }
 
     function draw() {
       ctx.fillStyle = '#050915';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      for (let i = 0; i < 140; i++) {
-        const x = (i * 97) % canvas.width;
-        const y = (i * 57) % canvas.height;
-        ctx.fillStyle = 'rgba(145,214,255,0.08)';
-        ctx.fillRect(x, y, 2, 2);
+      for (const st of stars) {
+        ctx.fillStyle = 'rgba(145,214,255,0.13)';
+        ctx.fillRect(st.x, st.y, st.s, st.s);
       }
 
       for (const enemy of enemies) {
@@ -206,10 +487,12 @@
         ctx.fill();
       }
 
-      ctx.fillStyle = '#92e8ff';
-      ctx.beginPath();
-      ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
-      ctx.fill();
+      for (const b of enemyBullets) {
+        ctx.fillStyle = '#ffb367';
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       for (const b of bullets) {
         ctx.fillStyle = '#d8f9ff';
@@ -219,15 +502,138 @@
       }
 
       for (const p of particles) {
-        ctx.fillStyle = 'rgba(140,255,180,0.65)';
-        ctx.fillRect(p.x, p.y, 3, 3);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, 2.5, 2.5);
+      }
+
+      const blink = player.invuln > 0 ? (Math.floor(performance.now() / 60) % 2 === 0) : true;
+      if (blink) {
+        ctx.fillStyle = '#92e8ff';
+        ctx.beginPath();
+        ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       ctx.strokeStyle = 'rgba(194,247,255,0.75)';
       ctx.beginPath();
-      ctx.arc(mouse.x, mouse.y, 10, 0, Math.PI * 2);
+      ctx.arc(mouse.x, mouse.y, 9, 0, Math.PI * 2);
       ctx.stroke();
+
+      if (paused) {
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#e8fbff';
+        ctx.font = 'bold 30px Inter, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
+      }
     }
+
+    function fallbackAdvice() {
+      if (gameOver) return 'Fallback AI: Restart with R, then keep moving diagonally to avoid swarm pressure.';
+      if (player.hp < 30) return 'Fallback AI: HP critical. Kite enemies in circles and avoid close collisions.';
+      if (enemies.length > 12) return 'Fallback AI: Thin the nearest cluster first, then create distance.';
+      return 'Fallback AI: Focus nearest enemy, keep strafing, and avoid stopping in corners.';
+    }
+
+    async function askAiStrategy() {
+      const endpoint = endpointEl.value.trim();
+      const model = modelEl.value.trim();
+      const apiKey = apiKeyEl.value.trim();
+
+      if (!endpoint || !model || !apiKey) {
+        aiAdviceEl.textContent = `Please fill endpoint, model, and API key.\n${fallbackAdvice()}`;
+        return;
+      }
+
+      aiAdviceEl.textContent = 'Contacting AI advisor...';
+
+      const state = {
+        hp: Math.round(player.hp),
+        wave,
+        enemiesAlive: enemies.length,
+        score,
+        autopilot,
+        playerPos: { x: Math.round(player.x), y: Math.round(player.y) }
+      };
+
+      const payload = {
+        model,
+        temperature: 0.4,
+        messages: [
+          { role: 'system', content: 'You are a concise tactical assistant for a top-down survival shooter. Give 2-3 short actionable tips.' },
+          { role: 'user', content: `Game state: ${JSON.stringify(state)}. Give immediate survival advice.` }
+        ]
+      };
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+
+        const data = await res.json();
+        const text = data?.choices?.[0]?.message?.content?.trim();
+        aiAdviceEl.textContent = text || fallbackAdvice();
+      } catch (err) {
+        aiAdviceEl.textContent = `AI request failed (${err.message}).\n${fallbackAdvice()}`;
+      }
+    }
+
+    function saveAiSettings() {
+      localStorage.setItem('af_endpoint', endpointEl.value.trim());
+      localStorage.setItem('af_model', modelEl.value.trim());
+      localStorage.setItem('af_apiKey', apiKeyEl.value.trim());
+      aiAdviceEl.textContent = 'AI settings saved locally in this browser.';
+    }
+
+    function loadAiSettings() {
+      endpointEl.value = localStorage.getItem('af_endpoint') || endpointEl.value;
+      modelEl.value = localStorage.getItem('af_model') || modelEl.value;
+      apiKeyEl.value = localStorage.getItem('af_apiKey') || '';
+    }
+
+    addEventListener('keydown', (e) => {
+      keys.add(e.code);
+      if (e.code === 'KeyR') resetGame();
+      if (e.code === 'KeyP' && !gameOver) {
+        paused = !paused;
+        setMessage(paused ? 'Paused. Press P to resume.' : 'Resumed.');
+      }
+      if (e.code === 'KeyT' && !gameOver) {
+        autopilot = !autopilot;
+        updateHud();
+        setMessage(`Auto-AI pilot ${autopilot ? 'enabled' : 'disabled'}.`);
+      }
+    });
+    addEventListener('keyup', (e) => keys.delete(e.code));
+
+    canvas.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button !== 0 || gameOver || paused || autopilot) return;
+      mouse.down = true;
+      const angle = Math.atan2(mouse.y - player.y, mouse.x - player.x);
+      shootFrom(player, angle, 560, false);
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      mouse.down = false;
+    });
+
+    askAiBtn.addEventListener('click', askAiStrategy);
+    saveSettingsBtn.addEventListener('click', saveAiSettings);
 
     let last = performance.now();
     function loop(now) {
@@ -238,6 +644,8 @@
       requestAnimationFrame(loop);
     }
 
+    loadAiSettings();
+    resetGame();
     requestAnimationFrame(loop);
   </script>
 </body>
