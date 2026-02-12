@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alien Frontier Skirmish</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="hud-wrapper">
+    <section class="panel">
+      <h1>Alien Frontier Skirmish</h1>
+      <p>
+        Explore the map, collect energy shards, and survive enemy patrols.
+        Move with <strong>WASD</strong> or <strong>Arrow Keys</strong>, fire with <strong>Space</strong>.
+      </p>
+      <div class="stats">
+        <span>Health: <strong id="health">100</strong></span>
+        <span>Score: <strong id="score">0</strong></span>
+        <span>Shards: <strong id="shards">0</strong></span>
+        <span>Wave: <strong id="wave">1</strong></span>
+      </div>
+      <p id="message">Scan the terrain and engage hostile aliens.</p>
+    </section>
+    <canvas id="game" width="960" height="540" aria-label="Alien battle game"></canvas>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>

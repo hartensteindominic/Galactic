@@ -1,0 +1,53 @@
+:root {
+  color-scheme: dark;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at top, #1a3344, #080b12 65%);
+  color: #f0f6ff;
+}
+
+.hud-wrapper {
+  width: min(100%, 1024px);
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.panel {
+  background: rgba(5, 11, 23, 0.75);
+  border: 1px solid rgba(112, 186, 255, 0.45);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.75rem;
+  backdrop-filter: blur(3px);
+}
+
+.panel h1 {
+  margin: 0 0 0.4rem;
+  font-size: 1.5rem;
+}
+
+.panel p {
+  margin: 0.35rem 0;
+  line-height: 1.35;
+}
+
+.stats {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem;
+}
+
+canvas {
+  width: 100%;
+  border: 1px solid rgba(157, 212, 255, 0.55);
+  border-radius: 10px;
+  box-shadow: 0 16px 26px rgba(0, 0, 0, 0.5);
+  background: #06131d;
+}
