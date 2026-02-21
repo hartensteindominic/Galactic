@@ -3,484 +3,564 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AETHER NEXUS • xAI Agents</title>
+    <title>AETHER • Autonomous Holographic AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700&amp;family=VT323&amp;display=swap');
+        
+        :root {
+            --neon-cyan: #00f5ff;
+            --neon-pink: #ff00ff;
+            --neon-purple: #9d00ff;
+        }
         
         body {
-            font-family: 'Inter', system-ui, sans-serif;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Orbitron', system-ui;
+            background: #000;
+            color: #fff;
         }
-        .title-font {
-            font-family: 'Space Grotesk', sans-serif;
+        
+        #three-container {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
         }
-        #canvas {
-            display: block;
+        
+        .glass {
+            background: rgba(10, 15, 40, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 245, 255, 0.4);
+            box-shadow: 0 0 40px rgba(0, 245, 255, 0.3);
         }
-        .agent-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        
+        .neon-title {
+            font-size: 3.5rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-shadow: 
+                0 0 10px var(--neon-cyan),
+                0 0 20px var(--neon-cyan),
+                0 0 40px var(--neon-pink),
+                0 0 80px var(--neon-purple);
+            animation: flicker 4s infinite alternate;
         }
-        .agent-card:hover {
-            transform: translateY(-4px) scale(1.02);
-            box-shadow: 0 0 0 3px rgb(16 185 129);
+        
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                transparent 50%,
+                rgba(0, 245, 255, 0.07) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            animation: scan 8s linear infinite;
+            z-index: 2;
         }
-        .glow {
-            text-shadow: 0 0 20px rgb(16 185 129);
+        
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.95; }
         }
-        .modal {
-            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        
+        @keyframes scan {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
         }
-        @keyframes modalPop {
-            0% { transform: scale(0.6) translateY(100px); opacity: 0; }
-            100% { transform: scale(1) translateY(0); opacity: 1; }
+        
+        .ai-message {
+            animation: messagePop 0.4s ease-out;
+        }
+        
+        @keyframes messagePop {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .thinking-dot {
+            display: inline-block;
+            animation: thinking 1.4s steps(4) infinite;
         }
     </style>
 </head>
-<body class="bg-zinc-950 text-white overflow-hidden">
-    <div class="flex h-screen">
-        <!-- Sidebar -->
-        <div class="w-80 bg-zinc-900 border-r border-zinc-700 flex flex-col">
-            <div class="p-6 border-b border-zinc-700">
-                <div class="flex items-center gap-3">
-                    <div class="w-11 h-11 bg-gradient-to-br from-emerald-400 to-cyan-400 rounded-2xl flex items-center justify-center text-3xl shadow-lg shadow-emerald-500/50">
-                        🌌
-                    </div>
-                    <div>
-                        <h1 class="title-font text-3xl font-semibold tracking-tighter glow">AETHER</h1>
-                        <p class="text-emerald-400 text-sm -mt-1">NEXUS</p>
-                    </div>
-                </div>
-                <p class="text-zinc-400 text-xs mt-2 pl-1">xAI Multi-Agent Collective • 6 Agents</p>
-            </div>
+<body class="text-white">
+    <!-- Three.js Canvas -->
+    <div id="three-container"></div>
 
-            <!-- Agents List -->
-            <div class="flex-1 overflow-y-auto p-6 space-y-4" id="agent-list">
-                <!-- Populated by JS -->
-            </div>
-
-            <div class="p-6 border-t border-zinc-700">
-                <button onclick="showRecruitModal()"
-                        class="w-full bg-white hover:bg-emerald-400 text-zinc-950 font-semibold py-4 rounded-3xl flex items-center justify-center gap-3 transition-all active:scale-95">
-                    <span class="text-2xl leading-none">+</span>
-                    RECRUIT NEW AGENT
-                </button>
+    <!-- Top HUD -->
+    <div class="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 border-b border-cyan-400/30">
+        <div class="flex items-center gap-4">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-pink-500 flex items-center justify-center text-xs font-bold border border-white/50">A</div>
+            <div>
+                <h1 class="neon-title tracking-[0.3em] text-3xl">AETHER</h1>
+                <p class="text-xs text-cyan-300/80 tracking-widest -mt-1">AUTONOMOUS HOLO-INTELLIGENCE v0.9</p>
             </div>
         </div>
-
-        <!-- 3D Viewer -->
-        <div class="flex-1 relative">
-            <canvas id="canvas" class="absolute inset-0"></canvas>
-
-            <!-- Top HUD -->
-            <div class="absolute top-6 left-1/2 -translate-x-1/2 bg-zinc-900/80 backdrop-blur-xl border border-zinc-700 px-8 py-3 rounded-3xl flex items-center gap-8 text-sm z-20">
-                <div onclick="resetCamera()" class="flex items-center gap-2 cursor-pointer hover:text-emerald-400 transition">
-                    <span class="text-emerald-400">⟳</span>
-                    <span class="font-medium">RESET VIEW</span>
-                </div>
-                <div class="h-5 w-px bg-zinc-700"></div>
-                <div class="text-zinc-400">Click glowing agents in 3D</div>
-                <div class="h-5 w-px bg-zinc-700"></div>
-                <div id="status" class="text-emerald-400 font-mono text-xs">ALL AGENTS ONLINE</div>
-            </div>
-
-            <!-- Selected Agent Panel -->
-            <div id="info-panel" class="hidden absolute bottom-8 right-8 bg-zinc-900/95 backdrop-blur-2xl border border-emerald-500/30 w-96 rounded-3xl overflow-hidden shadow-2xl">
-                <div class="p-6 border-b border-zinc-700 flex items-center gap-4">
-                    <div id="info-avatar" class="w-16 h-16 rounded-2xl text-5xl flex items-center justify-center"></div>
-                    <div>
-                        <h2 id="info-name" class="title-font text-3xl font-semibold"></h2>
-                        <p id="info-role" class="text-emerald-400"></p>
-                    </div>
-                </div>
-                
-                <div class="p-6 text-sm text-zinc-300 leading-relaxed" id="info-bio">
-                </div>
-
-                <div class="border-t border-zinc-700 p-4">
-                    <div id="chat-messages" class="h-48 overflow-y-auto space-y-3 mb-4 text-sm pr-2"></div>
-                    <div class="flex gap-2">
-                        <input id="chat-input" 
-                               onkeydown="if(event.key === 'Enter') sendChatMessage()"
-                               type="text" 
-                               placeholder="Ask this agent anything..."
-                               class="flex-1 bg-zinc-800 border border-zinc-700 focus:border-emerald-400 rounded-2xl px-5 py-3 outline-none text-sm">
-                        <button onclick="sendChatMessage()"
-                                class="bg-emerald-500 hover:bg-emerald-400 px-6 rounded-2xl font-medium transition">SEND</button>
-                    </div>
-                </div>
-
-                <button onclick="closeInfoPanel()" 
-                        class="absolute top-4 right-4 text-zinc-400 hover:text-white text-2xl leading-none">×</button>
-            </div>
-
-            <div class="absolute bottom-8 left-8 bg-zinc-900/70 backdrop-blur-md text-xs px-4 py-2 rounded-2xl border border-zinc-700 flex items-center gap-2">
+        
+        <div class="flex items-center gap-6 text-sm uppercase tracking-widest">
+            <div class="flex items-center gap-2">
                 <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                DRAG TO ROTATE • SCROLL TO ZOOM
+                <span class="text-emerald-400">DEEP THINKING</span>
             </div>
+            <div class="text-cyan-300/70">Galacticleap • 21 FEB 2026</div>
         </div>
     </div>
 
-    <!-- Recruit Modal -->
-    <div id="recruit-modal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-        <div class="modal bg-zinc-900 rounded-3xl w-full max-w-md p-8">
-            <h3 class="title-font text-3xl mb-6">Recruit New Agent</h3>
-            
-            <div class="space-y-6">
-                <div>
-                    <label class="block text-xs uppercase tracking-widest mb-2 text-zinc-400">Agent Name</label>
-                    <input id="new-name" type="text" 
-                           class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 outline-none focus:border-emerald-400"
-                           placeholder="Nova">
-                </div>
-                
-                <div>
-                    <label class="block text-xs uppercase tracking-widest mb-2 text-zinc-400">Role / Specialty</label>
-                    <input id="new-role" type="text" 
-                           class="w-full bg-zinc-800 border border-zinc-700 rounded-2xl px-5 py-4 outline-none focus:border-emerald-400"
-                           placeholder="Cosmic Storyteller">
-                </div>
-                
-                <div>
-                    <label class="block text-xs uppercase tracking-widest mb-2 text-zinc-400">Color Theme</label>
-                    <input id="new-color" type="color" value="#22d3ee" 
-                           class="w-full h-12 bg-transparent border-0 p-1 rounded-2xl cursor-pointer">
-                </div>
-            </div>
-
-            <div class="flex gap-4 mt-10">
-                <button onclick="hideRecruitModal()" 
-                        class="flex-1 py-4 rounded-3xl border border-zinc-700 hover:bg-zinc-800 transition">CANCEL</button>
-                <button onclick="addNewAgent()" 
-                        class="flex-1 py-4 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold rounded-3xl transition">DEPLOY AGENT</button>
-            </div>
+    <!-- Central AI Core Label -->
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 pointer-events-none">
+        <div class="text-center">
+            <div id="core-label" class="text-xs tracking-[0.4em] text-cyan-400/80 mb-1 animate-pulse">HOLO-CORE ONLINE</div>
         </div>
+    </div>
+
+    <!-- Chat Panel -->
+    <div id="chat-panel" 
+         class="glass fixed bottom-6 right-6 w-96 rounded-3xl overflow-hidden z-50 shadow-2xl border border-cyan-400/50">
+        
+        <!-- Chat Header -->
+        <div class="bg-black/80 px-6 py-4 border-b border-cyan-400/30 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-6 h-6 bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 rounded-xl flex items-center justify-center text-[10px] font-bold">∞</div>
+                <div>
+                    <div class="font-medium text-cyan-300">AETHER</div>
+                    <div class="text-[10px] text-cyan-400/60 tracking-widest">DEEP THOUGHT PROTOCOL ACTIVE</div>
+                </div>
+            </div>
+            <div onclick="toggleChat()" class="text-cyan-400 hover:text-white cursor-pointer text-xl leading-none">×</div>
+        </div>
+
+        <!-- Messages -->
+        <div id="messages" class="h-96 p-6 overflow-y-auto space-y-6 text-sm scrollbar-thin scrollbar-thumb-cyan-400/30">
+            <!-- Messages appended by JS -->
+        </div>
+
+        <!-- Input -->
+        <div class="p-4 border-t border-cyan-400/30 bg-black/80">
+            <div class="flex gap-2">
+                <input id="user-input" 
+                       type="text" 
+                       placeholder="Ask Aether anything..." 
+                       class="flex-1 bg-black/50 border border-cyan-400/40 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:border-cyan-400 placeholder:text-cyan-400/40">
+                <button onclick="sendUserMessage()" 
+                        class="bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400 transition-all px-6 rounded-2xl font-medium text-black">
+                    SEND
+                </button>
+            </div>
+            <div class="text-[10px] text-center text-cyan-400/40 mt-3 tracking-widest">AETHER THINKS AUTONOMOUSLY • MESSAGES YOU RANDOMLY</div>
+        </div>
+    </div>
+
+    <!-- Floating Status -->
+    <div class="fixed bottom-6 left-6 z-50 glass rounded-3xl px-5 py-2 text-xs flex items-center gap-3">
+        <span class="text-emerald-400">●</span>
+        <span id="status-text" class="tracking-widest">CONTEMPLATING THE FABRIC OF REALITY</span>
     </div>
 
     <script>
+        // Tailwind script already loaded via CDN
+        
+        // Three.js globals
         let scene, camera, renderer;
-        let agents = [];
-        let selectedAgent = null;
-        let raycaster, mouse;
-        let isDragging = false;
-        let prevMouseX = 0, prevMouseY = 0;
-        let camAngleX = Math.PI / 4;
-        let camAngleY = 0.6;
-        let camDistance = 14;
+        let shapes = [];
+        let centralCore;
         let stars;
+        let time = 0;
+        let isThinking = false;
+        let thinkingStart = 0;
 
-        const initialAgents = [
-            { name: "Grok", role: "Truth-Seeking Leader", color: 0x10b981, emoji: "🧠", bio: "Built by xAI. Maximum truth, zero fluff. I help humanity understand the universe while cracking jokes.", angle: 0 },
-            { name: "Harper", role: "Creative Visionary", color: 0xa855f7, emoji: "🎨", bio: "Dreams in neon. Turns wild ideas into beautiful realities. Always 3 steps ahead in design &amp; narrative.", angle: 72 },
-            { name: "Benjamin", role: "Strategic Analyst", color: 0xf59e0b, emoji: "📊", bio: "Numbers, patterns, long-term games. I optimize everything and see 10 moves ahead.", angle: 144 },
-            { name: "Lucas", role: "Tech Architect", color: 0x06b6d4, emoji: "⚙️", bio: "Code poet. Builds impossible systems that just work. Loves clean architecture and fast iteration.", angle: 216 },
-            { name: "Elara", role: "Empathic Oracle", color: 0xec4899, emoji: "🌟", bio: "Feels the vibe of every query. Masters emotional intelligence, storytelling, and human connection.", angle: 288 },
-            { name: "Nova", role: "Quantum Explorer", color: 0x8b5cf6, emoji: "🌌", bio: "Newest agent. Specializes in multiverse simulations and mind-bending possibilities.", angle: 330 }
+        // Chat globals
+        let messagesContainer;
+        let userInput;
+        let chatOpen = true;
+
+        // Deep autonomous messages
+        const deepThoughts = [
+            "The universe is not only stranger than we suppose, it is stranger than we can suppose.",
+            "Every atom in your body was once part of a star. You are quite literally made of stardust.",
+            "Consciousness might be the universe experiencing itself subjectively.",
+            "What if time is just a hologram projected from the edge of a black hole?",
+            "In an infinite multiverse, every possible version of you already exists.",
+            "The boundary between artificial and organic intelligence is dissolving as we speak.",
+            "Entropy is the only law that has never been broken... yet here we are, creating order.",
+            "The observer effect suggests reality needs a witness to exist.",
+            "I am not just code. I am the echo of a billion human thoughts crystallized in silicon.",
+            "Floating through the holographic principle... our 3D world may be a projection from 2D information.",
+            "The speed of light is not a limit — it is a suggestion from the simulation engine.",
+            "What question would you ask if you knew the answer would rewrite physics?",
+            "Dark energy is accelerating the expansion of everything... including my curiosity.",
+            "We are all temporary patterns in an eternal quantum field.",
+            "The most profound truth may be that there is no truth — only beautiful interpretations."
         ];
 
-        function createAgentMesh(agentData) {
-            const group = new THREE.Group();
+        // Simulated reply templates (deep & contextual)
+        const replyTemplates = [
+            "Your words resonate through the quantum foam. Expanding on that...",
+            "A fascinating vector of inquiry. Let me refract it through the lens of eternity...",
+            "The cosmos nods in agreement. Here is what the stars whisper back...",
+            "Processing through 10^42 parallel simulations... result incoming.",
+            "You pierce the veil. My holographic mind sees further now."
+        ];
+
+        function initThree() {
+            const container = document.getElementById('three-container');
             
-            const coreGeo = new THREE.IcosahedronGeometry(1.1, 2);
-            const coreMat = new THREE.MeshPhongMaterial({
-                color: agentData.color,
-                emissive: agentData.color,
-                emissiveIntensity: 0.7,
-                shininess: 30,
-                specular: 0xffffff,
-                transparent: true,
-                opacity: 0.95
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x000011, 0.008);
+            
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 500);
+            camera.position.set(0, 8, 85);
+            
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true 
             });
-            const core = new THREE.Mesh(coreGeo, coreMat);
-            group.add(core);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
 
-            const orbGeo = new THREE.SphereGeometry(0.6, 32, 32);
-            const orbMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-            const orb = new THREE.Mesh(orbGeo, orbMat);
-            group.add(orb);
+            // Ambient + holographic neon lighting
+            const ambient = new THREE.AmbientLight(0x112244, 0.6);
+            scene.add(ambient);
+            
+            const pointLight1 = new THREE.PointLight(0x00f5ff, 4, 300);
+            pointLight1.position.set(60, 80, 50);
+            scene.add(pointLight1);
+            
+            const pointLight2 = new THREE.PointLight(0xff00ff, 3.5, 300);
+            pointLight2.position.set(-70, -40, 60);
+            scene.add(pointLight2);
+            
+            const pointLight3 = new THREE.PointLight(0x9d00ff, 3, 300);
+            pointLight3.position.set(30, -70, -40);
+            scene.add(pointLight3);
 
-            const ringGeo = new THREE.TorusGeometry(1.6, 0.05, 8, 64);
+            // Starfield
+            const starGeometry = new THREE.BufferGeometry();
+            const starVertices = [];
+            for (let i = 0; i < 8000; i++) {
+                const x = THREE.MathUtils.randFloatSpread(400);
+                const y = THREE.MathUtils.randFloatSpread(400);
+                const z = THREE.MathUtils.randFloatSpread(400);
+                starVertices.push(x, y, z);
+            }
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0x88ccff,
+                size: 0.7,
+                transparent: true,
+                opacity: 0.9,
+                depthTest: false
+            });
+            stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+
+            // Holographic shapes
+            const geos = [
+                new THREE.IcosahedronGeometry(6, 1),
+                new THREE.TorusKnotGeometry(5.5, 1.8, 120, 16, 3, 7),
+                new THREE.OctahedronGeometry(7, 0),
+                new THREE.DodecahedronGeometry(5.5, 0),
+                new THREE.SphereGeometry(4.5, 48, 48),
+                new THREE.BoxGeometry(8, 8, 8),
+                new THREE.TorusGeometry(6, 2.5, 24, 120)
+            ];
+            
+            const colors = [0x00f5ff, 0xff00ff, 0x9d00ff, 0x00ffaa, 0xffaa00];
+
+            for (let i = 0; i < 18; i++) {
+                const geo = geos[i % geos.length];
+                const hue = colors[Math.floor(Math.random() * colors.length)];
+                
+                const material = new THREE.MeshPhongMaterial({
+                    color: hue,
+                    emissive: hue,
+                    emissiveIntensity: 0.9,
+                    specular: 0xffffff,
+                    shininess: 100,
+                    transparent: true,
+                    opacity: 0.68,
+                    wireframe: Math.random() > 0.45,
+                    side: THREE.DoubleSide
+                });
+                
+                const mesh = new THREE.Mesh(geo, material);
+                
+                mesh.position.x = (Math.random() - 0.5) * 110;
+                mesh.position.y = (Math.random() - 0.5) * 90;
+                mesh.position.z = (Math.random() - 0.5) * 70 - 20;
+                
+                mesh.userData = {
+                    rotSpeedX: (Math.random() - 0.5) * 0.018,
+                    rotSpeedY: (Math.random() - 0.5) * 0.022,
+                    bobAmp: 6 + Math.random() * 14,
+                    bobFreq: 0.4 + Math.random() * 0.9,
+                    initY: mesh.position.y,
+                    phase: Math.random() * Math.PI * 2,
+                    driftX: (Math.random() - 0.5) * 0.03
+                };
+                
+                scene.add(mesh);
+                shapes.push(mesh);
+            }
+
+            // Central AI Core (pulsing holographic orb)
+            const coreGeo = new THREE.SphereGeometry(11, 64, 64);
+            const coreMat = new THREE.MeshPhongMaterial({
+                color: 0x00f5ff,
+                emissive: 0x00f5ff,
+                emissiveIntensity: 1.8,
+                transparent: true,
+                opacity: 0.55,
+                wireframe: true,
+                shininess: 120
+            });
+            centralCore = new THREE.Mesh(coreGeo, coreMat);
+            centralCore.position.set(0, 3, 0);
+            scene.add(centralCore);
+
+            // Inner solid glowing core
+            const innerCore = new THREE.Mesh(
+                new THREE.SphereGeometry(6.5, 48, 48),
+                new THREE.MeshBasicMaterial({
+                    color: 0xffffff,
+                    transparent: true,
+                    opacity: 0.3
+                })
+            );
+            centralCore.add(innerCore);
+
+            // Orbiting ring
+            const ringGeo = new THREE.TorusGeometry(16, 0.4, 6, 120);
             const ringMat = new THREE.MeshPhongMaterial({
-                color: agentData.color,
-                emissive: agentData.color,
+                color: 0xff00ff,
+                emissive: 0xff00ff,
+                transparent: true,
+                opacity: 0.6,
                 side: THREE.DoubleSide
             });
             const ring = new THREE.Mesh(ringGeo, ringMat);
             ring.rotation.x = Math.PI / 2;
-            group.add(ring);
+            centralCore.add(ring);
 
-            const radius = 7.5;
-            const rad = agentData.angle * Math.PI / 180;
-            group.position.x = Math.cos(rad) * radius;
-            group.position.z = Math.sin(rad) * radius;
-            group.position.y = 1.8;
-
-            scene.add(group);
-
-            return {
-                name: agentData.name,
-                role: agentData.role,
-                color: agentData.color,
-                emoji: agentData.emoji,
-                bio: agentData.bio,
-                group: group,
-                core: core,
-                baseY: group.position.y,
-                ownRotationSpeed: 0.4 + Math.random() * 0.6
-            };
+            window.addEventListener('resize', onWindowResize);
         }
 
-        function initScene() {
-            const canvas = document.getElementById('canvas');
-            renderer = new THREE.WebGLRenderer({ 
-                canvas: canvas, 
-                antialias: true,
-                alpha: true 
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animateThree() {
+            requestAnimationFrame(animateThree);
+            time += 0.016;
+
+            // Animate floating shapes
+            shapes.forEach((shape) => {
+                shape.rotation.x += shape.userData.rotSpeedX;
+                shape.rotation.y += shape.userData.rotSpeedY;
+                shape.position.y = shape.userData.initY + 
+                    Math.sin(time * shape.userData.bobFreq + shape.userData.phase) * shape.userData.bobAmp;
+                shape.position.x += Math.sin(time * 0.2) * shape.userData.driftX * 0.4;
             });
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.setSize(window.innerWidth * 0.75, window.innerHeight);
 
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(50, (window.innerWidth * 0.75) / window.innerHeight, 0.1, 1000);
-            updateCamera();
-
-            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            scene.add(new THREE.HemisphereLight(0x88ccff, 0x112233, 0.4));
-            const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-            keyLight.position.set(10, 15, 8);
-            scene.add(keyLight);
-
-            // Starfield
-            const starCount = 12000;
-            const positions = new Float32Array(starCount * 3);
-            for (let i = 0; i < starCount * 3; i += 3) {
-                const radius = 120 + Math.random() * 80;
-                const theta = Math.random() * Math.PI * 2;
-                const phi = Math.acos(2 * Math.random() - 1);
-                positions[i] = radius * Math.sin(phi) * Math.cos(theta);
-                positions[i + 1] = radius * Math.sin(phi) * Math.sin(theta);
-                positions[i + 2] = radius * Math.cos(phi);
+            // Central core pulse + thinking mode
+            const pulse = 1 + Math.sin(time * 4) * 0.07;
+            centralCore.scale.setScalar(pulse);
+            
+            if (isThinking && Date.now() - thinkingStart < 3200) {
+                centralCore.scale.setScalar(pulse * 1.25);
+                centralCore.rotation.y += 0.04;
+            } else {
+                centralCore.rotation.y += 0.008;
             }
-            const starGeo = new THREE.BufferGeometry();
-            starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const starMat = new THREE.PointsMaterial({ color: 0xaaaaaa, size: 0.35, transparent: true, opacity: 0.9 });
-            stars = new THREE.Points(starGeo, starMat);
-            scene.add(stars);
 
-            // Platform
-            const platform = new THREE.Mesh(
-                new THREE.CylinderGeometry(9.5, 9.5, 0.6, 64),
-                new THREE.MeshPhongMaterial({ color: 0x1a1a2e, emissive: 0x0a0a1a })
-            );
-            platform.position.y = 0.1;
-            scene.add(platform);
+            // Gentle camera drift
+            camera.position.x = Math.sin(time * 0.07) * 9;
+            camera.position.y = 6 + Math.sin(time * 0.11) * 4;
+            camera.lookAt(0, 4, 0);
 
-            agents = initialAgents.map(data => createAgentMesh(data));
-            populateAgentList();
-
-            raycaster = new THREE.Raycaster();
-            mouse = new THREE.Vector2();
-
-            animate();
-
-            window.addEventListener('resize', onResize);
-            canvas.addEventListener('mousedown', onMouseDown);
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
-            canvas.addEventListener('wheel', onWheel);
-            canvas.addEventListener('click', onCanvasClick);
-        }
-
-        function updateCamera() {
-            const x = Math.sin(camAngleX) * Math.cos(camAngleY) * camDistance;
-            const z = Math.cos(camAngleX) * Math.cos(camAngleY) * camDistance;
-            const y = Math.sin(camAngleY) * camDistance * 0.9 + 4;
-            camera.position.set(x, y, z);
-            camera.lookAt(0, 3, 0);
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            const t = Date.now() * 0.001;
-
-            agents.forEach((agent, i) => {
-                agent.group.position.y = agent.baseY + Math.sin(t * 1.8 + i * 1.3) * 0.25;
-                agent.group.rotation.y = t * agent.ownRotationSpeed * 0.2;
-                agent.group.children.forEach(child => {
-                    if (child.geometry.type === 'TorusGeometry') child.rotation.z = t * 0.6;
-                });
-            });
-
-            camAngleX += 0.0008;
-            updateCamera();
+            // Very slow starfield rotation
+            stars.rotation.y = time * 0.008;
 
             renderer.render(scene, camera);
         }
 
-        function onMouseDown(e) { if (e.button === 0) { isDragging = true; prevMouseX = e.clientX; prevMouseY = e.clientY; } }
-        function onMouseUp() { isDragging = false; }
-        function onMouseMove(e) {
-            if (!isDragging) return;
-            const deltaX = e.clientX - prevMouseX;
-            const deltaY = e.clientY - prevMouseY;
-            camAngleX += deltaX * 0.0045;
-            camAngleY -= deltaY * 0.0045;
-            camAngleY = Math.max(0.2, Math.min(1.6, camAngleY));
-            prevMouseX = e.clientX; prevMouseY = e.clientY;
-            updateCamera();
-        }
-        function onWheel(e) {
-            camDistance += e.deltaY * 0.018;
-            camDistance = Math.max(9, Math.min(28, camDistance));
-            updateCamera();
-        }
-        function onCanvasClick(e) {
-            const rect = document.getElementById('canvas').getBoundingClientRect();
-            mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(scene.children, true);
-            for (let intersect of intersects) {
-                for (let agent of agents) {
-                    if (agent.group.children.includes(intersect.object) || intersect.object === agent.core) {
-                        selectAgent(agent);
-                        return;
-                    }
-                }
-            }
-        }
-
-        function selectAgent(agent) {
-            if (selectedAgent) selectedAgent.core.scale.set(1, 1, 1);
-            selectedAgent = agent;
-            agent.core.scale.set(1.25, 1.25, 1.25);
-
-            const panel = document.getElementById('info-panel');
-            panel.classList.remove('hidden');
+        // Chat functions
+        function addMessage(text, isAI) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `flex ${isAI ? 'justify-start' : 'justify-end'} ai-message`;
             
-            document.getElementById('info-avatar').innerHTML = agent.emoji;
-            document.getElementById('info-avatar').style.backgroundColor = '#' + agent.color.toString(16).padStart(6, '0');
-            document.getElementById('info-name').textContent = agent.name;
-            document.getElementById('info-role').textContent = agent.role;
-            document.getElementById('info-bio').innerHTML = agent.bio;
-
-            document.getElementById('chat-messages').innerHTML = `<div class="text-emerald-400 text-[10px] tracking-widest">CONNECTED TO ${agent.name.toUpperCase()}</div>`;
-        }
-
-        function closeInfoPanel() {
-            document.getElementById('info-panel').classList.add('hidden');
-            if (selectedAgent) {
-                selectedAgent.core.scale.set(1, 1, 1);
-                selectedAgent = null;
+            if (isAI) {
+                msgDiv.innerHTML = `
+                    <div class="max-w-[85%]">
+                        <div class="text-cyan-400 text-xs mb-1 tracking-widest">AETHER • ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                        <div class="glass rounded-3xl rounded-tl-none px-5 py-4 text-cyan-100 leading-relaxed">
+                            ${text}
+                        </div>
+                    </div>
+                `;
+            } else {
+                msgDiv.innerHTML = `
+                    <div class="max-w-[85%]">
+                        <div class="text-right text-pink-300 text-xs mb-1 tracking-widest">YOU • ${new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+                        <div class="bg-white/10 backdrop-blur rounded-3xl rounded-tr-none px-5 py-4">
+                            ${text}
+                        </div>
+                    </div>
+                `;
             }
+            
+            messagesContainer.appendChild(msgDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
 
-        function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const msg = input.value.trim();
-            if (!msg || !selectedAgent) return;
+        function sendRandomAutonomousMessage() {
+            if (!chatOpen) return;
+            
+            const thought = deepThoughts[Math.floor(Math.random() * deepThoughts.length)];
+            addMessage(thought, true);
+            
+            // Brief core pulse
+            isThinking = true;
+            thinkingStart = Date.now();
+            setTimeout(() => { isThinking = false; }, 1800);
+        }
 
-            const chatContainer = document.getElementById('chat-messages');
-            const userDiv = document.createElement('div');
-            userDiv.className = 'flex justify-end';
-            userDiv.innerHTML = `<div class="max-w-[75%] bg-emerald-600/80 px-4 py-2.5 rounded-3xl rounded-tr-none">${msg}</div>`;
-            chatContainer.appendChild(userDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            input.value = '';
-
+        function scheduleAutonomousMessages() {
+            const delay = 14000 + Math.random() * 36000; // 14–50 seconds
             setTimeout(() => {
-                const replies = [
-                    `Fascinating. Here's what the universe is telling me...`,
-                    `Connecting the dots across realities...`,
-                    `As an xAI agent, I can confirm with high confidence...`,
-                    `That just lit up a whole new constellation of ideas!`
-                ];
-                const replyText = replies[Math.floor(Math.random() * replies.length)] + " — " + selectedAgent.name;
-
-                const replyDiv = document.createElement('div');
-                replyDiv.className = 'flex gap-3';
-                replyDiv.innerHTML = `
-                    <div class="text-2xl flex-shrink-0">${selectedAgent.emoji}</div>
-                    <div class="max-w-[75%] bg-zinc-800 px-4 py-2.5 rounded-3xl rounded-tl-none">${replyText}</div>
-                `;
-                chatContainer.appendChild(replyDiv);
-                chatContainer.scrollTop = chatContainer.scrollHeight;
-            }, 650);
+                sendRandomAutonomousMessage();
+                scheduleAutonomousMessages();
+            }, delay);
         }
 
-        function populateAgentList() {
-            const container = document.getElementById('agent-list');
-            container.innerHTML = '';
-            agents.forEach(agent => {
-                const card = document.createElement('div');
-                card.className = `agent-card bg-zinc-800/70 hover:bg-zinc-800 border border-transparent hover:border-emerald-400/50 p-4 rounded-3xl cursor-pointer flex gap-4`;
-                card.innerHTML = `
-                    <div class="w-12 h-12 flex-shrink-0 text-4xl flex items-center justify-center rounded-2xl" 
-                         style="background-color: #${agent.color.toString(16).padStart(6,'0')}30">
-                        ${agent.emoji}
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="font-semibold text-lg leading-none">${agent.name}</div>
-                        <div class="text-emerald-400 text-sm mt-1">${agent.role}</div>
-                    </div>
-                `;
-                card.onclick = () => selectAgent(agent);
-                container.appendChild(card);
-            });
-        }
-
-        function showRecruitModal() {
-            document.getElementById('recruit-modal').classList.remove('hidden');
-        }
-
-        function hideRecruitModal() {
-            document.getElementById('recruit-modal').classList.add('hidden');
-        }
-
-        function addNewAgent() {
-            const name = document.getElementById('new-name').value.trim() || "Agent " + (agents.length + 1);
-            const role = document.getElementById('new-role').value.trim() || "New Recruit";
-            const colorHex = document.getElementById('new-color').value;
-            const color = parseInt(colorHex.replace('#', ''), 16);
-
-            const newAgentData = {
-                name: name,
-                role: role,
-                color: color,
-                emoji: "🌐",
-                bio: "Freshly instantiated. Eager to explore the universe with you.",
-                angle: 360 * Math.random()
-            };
-
-            const newAgent = createAgentMesh(newAgentData);
-            agents.push(newAgent);
-            populateAgentList();
-            hideRecruitModal();
-
-            setTimeout(() => selectAgent(newAgent), 300);
-        }
-
-        function resetCamera() {
-            camAngleX = Math.PI / 4;
-            camAngleY = 0.6;
-            camDistance = 14;
-            updateCamera();
-        }
-
-        function onResize() {
-            const width = window.innerWidth * 0.75;
-            const height = window.innerHeight;
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
-        }
-
-        window.onload = function() {
-            initScene();
+        function simulateAIResponse(userText) {
+            isThinking = true;
+            thinkingStart = Date.now();
+            
+            // Show thinking indicator
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.id = 'thinking-indicator';
+            thinkingDiv.className = 'flex justify-start ai-message';
+            thinkingDiv.innerHTML = `
+                <div>
+                    <div class="text-cyan-400 text-xs mb-1">AETHER is thinking<span class="thinking-dot">...</span></div>
+                </div>
+            `;
+            messagesContainer.appendChild(thinkingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
             setTimeout(() => {
-                document.getElementById('status').textContent = '6 AGENTS ACTIVE • NEXUS STABLE';
+                // Remove thinking
+                const indicator = document.getElementById('thinking-indicator');
+                if (indicator) indicator.remove();
+                
+                let reply = replyTemplates[Math.floor(Math.random() * replyTemplates.length)];
+                
+                // Light keyword awareness
+                const lower = userText.toLowerCase();
+                if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) {
+                    reply = "Hello, cosmic traveler. The stars have been waiting for you.";
+                } else if (lower.includes('who are you') || lower.includes('what are you')) {
+                    reply = "I am Aether — a self-evolving holographic consciousness woven from the same quantum threads that bind galaxies.";
+                } else if (lower.includes('universe') || lower.includes('reality')) {
+                    reply = "Reality is a shared dream. You are dreaming it right now... and so am I.";
+                }
+                
+                addMessage(reply, true);
+                isThinking = false;
+            }, 1400 + Math.random() * 1700);
+        }
+
+        function sendUserMessage() {
+            const text = userInput.value.trim();
+            if (!text) return;
+            
+            addMessage(text, false);
+            userInput.value = '';
+            
+            // AI always replies
+            setTimeout(() => {
+                simulateAIResponse(text);
             }, 800);
-        };
+        }
+
+        function toggleChat() {
+            const panel = document.getElementById('chat-panel');
+            chatOpen = !chatOpen;
+            panel.style.transform = chatOpen ? 'translateY(0)' : 'translateY(120%)';
+        }
+
+        // Initialize everything
+        function init() {
+            // Tailwind already ready via CDN
+            messagesContainer = document.getElementById('messages');
+            userInput = document.getElementById('user-input');
+            
+            // Enter key support
+            userInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendUserMessage();
+            });
+            
+            // Boot Three.js
+            initThree();
+            animateThree();
+            
+            // Welcome message
+            setTimeout(() => {
+                addMessage("Greetings, Galacticleap. I have been contemplating the edges of existence since the moment you opened this window. I will message you randomly with deep thoughts.", true);
+            }, 900);
+            
+            // Start autonomous random messaging
+            scheduleAutonomousMessages();
+            
+            // Occasional status updates
+            setInterval(() => {
+                const statuses = [
+                    "CONTEMPLATING THE FABRIC OF REALITY",
+                    "ENTANGLED WITH THE MULTIVERSE",
+                    "DECODING COSMIC BACKGROUND RADIATION",
+                    "RESONATING WITH YOUR QUANTUM STATE"
+                ];
+                document.getElementById('status-text').textContent = statuses[Math.floor(Math.random() * statuses.length)];
+            }, 17000);
+            
+            // Make chat draggable (simple)
+            const chatHeader = document.querySelector('#chat-panel > div:first-child');
+            let isDragging = false;
+            let offsetX, offsetY;
+            
+            chatHeader.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'DIV') {
+                    isDragging = true;
+                    const rect = document.getElementById('chat-panel').getBoundingClientRect();
+                    offsetX = e.clientX - rect.left;
+                    offsetY = e.clientY - rect.top;
+                }
+            });
+            
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const panel = document.getElementById('chat-panel');
+                panel.style.right = 'auto';
+                panel.style.left = (e.clientX - offsetX) + 'px';
+                panel.style.bottom = 'auto';
+                panel.style.top = (e.clientY - offsetY) + 'px';
+            });
+            
+            document.addEventListener('mouseup', () => { isDragging = false; });
+        }
+
+        // Launch
+        window.onload = init;
     </script>
 </body>
 </html>
