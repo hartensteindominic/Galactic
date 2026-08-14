@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro</title>
+    <title>Spatial Dash Pro - 3D Visualizer</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -23,13 +23,22 @@
             object-fit: cover;
             z-index: 1;
         }
-        #hud-overlay {
+        #webgl-canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             z-index: 2;
+            pointer-events: none;
+        }
+        #hud-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -107,16 +116,18 @@
 
     <video id="camera-stream" autoplay playsinline muted></video>
 
+    <canvas id="webgl-canvas"></canvas>
+
     <div id="hud-overlay">
         <div class="top-status interactive">
-            <span class="brand">SPATIAL DASH</span>
+            <span class="brand">SPATIAL DASH 3D</span>
             <span id="status-badge" class="badge">SYSTEM READY</span>
         </div>
 
         <div class="control-dock interactive">
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-label">Nodes</div>
+                    <div class="metric-label">3D Nodes</div>
                     <div id="node-count" class="metric-value">0</div>
                 </div>
                 <div class="metric-card">
@@ -125,7 +136,7 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Mode</div>
-                    <div class="metric-value">Spatial LiDAR</div>
+                    <div class="metric-value">AR Cloud</div>
                 </div>
             </div>
             
@@ -135,6 +146,8 @@
             </div>
         </div>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
         let videoElement = document.getElementById('camera-stream');
@@ -148,7 +161,35 @@
         let spatialNodes = [];
         let scanInterval = null;
 
-        // Initialize high-resolution camera feed tailored for mobile browser frames
+        // Three.js Scene Components
+        let scene, camera, renderer;
+        let nodeGroup = new THREE.Group();
+
+        function initThreeJS() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 0, 0);
+
+            const canvas = document.getElementById('webgl-canvas');
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
+
+            scene.add(nodeGroup);
+
+            // Ambient lighting for the 3D objects
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+            scene.add(ambientLight);
+
+            // Animation render loop
+            function animate() {
+                requestAnimationFrame(animate);
+                nodeGroup.rotation.y += 0.002; // Gentle organic shift of the point cloud grid
+                renderer.render(scene, camera);
+            }
+            animate();
+        }
+
         async function initCameraFeed() {
             try {
                 const constraints = {
@@ -161,12 +202,11 @@
                 let stream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = stream;
             } catch (err) {
-                // Safe fallback for devices lacking explicit environment constraints
                 try {
                     let fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     videoElement.srcObject = fallbackStream;
                 } catch (e) {
-                    alert("Camera permissions required for spatial tracking layout.");
+                    alert("Camera permissions required.");
                 }
             }
         }
@@ -182,20 +222,39 @@
                 surfaceStatusText.innerText = "Tracking";
                 saveBtn.style.display = "block";
                 
-                spatialNodes = []; // Reset storage array for new run
+                spatialNodes = [];
+                // Clear out prior visual meshes if restarting
+                while(nodeGroup.children.length > 0){ 
+                    nodeGroup.remove(nodeGroup.children[0]); 
+                }
 
-                // High-frequency telemetry stream simulating spatial mesh telemetry points
+                // Generate real-time data nodes AND spawn visual 3D spheres in the scene
                 scanInterval = setInterval(() => {
+                    let px = (Math.random() * 4 - 2);
+                    let py = (Math.random() * 1.5 - 0.7);
+                    let pz = (-Math.random() * 4 - 1);
+
                     let mockNode = {
                         id: spatialNodes.length + 1,
-                        x: (Math.random() * 4 - 2).toFixed(3),
-                        y: (Math.random() * 1.5 - 0.5).toFixed(3),
-                        z: (-Math.random() * 5).toFixed(3),
+                        x: px.toFixed(3),
+                        y: py.toFixed(3),
+                        z: pz.toFixed(3),
                         timestamp: new Date().toISOString()
                     };
                     spatialNodes.push(mockNode);
                     nodeCountText.innerText = spatialNodes.length;
-                }, 150);
+
+                    // Create glowing 3D marker for each spatial node
+                    const geometry = new THREE.SphereGeometry(0.04, 16, 16);
+                    const material = new THREE.MeshBasicMaterial({ 
+                        color: 0x00ffff, 
+                        wireframe: true 
+                    });
+                    const sphere = new THREE.Mesh(geometry, material);
+                    sphere.position.set(px, py, pz);
+                    nodeGroup.add(sphere);
+
+                }, 180);
 
             } else {
                 scanBtn.innerText = "START SCANNING";
@@ -209,13 +268,13 @@
 
         function exportEnvironmentMap() {
             if (spatialNodes.length === 0) {
-                alert("No environment nodes recorded. Start scanning first.");
+                alert("No environment nodes recorded.");
                 return;
             }
 
             const environmentPayload = {
-                generator: "Spatial Dash Pro Web Engine",
-                version: "2.0",
+                generator: "Spatial Dash Pro 3D Visualizer",
+                version: "3.0",
                 sessionDate: new Date().toISOString(),
                 totalMeshNodes: spatialNodes.length,
                 coordinatesMatrix: spatialNodes
@@ -226,14 +285,23 @@
             
             const fileLink = document.createElement('a');
             fileLink.href = downloadUrl;
-            fileLink.download = `spatial_environment_${Date.now()}.json`;
+            fileLink.download = `spatial_3d_environment_${Date.now()}.json`;
             document.body.appendChild(fileLink);
             fileLink.click();
             document.body.removeChild(fileLink);
             URL.revokeObjectURL(downloadUrl);
         }
 
-        window.addEventListener('load', initCameraFeed);
+        window.addEventListener('load', () => {
+            initCameraFeed();
+            initThreeJS();
+        });
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
