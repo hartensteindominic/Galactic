@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Web</title>
+    <title>Spatial Dash WebAR</title>
     <style>
         body {
             margin: 0;
@@ -11,7 +11,6 @@
             background-color: #000;
             font-family: -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        /* Tesla-style HUD overlay */
         #hud {
             position: absolute;
             top: 0;
@@ -26,8 +25,8 @@
             padding: 20px;
         }
         .top-bar, .bottom-panel {
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid #333;
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid #444;
             border-radius: 12px;
             padding: 15px 20px;
             pointer-events: auto;
@@ -37,84 +36,139 @@
             align-items: center;
         }
         .top-bar { font-weight: bold; letter-spacing: 1px; }
-        .status-dot { color: #00ff66; }
+        .status-dot { color: #ff3333; }
+        .status-active { color: #00ff66; }
         button {
-            background: #222;
+            background: #111;
             color: white;
-            border: 1px solid #555;
+            border: 1px solid #666;
             padding: 10px 20px;
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
         }
-        button:active { background: #444; }
-        /* Camera background feed */
-        #cam-feed {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: -1;
+        button:active { background: #333; }
+        #ar-canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
         }
     </style>
 </head>
 <body>
 
-    <video id="cam-feed" autoplay playsinline muted></video>
+    <canvas id="ar-canvas"></canvas>
 
     <div id="hud">
         <div class="top-bar">
-            <span>SPATIAL DASH</span>
-            <span class="status-dot">● LIVE FEED</span>
+            <span>SPATIAL DASH AR</span>
+            <span id="connection-status" class="status-dot">● OFFLINE</span>
         </div>
         
         <div class="bottom-panel">
             <div>
-                <div style="font-size: 16px; font-weight: bold;">Environment Map</div>
-                <div style="font-size: 12px; color: #aaa;" id="sub-text">Camera stream active</div>
+                <div style="font-size: 16px; font-weight: bold;">Environment Mapping</div>
+                <div style="font-size: 12px; color: #aaa;" id="sub-text">Tap start to trigger AR session</div>
             </div>
-            <button id="scan-btn" onclick="toggleScan()">START SCAN</button>
+            <div style="display: flex; gap: 10px;">
+                <button id="scan-btn" onclick="toggleARSession()">START AR SCAN</button>
+                <button id="save-btn" onclick="saveEnvironmentData()" style="display:none; background:#0055ff;">SAVE MAP</button>
+            </div>
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <script>
-        // Access iPhone Rear Camera via Web APIs
-        async function initCamera() {
-            try {
-                const constraints = {
-                    video: { facingMode: { exact: "environment" } } // Attempts to use rear camera
-                };
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                document.getElementById('cam-feed').srcObject = stream;
-            } catch (err) {
-                // Fallback to any available camera if exact rear fails
+        let xrSession = null;
+        let gl = null;
+        let renderer, scene, camera;
+        let scannedPoints = [];
+
+        async function toggleARSession() {
+            if (!navigator.xr) {
+                alert("WebXR not supported on this browser. Try opening this page via Mozilla WebXR Viewer.");
+                return;
+            }
+
+            if (!xrSession) {
                 try {
-                    const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    document.getElementById('cam-feed').srcObject = fallbackStream;
+                    // Request an immersive-ar session with hit-test capability
+                    xrSession = await navigator.xr.requestSession("immersive-ar", {
+                        requiredFeatures: ["hit-test", "local-floor"]
+                    });
+
+                    document.getElementById('connection-status').innerText = "● SCANNING ACTIVE";
+                    document.getElementById('connection-status').className = "status-active";
+                    document.getElementById('scan-btn').innerText = "STOP SESSION";
+                    document.getElementById('sub-text').innerText = "Walk around to map room surfaces";
+                    document.getElementById('save-btn').style.display = "block";
+
+                    setupThreeJSXR();
+                    xrSession.addEventListener('end', onSessionEnded);
+
                 } catch (e) {
-                    alert("Camera access denied or unavailable.");
+                    alert("Failed to start AR session: " + e.message);
                 }
-            }
-        }
-
-        let scanning = false;
-        function toggleScan() {
-            scanning = !scanning;
-            const btn = document.getElementById('scan-btn');
-            const sub = document.getElementById('sub-text');
-            if (scanning) {
-                btn.innerText = "STOP SCAN";
-                sub.innerText = "Analyzing spatial boundaries...";
             } else {
-                btn.innerText = "START SCAN";
-                sub.innerText = "Camera stream active";
+                await xrSession.end();
             }
         }
 
-        // Start camera on page load
-        window.onload = initCamera;
+        function setupThreeJSXR() {
+            const canvas = document.getElementById('ar-canvas');
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, preserveDrawingBuffer: true });
+            renderer.xr.enabled = true;
+
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
+
+            renderer.xr.setSession(xrSession);
+
+            renderer.setAnimationCallback((timestamp, frame) => {
+                if (frame) {
+                    // Collect tracking data points to mock room digital structure
+                    const viewerPose = frame.getViewerPose(renderer.xr.getReferenceSpace());
+                    if (viewerPose) {
+                        const pos = viewerPose.transform.position;
+                        // Log tracking coordinates dynamically during motion
+                        scannedPoints.push({ x: pos.x.toFixed(3), y: pos.y.toFixed(3), z: pos.z.toFixed(3), time: Date.now() });
+                    }
+                }
+                renderer.render(scene, camera);
+            });
+        }
+
+        function saveEnvironmentData() {
+            if (scannedPoints.length === 0) {
+                alert("No spatial coordinates recorded yet. Move your phone around first.");
+                return;
+            }
+
+            // Clean data payload representing the scanned digital environment
+            const environmentMap = {
+                version: "1.0",
+                device: "iOS WebAR",
+                totalPointsCaptured: scannedPoints.length,
+                spatialCoordinates: scannedPoints.slice(-500) // Keep the latest 500 coordinates
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(environmentMap, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "spatial_environment_map.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function onSessionEnded() {
+            xrSession = null;
+            document.getElementById('connection-status').innerText = "● OFFLINE";
+            document.getElementById('connection-status').className = "status-dot";
+            document.getElementById('scan-btn').innerText = "START AR SCAN";
+            document.getElementById('sub-text').innerText = "AR session closed";
+        }
     </script>
 </body>
 </html>
