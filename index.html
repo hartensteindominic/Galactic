@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - 3D Visualizer</title>
+    <title>Spatial Dash Pro - 3D Mesh Reconstructor</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -120,23 +120,23 @@
 
     <div id="hud-overlay">
         <div class="top-status interactive">
-            <span class="brand">SPATIAL DASH 3D</span>
+            <span class="brand">SPATIAL DASH MESH</span>
             <span id="status-badge" class="badge">SYSTEM READY</span>
         </div>
 
         <div class="control-dock interactive">
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-label">3D Nodes</div>
+                    <div class="metric-label">Mesh Nodes</div>
                     <div id="node-count" class="metric-value">0</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Surface</div>
-                    <div id="surface-status" class="metric-value">Calibrating</div>
+                    <div class="metric-label">Surfaces</div>
+                    <div id="surface-status" class="metric-value">Idle</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Mode</div>
-                    <div class="metric-value">AR Cloud</div>
+                    <div class="metric-value">Live Wireframe</div>
                 </div>
             </div>
             
@@ -163,7 +163,8 @@
 
         // Three.js Scene Components
         let scene, camera, renderer;
-        let nodeGroup = new THREE.Group();
+        let worldGroup = new THREE.Group();
+        let vectorPoints = [];
 
         function initThreeJS() {
             scene = new THREE.Scene();
@@ -175,16 +176,14 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
-            scene.add(nodeGroup);
+            scene.add(worldGroup);
 
-            // Ambient lighting for the 3D objects
             const ambientLight = new THREE.AmbientLight(0xffffff, 1);
             scene.add(ambientLight);
 
-            // Animation render loop
             function animate() {
                 requestAnimationFrame(animate);
-                nodeGroup.rotation.y += 0.002; // Gentle organic shift of the point cloud grid
+                worldGroup.rotation.y += 0.0015; // Gentle rotation to view the constructed room mesh
                 renderer.render(scene, camera);
             }
             animate();
@@ -217,22 +216,26 @@
             if (isScanning) {
                 scanBtn.innerText = "STOP SCANNING";
                 scanBtn.classList.add("scanning");
-                statusBadge.innerText = "MAPPING ACTIVE";
+                statusBadge.innerText = "RECONSTRUCTING MESH";
                 statusBadge.classList.add("active");
-                surfaceStatusText.innerText = "Tracking";
+                surfaceStatusText.innerText = "Constructing";
                 saveBtn.style.display = "block";
                 
                 spatialNodes = [];
-                // Clear out prior visual meshes if restarting
-                while(nodeGroup.children.length > 0){ 
-                    nodeGroup.remove(nodeGroup.children[0]); 
+                vectorPoints = [];
+                
+                while(worldGroup.children.length > 0){ 
+                    worldGroup.remove(worldGroup.children[0]); 
                 }
 
-                // Generate real-time data nodes AND spawn visual 3D spheres in the scene
+                // Scan loop generating spatial points and rebuilding live structural meshes
                 scanInterval = setInterval(() => {
                     let px = (Math.random() * 4 - 2);
                     let py = (Math.random() * 1.5 - 0.7);
                     let pz = (-Math.random() * 4 - 1);
+
+                    let newVector = new THREE.Vector3(px, py, pz);
+                    vectorPoints.push(newVector);
 
                     let mockNode = {
                         id: spatialNodes.length + 1,
@@ -244,24 +247,30 @@
                     spatialNodes.push(mockNode);
                     nodeCountText.innerText = spatialNodes.length;
 
-                    // Create glowing 3D marker for each spatial node
-                    const geometry = new THREE.SphereGeometry(0.04, 16, 16);
-                    const material = new THREE.MeshBasicMaterial({ 
-                        color: 0x00ffff, 
-                        wireframe: true 
-                    });
-                    const sphere = new THREE.Mesh(geometry, material);
-                    sphere.position.set(px, py, pz);
-                    nodeGroup.add(sphere);
+                    // 1. Drop a node marker sphere
+                    const sphereGeo = new THREE.SphereGeometry(0.03, 8, 8);
+                    const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
+                    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+                    sphere.position.copy(newVector);
+                    worldGroup.add(sphere);
 
-                }, 180);
+                    // 2. Connect new nodes with structural wireframe lines if we have multiple points
+                    if (vectorPoints.length > 1) {
+                        let prevVector = vectorPoints[vectorPoints.length - 2];
+                        const lineGeo = new THREE.BufferGeometry().setFromPoints([prevVector, newVector]);
+                        const lineMat = new THREE.LineBasicMaterial({ color: 0x0088ff, transparent: true, opacity: 0.7 });
+                        const connectingLine = new THREE.Line(lineGeo, lineMat);
+                        worldGroup.add(connectingLine);
+                    }
+
+                }, 200);
 
             } else {
                 scanBtn.innerText = "START SCANNING";
                 scanBtn.classList.remove("scanning");
-                statusBadge.innerText = "SCAN PAUSED";
+                statusBadge.innerText = "MESH LOCKED";
                 statusBadge.classList.remove("active");
-                surfaceStatusText.innerText = "Locked";
+                surfaceStatusText.innerText = "Ready";
                 clearInterval(scanInterval);
             }
         }
@@ -273,8 +282,8 @@
             }
 
             const environmentPayload = {
-                generator: "Spatial Dash Pro 3D Visualizer",
-                version: "3.0",
+                generator: "Spatial Dash Pro 3D Mesh Engine",
+                version: "4.0",
                 sessionDate: new Date().toISOString(),
                 totalMeshNodes: spatialNodes.length,
                 coordinatesMatrix: spatialNodes
@@ -285,7 +294,7 @@
             
             const fileLink = document.createElement('a');
             fileLink.href = downloadUrl;
-            fileLink.download = `spatial_3d_environment_${Date.now()}.json`;
+            fileLink.download = `spatial_mesh_environment_${Date.now()}.json`;
             document.body.appendChild(fileLink);
             fileLink.click();
             document.body.removeChild(fileLink);
