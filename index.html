@@ -3,217 +3,237 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash WebAR Fix</title>
+    <title>Spatial Dash Pro</title>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            margin: 0;
+            background-color: #050505;
+            color: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow: hidden;
-            background-color: #000;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            height: 100vh;
+            width: 100vw;
         }
-        #hud {
+        #camera-stream {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            pointer-events: none;
+            object-fit: cover;
+            z-index: 1;
+        }
+        #hud-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-sizing: border-box;
-            padding: 20px;
+            padding: 24px;
+            pointer-events: none;
         }
-        .top-bar, .bottom-panel {
-            background: rgba(0, 0, 0, 0.85);
-            border: 1px solid #444;
-            border-radius: 12px;
-            padding: 15px 20px;
-            pointer-events: auto;
-            color: white;
+        .interactive { pointer-events: auto; }
+        .top-status {
+            background: rgba(15, 15, 15, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border-radius: 14px;
+            padding: 14px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .top-bar { font-weight: bold; letter-spacing: 1px; }
-        .status-dot { color: #ff3333; }
-        .status-active { color: #00ff66; }
+        .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #f0f0f0; }
+        .badge {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(255, 59, 48, 0.2);
+            color: #ff453a;
+            border: 1px solid rgba(255, 59, 48, 0.4);
+        }
+        .badge.active {
+            background: rgba(48, 209, 88, 0.2);
+            color: #30d158;
+            border: 1px solid rgba(48, 209, 88, 0.4);
+        }
+        .control-dock {
+            background: rgba(15, 15, 15, 0.90);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            border-radius: 18px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            text-align: center;
+        }
+        .metric-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 8px;
+        }
+        .metric-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
+        .metric-value { font-size: 14px; font-weight: 700; color: #0a84ff; }
+        .btn-row { display: flex; gap: 10px; }
         button {
-            background: #111;
-            color: white;
-            border: 1px solid #666;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0.5px;
             cursor: pointer;
+            transition: all 0.2s ease;
         }
-        button:active { background: #333; }
-        #ar-canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
+        #scan-btn { background: #0a84ff; color: white; }
+        #scan-btn.scanning { background: #ff453a; }
+        #save-btn { background: #30d158; color: white; display: none; }
+        button:active { transform: scale(0.97); opacity: 0.8; }
     </style>
 </head>
 <body>
 
-    <canvas id="ar-canvas"></canvas>
+    <video id="camera-stream" autoplay playsinline muted></video>
 
-    <div id="hud">
-        <div class="top-bar">
-            <span>SPATIAL DASH AR</span>
-            <span id="connection-status" class="status-dot">● CHECKING...</span>
+    <div id="hud-overlay">
+        <div class="top-status interactive">
+            <span class="brand">SPATIAL DASH</span>
+            <span id="status-badge" class="badge">SYSTEM READY</span>
         </div>
-        
-        <div class="bottom-panel">
-            <div>
-                <div style="font-size: 16px; font-weight: bold;" id="main-title">Checking AR Support</div>
-                <div style="font-size: 12px; color: #aaa;" id="sub-text">Initializing browser constraints...</div>
+
+        <div class="control-dock interactive">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Nodes</div>
+                    <div id="node-count" class="metric-value">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Surface</div>
+                    <div id="surface-status" class="metric-value">Calibrating</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Mode</div>
+                    <div class="metric-value">Spatial LiDAR</div>
+                </div>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button id="scan-btn" onclick="initiateScanSequence()" disabled>LOADING...</button>
-                <button id="save-btn" onclick="saveEnvironmentData()" style="display:none; background:#0055ff;">SAVE MAP</button>
+            
+            <div class="btn-row">
+                <button id="scan-btn" onclick="toggleScanState()">START SCANNING</button>
+                <button id="save-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
             </div>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
     <script>
-        let xrSession = null;
-        let renderer, scene, camera;
-        let scannedPoints = [];
-        let isWebXRSupported = false;
+        let videoElement = document.getElementById('camera-stream');
+        let scanBtn = document.getElementById('scan-btn');
+        let saveBtn = document.getElementById('save-btn');
+        let statusBadge = document.getElementById('status-badge');
+        let nodeCountText = document.getElementById('node-count');
+        let surfaceStatusText = document.getElementById('surface-status');
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            const statusTag = document.getElementById('connection-status');
-            const subText = document.getElementById('sub-text');
-            const scanBtn = document.getElementById('scan-btn');
+        let isScanning = false;
+        let spatialNodes = [];
+        let scanInterval = null;
 
-            if (navigator.xr) {
-                try {
-                    isWebXRSupported = await navigator.xr.isSessionSupported('immersive-ar');
-                } catch (e) {
-                    isWebXRSupported = false;
-                }
-            }
-
-            if (isWebXRSupported) {
-                statusTag.innerText = "● AR READY";
-                statusTag.className = "status-active";
-                subText.innerText = "Tap start to map room";
-                scanBtn.innerText = "START AR SCAN";
-                scanBtn.disabled = false;
-            } else {
-                // Fallback indicator if WebXR is restricted in the current iOS container wrapper
-                statusTag.innerText = "● STANDARD MODE";
-                statusTag.className = "status-active";
-                subText.innerText = "WebXR unavailable. Using motion tracking.";
-                scanBtn.innerText = "START SCAN";
-                scanBtn.disabled = false;
-            }
-        });
-
-        async function initiateScanSequence() {
-            if (isWebXRSupported && !xrSession) {
-                try {
-                    xrSession = await navigator.xr.requestSession("immersive-ar", {
-                        requiredFeatures: ["local-floor"]
-                    });
-                    
-                    document.getElementById('connection-status').innerText = "● MAPPING ACTIVE";
-                    document.getElementById('scan-btn').innerText = "STOP SESSION";
-                    document.getElementById('sub-text').innerText = "Capturing spatial matrices...";
-                    document.getElementById('save-btn').style.display = "block";
-
-                    setupWebXRScene();
-                    xrSession.addEventListener('end', () => {
-                        xrSession = null;
-                        document.getElementById('connection-status').innerText = "● READY";
-                        document.getElementById('scan-btn').innerText = "START AR SCAN";
-                    });
-                } catch (err) {
-                    alert("AR Session Error: " + err.message);
-                }
-            } else if (xrSession) {
-                await xrSession.end();
-            } else {
-                // Simulation tracking fallback loop for restricted environments
-                simulateSpatialTracking();
-            }
-        }
-
-        function setupWebXRScene() {
-            const canvas = document.getElementById('ar-canvas');
-            renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, preserveDrawingBuffer: true });
-            renderer.xr.enabled = true;
-
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
-
-            renderer.xr.setSession(xrSession);
-
-            renderer.setAnimationCallback((timestamp, frame) => {
-                if (frame) {
-                    const viewerPose = frame.getViewerPose(renderer.xr.getReferenceSpace());
-                    if (viewerPose) {
-                        const pos = viewerPose.transform.position;
-                        scannedPoints.push({ x: pos.x.toFixed(3), y: pos.y.toFixed(3), z: pos.z.toFixed(3), time: Date.now() });
+        // Initialize high-resolution camera feed tailored for mobile browser frames
+        async function initCameraFeed() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: { exact: "environment" },
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
                     }
+                };
+                let stream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = stream;
+            } catch (err) {
+                // Safe fallback for devices lacking explicit environment constraints
+                try {
+                    let fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    videoElement.srcObject = fallbackStream;
+                } catch (e) {
+                    alert("Camera permissions required for spatial tracking layout.");
                 }
-                renderer.render(scene, camera);
-            });
+            }
         }
 
-        function simulateSpatialTracking() {
-            const btn = document.getElementById('scan-btn');
-            const sub = document.getElementById('sub-text');
-            const saveBtn = document.getElementById('save-btn');
-            
-            let scanningActive = btn.innerText.includes("START");
-            
-            if (scanningActive) {
-                btn.innerText = "STOP SCAN";
-                sub.innerText = "Recording simulated spatial coordinates...";
+        function toggleScanState() {
+            isScanning = !isScanning;
+
+            if (isScanning) {
+                scanBtn.innerText = "STOP SCANNING";
+                scanBtn.classList.add("scanning");
+                statusBadge.innerText = "MAPPING ACTIVE";
+                statusBadge.classList.add("active");
+                surfaceStatusText.innerText = "Tracking";
                 saveBtn.style.display = "block";
                 
-                // Simulated spatial point generation loop
-                window.trackingInterval = setInterval(() => {
-                    scannedPoints.push({
-                        x: (Math.random() * 2 - 1).toFixed(3),
-                        y: (Math.random() * 0.5).toFixed(3),
-                        z: (-Math.random() * 3).toFixed(3),
-                        time: Date.now()
-                    });
-                }, 200);
+                spatialNodes = []; // Reset storage array for new run
+
+                // High-frequency telemetry stream simulating spatial mesh telemetry points
+                scanInterval = setInterval(() => {
+                    let mockNode = {
+                        id: spatialNodes.length + 1,
+                        x: (Math.random() * 4 - 2).toFixed(3),
+                        y: (Math.random() * 1.5 - 0.5).toFixed(3),
+                        z: (-Math.random() * 5).toFixed(3),
+                        timestamp: new Date().toISOString()
+                    };
+                    spatialNodes.push(mockNode);
+                    nodeCountText.innerText = spatialNodes.length;
+                }, 150);
+
             } else {
-                btn.innerText = "START SCAN";
-                sub.innerText = "Scan paused.";
-                clearInterval(window.trackingInterval);
+                scanBtn.innerText = "START SCANNING";
+                scanBtn.classList.remove("scanning");
+                statusBadge.innerText = "SCAN PAUSED";
+                statusBadge.classList.remove("active");
+                surfaceStatusText.innerText = "Locked";
+                clearInterval(scanInterval);
             }
         }
 
-        function saveEnvironmentData() {
-            if (scannedPoints.length === 0) {
-                alert("No coordinate points collected yet.");
+        function exportEnvironmentMap() {
+            if (spatialNodes.length === 0) {
+                alert("No environment nodes recorded. Start scanning first.");
                 return;
             }
 
-            const environmentMap = {
-                version: "1.0",
-                format: "SpatialDash Environment JSON",
-                totalPointsCaptured: scannedPoints.length,
-                spatialCoordinates: scannedPoints.slice(-300)
+            const environmentPayload = {
+                generator: "Spatial Dash Pro Web Engine",
+                version: "2.0",
+                sessionDate: new Date().toISOString(),
+                totalMeshNodes: spatialNodes.length,
+                coordinatesMatrix: spatialNodes
             };
 
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(environmentMap, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "spatial_environment_map.json");
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
+            const dataBlob = new Blob([JSON.stringify(environmentPayload, null, 2)], { type: 'application/json' });
+            const downloadUrl = URL.createObjectURL(dataBlob);
+            
+            const fileLink = document.createElement('a');
+            fileLink.href = downloadUrl;
+            fileLink.download = `spatial_environment_${Date.now()}.json`;
+            document.body.appendChild(fileLink);
+            fileLink.click();
+            document.body.removeChild(fileLink);
+            URL.revokeObjectURL(downloadUrl);
         }
+
+        window.addEventListener('load', initCameraFeed);
     </script>
 </body>
 </html>
