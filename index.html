@@ -162,8 +162,8 @@
 
     <div id="export-modal" class="interactive">
         <div class="modal-content">
-            <h3>Condensed Camera Telemetry Payload</h3>
-            <p style="font-size:11px; color:#aaa;">Compact JSON export containing normalized tracking matrices and sequential 4D frames ready to copy.</p>
+            <h3>4D Map Processor Compatible Payload</h3>
+            <p style="font-size:11px; color:#aaa;">Formatted sequence ready to be pasted directly into the 3D Map Processor application.</p>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button id="modal-copy-btn" class="modal-btn" onclick="copyPayload()">COPY PAYLOAD</button>
@@ -194,7 +194,7 @@
                     <div id="node-count" class="metric-value">0</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">4D Frames Captured</div>
+                    <div class="metric-label">4D Frames</div>
                     <div id="captured-count" class="metric-value">0</div>
                 </div>
             </div>
@@ -221,8 +221,7 @@
         
         let isScanning = false;
         let recordedSequence = [];
-        let latestFramePayload = null;
-        let latestTelemetry = { timestamp: null, facing: currentFacingMode, landmarksDetected: 0, sequence: [] };
+        let latestMapPayload = { sequence: [] };
 
         async function initCameraFeed() {
             if (activeStream) {
@@ -295,62 +294,62 @@
 
         function onHolisticResults(results) {
             let count = 0;
-            let summaryData = {};
             let currentVertices = [];
+            let currentColors = [];
 
             function extractLandmarks(landmarkObj) {
                 if (!landmarkObj || !landmarkObj.landmark) return;
                 for (let pt of landmarkObj.landmark) {
-                    currentVertices.push(pt.x, pt.y, pt.z || 0);
+                    const x = (pt.x - 0.5) * -3.0;
+                    const y = (pt.y - 0.5) * -3.0;
+                    const z = (pt.z || 0) * 12.0;
+
+                    currentVertices.push(x, y, z);
+                    
+                    let depthShade = Math.min(Math.max((z + 2.0) / 4.0, 0.1), 1.0);
+                    currentColors.push(0.1 + depthShade * 0.4, 0.65, 1.0 - (depthShade * 0.3));
                 }
             }
 
             if (results.faceLandmarks) { 
                 count += results.faceLandmarks.landmark.length; 
-                summaryData.face = results.faceLandmarks.landmark.length;
                 extractLandmarks(results.faceLandmarks);
             }
             if (results.poseLandmarks) { 
                 count += results.poseLandmarks.landmark.length; 
-                summaryData.pose = results.poseLandmarks.landmark.length;
                 extractLandmarks(results.poseLandmarks);
             }
             if (results.leftHandLandmarks) { 
                 count += results.leftHandLandmarks.landmark.length; 
-                summaryData.leftHand = results.leftHandLandmarks.landmark.length;
                 extractLandmarks(results.leftHandLandmarks);
             }
             if (results.rightHandLandmarks) { 
                 count += results.rightHandLandmarks.landmark.length; 
-                summaryData.rightHand = results.rightHandLandmarks.landmark.length;
                 extractLandmarks(results.rightHandLandmarks);
             }
 
             nodeCountText.innerText = count;
 
-            latestFramePayload = {
-                frameIndex: frameIndex,
-                vertices: currentVertices
-            };
-
             if (isScanning && currentVertices.length > 0) {
-                recordedSequence.push(latestFramePayload);
+                recordedSequence.push({
+                    vertices: [...currentVertices],
+                    colors: [...currentColors]
+                });
                 capturedCountText.innerText = recordedSequence.length;
             }
 
-            latestTelemetry = {
-                version: "1.1",
-                type: "CameraProcessorSequenceSnapshot",
-                timestamp: new Date().toISOString(),
-                facingMode: currentFacingMode,
-                totalLandmarks: count,
-                breakdown: summaryData,
+            latestMapPayload = {
+                metadata: {
+                    generator: 'Spatial Camera Processor',
+                    version: '4.2',
+                    totalFrames: recordedSequence.length
+                },
                 sequence: recordedSequence
             };
         }
 
         function exportTelemetry() {
-            modalJsonText.value = JSON.stringify(latestTelemetry, null, 2);
+            modalJsonText.value = JSON.stringify(latestMapPayload);
             exportModal.style.display = 'flex';
         }
 
