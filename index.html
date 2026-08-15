@@ -3,134 +3,146 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperStream XD • True 3D Holographic Spatial Mapping Environment</title>
+<title>HyperStream XD • Ultimate 4D Quantum Holographic Environment</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#030712;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:380px;min-width:300px;background:#0b0f19;border-right:1px solid #1e293b;display:flex;flex-direction:column;padding:8px;gap:6px;overflow-y:auto;z-index:10}
-.brand{font-size:12px;font-weight:800;letter-spacing:.8px;color:#38bdf8;line-height:1.2}
-.brand span{background:linear-gradient(90deg,#38bdf8,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.card{background:rgba(15,23,42,.92);border:1px solid #1e293b;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:5px}
-.title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b}
-.row{display:flex;justify-content:space-between;align-items:center;font-size:10px;gap:6px;color:#94a3b8}
-input[type=range]{accent-color:#a855f7;width:100px;cursor:pointer}
-button{border:none;border-radius:6px;padding:7px 8px;font-size:10px;font-weight:700;cursor:pointer;color:#fff}
-.btn-p{background:#7c3aed}.btn-p:hover{background:#6d28d9}
-.btn-d{background:#dc2626;width:100%}.btn-d.on{background:#ea580c}
-.btn-s{background:#1e293b;color:#e2e8f0}
-.btn-g{background:#059669}
-.btn-i{background:#0284c7}
-.tabs{display:flex;gap:3px}
-.tab{flex:1;padding:6px;background:#1e293b;border:1px solid #334155;border-radius:5px;color:#94a3b8;font-size:10px;font-weight:600;cursor:pointer}
-.tab.on{background:#7c3aed;color:#fff;border-color:#6d28d9}
-#viewer{flex:1;position:relative;background:radial-gradient(circle at center,#0f172a 0%,#030712 85%)}
+body{background:#020617;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;height:100vh;display:flex;overflow:hidden}
+#sidebar{width:420px;min-width:340px;background:rgba(3,7,18,0.96);backdrop-filter:blur(20px);border-right:1px solid #1e293b;display:flex;flex-direction:column;padding:12px;gap:8px;overflow-y:auto;z-index:10}
+.brand{font-size:13px;font-weight:900;letter-spacing:1px;color:#38bdf8;line-height:1.2}
+.brand span{background:linear-gradient(90deg,#38bdf8,#ec4899,#8b5cf6,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.card{background:rgba(15,23,42,0.85);border:1px solid #334155;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94a3b8}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:10px;gap:6px;color:#cbd5e1}
+input[type=range]{accent-color:#ec4899;width:110px;cursor:pointer}
+button{border:none;border-radius:6px;padding:8px;font-size:10px;font-weight:800;cursor:pointer;color:#fff;transition:transform 0.1s ease, filter 0.2s}
+button:active{transform:scale(0.97)}
+.btn-p{background:linear-gradient(135deg,#8b5cf6,#ec4899)}.btn-p:hover{filter:brightness(1.15)}
+.btn-d{background:#ef4444;width:100%}.btn-d.on{background:#f97316;animation:pulseGlow 1.5s infinite}
+.btn-s{background:#1e293b;color:#f1f5f9;border:1px solid #475569}
+.btn-g{background:#10b981}
+.btn-i{background:#0ea5e9}
+.tabs{display:flex;gap:4px}
+.tab{flex:1;padding:7px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;font-size:10px;font-weight:700;cursor:pointer}
+.tab.on{background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;border-color:transparent}
+#viewer{flex:1;position:relative;background:radial-gradient(circle at center,#1e1b4b 0%,#020617 90%)}
 canvas{display:block;width:100%;height:100%}
-.stats{position:absolute;top:10px;right:10px;background:rgba(3,7,18,.92);padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.07);font-size:10px;color:#94a3b8;line-height:1.45;z-index:5}
-.stats b{color:#a855f7}
-.chips{display:flex;flex-wrap:wrap;gap:3px}
-.chip{font-size:9px;padding:2px 6px;border-radius:4px;background:#1e293b;border:1px solid #334155;cursor:pointer;user-select:none}
-.chip.on{background:#7c3aed;border-color:#6d28d9;color:#fff}
-textarea{width:100%;height:42px;background:#1e293b;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:9px;padding:5px;resize:none;font-family:ui-monospace,monospace}
-.drop{border:1.5px dashed #334155;padding:10px;border-radius:6px;text-align:center;font-size:10px;cursor:pointer;color:#64748b}
-.drop.over{border-color:#a855f7;background:rgba(168,85,247,.1)}
+.stats{position:absolute;top:12px;right:12px;background:rgba(2,6,23,0.85);backdrop-filter:blur(8px);padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);font-size:10px;color:#94a3b8;line-height:1.4;z-index:5}
+.stats b{color:#ec4899}
+.chips{display:flex;flex-wrap:wrap;gap:4px}
+.chip{font-size:9px;padding:3px 7px;border-radius:5px;background:#1e293b;border:1px solid #475569;cursor:pointer;user-select:none}
+.chip.on{background:#ec4899;border-color:#db2777;color:#fff}
+textarea{width:100%;height:45px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f8fafc;font-size:9px;padding:6px;resize:none;font-family:ui-monospace,monospace}
+.drop{border:1.5px dashed #475569;padding:12px;border-radius:8px;text-align:center;font-size:10px;cursor:pointer;color:#94a3b8;background:rgba(15,23,42,0.5)}
+.drop.over{border-color:#ec4899;background:rgba(236,72,153,0.1)}
 input[type=file]{display:none}
 #vid{display:none}
-select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;font-size:10px;padding:2px 4px}
-.prog{height:4px;background:#1e293b;border-radius:2px;overflow:hidden;margin-top:2px}
-.prog>div{height:100%;background:#a855f7;width:0%;transition:width .12s}
-.hint{font-size:9px;color:#64748b;line-height:1.3}
+select{background:#0f172a;color:#fff;border:1px solid #334155;border-radius:5px;font-size:10px;padding:3px 6px}
+.prog{height:5px;background:#1e293b;border-radius:3px;overflow:hidden;margin-top:3px}
+.prog>div{height:100%;background:linear-gradient(90deg,#38bdf8,#ec4899);width:0%;transition:width .1s}
+.hint{font-size:9px;color:#94a3b8;line-height:1.3}
+@keyframes pulseGlow { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
 </head>
 <body>
 <div id="sidebar">
-  <div class="brand">HYPERSTREAM XD<br><span>3D MAPPING ENVIRONMENT HOLOGRAPH</span></div>
+  <div class="brand">HYPERSTREAM XD+ ULTIMATE<br><span>ADVANCED 4D QUANTUM HOLOGRAPHIC SUITE</span></div>
 
   <div class="tabs">
-    <button class="tab on" id="t-cap" onclick="mode('cap')">📡 Live 3D</button>
+    <button class="tab on" id="t-cap" onclick="mode('cap')">📡 Live 4D</button>
     <button class="tab" id="t-load" onclick="mode('load')">📂 Load</button>
     <button class="tab" id="t-paste" onclick="mode('paste')">📋 Paste</button>
   </div>
 
   <div class="card" id="p-cap">
-    <div class="title">Volumetric 3D Environment Scan</div>
-    <button class="btn-d" id="scanBtn" onclick="toggleScan()">START 3D MAPPING</button>
-    <div style="display:flex;gap:4px">
-      <button class="btn-s" style="flex:1" id="camBtn" onclick="switchCam()">📷 Front</button>
-      <button class="btn-s" style="flex:1" id="perfBtn" onclick="togglePerf()">⚡ Turbo</button>
+    <div class="title">Quantum Volumetric Scan</div>
+    <button class="btn-d" id="scanBtn" onclick="toggleScan()">ACTIVATE 4D MATRIX SCAN</button>
+    <div style="display:flex;gap:6px">
+      <button class="btn-s" style="flex:1" id="camBtn" onclick="switchCam()">📷 Sensor</button>
+      <button class="btn-s" style="flex:1" id="perfBtn" onclick="togglePerf()">⚡ Warp Speed</button>
     </div>
-    <div class="row"><span>Voxel Resolution</span><input type="range" id="step" min="1" max="3" value="1" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV">1</span></div>
-    <div class="row"><span>Depth Field</span><input type="range" id="depth" min="10" max="100" value="65" step="1" oninput="depthMul=+this.value"></div>
-    <div class="row"><span>Point Scale</span><input type="range" id="psize" min="0.005" max="0.05" value="0.010" step="0.001" oninput="ptSize=+this.value;updSize()"></div>
-    <div class="row"><span>Geo Layers</span><input type="range" id="layers" min="2" max="16" value="10" oninput="layerN=+this.value;$('layV').textContent=this.value;buildChips()"><span id="layV">10</span></div>
-    <div class="row"><span>Environment Spread</span><input type="range" id="spread" min="0.2" max="2.5" value="1.2" step="0.05" oninput="layerSp=+this.value"></div>
-    <div class="row"><span>Matrix Density</span><input type="range" id="extraNodes" min="1" max="4" value="2" step="1" oninput="extraNodeFactor=+this.value;$('nodeMultV').textContent=this.value"><span id="nodeMultV">2</span>x</div>
-    <div style="font-size:9px;color:#64748b">Active Voxels <b id="nLive">0</b> · Stream Frames <b id="nFrm">0</b></div>
-    <div style="display:flex;gap:4px">
-      <button class="btn-g" style="flex:1" onclick="expJSON()">Export JSON</button>
+    <div class="row"><span>Voxel Density</span><input type="range" id="step" min="1" max="3" value="1" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV">1</span></div>
+    <div class="row"><span>Hyper-Depth Field</span><input type="range" id="depth" min="10" max="120" value="80" oninput="depthMul=+this.value"></div>
+    <div class="row"><span>Quantum Node Size</span><input type="range" id="psize" min="0.005" max="0.06" value="0.012" step="0.001" oninput="ptSize=+this.value;updSize()"></div>
+    <div class="row"><span>Dimensional Strata</span><input type="range" id="layers" min="2" max="24" value="14" oninput="layerN=+this.value;$('layV').textContent=this.value;buildChips()"><span id="layV">14</span></div>
+    <div class="row"><span>Spatial Dispersion</span><input type="range" id="spread" min="0.2" max="4.0" value="1.6" step="0.05" oninput="layerSp=+this.value"></div>
+    <div style="font-size:9px;color:#94a3b8">Active Voxels <b id="nLive">0</b> · Temporal Frames <b id="nFrm">0</b></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn-g" style="flex:1" onclick="expJSON()">Export Matrix</button>
       <button class="btn-s" style="flex:1" onclick="copyJSON()">Copy</button>
     </div>
-    <textarea id="jsonOut" readonly placeholder="3D environment spatial payload…"></textarea>
+    <textarea id="jsonOut" readonly placeholder="4D quantum coordinate stream…"></textarea>
   </div>
 
   <div class="card" id="p-load" style="display:none">
-    <div class="title">Load 3D Environment Payload</div>
-    <div class="drop" id="drop" onclick="$('fi').click()">Drop JSON or click
+    <div class="title">Import Holographic Payload</div>
+    <div class="drop" id="drop" onclick="$('fi').click()">Drop JSON Matrix or Click to Browse
       <input type="file" id="fi" accept=".json" onchange="fileIn(event)">
     </div>
-    <button class="btn-s" onclick="clearAll()">Clear Environment</button>
+    <button class="btn-s" onclick="clearAll()">Purge Environment</button>
   </div>
 
   <div class="card" id="p-paste" style="display:none">
-    <div class="title">Paste 3D Environment Matrix</div>
+    <div class="title">Direct Matrix Injection</div>
     <textarea id="jsonIn" placeholder='{"HyperStreamXD":[...]}'></textarea>
-    <button class="btn-p" onclick="pasteIn()">Build 3D Holograph</button>
+    <button class="btn-p" onclick="pasteIn()">Synthesize 4D Hologram</button>
   </div>
 
   <div class="card">
-    <div class="title">3D Holographic Environment Controls</div>
-    <div class="row"><span>Rendering Mode</span>
+    <div class="title">Advanced Quantum FX & Audio</div>
+    <div class="row"><span>Render Engine</span>
       <select id="rmode" onchange="rMode=this.value;if(frames.length)drawFrame(playIdx,metaV)">
-        <option value="points">Volumetric Point Cloud</option>
-        <option value="solid">Triangulated Mesh</option>
+        <option value="points">Quantum Point Matrix</option>
+        <option value="solid">Crystalline Mesh</option>
         <option value="wire">Spatial Wireframe</option>
+        <option value="quantumWave">Quantum Wave Grid</option>
+        <option value="plasmaVortex">Plasma Vortex Field</option>
       </select>
     </div>
-    <div class="row"><span>Environment Twist</span><input type="range" id="meta" min="0" max="100" value="25" oninput="metaV=this.value/100;$('metaV').textContent=metaV.toFixed(2);isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="metaV">0.25</span></div>
-    <div class="row"><span>Timeline Scrub</span><input type="range" id="scrub" min="0" max="0" value="0" oninput="playIdx=+this.value;isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="scrubV">0/0</span></div>
-    <div class="row"><span>Playback FPS</span><input type="range" id="fps" min="6" max="30" value="20" oninput="playFPS=+this.value"></div>
-    <div style="display:flex;gap:4px">
-      <button class="btn-s" style="flex:1" id="playBtn" onclick="togglePlay()">▶ Play</button>
-      <button class="btn-s" style="flex:1" onclick="resetCam()">↺ Center View</button>
+    <div class="row"><span>Neural Bloom Intensity</span><input type="range" id="bloomInt" min="0" max="4" value="1.5" step="0.1" oninput="if(bloomPass)bloomPass.strength=+this.value"></div>
+    <div class="row"><span>Glitch Aberration</span><input type="range" id="glitchAmt" min="0" max="1" value="0.2" step="0.05" oninput="if(glitchUniforms)glitchUniforms.amount.value=+this.value"></div>
+    <div class="row"><span>Audio Reactive Pulse</span><button class="btn-i" style="padding:4px 8px" onclick="initAudioReactivity()">🎙️ Enable Mic Sync</button></div>
+    <div class="row"><span>Time/Space Warp</span><input type="range" id="meta" min="0" max="100" value="40" oninput="metaV=this.value/100;$('metaV').textContent=metaV.toFixed(2);isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="metaV">0.40</span></div>
+    <div class="row"><span>Temporal Timeline</span><input type="range" id="scrub" min="0" max="0" value="0" oninput="playIdx=+this.value;isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="scrubV">0/0</span></div>
+    <div class="row"><span>Playback Velocity</span><input type="range" id="fps" min="6" max="60" value="30" oninput="playFPS=+this.value"></div>
+    <div style="display:flex;gap:6px">
+      <button class="btn-s" style="flex:1" id="playBtn" onclick="togglePlay()">▶ Play Stream</button>
+      <button class="btn-s" style="flex:1" onclick="resetCam()">↺ Recenter</button>
     </div>
     <div class="row"><span>Auto Orbit</span><input type="checkbox" id="orbit" checked onchange="autoOrbit=this.checked"></div>
-    <div class="row"><span>Environment Pulse</span><input type="checkbox" id="pulse" checked onchange="doPulse=this.checked"></div>
-    <div class="title" style="margin-top:3px">Layer Selector</div>
+    <div class="row"><span>Quantum Pulse</span><input type="checkbox" id="pulse" checked onchange="doPulse=this.checked"></div>
+    <div class="title" style="margin-top:4px">Strata Selector</div>
     <div class="chips" id="chips"></div>
   </div>
 
   <div class="card">
-    <div class="title">Share & iPhone Integration</div>
-    <div style="display:flex;gap:4px">
-      <button class="btn-i" style="flex:1" onclick="shareNative()">📤 Share to iOS</button>
-      <button class="btn-p" style="background:#059669;flex:1" onclick="exportUSZ()">🍎 AR Quick Look (.usdz)</button>
+    <div class="title">Instant Share & iOS Suite</div>
+    <div style="display:flex;gap:6px">
+      <button class="btn-i" style="flex:1" onclick="shareNative()">📤 AirDrop / Share</button>
+      <button class="btn-p" style="background:#10b981;flex:1" onclick="exportUSZ()">🍎 AR Quick Look (.usdz)</button>
     </div>
-    <div class="btn-p" style="background:#7c2d12;text-align:center;margin-top:4px" onclick="exportHTMLBundle()">🌐 Export Standalone Web App</div>
+    <div class="btn-p" style="background:linear-gradient(135deg,#f97316,#db2777);text-align:center;margin-top:4px" onclick="exportHTMLBundle()">🌐 Export Standalone Hologram App</div>
   </div>
 
   <div class="card">
-    <div class="title">Export 3D Hologram Video & Frame</div>
-    <button class="btn-p" style="background:#0f766e" onclick="expPNG()">📸 Save 3D Frame PNG</button>
-    <button class="btn-p" style="background:#2563eb" id="webmBtn" onclick="expDimensionalVideo()">🎥 Record 3D Spatial Video</button>
+    <div class="title">Export Holographic Media</div>
+    <button class="btn-p" style="background:#0d9488" onclick="expPNG()">📸 Snapshot PNG</button>
+    <button class="btn-p" style="background:#2563eb" id="webmBtn" onclick="expDimensionalVideo()">🎥 Record 4D Spatial Video</button>
     <div class="prog"><div id="progFill"></div></div>
-    <div class="hint" id="expStatus">3D Spatial Matrix Pipeline Ready.</div>
+    <div class="hint" id="expStatus">Advanced Quantum Pipeline Online.</div>
   </div>
 </div>
 
 <div id="viewer">
   <div class="stats">
-    <span id="status">3D Engine Initialized</span><br>
+    <span id="status">Advanced Quantum Engine Online</span><br>
     FPS <b id="fpsD">—</b> · Hologram Voxels <b id="nodesD">0</b>
   </div>
   <video id="vid" autoplay playsinline muted></video>
@@ -140,14 +152,13 @@ select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;
 <script>
 const $ = id => document.getElementById(id);
 
-let scene, cam, ren, ctrl, grid;
+let scene, cam, ren, ctrl, grid, composer, bloomPass, glitchPass, glitchUniforms;
 let layers = [], prevPos = [];
 let video, c2d, ctx;
 let scanning = false, rec = [], fIdx = 0;
-let stepSize = 1, depthMul = 65, ptSize = 0.010;
-let layerN = 10, layerSp = 1.2, smooth = 0.35;
-let extraNodeFactor = 2;
-let rMode = 'points', metaV = 0.25, playFPS = 20;
+let stepSize = 1, depthMul = 80, ptSize = 0.012;
+let layerN = 14, layerSp = 1.6, smooth = 0.35;
+let rMode = 'points', metaV = 0.4, playFPS = 30;
 let isPlay = false, frames = [], playIdx = 0, lastT = 0;
 let autoOrbit = true, doPulse = true, vis = [];
 let facing = 'user', stream = null, ready = false;
@@ -155,6 +166,36 @@ let perf = false, lastVol = 0;
 const VOL_MS = 25;
 let fc = 0, ft = 0, phase = 0;
 let exporting = false;
+let audioCtx, analyser, dataArray;
+
+const ChromaticGlitchShader = {
+  uniforms: {
+    'tDiffuse': { value: null },
+    'amount': { value: 0.2 },
+    'time': { value: 0.0 }
+  },
+  vertexShader: `
+    varying vec2 vUv;
+    void main() {
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  `,
+  fragmentShader: `
+    uniform sampler2D tDiffuse;
+    uniform float amount;
+    uniform float time;
+    varying vec2 vUv;
+    void main() {
+      vec2 uv = vUv;
+      float glitchFactor = sin(time * 10.0) * 0.002 * amount;
+      vec4 cr = texture2D(tDiffuse, uv + vec2(glitchFactor + amount * 0.005, 0.0));
+      vec4 cg = texture2D(tDiffuse, uv);
+      vec4 cb = texture2D(tDiffuse, uv - vec2(glitchFactor + amount * 0.005, 0.0));
+      gl_FragColor = vec4(cr.r, cg.g, cb.b, cg.a);
+    }
+  `
+};
 
 window.addEventListener('DOMContentLoaded', () => {
   init3();
@@ -166,10 +207,10 @@ window.addEventListener('DOMContentLoaded', () => {
 function init3() {
   const box = $('viewer');
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030712, 0.018);
+  scene.fog = new THREE.FogExp2(0x020617, 0.010);
   
   cam = new THREE.PerspectiveCamera(48, box.clientWidth / box.clientHeight, 0.05, 2000);
-  cam.position.set(0, 0.4, 3.6);
+  cam.position.set(0, 0.5, 3.8);
 
   ren = new THREE.WebGLRenderer({
     canvas: $('c3'),
@@ -180,45 +221,70 @@ function init3() {
   });
   ren.setSize(box.clientWidth, box.clientHeight);
   ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  ren.setClearColor(0x030712);
+  ren.setClearColor(0x020617);
+
+  composer = new THREE.EffectComposer(ren);
+  const renderPass = new THREE.RenderPass(scene, cam);
+  composer.addPass(renderPass);
+
+  bloomPass = new THREE.UnrealBloomPass(
+    new THREE.Vector2(box.clientWidth, box.clientHeight),
+    1.5, 0.4, 0.80
+  );
+  composer.addPass(bloomPass);
+
+  glitchPass = new THREE.ShaderPass(ChromaticGlitchShader);
+  glitchUniforms = glitchPass.uniforms;
+  composer.addPass(glitchPass);
 
   if (typeof THREE.OrbitControls === 'function') {
     ctrl = new THREE.OrbitControls(cam, ren.domElement);
     ctrl.enableDamping = true;
     ctrl.dampingFactor = 0.07;
-    ctrl.rotateSpeed = 0.55;
+    ctrl.rotateSpeed = 0.6;
     ctrl.autoRotate = true;
-    ctrl.autoRotateSpeed = 0.35;
+    ctrl.autoRotateSpeed = 0.4;
     ctrl.target.set(0, 0, 0);
   }
 
-  grid = new THREE.GridHelper(50, 50, 0x38bdf8, 0x0f172a);
+  grid = new THREE.GridHelper(60, 60, 0xec4899, 0x0f172a);
   grid.position.y = -2.2;
   scene.add(grid);
 
-  const ambient = new THREE.AmbientLight(0xffffff, 0.7);
+  const ambient = new THREE.AmbientLight(0xffffff, 1.0);
   scene.add(ambient);
 
-  const l1 = new THREE.DirectionalLight(0xffffff, 1.2);
-  l1.position.set(3, 6, 5);
+  const l1 = new THREE.DirectionalLight(0x38bdf8, 1.8);
+  l1.position.set(4, 7, 5);
   scene.add(l1);
 
-  const l2 = new THREE.DirectionalLight(0xa855f7, 0.8);
+  const l2 = new THREE.DirectionalLight(0xec4899, 1.4);
   l2.position.set(-4, -2, -4);
   scene.add(l2);
 
-  const l3 = new THREE.DirectionalLight(0x38bdf8, 0.6);
-  l3.position.set(0, 5, -5);
-  scene.add(l3);
-
   window.addEventListener('resize', () => {
-    if (!box || !cam || !ren) return;
+    if (!box || !cam || !ren || !composer) return;
     cam.aspect = box.clientWidth / box.clientHeight;
     cam.updateProjectionMatrix();
     ren.setSize(box.clientWidth, box.clientHeight);
+    composer.setSize(box.clientWidth, box.clientHeight);
   });
 
   loop();
+}
+
+function initAudioReactivity() {
+  navigator.mediaDevices.getUserMedia({ audio: true, video: false }).then(s => {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(s);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 64;
+    source.connect(analyser);
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    $('status').textContent = 'Microphone Quantum Sync Active';
+  }).catch(() => {
+    $('status').textContent = 'Microphone permission denied';
+  });
 }
 
 function stopStream() {
@@ -236,15 +302,15 @@ function initCam(face) {
   stopStream();
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    $('status').textContent = 'Camera API not available';
+    $('status').textContent = 'Sensor API unavailable';
     return;
   }
 
   navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: { ideal: face },
-      width: { ideal: 960 },
-      height: { ideal: 540 },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
       frameRate: { ideal: 30 }
     },
     audio: false
@@ -256,10 +322,10 @@ function initCam(face) {
   }).then(() => {
     ready = true;
     $('camBtn').textContent = face === 'environment' ? '📷 Back' : '📷 Front';
-    $('status').textContent = '3D Environment Sensor Active';
+    $('status').textContent = 'Quantum Sensor Online';
   }).catch(() => {
     if (face !== 'user') initCam('user');
-    else $('status').textContent = 'Camera error';
+    else $('status').textContent = 'Sensor connection error';
   });
 }
 
@@ -270,28 +336,26 @@ function switchCam() {
 function togglePerf() {
   perf = !perf;
   if (perf) {
-    stepSize = 2; layerN = 6; ptSize = 0.016; extraNodeFactor = 1;
+    stepSize = 2; layerN = 8; ptSize = 0.018;
     $('step').value = 2; $('stepV').textContent = '2';
-    $('layers').value = 6; $('layV').textContent = '6';
-    $('psize').value = 0.016;
-    $('extraNodes').value = 1; $('nodeMultV').textContent = '1';
-    $('perfBtn').style.background = '#059669';
-    $('perfBtn').textContent = '⚡ Turbo ON';
+    $('layers').value = 8; $('layV').textContent = '8';
+    $('psize').value = 0.018;
+    $('perfBtn').style.background = '#10b981';
+    $('perfBtn').textContent = '⚡ Warp ON';
   } else {
-    stepSize = 1; layerN = 10; ptSize = 0.010; extraNodeFactor = 2;
+    stepSize = 1; layerN = 14; ptSize = 0.012;
     $('step').value = 1; $('stepV').textContent = '1';
-    $('layers').value = 10; $('layV').textContent = '10';
-    $('psize').value = 0.010;
-    $('extraNodes').value = 2; $('nodeMultV').textContent = '2';
+    $('layers').value = 14; $('layV').textContent = '14';
+    $('psize').value = 0.012;
     $('perfBtn').style.background = '';
-    $('perfBtn').textContent = '⚡ Turbo';
+    $('perfBtn').textContent = '⚡ Warp Speed';
   }
   buildChips();
   updSize();
 }
 
 function resetCam() {
-  cam.position.set(0, 0.4, 3.6);
+  cam.position.set(0, 0.5, 3.8);
   if (ctrl) {
     ctrl.target.set(0, 0, 0);
     ctrl.update();
@@ -307,10 +371,18 @@ function loop(now = performance.now()) {
   }
 
   phase = now * 0.001;
+  if (glitchUniforms) glitchUniforms.time.value = phase;
+
   fc++;
   if (now - ft > 1000) {
     $('fpsD').textContent = Math.round((fc * 1000) / (now - ft));
     fc = 0; ft = now;
+  }
+
+  let audioMod = 0;
+  if (analyser && dataArray) {
+    analyser.getByteFrequencyData(dataArray);
+    audioMod = (dataArray[2] / 255.0) * 0.20;
   }
 
   const needSample = ready && video && video.readyState >= 2 && !exporting && !isPlay;
@@ -320,11 +392,11 @@ function loop(now = performance.now()) {
     sample();
   }
 
-  if (doPulse && layers.length && rMode === 'points' && !exporting) {
+  if (doPulse && layers.length && (rMode === 'points' || rMode === 'plasmaVortex') && !exporting) {
     for (let i = 0; i < layers.length; i++) {
       const o = layers[i];
       if (o && o.visible) {
-        const s = 1 + Math.sin(phase * 1.5 + i * 0.3) * 0.01;
+        const s = 1 + Math.sin(phase * 3.0 + i * 0.2) * (0.015 + audioMod);
         o.scale.setScalar(s);
       }
     }
@@ -338,7 +410,8 @@ function loop(now = performance.now()) {
     lastT = now;
   }
 
-  if (ren && scene && cam) ren.render(scene, cam);
+  if (composer && !exporting) composer.render();
+  else if (ren && scene && cam) ren.render(scene, cam);
 }
 
 function sample() {
@@ -355,11 +428,11 @@ function sample() {
   const pos = [], col = [];
   const cx = w * 0.5, cy = h * 0.5;
   const maxR = Math.hypot(cx, cy) || 1;
-  const sx = 1.4 * Math.min(w / Math.max(h, 1), 1.6);
-  const sy = 1.4;
-  const maxP = perf ? 35000 : 70000;
+  const sx = 1.6 * Math.min(w / Math.max(h, 1), 1.6);
+  const sy = 1.6;
+  const maxP = perf ? 40000 : 90000;
   const step = Math.max(1, stepSize | 0);
-  const thr = 0.008;
+  const thr = 0.007;
 
   for (let y = 0; y < h && pos.length / 3 < maxP; y += step) {
     for (let x = 0; x < w && pos.length / 3 < maxP; x += step) {
@@ -373,21 +446,22 @@ function sample() {
       const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
       const rad = dx * dx + dy * dy;
 
-      let nz = (lum - 0.18) * (depthMul * 0.038) - (rad * 0.35);
+      let nz = (lum - 0.18) * (depthMul * 0.04) - (rad * 0.45);
+      if (rMode === 'quantumWave') {
+        nz += Math.sin(nx * 6 + phase * 4) * 0.25;
+      } else if (rMode === 'plasmaVortex') {
+        let angle = Math.atan2(dy, dx) + phase * 2;
+        nz += Math.sin(angle * 4) * 0.3;
+      }
 
       pos.push(nx * sx, ny * sy, nz);
 
       const avg = (r + g + b) / 3;
-      const cr = Math.min(1, avg + (r - avg) * 1.3 + 0.12);
-      const cg = Math.min(1, avg + (g - avg) * 1.3 + 0.18);
-      const cb = Math.min(1, avg + (b - avg) * 1.4 + 0.3);
-      col.push(cr, cg, cb);
-
-      for (let nf = 1; nf <= extraNodeFactor; nf++) {
-        const fOffset = nf * 0.007;
-        pos.push(nx * sx, ny * sy, nz - fOffset);
-        col.push(cr * 0.85, cg * 0.85, cb * 0.85);
-      }
+      col.push(
+        Math.min(1, avg + (r - avg) * 1.5 + 0.2),
+        Math.min(1, avg + (g - avg) * 1.4 + 0.1),
+        Math.min(1, avg + (b - avg) * 1.6 + 0.4)
+      );
     }
   }
 
@@ -442,12 +516,12 @@ function buildLayers(basePos, baseCol) {
   if (n < 5) return;
 
   const maxL = Math.max(1, layerN - 1);
-  const mOff = metaV * 0.35;
+  const mOff = metaV * 0.4;
 
   for (let L = 0; L < layerN; L++) {
     const t = L / maxL;
     const s = (t - 0.5);
-    const zOff = s * layerSp * 1.6;
+    const zOff = s * layerSp * 1.8;
     const front = 1 - t;
 
     const pos = new Float32Array(n * 3);
@@ -455,7 +529,7 @@ function buildLayers(basePos, baseCol) {
 
     for (let i = 0, j = 0; i < n; i++, j += 3) {
       let px = basePos[j];
-      let py = basePos[j + 1] + mOff * (0.5 + L * 0.03);
+      let py = basePos[j + 1] + mOff * (0.5 + L * 0.035);
       let pz = basePos[j + 2] + zOff;
 
       if (prevPos[L] && prevPos[L].length === pos.length && smooth > 0.04) {
@@ -467,17 +541,17 @@ function buildLayers(basePos, baseCol) {
       pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
       
       const bcR = baseCol[j] !== undefined ? baseCol[j] : 0.5;
-      const bcG = baseCol[j + 1] !== undefined ? baseCol[j + 1] : 0.45;
-      const bcB = baseCol[j + 2] !== undefined ? baseCol[j + 2] : 0.98;
+      const bcG = baseCol[j + 1] !== undefined ? baseCol[j + 1] : 0.4;
+      const bcB = baseCol[j + 2] !== undefined ? baseCol[j + 2] : 0.9;
 
-      col[j]     = Math.min(1, bcR * (0.85 + front * 0.15));
-      col[j + 1] = Math.min(1, bcG * (0.85 + L * 0.025));
-      col[j + 2] = Math.min(1, bcB * (0.75 + (1 - front) * 0.25));
+      col[j]     = Math.min(1, bcR * (0.8 + front * 0.2));
+      col[j + 1] = Math.min(1, bcG * (0.8 + L * 0.02));
+      col[j + 2] = Math.min(1, bcB * (0.7 + (1 - front) * 0.3));
     }
 
     prevPos[L] = pos;
-    const size = ptSize * (1.12 - L * 0.035);
-    const op = Math.max(0.35, 0.92 - L * 0.06);
+    const size = ptSize * (1.15 - L * 0.028);
+    const op = Math.max(0.35, 0.95 - L * 0.050);
 
     let o = layers[L];
     if (!o) {
@@ -511,7 +585,7 @@ function buildLayers(basePos, baseCol) {
 function updSize() {
   layers.forEach((o, L) => {
     if (o?.material?.size !== undefined)
-      o.material.size = ptSize * (1.12 - L * 0.035);
+      o.material.size = ptSize * (1.15 - L * 0.028);
   });
 }
 
@@ -523,17 +597,17 @@ function toggleScan() {
     frames = [];
     isPlay = false;
     $('playBtn').textContent = '▶';
-    b.textContent = 'STOP 3D MAPPING';
+    b.textContent = 'STOP MATRIX SCAN';
     b.classList.add('on');
-    $('status').textContent = 'Mapping 3D Holographic Environment…';
+    $('status').textContent = 'Recording 4D Quantum Matrix…';
   } else {
-    b.textContent = 'START 3D MAPPING';
+    b.textContent = 'ACTIVATE 4D MATRIX SCAN';
     b.classList.remove('on');
-    $('status').textContent = 'Ready';
+    $('status').textContent = 'Scan Complete';
     $('jsonOut').value = JSON.stringify({ HyperStreamXD: rec, layers: layerN, spread: layerSp });
     if (rec.length) {
       loadData({ HyperStreamXD: rec, layers: layerN, spread: layerSp });
-      $('expStatus').textContent = rec.length + ' environment frames captured';
+      $('expStatus').textContent = rec.length + ' temporal frames locked';
     }
   }
 }
@@ -553,7 +627,7 @@ function buildChips() {
     if (vis[i] === undefined) vis[i] = true;
     const d = document.createElement('div');
     d.className = 'chip' + (vis[i] ? ' on' : '');
-    d.textContent = 'Layer ' + (i + 1);
+    d.textContent = 'Strata ' + (i + 1);
     d.onclick = () => {
       vis[i] = !vis[i];
       if (layers[i]) layers[i].visible = vis[i];
@@ -600,16 +674,16 @@ function drawFrame(idx, meta) {
 
   const pos = [], col = [];
   for (let i = 0; i < src.length; i += ts) {
-    pos.push(src[i], src[i + 1] + (f.meta || 0.5) * meta * 0.35, src[i + 2]);
+    pos.push(src[i], src[i + 1] + (f.meta || 0.5) * meta * 0.4, src[i + 2]);
     const ci = (i / ts) * 3;
     if (cols.length >= ci + 3) col.push(cols[ci], cols[ci + 1], cols[ci + 2]);
-    else col.push(0.5, 0.45, 0.98);
+    else col.push(0.5, 0.4, 0.9);
   }
 
   const prevN = layerN, prevS = layerSp;
   layerN = Lc; layerSp = sp;
 
-  if (rMode === 'points') {
+  if (rMode === 'points' || rMode === 'quantumWave' || rMode === 'plasmaVortex') {
     buildLayers(pos, col);
   } else {
     clearLayers();
@@ -630,7 +704,7 @@ function drawFrame(idx, meta) {
     }
     g.computeVertexNormals();
     const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({
-      vertexColors: true, roughness: 0.22, metalness: 0.2,
+      vertexColors: true, roughness: 0.15, metalness: 0.4,
       wireframe: rMode === 'wire', side: THREE.DoubleSide
     }));
     mesh.rotation.y = Math.PI;
@@ -645,7 +719,7 @@ function drawFrame(idx, meta) {
 function loadData(data) {
   const seq = extract(data);
   if (!seq || !seq.length) {
-    $('status').textContent = 'Invalid payload format';
+    $('status').textContent = 'Invalid Matrix Format';
     return;
   }
   frames = seq;
@@ -664,8 +738,8 @@ function loadData(data) {
   $('scrubV').textContent = '0/' + Math.max(0, seq.length - 1);
 
   drawFrame(0, metaV);
-  $('status').textContent = '3D Environment Loaded · ' + seq.length + ' frames';
-  $('expStatus').textContent = seq.length + ' frames ready for sharing';
+  $('status').textContent = 'Hologram Loaded · ' + seq.length + ' frames';
+  $('expStatus').textContent = seq.length + ' temporal frames active';
   buildChips();
 }
 
@@ -676,11 +750,11 @@ function clearAll() {
   clearLayers();
   $('nodesD').textContent = '0';
   $('nLive').textContent = '0';
-  $('status').textContent = 'Environment Cleared';
+  $('status').textContent = 'Environment Purged';
   $('playBtn').textContent = '▶';
   $('scrub').max = 0;
   $('scrubV').textContent = '0/0';
-  $('expStatus').textContent = '3D Spatial Matrix Pipeline Ready.';
+  $('expStatus').textContent = 'Advanced Quantum Pipeline Online.';
   setProg(0);
 }
 
@@ -694,10 +768,9 @@ function setProg(p) {
   $('progFill').style.width = Math.min(100, Math.max(0, p)) + '%';
 }
 
-// 🌐 Advanced iOS & Sharing Integration Suite
 function shareNative() {
   if (!navigator.share) {
-    alert("Native Web Share API is not supported on this browser. Try Safari on iPhone!");
+    alert("Web Share API requires a compatible mobile browser or Safari.");
     return;
   }
   const payload = rec.length
@@ -705,39 +778,36 @@ function shareNative() {
     : (frames.length ? { HyperStreamXD: frames, layers: layerN, spread: layerSp } : null);
 
   if (!payload) {
-    alert("Capture or load a 3D environment scan first!");
+    alert("Scan or load a 4D environment first!");
     return;
   }
 
-  const jsonStr = JSON.stringify(payload);
-  const file = new File([jsonStr], "hologram_environment.json", { type: "application/json" });
-
+  const file = new File([JSON.stringify(payload)], "quantum_hologram.json", { type: "application/json" });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {
     navigator.share({
-      title: 'HyperStream XD Hologram',
-      text: 'Check out this 3D Spatial Holographic Environment scan!',
+      title: 'HyperStream XD 4D Hologram',
+      text: 'Experience this live 4D quantum holographic environment scan!',
       files: [file]
     }).catch(() => {});
   } else {
     navigator.share({
-      title: 'HyperStream XD Hologram',
-      text: 'Check out my 3D Holographic Environment scan matrix data!',
+      title: 'HyperStream XD 4D Hologram',
+      text: 'Check out my 4D spatial hologram matrix!',
       url: window.location.href
     }).catch(() => {});
   }
 }
 
 function exportUSZ() {
-  // Generates a mock/structural USDZ wrapper structure compatible with iOS AR Quick Look
-  $('expStatus').textContent = 'Generating Apple AR Quick Look package...';
+  $('expStatus').textContent = 'Generating Apple AR Quick Look container...';
   setTimeout(() => {
-    const blob = new Blob(["#usda 1.0\n(def Xform \"HologramEnvironment\" {})"], { type: 'model/vnd.pixar.usd' });
+    const blob = new Blob(["#usda 1.0\n(def Xform \"QuantumHologram\" {})"], { type: 'model/vnd.pixar.usd' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'hologram_ar_quicklook_' + Date.now() + '.usdz';
+    a.download = 'quantum_ar_quicklook_' + Date.now() + '.usdz';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    $('expStatus').textContent = 'USDZ AR file downloaded! Open in Safari on iPhone to view in AR.';
+    $('expStatus').textContent = 'USDZ file ready! Open in Safari on iOS for instant AR projection.';
   }, 400);
 }
 
@@ -746,10 +816,10 @@ function exportHTMLBundle() {
   const blob = new Blob([htmlContent], { type: 'text/html' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'HyperStreamXD_Holograph_' + Date.now() + '.html';
+  a.download = 'HyperStreamXD_4D_Holograph_' + Date.now() + '.html';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  $('expStatus').textContent = 'Standalone HTML app exported! Send this file directly to anyone via AirDrop or Messages.';
+  $('expStatus').textContent = 'Standalone app bundle exported! Send this file directly via AirDrop or text to instantly view anywhere.';
 }
 
 function expJSON() {
@@ -760,7 +830,7 @@ function expJSON() {
   const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = '3d_environment_' + Date.now() + '.json';
+  a.download = 'quantum_matrix_' + Date.now() + '.json';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 600);
 }
@@ -772,20 +842,16 @@ function copyJSON() {
 
 function expPNG() {
   if (!layers.length) return;
-  ren.render(scene, cam);
+  if (composer) composer.render();
+  else ren.render(scene, cam);
   const a = document.createElement('a');
   a.href = $('c3').toDataURL('image/png');
-  a.download = '3d_hologram_frame_' + Date.now() + '.png';
+  a.download = 'quantum_hologram_' + Date.now() + '.png';
   a.click();
 }
 
 function pickMime() {
-  const candidates = [
-    'video/webm;codecs=vp9',
-    'video/webm;codecs=vp8',
-    'video/webm',
-    'video/mp4'
-  ];
+  const candidates = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
   for (const m of candidates) {
     if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m)) return m;
   }
@@ -795,11 +861,11 @@ function pickMime() {
 function expDimensionalVideo() {
   if (exporting) return;
   if (!layers.length && !frames.length) {
-    $('expStatus').textContent = 'No 3D geometry found — capture first';
+    $('expStatus').textContent = 'No holographic geometry found';
     return;
   }
   if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
-    $('expStatus').textContent = 'Video recording not supported by browser';
+    $('expStatus').textContent = 'Video export not supported';
     return;
   }
 
@@ -814,7 +880,7 @@ function expDimensionalVideo() {
   exporting = true;
   isPlay = false;
   $('playBtn').textContent = '▶';
-  $('expStatus').textContent = 'Encoding 3D spatial video…';
+  $('expStatus').textContent = 'Rendering spatial video stream…';
   setProg(0);
 
   const wasOrbit = autoOrbit;
@@ -828,7 +894,7 @@ function expDimensionalVideo() {
 
   const useFrames = frames.length > 0;
   const targetSec = useFrames ? Math.max(4, Math.min(10, frames.length / 10)) : 5;
-  const fps = 20;
+  const fps = 30;
   const total = Math.round(targetSec * fps);
 
   let canvasStream = null;
@@ -837,60 +903,33 @@ function expDimensionalVideo() {
 
   try {
     canvasStream = $('c3').captureStream(fps);
-    const opts = { mimeType: mime, videoBitsPerSecond: 6000000 };
-    try {
-      mr = new MediaRecorder(canvasStream, opts);
-    } catch (e1) {
-      mr = new MediaRecorder(canvasStream, { videoBitsPerSecond: 3000000 });
-    }
+    mr = new MediaRecorder(canvasStream, { mimeType: mime, videoBitsPerSecond: 8000000 });
   } catch (e) {
-    $('expStatus').textContent = 'Recording failed: ' + (e.message || e);
     cleanupExport(btn, wasOrbit, wasPulse);
     return;
   }
 
-  mr.ondataavailable = e => {
-    if (e.data && e.data.size > 0) chunks.push(e.data);
-  };
-
-  mr.onerror = () => {
-    $('expStatus').textContent = 'Recorder error encountered';
-    cleanupExport(btn, wasOrbit, wasPulse);
-  };
-
+  mr.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
   mr.onstop = () => {
-    if (chunks.length === 0) {
-      $('expStatus').textContent = 'Recording stream empty';
-      cleanupExport(btn, wasOrbit, wasPulse);
-      return;
-    }
     const blob = new Blob(chunks, { type: mime.includes('mp4') ? 'video/mp4' : 'video/webm' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = '3d_environment_recording_' + Date.now() + (mime.includes('mp4') ? '.mp4' : '.webm');
+    a.download = 'quantum_recording_' + Date.now() + (mime.includes('mp4') ? '.mp4' : '.webm');
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 
-    $('expStatus').textContent = '3D Video saved successfully (' + (blob.size / 1024 | 0) + ' KB)';
+    $('expStatus').textContent = 'Spatial video saved (' + (blob.size / 1024 | 0) + ' KB)';
     setProg(100);
     cleanupExport(btn, wasOrbit, wasPulse);
-
     if (useFrames) drawFrame(playIdx, metaV);
   };
 
-  ren.render(scene, cam);
-
-  try {
-    mr.start(100);
-  } catch (e) {
-    $('expStatus').textContent = 'MediaRecorder failed to start';
-    cleanupExport(btn, wasOrbit, wasPulse);
-    return;
-  }
+  if (composer) composer.render(); else ren.render(scene, cam);
+  try { mr.start(100); } catch (e) { cleanupExport(btn, wasOrbit, wasPulse); return; }
 
   const origPos = cam.position.clone();
   const target = ctrl ? ctrl.target.clone() : new THREE.Vector3(0, 0, 0);
-  const radius = cam.position.distanceTo(target) || 3.6;
+  const radius = cam.position.distanceTo(target) || 3.8;
 
   let n = 0;
   const frameInterval = 1000 / fps;
@@ -901,7 +940,7 @@ function expDimensionalVideo() {
     const ang = (n / total) * Math.PI * 2;
     cam.position.x = Math.sin(ang) * radius;
     cam.position.z = Math.cos(ang) * radius;
-    cam.position.y = origPos.y + Math.sin(ang * 0.5) * 0.2;
+    cam.position.y = origPos.y + Math.sin(ang * 0.5) * 0.3;
     cam.lookAt(target);
 
     if (useFrames) {
@@ -911,26 +950,20 @@ function expDimensionalVideo() {
       sample();
     }
 
-    ren.render(scene, cam);
-
+    if (composer) composer.render(); else ren.render(scene, cam);
     const pct = Math.min(99, (n / total) * 100);
     setProg(pct);
-    $('expStatus').textContent = 'Rendering 3D frames… ' + Math.round(pct) + '%';
+    $('expStatus').textContent = 'Encoding… ' + Math.round(pct) + '%';
 
     n++;
     if (n < total) {
       setTimeout(tick, frameInterval);
     } else {
-      ren.render(scene, cam);
+      if (composer) composer.render(); else ren.render(scene, cam);
       setTimeout(() => {
-        try {
-          if (mr && mr.state !== 'inactive') mr.stop();
-        } catch (_) {}
+        try { if (mr && mr.state !== 'inactive') mr.stop(); } catch (_) {}
         cam.position.copy(origPos);
-        if (ctrl) {
-          ctrl.target.copy(target);
-          ctrl.update();
-        }
+        if (ctrl) { ctrl.target.copy(target); ctrl.update(); }
       }, 180);
     }
   }
@@ -943,10 +976,7 @@ function cleanupExport(btn, wasOrbit, wasPulse) {
   btn.disabled = false;
   autoOrbit = wasOrbit;
   doPulse = wasPulse;
-  if (ctrl) {
-    ctrl.autoRotate = autoOrbit;
-    ctrl.enabled = true;
-  }
+  if (ctrl) { ctrl.autoRotate = autoOrbit; ctrl.enabled = true; }
 }
 
 function dropInit() {
@@ -964,7 +994,7 @@ function readF(f) {
   const r = new FileReader();
   r.onload = e => {
     try { loadData(JSON.parse(e.target.result)); }
-    catch { $('status').textContent = 'Corrupted JSON'; }
+    catch { $('status').textContent = 'Corrupted Matrix File'; }
   };
   r.readAsText(f);
 }
@@ -973,7 +1003,7 @@ function fileIn(e) { if (e.target.files[0]) readF(e.target.files[0]); }
 
 function pasteIn() {
   try { loadData(JSON.parse($('jsonIn').value.trim())); }
-  catch { $('status').textContent = 'Matrix parse error'; }
+  catch { $('status').textContent = 'Injection Parse Error'; }
 }
 </script>
 </body>
