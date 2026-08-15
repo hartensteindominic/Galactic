@@ -130,6 +130,49 @@
             z-index: 1;
             display: none;
         }
+
+        /* Modal popup for guaranteed copying/saving */
+        #export-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #151515;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 450px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .modal-content h3 { font-size: 15px; color: #fff; }
+        .modal-content textarea {
+            width: 100%;
+            height: 120px;
+            background: #0a0a0a;
+            color: #0a84ff;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 10px;
+            resize: none;
+        }
+        .modal-btn-row { display: flex; gap: 8px; }
+        .modal-btn {
+            flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; cursor: pointer;
+        }
+        #modal-copy-btn { background: #0a84ff; color: white; }
+        #modal-close-btn { background: #333; color: white; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -140,6 +183,19 @@
     <video id="camera-stream" autoplay playsinline muted></video>
     <canvas id="processing-canvas"></canvas>
     <div id="render-container"></div>
+
+    <!-- Export & Copy Modal Window -->
+    <div id="export-modal" class="interactive">
+        <div class="modal-content">
+            <h3>Scan Payload Ready</h3>
+            <p style="font-size:11px; color:#aaa;">Browser secure downloads restricted this file. Copy the raw payload data below:</p>
+            <textarea id="modal-json-text" readonly></textarea>
+            <div class="modal-btn-row">
+                <button id="modal-copy-btn" class="modal-btn" onclick="copyPayloadToClipboard()">COPY DATA</button>
+                <button id="modal-close-btn" class="modal-btn" onclick="closeModal()">CLOSE</button>
+            </div>
+        </div>
+    </div>
 
     <div id="hud-overlay">
         <div class="top-status interactive">
@@ -187,6 +243,8 @@
         let statusBadge = document.getElementById('status-badge');
         let nodeCountText = document.getElementById('node-count');
         let surfaceStatusText = document.getElementById('surface-status');
+        let exportModal = document.getElementById('export-modal');
+        let modalJsonText = document.getElementById('modal-json-text');
 
         let isScanning = false;
         let spatialVertices = []; 
@@ -196,6 +254,7 @@
         let activeStream = null;
         let holistic = null;
         let cameraUtilsInstance = null;
+        let cachedJsonString = "";
 
         let scene, camera, renderer, pointCloud;
 
@@ -262,7 +321,7 @@
             canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
             
             const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
-            const step = 8; // Increased step slightly to prevent memory bloat over long scans
+            const step = 8;
 
             let envVertices = [];
             let envColors = [];
@@ -357,7 +416,7 @@
                 const environmentPayload = {
                     metadata: {
                         generator: "Spatial Dash Omni Environment Engine",
-                        version: "5.6",
+                        version: "5.7",
                         type: "BufferGeometry",
                         totalVertices: spatialVertices.length / 3,
                         timestamp: new Date().toISOString()
@@ -371,23 +430,34 @@
                     }
                 };
 
-                // Compact JSON stringification without spacing to reduce size and prevent memory/stack overflow
-                const jsonString = JSON.stringify(environmentPayload);
-                const blob = new Blob([jsonString], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
+                cachedJsonString = JSON.stringify(environmentPayload);
                 
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `spatial_scan_${Date.now()}.json`;
-                document.body.appendChild(a);
-                a.click();
-                
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    statusBadge.innerText = "SCAN CAPTURED";
-                }, 500);
+                // Trigger modal popup to guarantee copy utility access
+                modalJsonText.value = cachedJsonString;
+                exportModal.style.display = 'flex';
+                statusBadge.innerText = "SCAN CAPTURED";
             }, 100);
+        }
+
+        function copyPayloadToClipboard() {
+            if (!cachedJsonString) return;
+            navigator.clipboard.writeText(cachedJsonString).then(() => {
+                let copyBtn = document.getElementById('modal-copy-btn');
+                copyBtn.innerText = "COPIED SUCCESSFULLY!";
+                copyBtn.style.background = "#30d158";
+                setTimeout(() => {
+                    copyBtn.innerText = "COPY DATA";
+                }, 2000);
+            }).catch(err => {
+                // Fallback selection highlight if clipboard permissions block script
+                modalJsonText.select();
+                document.execCommand('copy');
+                alert("Payload highlighted and copied!");
+            });
+        }
+
+        function closeModal() {
+            exportModal.style.display = 'none';
         }
 
         function loadEnvironmentMap(event) {
