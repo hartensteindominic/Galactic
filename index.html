@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - Universal Omni Scanner</title>
+    <title>Spatial Dash Pro - Universal Omni Scanner HD</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -198,7 +198,7 @@
     <div id="hud-overlay">
         <div class="top-status interactive">
             <div class="brand-group">
-                <span class="brand">SPATIAL DASH OMNI</span>
+                <span class="brand">SPATIAL DASH HD</span>
                 <button class="camera-switch-btn" onclick="switchCamera()">📷 Flip</button>
                 <label class="file-upload-btn">
                     📁 Load JSON
@@ -220,7 +220,7 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Engine</div>
-                    <div id="mode-status" class="metric-value">Single-Layer Clean</div>
+                    <div id="mode-status" class="metric-value">HD Dense Grid</div>
                 </div>
             </div>
             
@@ -315,12 +315,13 @@
         function captureEnvironmentPointCloud() {
             if (!videoElement.videoWidth) return;
             
-            processingCanvas.width = 320;
-            processingCanvas.height = 180;
+            // Scaled up resolution to allow thousands of dense nodes
+            processingCanvas.width = 640;
+            processingCanvas.height = 360;
             canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
             
             const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
-            const step = 8;
+            const step = 3; // Lower step = massively higher node count (approx ~25,000+ points)
 
             let envVertices = [];
             let envColors = [];
@@ -337,7 +338,6 @@
                     
                     let posX = parseFloat(((x / processingCanvas.width - 0.5) * 4.0).toFixed(3));
                     let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 4.0).toFixed(3));
-                    // Enhanced depth variation for better single-layer relief
                     let posZ = parseFloat(((luminance - 0.5) * 2.2).toFixed(3));
 
                     envVertices.push(posX, posY, posZ);
@@ -346,13 +346,12 @@
                 }
             }
 
-            // OVERWRITE frame array instead of accumulating (.push) to remove stacked layers
             spatialVertices = envVertices;
             spatialColors = envColors;
             spatialIntensity = envIntensity;
 
             nodeCountText.innerText = spatialVertices.length / 3;
-            surfaceStatusText.innerText = "Single-Layer Active";
+            surfaceStatusText.innerText = "HD Dense Active";
         }
 
         function onHolisticResults(results) {
@@ -381,7 +380,6 @@
             if (results.rightHandLandmarks) addLandmarks(results.rightHandLandmarks.landmark, 0.9, 0.1, 0.9);
 
             if (humanVertices.length > 0) {
-                // Append landmarks cleanly on top of the environment layer
                 spatialVertices.push(...humanVertices);
                 spatialColors.push(...humanColors);
                 spatialIntensity.push(...humanIntensity);
@@ -394,7 +392,7 @@
             if (isScanning) {
                 scanBtn.innerText = "STOP SCANNING";
                 scanBtn.classList.add("scanning");
-                statusBadge.innerText = "SINGLE-LAYER ACTIVE";
+                statusBadge.innerText = "HD DENSE ACTIVE";
                 statusBadge.classList.add("active");
                 saveBtn.style.display = "block";
             } else {
@@ -417,8 +415,8 @@
             setTimeout(() => {
                 const environmentPayload = {
                     metadata: {
-                        generator: "Spatial Dash Omni Environment Engine",
-                        version: "5.9",
+                        generator: "Spatial Dash HD Engine",
+                        version: "6.0",
                         type: "BufferGeometry",
                         totalVertices: spatialVertices.length / 3,
                         timestamp: new Date().toISOString()
@@ -529,7 +527,7 @@
             const geometry = new THREE.BufferGeometry();
             geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(rawArray), 3));
 
-            let materialConfig = { size: 0.03, transparent: true, opacity: 0.85 };
+            let materialConfig = { size: 0.02, transparent: true, opacity: 0.85 };
             if (payload.data.attributes.color) {
                 geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(payload.data.attributes.color.array), 3));
                 materialConfig.vertexColors = true;
