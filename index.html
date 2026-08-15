@@ -23,6 +23,7 @@ canvas{display:block;width:100%;height:100%}
 .stats-overlay span{color:#818cf8;font-weight:700}
 .layer-control-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#cbd5e1}
 input[type=range]{accent-color:#818cf8;cursor:pointer;width:110px}
+textarea { width: 100%; background: #030712; color: #38bdf8; border: 1px solid #1f2937; border-radius: 6px; padding: 6px; font-size: 10px; font-family: monospace; resize: vertical; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -36,6 +37,12 @@ input[type=range]{accent-color:#818cf8;cursor:pointer;width:110px}
         <div class="card-title">Live 4D Infinite Capture</div>
         <button id="scan-toggle-btn" class="danger-btn" onclick="toggleInfiniteScanning()">START INFINITE 4D STREAM</button>
         <button class="primary-btn" onclick="exportInfiniteStream()" style="background:#059669;margin-top:4px;">Export Infinite 4D JSON</button>
+    </div>
+
+    <div class="section-card">
+        <div class="card-title">JSON Data Clipboard</div>
+        <button class="primary-btn" onclick="copyJSONToClipboard()" style="background:#2563eb;">Copy JSON to Clipboard</button>
+        <textarea id="json-output-box" rows="4" placeholder="Recorded JSON payload will appear here for instant copying..." readonly></textarea>
     </div>
 
     <div class="section-card">
@@ -60,7 +67,7 @@ input[type=range]{accent-color:#818cf8;cursor:pointer;width:110px}
 </div>
 
 <script>
-let scene, camera, renderer,controls, particleCloud;
+let scene, camera, renderer, controls, particleCloud;
 let video, canvas2D, ctx2D;
 let isInfiniteScanning = false;
 let recorded4DFrames = [];
@@ -68,7 +75,6 @@ let frameIndex = 0;
 let stepSize = 3;
 let depthMultiplier = 10.0;
 let currentPointSize = 0.025;
-let lastTime = performance.now();
 let frameCount = 0;
 let fpsTimer = 0;
 
@@ -95,7 +101,6 @@ function initEngine3D() {
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.8));
 
-    // Initialize empty point cloud geometry
     const geometry = new THREE.BufferGeometry();
     const material = new THREE.PointsMaterial({
         size: currentPointSize,
@@ -146,7 +151,6 @@ function animateEngine(now) {
     requestAnimationFrame(animateEngine);
     if (controls) controls.update();
 
-    // FPS Calculation
     frameCount++;
     if (now - fpsTimer > 1000) {
         document.getElementById('fps-display').innerText = Math.round((frameCount * 1000) / (now - fpsTimer));
@@ -171,7 +175,6 @@ function animateEngine(now) {
         const colors = [];
         const tVal = frameIndex;
 
-        // Infinite dense pixel sampling loop
         for (let y = 0; y < vh; y += stepSize) {
             for (let x = 0; x < vw; x += stepSize) {
                 const idx = (y * vw + x) * 4;
@@ -179,11 +182,9 @@ function animateEngine(now) {
                 const g = pixels[idx + 1] / 255;
                 const b = pixels[idx + 2] / 255;
 
-                // Normalized spatial coordinates (-1 to 1) with mirror effect
                 const nx = ((vw - x) / vw) * 2.0 - 1.0;
                 const ny = -((y / vh) * 2.0 - 1.0);
                 
-                // Depth computed from luminance intensity for infinite surface displacement
                 const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
                 const nz = (luminance - 0.5) * (depthMultiplier * 0.2);
 
@@ -195,7 +196,6 @@ function animateEngine(now) {
         const posArr = new Float32Array(positions);
         const colArr = new Float32Array(colors);
 
-        // Update real-time Three.js geometry interactively
         particleCloud.geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
         particleCloud.geometry.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
         particleCloud.geometry.attributes.position.needsUpdate = true;
@@ -204,7 +204,6 @@ function animateEngine(now) {
         document.getElementById('node-counter').innerText = (positions.length / 3).toLocaleString();
 
         if (isInfiniteScanning) {
-            // Store condensed 4D nodes [x, y, z, t]
             const condensedV = [];
             for(let i=0; i<positions.length; i+=3) {
                 condensedV.push(Number(positions[i].toFixed(4)), Number(positions[i+1].toFixed(4)), Number(positions[i+2].toFixed(4)), Number(tVal));
@@ -214,10 +213,18 @@ function animateEngine(now) {
             recorded4DFrames.push({ v: condensedV, c: condensedC });
             frameIndex++;
             document.getElementById('frame-counter').innerText = recorded4DFrames.length;
+            
+            // Real-time update to text box during recording
+            updateJSONTextBox();
         }
     }
 
     if (renderer && scene && camera) renderer.render(scene, camera);
+}
+
+function updateJSONTextBox() {
+    const payload = { HyperStream4D: recorded4DFrames };
+    document.getElementById('json-output-box').value = JSON.stringify(payload);
 }
 
 function toggleInfiniteScanning() {
@@ -233,6 +240,7 @@ function toggleInfiniteScanning() {
         btn.innerText = 'START INFINITE 4D STREAM';
         btn.classList.remove('scanning');
         logConsole(`Recording finalized. Total recorded 4D frames: ${recorded4DFrames.length}`);
+        updateJSONTextBox();
     }
 }
 
@@ -250,6 +258,20 @@ function exportInfiniteStream() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     logConsole("Export complete!");
+}
+
+function copyJSONToClipboard() {
+    const textBox = document.getElementById('json-output-box');
+    if (!textBox.value) {
+        alert('No data available in JSON payload box yet.');
+        return;
+    }
+    navigator.clipboard.writeText(textBox.value).then(() => {
+        logConsole("JSON payload successfully copied to clipboard!");
+        alert('JSON data copied to clipboard!');
+    }).catch(err => {
+        logConsole("Failed to copy JSON: " + err);
+    });
 }
 </script>
 </body>
