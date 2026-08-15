@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - Omni Scan Edition</title>
+    <title>Spatial Dash Pro - Universal Omni Scanner</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -14,7 +14,7 @@
             height: 100vh;
             width: 100vw;
         }
-        #camera-stream {
+        #camera-stream, #processing-canvas {
             position: absolute;
             top: 0;
             left: 0;
@@ -23,9 +23,8 @@
             object-fit: cover;
             z-index: 1;
         }
-        #camera-stream.front-facing {
-            transform: scaleX(-1);
-        }
+        #processing-canvas { display: none; }
+        #camera-stream.front-facing { transform: scaleX(-1); }
         #hud-overlay {
             position: absolute;
             top: 0;
@@ -139,6 +138,7 @@
 <body>
 
     <video id="camera-stream" autoplay playsinline muted></video>
+    <canvas id="processing-canvas"></canvas>
     <div id="render-container"></div>
 
     <div id="hud-overlay">
@@ -157,41 +157,42 @@
         <div class="control-dock interactive">
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-label">Nodes (Omni)</div>
+                    <div class="metric-label">Total Nodes</div>
                     <div id="node-count" class="metric-value">0</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Target Grid</div>
-                    <div id="surface-status" class="metric-value">Calibrating</div>
+                    <div class="metric-label">Scan Field</div>
+                    <div id="surface-status" class="metric-value">Standby</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Mode</div>
-                    <div id="mode-status" class="metric-value">Holistic AI</div>
+                    <div class="metric-label">Engine</div>
+                    <div id="mode-status" class="metric-value">Omni + Surface Mesh</div>
                 </div>
             </div>
             
             <div class="btn-row">
                 <button id="scan-btn" class="action-btn" onclick="toggleScanState()">START OMNI SCAN</button>
-                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">EXPORT OMNI MAP (.JSON)</button>
+                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
             </div>
         </div>
     </div>
 
     <script>
         let videoElement = document.getElementById('camera-stream');
+        let processingCanvas = document.getElementById('processing-canvas');
+        let canvasCtx = processingCanvas.getContext('2d', { willReadFrequently: true });
         let renderContainer = document.getElementById('render-container');
         let scanBtn = document.getElementById('scan-btn');
         let saveBtn = document.getElementById('save-btn');
         let statusBadge = document.getElementById('status-badge');
         let nodeCountText = document.getElementById('node-count');
         let surfaceStatusText = document.getElementById('surface-status');
-        let modeStatusText = document.getElementById('mode-status');
 
         let isScanning = false;
         let spatialVertices = []; 
         let spatialColors = [];
         let spatialIntensity = [];
-        let currentFacingMode = "user"; 
+        let currentFacingMode = "environment"; // Defaults to back camera for room scanning
         let activeStream = null;
         let holistic = null;
         let cameraUtilsInstance = null;
@@ -205,7 +206,7 @@
             }
 
             try {
-                const constraints = { video: { facingMode: currentFacingMode, width: 1280, height: 720 } };
+                const constraints = { video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } } };
                 activeStream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = activeStream;
 
@@ -224,8 +225,7 @@
             initCameraFeed();
         }
 
-        // Initialize MediaPipe Holistic (Face + Hands + Full Body Pose)
-        function setupHolisticScanner() {
+        function setupOmniScanner() {
             holistic = new Holistic({locateFile: (file) => {
                 return `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`;
             }});
@@ -234,9 +234,9 @@
                 modelComplexity: 1,
                 smoothLandmarks: true,
                 enableSegmentation: false,
-                refineFaceLandmarks: true, // Includes lips, eyes, iris detail
-                minDetectionConfidence: 0.5,
-                minTrackingConfidence: 0.5
+                refineFaceLandmarks: true,
+                minDetectionConfidence: 0.3,
+                minTrackingConfidence: 0.3
             });
 
             holistic.onResults(onHolisticResults);
@@ -244,7 +244,11 @@
             cameraUtilsInstance = new Camera(videoElement, {
                 onFrame: async () => {
                     if (isScanning && videoElement) {
+                        // 1. Run AI skeleton/face/hand tracking
                         await holistic.send({image: videoElement});
+                        
+                        // 2. Run active environment pixel-depth surface point extraction
+                        captureEnvironmentPointCloud();
                     }
                 },
                 width: 1280,
@@ -253,56 +257,80 @@
             cameraUtilsInstance.start();
         }
 
-        function onHolisticResults(results) {
-            if (!isScanning) return;
+        // Active background grid generator sampling the video frame pixels as a depth grid
+        function captureEnvironmentPointCloud() {
+            if (!videoElement.videoWidth) return;
             
-            let detected = false;
-            let currentBatchVertices = [];
-            let currentBatchColors = [];
-            let currentBatchIntensity = [];
+            processingCanvas.width = 320; // Lower resolution matrix for high performance sampling
+            processingCanvas.height = 180;
+            canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
+            
+            const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
+            const step = 6; // Sample density step
 
-            // Helper function to process landmark arrays
-            function ingestLandmarks(landmarks, rColor, gColor, bColor) {
-                if (!landmarks) return;
-                detected = true;
-                for (let pt of landmarks) {
-                    let x = parseFloat(((pt.x - 0.5) * -3.5).toFixed(3));
-                    let y = parseFloat(((pt.y - 0.5) * -3.5).toFixed(3));
-                    let z = parseFloat(((pt.z || 0) * 3.5).toFixed(3));
+            let envVertices = [];
+            let envColors = [];
+            let envIntensity = [];
 
-                    currentBatchVertices.push(x, y, z);
-                    currentBatchColors.push(rColor, gColor, bColor);
-                    currentBatchIntensity.push(parseFloat((0.7 + Math.abs(z * 0.3)).toFixed(2)));
+            for (let y = 0; y < processingCanvas.height; y += step) {
+                for (let x = 0; x < processingCanvas.width; x += step) {
+                    let index = (y * processingCanvas.width + x) * 4;
+                    let r = frameData[index];
+                    let g = frameData[index + 1];
+                    let b = frameData[index + 2];
+
+                    // Approximate surface depth using luminance contrast
+                    let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
+                    
+                    let posX = parseFloat(((x / processingCanvas.width - 0.5) * 4.0).toFixed(3));
+                    let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 4.0).toFixed(3));
+                    let posZ = parseFloat(((luminance - 0.5) * 1.5).toFixed(3)); // Depth variation mapped from light/shadow
+
+                    envVertices.push(posX, posY, posZ);
+                    // Environment surface color mapped dynamically from feed
+                    envColors.push(parseFloat((r/255).toFixed(2)), parseFloat((g/255).toFixed(2)), parseFloat((b/255).toFixed(2)));
+                    envIntensity.push(parseFloat(luminance.toFixed(2)));
                 }
             }
 
-            // 1. Process Face Mesh Nodes (Cyan Theme)
-            if (results.faceLandmarks) {
-                ingestLandmarks(results.faceLandmarks.landmark, 0.05, 0.5, 1.0);
-            }
-            // 2. Process Full Body Pose Nodes (Green Theme)
-            if (results.poseLandmarks) {
-                ingestLandmarks(results.poseLandmarks.landmark, 0.2, 0.8, 0.3);
-            }
-            // 3. Process Left Hand Nodes (Orange/Yellow Theme)
-            if (results.leftHandLandmarks) {
-                ingestLandmarks(results.leftHandLandmarks.landmark, 1.0, 0.6, 0.1);
-            }
-            // 4. Process Right Hand Nodes (Purple/Pink Theme)
-            if (results.rightHandLandmarks) {
-                ingestLandmarks(results.rightHandLandmarks.landmark, 0.8, 0.2, 0.9);
+            // Append environment batch data continuously
+            spatialVertices.push(...envVertices);
+            spatialColors.push(...envColors);
+            spatialIntensity.push(...envIntensity);
+
+            nodeCountText.innerText = spatialVertices.length / 3;
+            surfaceStatusText.innerText = "Mapping Environment";
+        }
+
+        function onHolisticResults(results) {
+            if (!isScanning) return;
+            
+            let humanVertices = [];
+            let humanColors = [];
+            let humanIntensity = [];
+
+            function addLandmarks(landmarks, rc, gc, bc) {
+                if (!landmarks) return;
+                for (let pt of landmarks) {
+                    let x = parseFloat(((pt.x - 0.5) * -4.0).toFixed(3));
+                    let y = parseFloat(((pt.y - 0.5) * -4.0).toFixed(3));
+                    let z = parseFloat(((pt.z || 0) * 4.0).toFixed(3));
+
+                    humanVertices.push(x, y, z);
+                    humanColors.push(rc, gc, bc);
+                    humanIntensity.push(1.0);
+                }
             }
 
-            if (detected) {
-                // Accumulate scanner data continuously over time as you move/pose
-                spatialVertices.push(...currentBatchVertices);
-                spatialColors.push(...currentBatchColors);
-                spatialIntensity.push(...currentBatchIntensity);
+            if (results.faceLandmarks) addLandmarks(results.faceLandmarks.landmark, 0.0, 0.8, 1.0); // Cyan Face
+            if (results.poseLandmarks) addLandmarks(results.poseLandmarks.landmark, 0.1, 0.9, 0.3); // Green Skeleton
+            if (results.leftHandLandmarks) addLandmarks(results.leftHandLandmarks.landmark, 1.0, 0.5, 0.0); // Orange Hands
+            if (results.rightHandLandmarks) addLandmarks(results.rightHandLandmarks.landmark, 0.9, 0.1, 0.9); // Purple Hands
 
-                nodeCountText.innerText = spatialVertices.length / 3;
-                surfaceStatusText.innerText = "Omni Grid Locked";
-            } else {
-                surfaceStatusText.innerText = "Scanning Environment...";
+            if (humanVertices.length > 0) {
+                spatialVertices.push(...humanVertices);
+                spatialColors.push(...humanColors);
+                spatialIntensity.push(...humanIntensity);
             }
         }
 
@@ -310,9 +338,9 @@
             isScanning = !isScanning;
 
             if (isScanning) {
-                scanBtn.innerText = "STOP OMNI SCAN";
+                scanBtn.innerText = "STOP SCANNING";
                 scanBtn.classList.add("scanning");
-                statusBadge.innerText = "OMNI-MAPPING ACTIVE";
+                statusBadge.innerText = "OMNI-SURFACE ACTIVE";
                 statusBadge.classList.add("active");
                 saveBtn.style.display = "block";
             } else {
@@ -326,14 +354,14 @@
 
         function exportEnvironmentMap() {
             if (spatialVertices.length === 0) {
-                alert("No structural nodes accumulated. Move your hands, body, or face in front of the camera while scanning.");
+                alert("No structural nodes recorded. Press start and pan your camera around the room.");
                 return;
             }
 
             const environmentPayload = {
                 metadata: {
-                    generator: "Spatial Dash Pro Omni Engine",
-                    version: "5.0",
+                    generator: "Spatial Dash Omni Environment Engine",
+                    version: "5.2",
                     type: "BufferGeometry",
                     totalVertices: spatialVertices.length / 3,
                     timestamp: new Date().toISOString()
@@ -352,7 +380,7 @@
             
             const fileLink = document.createElement('a');
             fileLink.href = downloadUrl;
-            fileLink.download = `omni_spatial_map_${Date.now()}.json`;
+            fileLink.download = `spatial_environment_${Date.now()}.json`;
             document.body.appendChild(fileLink);
             fileLink.click();
             document.body.removeChild(fileLink);
@@ -369,7 +397,7 @@
                     const jsonContent = JSON.parse(e.target.result);
                     render3DModelFromJSON(jsonContent);
                 } catch (err) {
-                    alert("Invalid JSON map file format.");
+                    alert("Invalid JSON map file.");
                 }
             };
             reader.readAsText(file);
@@ -382,8 +410,7 @@
             videoElement.style.display = 'none';
             renderContainer.style.display = 'block';
             
-            modeStatusText.innerText = "3D Omni Reconstructed";
-            statusBadge.innerText = "MODEL LOADED";
+            statusBadge.innerText = "ENVIRONMENT LOADED";
             statusBadge.classList.add("active");
 
             let rawArray = payload.data.attributes.position.array;
@@ -393,7 +420,7 @@
             if (!scene) {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 0, 3.5);
+                camera.position.set(0, 0, 4.0);
 
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -419,7 +446,7 @@
             const geometry = new THREE.BufferGeometry();
             geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(rawArray), 3));
 
-            let materialConfig = { size: 0.035, transparent: true, opacity: 0.9 };
+            let materialConfig = { size: 0.03, transparent: true, opacity: 0.85 };
             if (payload.data.attributes.color) {
                 geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(payload.data.attributes.color.array), 3));
                 materialConfig.vertexColors = true;
@@ -428,7 +455,6 @@
             }
 
             pointCloud = new THREE.Points(geometry, new THREE.PointsMaterial(materialConfig));
-            pointCloud.rotation.y = Math.PI; 
             scene.add(pointCloud);
 
             function animate() {
@@ -440,7 +466,7 @@
 
         window.addEventListener('load', () => {
             initCameraFeed();
-            setupHolisticScanner();
+            setupOmniScanner();
         });
     </script>
 </body>
