@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro – Maximum Speed 5D Engine (High Density)</title>
+    <title>Spatial Dash Pro – Maximum Speed 4D Engine</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #030303; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
@@ -38,8 +38,6 @@
         .modal-btn.secondary { background: #333; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -49,7 +47,7 @@
 
     <div id="export-modal" class="modal interactive">
         <div class="modal-content">
-            <h3 style="font-size: 14px;">High-Speed 5D Payload Ready</h3>
+            <h3 style="font-size: 14px;">4D Volumetric Payload Ready</h3>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button class="modal-btn" onclick="copyPayload()">Copy Payload</button>
@@ -60,7 +58,7 @@
 
     <div id="paste-modal" class="modal interactive">
         <div class="modal-content">
-            <h3 style="font-size: 14px;">Import 5D Dataset JSON</h3>
+            <h3 style="font-size: 14px;">Import 4D Dataset JSON</h3>
             <textarea id="paste-json-text" placeholder="Paste JSON data here..."></textarea>
             <div class="modal-btn-row">
                 <button class="modal-btn" onclick="processJSONText()">Process & Play</button>
@@ -71,7 +69,7 @@
 
     <div id="hud-overlay">
         <div class="top-status interactive">
-            <div class="brand">SPATIAL DASH 5D (MAX SPEED)</div>
+            <div class="brand">SPATIAL DASH 4D ENGINE</div>
             <div class="btn-group">
                 <button class="ui-btn" onclick="switchCamera()">📷 Flip</button>
                 <label class="ui-btn">📁 Load<input type="file" accept=".json" onchange="loadFile(event)"></label>
@@ -87,8 +85,8 @@
                 <div class="metric-card"><div class="metric-label">Nodes / Frame</div><div id="node-count" class="metric-value">0</div></div>
             </div>
             <div class="btn-row">
-                <button id="scan-btn" class="action-btn" onclick="toggleScan()">START 5D SPEED RECORD</button>
-                <button id="save-btn" class="action-btn" onclick="exportMap()">SAVE 5D MAP (.JSON)</button>
+                <button id="scan-btn" class="action-btn" onclick="toggleScan()">START 4D SPEED RECORD</button>
+                <button id="save-btn" class="action-btn" onclick="exportMap()">SAVE 4D MAP (.JSON)</button>
             </div>
         </div>
     </div>
@@ -102,7 +100,7 @@
         const saveBtn = document.getElementById('save-btn');
         const badge = document.getElementById('status-badge');
         
-        let isScanning = false, frames = [], stream = null, holistic = null;
+        let isScanning = false, frames = [], stream = null;
         let cachedJSON = "", scene, camera, renderer, pointCloud, playback = [], frameIdx = 0, facing = "environment";
         let frameCounter = 0, lastFpsUpdate = 0, recordingStartTime = 0;
 
@@ -122,11 +120,8 @@
             initCam();
         }
 
-        function initHolistic() {
-            holistic = new Holistic({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${f}` });
-            holistic.setOptions({ modelComplexity: 0, smoothLandmarks: false, refineFaceLandmarks: false, minDetectionConfidence: 0.4 });
-            
-            function highSpeedLoop() {
+        function initEngine() {
+            function speedLoop() {
                 if (isScanning && video.readyState === video.HAVE_ENOUGH_DATA) {
                     const now = performance.now();
                     frameCounter++;
@@ -135,15 +130,15 @@
                         frameCounter = 0;
                         lastFpsUpdate = now;
                     }
-                    sampleFrameFast(now);
+                    sampleFrame(now);
                 }
-                requestAnimationFrame(highSpeedLoop);
+                requestAnimationFrame(speedLoop);
             }
-            requestAnimationFrame(highSpeedLoop);
+            requestAnimationFrame(speedLoop);
         }
 
-        // Expanded 5D data sampler with higher density step interval (step = 2)
-        function sampleFrameFast(now) {
+        // 4D Data Sampler: 3D spatial dimensions (x,y,z) plus 1 temporal dimension (t)
+        function sampleFrame(now) {
             canvas.width = 120; canvas.height = 68;
             ctx.drawImage(video, 0, 0, 120, 68);
             const img = ctx.getImageData(0, 0, 120, 68).data;
@@ -157,23 +152,20 @@
                     let r = img[i], g = img[i+1], b = img[i+2];
                     let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
                     
-                    // Spatial Coordinates (x, y, z)
-                    let pxCoord = ((x / 120 - 0.5) * 4.0).toFixed(2);
-                    let pyCoord = (-(y / 68 - 0.5) * 4.0).toFixed(2);
-                    let pzCoord = ((lum - 0.5) * 3.0).toFixed(2);
-                    
-                    // 5D Extra Dimensions: Temporal offset (t) and Phase Modulation Index (w)
-                    let ptCoord = relativeTime;
-                    let pwCoord = (Math.sin(x * 0.1 + y * 0.1 + (now * 0.005)) * lum * 1.5).toFixed(2);
+                    // 3D Spatial Position Coordinates + Temporal Component
+                    let px = ((x / 120 - 0.5) * 4.0).toFixed(2);
+                    let py = (-(y / 68 - 0.5) * 4.0).toFixed(2);
+                    let pz = ((lum - 0.5) * 3.0).toFixed(2);
+                    let pt = relativeTime;
 
-                    v.push(pxCoord, pyCoord, pzCoord, ptCoord, pwCoord);
+                    v.push(px, py, pz, pt);
                     c.push((r/255).toFixed(2), (g/255).toFixed(2), (b/255).toFixed(2));
                 }
             }
             
             frames.push({ vertices: v, colors: c });
             document.getElementById('frame-count').innerText = frames.length;
-            document.getElementById('node-count').innerText = v.length / 5; // 5 components per node entry
+            document.getElementById('node-count').innerText = v.length / 4; 
         }
 
         function toggleScan() {
@@ -183,11 +175,11 @@
                 recordingStartTime = performance.now();
                 scanBtn.innerText = "STOP RECORDING";
                 scanBtn.classList.add("scanning");
-                badge.innerText = "MAX SPEED 5D CAPTURE...";
+                badge.innerText = "MAX SPEED 4D CAPTURE...";
                 badge.classList.add("active");
                 saveBtn.style.display = "block";
             } else {
-                scanBtn.innerText = "START 5D SPEED RECORD";
+                scanBtn.innerText = "START 4D SPEED RECORD";
                 scanBtn.classList.remove("scanning");
                 badge.innerText = "READY";
                 badge.classList.remove("active");
@@ -196,16 +188,16 @@
 
         function exportMap() {
             if (!frames.length) return alert("No frames recorded.");
-            badge.innerText = "BUILDING 5D DATA...";
+            badge.innerText = "BUILDING 4D DATA...";
             setTimeout(() => {
                 const payload = { 
-                    version: "5.0-5D", 
-                    dimensions: 5, 
-                    axes: ["x", "y", "z", "t", "w"],
-                    frames: frames.map((f, i) => ({ frameIndex: i, geometryStream5D: f })) 
+                    version: "4.0-Volumetric", 
+                    dimensions: 4, 
+                    axes: ["x", "y", "z", "t"],
+                    frames: frames.map((f, i) => ({ frameIndex: i, geometryStream4D: f })) 
                 };
                 cachedJSON = JSON.stringify(payload);
-                document.getElementById('modal-json-text').value = cachedJSON.substring(0, 600) + "\n...[5D Payload Ready]";
+                document.getElementById('modal-json-text').value = cachedJSON.substring(0, 600) + "\n...[4D Payload Ready]";
                 openModal('export-modal');
                 badge.innerText = "READY";
             }, 30);
@@ -214,7 +206,7 @@
         function processJSONText() {
             try {
                 const data = JSON.parse(document.getElementById('paste-json-text').value);
-                const seq = data.frames ? data.frames.map(f => f.geometryStream5D || f.geometryStream) : data.sequence;
+                const seq = data.frames ? data.frames.map(f => f.geometryStream4D || f.geometryStream) : data.sequence;
                 playSequence(seq);
                 closeModal('paste-modal');
             } catch (e) { alert("Invalid JSON format."); }
@@ -225,7 +217,7 @@
             reader.onload = (evt) => {
                 try {
                     const data = JSON.parse(evt.target.result);
-                    const seq = data.frames ? data.frames.map(f => f.geometryStream5D || f.geometryStream) : data.sequence;
+                    const seq = data.frames ? data.frames.map(f => f.geometryStream4D || f.geometryStream) : data.sequence;
                     playSequence(seq);
                 } catch (err) { alert("Invalid Map file."); }
             };
@@ -236,7 +228,7 @@
             if (stream) stream.getTracks().forEach(t => t.stop());
             video.style.display = 'none';
             renderContainer.style.display = 'block';
-            badge.innerText = "PLAYING 5D STREAM";
+            badge.innerText = "PLAYING 4D STREAM";
             badge.classList.add("active");
 
             playback = seq || [];
@@ -274,11 +266,8 @@
                     let f = playback[frameIdx];
                     let rawVals = f.vertices;
                     let posArr = [];
-                    for(let k = 0; k < rawVals.length; k += 5) {
-                        let x = parseFloat(rawVals[k]);
-                        let y = parseFloat(rawVals[k+1]);
-                        let z = parseFloat(rawVals[k+2]) + parseFloat(rawVals[k+4]) * 0.1;
-                        posArr.push(x, y, z);
+                    for(let k = 0; k < rawVals.length; k += 4) {
+                        posArr.push(parseFloat(rawVals[k]), parseFloat(rawVals[k+1]), parseFloat(rawVals[k+2]));
                     }
 
                     geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(posArr), 3));
@@ -295,9 +284,9 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function copyPayload() { navigator.clipboard.writeText(cachedJSON); alert("Copied 5D Payload!"); }
+        function copyPayload() { navigator.clipboard.writeText(cachedJSON); alert("Copied 4D Payload!"); }
 
-        window.addEventListener('load', () => { initCam(); initHolistic(); });
+        window.addEventListener('load', () => { initCam(); initEngine(); });
     </script>
 </body>
 </html>
