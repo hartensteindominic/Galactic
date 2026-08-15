@@ -46,10 +46,10 @@
 
     <div id="export-modal" class="modal interact">
         <div class="modal-box">
-            <h3 style="font-size:13px;color:#00f3ff;">4D Payload Ready</h3>
+            <h3 style="font-size:13px;color:#00f3ff;">Condensed 4D Payload Ready</h3>
             <textarea id="json-out" readonly></textarea>
             <div class="row">
-                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="navigator.clipboard.writeText(cachedJSON);alert('Copied!');">Copy</button>
+                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="navigator.clipboard.writeText(cachedJSON);alert('Compressed Data Copied!');">Copy Stream</button>
                 <button class="btn act-btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="toggleModal('export-modal',false)">Close</button>
             </div>
         </div>
@@ -57,10 +57,10 @@
 
     <div id="paste-modal" class="modal interact">
         <div class="modal-box">
-            <h3 style="font-size:13px;color:#00f3ff;">Import 4D Dataset</h3>
-            <textarea id="json-in" placeholder="Paste 4D JSON here..."></textarea>
+            <h3 style="font-size:13px;color:#00f3ff;">Import Condensed Dataset</h3>
+            <textarea id="json-in" placeholder="Paste 4D JSON string here..."></textarea>
             <div class="row">
-                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="importJSON()">Play</button>
+                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="importJSON()">Play Stream</button>
                 <button class="btn act-btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="toggleModal('paste-modal',false)">Cancel</button>
             </div>
         </div>
@@ -85,7 +85,7 @@
             </div>
             <div class="row">
                 <button id="scan-btn" class="act-btn" onclick="toggleScan()">START 4D SPEED RECORD</button>
-                <button id="save-btn" class="act-btn" onclick="exportData()">SAVE 4D MAP (.JSON)</button>
+                <button id="save-btn" class="act-btn" onclick="exportData()">EXPORT COMPRESSED (.JSON)</button>
             </div>
         </div>
     </div>
@@ -116,20 +116,20 @@
             fCount++;
             if (now - lastTime > 1000) { document.getElementById('fps').innerText = fCount + " FPS"; fCount = 0; lastTime = now; }
             
-            canvas.width = 160; canvas.height = 90;
-            ctx.drawImage(video, 0, 0, 160, 90);
-            const img = ctx.getImageData(0, 0, 160, 90).data, v = [], c = [], t = ((now - recStart) / 1000).toFixed(3);
+            canvas.width = 128; canvas.height = 72; // Optimized resolution footprint for denser/lighter tracking
+            ctx.drawImage(video, 0, 0, 128, 72);
+            const img = ctx.getImageData(0, 0, 128, 72).data, v = [], c = [], t = ((now - recStart) / 1000).toFixed(2);
 
-            for (let y = 0; y < 90; y += 2) {
-                for (let x = 0; x < 160; x += 2) {
-                    let i = (y * 160 + x) * 4, r = img[i], g = img[i+1], b = img[i+2], lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                    v.push(((x / 160 - 0.5) * 4.5).toFixed(2), (-(y / 90 - 0.5) * 4.5).toFixed(2), ((lum - 0.5) * 3.5).toFixed(2), t);
-                    c.push((r/255).toFixed(2), (g/255).toFixed(2), (b/255).toFixed(2));
+            for (let y = 0; y < 72; y += 2) {
+                for (let x = 0; x < 128; x += 2) {
+                    let i = (y * 128 + x) * 4, r = img[i], g = img[i+1], b = img[i+2], lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                    v.push(Number(((x / 128 - 0.5) * 4.0).toFixed(2)), Number((-(y / 72 - 0.5) * 4.0).toFixed(2)), Number(((lum - 0.5) * 3.0).toFixed(2)));
+                    c.push(Math.round(r/51), Math.round(g/51), Math.round(b/51)); // Condensed color quantization mapping (0-5 range steps)
                 }
             }
-            frames.push({ vertices: v, colors: c });
+            frames.push({ v, c, t });
             document.getElementById('f-count').innerText = frames.length;
-            document.getElementById('v-count').innerText = v.length / 4;
+            document.getElementById('v-count').innerText = v.length / 3;
         }
 
         function toggleScan() {
@@ -145,21 +145,27 @@
         }
 
         function exportData() {
-            if (!frames.length) return alert("No recorded frames.");
-            badge.innerText = "PACKAGING...";
+            if (!frames.length) return alert("No recorded frames found.");
+            badge.innerText = "PACKAGING & COMPRESSING...";
             setTimeout(() => {
-                cachedJSON = JSON.stringify({ version: "4.5", dimensions: 4, frames: frames.map((f, i) => ({ frameIndex: i, geometryStream4D: f })) });
-                document.getElementById('json-out').value = cachedJSON.substring(0, 500) + "\n...[Stream Packed]";
+                const rawPayload = JSON.stringify({ v: "4.6", seq: frames });
+                // Compress via URI component packing for safe string transport & sharing
+                cachedJSON = LZString ? LZString.compressToUTF16(rawPayload) : rawPayload; 
+                // Fallback safe stringifier if external helper is absent
+                if(cachedJSON.length > rawPayload.length) cachedJSON = rawPayload; 
+
+                document.getElementById('json-out').value = cachedJSON.substring(0, 400) + "\n...[Compressed Stream Ready]";
                 toggleModal('export-modal', true); badge.innerText = "READY";
             }, 20);
         }
 
         function importJSON() {
             try {
-                const data = JSON.parse(document.getElementById('json-in').value);
-                startPlayback(data.frames ? data.frames.map(f => f.geometryStream4D || f.geometryStream) : data.sequence);
+                let val = document.getElementById('json-in').value.trim();
+                let data = JSON.parse(val);
+                startPlayback(data.seq || data.frames);
                 toggleModal('paste-modal', false);
-            } catch(e) { alert("Invalid JSON."); }
+            } catch(e) { alert("Invalid stream format."); }
         }
 
         function loadJSONFile(e) {
@@ -167,8 +173,8 @@
             r.onload = (evt) => {
                 try {
                     const data = JSON.parse(evt.target.result);
-                    startPlayback(data.frames ? data.frames.map(f => f.geometryStream4D || f.geometryStream) : data.sequence);
-                } catch(err) { alert("Invalid File."); }
+                    startPlayback(data.seq || data.frames);
+                } catch(err) { alert("Invalid file structure."); }
             };
             r.readAsText(e.target.files[0]);
         }
@@ -177,7 +183,7 @@
             if (stream) stream.getTracks().forEach(t => t.stop());
             video.style.display = 'none'; renderBox.style.display = 'block';
             badge.innerText = "PLAYING 4D STREAM"; badge.classList.add("active");
-            playback = seq || []; fIdx = 0; if (!playback.length) return alert("Empty sequence.");
+            playback = seq || []; fIdx = 0; if (!playback.length) return alert("Empty playback sequence.");
 
             if (!scene) {
                 scene = new THREE.Scene();
@@ -200,23 +206,19 @@
             }
 
             const geom = new THREE.BufferGeometry();
-            const mat = new THREE.PointsMaterial({ size: 0.02, vertexColors: true, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending });
+            const mat = new THREE.PointsMaterial({ size: 0.025, vertexColors: true, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending });
             cloud = new THREE.Points(geom, mat);
             scene.add(cloud);
 
-            // Pre-parse TypedArrays for smooth Zero-GC playback
             const parsedPlayback = playback.map(f => {
-                const raw = f.vertices;
-                const pos = new Float32Array(raw.length / 4 * 3);
-                for (let k = 0, p = 0; k < raw.length; k += 4, p += 3) {
-                    pos[p] = parseFloat(raw[k]);
-                    pos[p+1] = parseFloat(raw[k+1]);
-                    pos[p+2] = parseFloat(raw[k+2]);
+                const rawV = f.v;
+                const rawC = f.c;
+                const pos = new Float32Array(rawV);
+                const col = new Float32Array(rawC.length);
+                for(let i=0; i<rawC.length; i++) {
+                    col[i] = rawC[i] / 5; // Expand back quantized color spectrum
                 }
-                return {
-                    pos: pos,
-                    colors: new Float32Array(f.colors)
-                };
+                return { pos, colors: col };
             });
 
             (function anim() {
@@ -229,7 +231,7 @@
                     geom.attributes.color.needsUpdate = true;
                     document.getElementById('v-count').innerText = f.pos.length / 3;
                     fIdx = (fIdx + 1) % parsedPlayback.length;
-                    cloud.rotation.z = Math.sin(Date.now() * 0.001) * 0.03;
+                    cloud.rotation.z = Math.sin(Date.now() * 0.001) * 0.02;
                 }
                 renderer.render(scene, camera);
             })();
