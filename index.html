@@ -3,370 +3,324 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash - Streamlined Camera Processor</title>
+    <title>Spatial Dash Pro – Enterprise 4D Volumetric Depth & Rigging Edition</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #030303;
-            color: #ffffff;
+            background-color: #030712;
+            color: #f3f4f6;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow: hidden;
             height: 100vh;
             width: 100vw;
+            display: flex;
         }
-        #camera-stream, #processing-canvas {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover;
-            z-index: 1;
-        }
-        #processing-canvas { display: none; }
-        #camera-stream.front-facing { transform: scaleX(-1); }
-        #hud-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 2;
+        #sidebar {
+            width: 380px;
+            background: #0b0f19;
+            border-right: 1px solid #1f2937;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            padding: 24px;
-            pointer-events: none;
-        }
-        .interactive { pointer-events: auto; }
-        .top-status {
-            background: rgba(15, 15, 15, 0.88);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(14px);
-            border-radius: 14px;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .brand-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #f0f0f0; }
-        
-        .btn-style {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #ffffff;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-style:hover { background: rgba(255, 255, 255, 0.2); }
-        .btn-style.scanning {
-            background: #ea580c;
-            border-color: #f97316;
-            color: #fff;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { opacity: 1; }
-        }
-
-        .badge {
-            font-size: 11px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
-            background: rgba(48, 209, 88, 0.2);
-            color: #30d158;
-            border: 1px solid rgba(48, 209, 88, 0.4);
-        }
-        .badge.recording {
-            background: rgba(234, 88, 12, 0.2);
-            color: #fb923c;
-            border-color: rgba(234, 88, 12, 0.4);
-        }
-
-        .control-dock {
-            background: rgba(15, 15, 15, 0.92);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(18px);
-            border-radius: 18px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            text-align: center;
-        }
-        .metric-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 8px;
-        }
-        .metric-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
-        .metric-value { font-size: 14px; font-weight: 700; color: #0a84ff; }
-        
-        #export-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 10;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .modal-content {
-            background: #151515;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 16px;
-            padding: 20px;
-            width: 100%;
-            max-width: 480px;
-            display: flex;
-            flex-direction: column;
+            padding: 16px;
             gap: 12px;
+            z-index: 10;
+            overflow-y: auto;
         }
-        .modal-content h3 { font-size: 15px; color: #fff; }
-        .modal-content textarea {
-            width: 100%;
-            height: 160px;
-            background: #0a0a0a;
-            color: #0a84ff;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 8px;
-            font-family: monospace;
-            font-size: 10px;
-            resize: none;
+        .brand { font-size: 14px; font-weight: 800; letter-spacing: 1px; color: #38bdf8; }
+        .section-card {
+            background: rgba(17, 24, 39, 0.7);
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        .modal-btn-row { display: flex; gap: 8px; }
-        .modal-btn {
-            flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; cursor: pointer;
+        .card-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: #94a3b8; }
+        .btn-row { display: flex; gap: 6px; }
+        .primary-btn, .secondary-btn, .danger-btn {
+            flex: 1; padding: 8px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; border: none; transition: background 0.2s;
         }
-        #modal-copy-btn { background: #0a84ff; color: white; }
-        #modal-close-btn { background: #333; color: white; }
+        .primary-btn { background: #0284c7; color: white; }
+        .primary-btn:hover { background: #0369a1; }
+        .secondary-btn { background: #334155; color: #f1f5f9; }
+        .danger-btn { background: #dc2626; color: white; }
+        .danger-btn.scanning { background: #ea580c; }
+        .file-upload-label {
+            display: block; text-align: center; border: 2px dashed #334155; padding: 10px; border-radius: 8px;
+            font-size: 11px; color: #94a3b8; cursor: pointer; background: rgba(255,255,255,0.01);
+        }
+        .file-upload-label:hover { border-color: #38bdf8; }
+        input[type="file"] { display: none; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; text-align: center; }
+        .metric-card { background: #1e293b; border-radius: 8px; padding: 6px; }
+        .metric-label { font-size: 9px; color: #64748b; text-transform: uppercase; }
+        .metric-value { font-size: 12px; font-weight: bold; color: #38bdf8; }
+        #viewer-container {
+            flex: 1; position: relative; background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
+        }
+        #camera-stream, #render-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;
+        }
+        #camera-stream.front-facing { transform: scaleX(-1); }
+        #processing-canvas { display: none; }
+        #render-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 2; }
+        .stats-overlay {
+            position: absolute; top: 16px; right: 16px; background: rgba(3, 7, 18, 0.85);
+            backdrop-filter: blur(8px); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); font-size: 11px; color: #94a3b8; z-index: 5;
+        }
+        .stats-overlay span { color: #38bdf8; font-weight: bold; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/holistic/holistic.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
+<div id="sidebar">
+    <div class="brand">SPATIAL 4D PROCESSOR<br><span style="font-size:9px;font-weight:500;color:#7dd3fc;">Condensed Map & Camera Streamline</span></div>
+    
+    <div class="section-card">
+        <div class="card-title">Data Ingestion & Stream</div>
+        <div class="btn-row">
+            <button class="secondary-btn" onclick="switchCamera()">📷 Flip Camera</button>
+            <label class="file-upload-label" style="flex:1;">
+                📁 Load Map JSON
+                <input type="file" id="json-file-input" accept=".json" onchange="loadEnvironmentMap(event)">
+            </label>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="card-title">Volumetric Metrics</div>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Frames</div>
+                <div id="frame-count" class="metric-value">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Nodes / Frame</div>
+                <div id="node-count" class="metric-value">0</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <div class="card-title">Recording & Export</div>
+        <div class="btn-row">
+            <button id="scan-btn" class="danger-btn" onclick="toggleScanState()">RECORD 4D</button>
+            <button class="primary-btn" onclick="exportEnvironmentMap()">SAVE MAP</button>
+        </div>
+    </div>
+</div>
+
+<div id="viewer-container">
+    <div class="stats-overlay">
+        Status: <span id="status-badge">SYSTEM READY</span><br>
+        <span id="bbox-info" style="font-size:10px;color:#64748b;">Optimized 3D Stream Pipeline</span>
+    </div>
     <video id="camera-stream" autoplay playsinline muted></video>
     <canvas id="processing-canvas"></canvas>
+    <div id="render-container"></div>
+</div>
 
-    <div id="export-modal" class="interactive">
-        <div class="modal-content">
-            <h3>4D Map Processor Compatible Payload</h3>
-            <p style="font-size:11px; color:#aaa;">Formatted sequence ready to be pasted directly into the 3D Map Processor application.</p>
-            <textarea id="modal-json-text" readonly></textarea>
-            <div class="modal-btn-row">
-                <button id="modal-copy-btn" class="modal-btn" onclick="copyPayload()">COPY PAYLOAD</button>
-                <button id="modal-close-btn" class="modal-btn" onclick="closeModal()">CLOSE</button>
-            </div>
-        </div>
-    </div>
+<script>
+    const videoElement = document.getElementById('camera-stream');
+    const processingCanvas = document.getElementById('processing-canvas');
+    const canvasCtx = processingCanvas.getContext('2d', { willReadFrequently: true });
+    const renderContainer = document.getElementById('render-container');
+    const scanBtn = document.getElementById('scan-btn');
+    const statusBadge = document.getElementById('status-badge');
+    const frameCountText = document.getElementById('frame-count');
+    const nodeCountText = document.getElementById('node-count');
 
-    <div id="hud-overlay">
-        <div class="top-status interactive">
-            <div class="brand-group">
-                <span class="brand">CAMERA PROCESSOR</span>
-                <button class="btn-style" onclick="switchCamera()">📷 Flip</button>
-                <button id="scan-toggle-btn" class="btn-style" onclick="toggleContinuousScan()">⏺ Start Scan</button>
-                <button class="btn-style" onclick="exportTelemetry()">📋 Export Data</button>
-            </div>
-            <span id="status-badge" class="badge">READY</span>
-        </div>
+    let isScanning = false;
+    let recordedFrames = [];
+    let currentFacingMode = "environment";
+    let activeStream = null;
+    let holistic = null;
+    let cameraUtilsInstance = null;
 
-        <div class="control-dock interactive">
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-label">Frame Index</div>
-                    <div id="frame-counter" class="metric-value">0</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Landmarks</div>
-                    <div id="node-count" class="metric-value">0</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">4D Frames</div>
-                    <div id="captured-count" class="metric-value">0</div>
-                </div>
-            </div>
-        </div>
-    </div>
+    let scene, camera, renderer, pointCloud;
+    let playbackFrames = [];
+    let playbackFrameIndex = 0;
 
-    <script>
-        let videoElement = document.getElementById('camera-stream');
-        let processingCanvas = document.getElementById('processing-canvas');
-        let canvasCtx = processingCanvas.getContext('2d', { willReadFrequently: true });
-        let statusBadge = document.getElementById('status-badge');
-        let nodeCountText = document.getElementById('node-count');
-        let frameCounterText = document.getElementById('frame-counter');
-        let capturedCountText = document.getElementById('captured-count');
-        let scanToggleBtn = document.getElementById('scan-toggle-btn');
-        let exportModal = document.getElementById('export-modal');
-        let modalJsonText = document.getElementById('modal-json-text');
+    async function initCameraFeed() {
+        if (renderContainer.style.display === "block") return;
+        if (activeStream) activeStream.getTracks().forEach(t => t.stop());
 
-        let currentFacingMode = "environment";
-        let activeStream = null;
-        let holistic = null;
-        let cameraUtilsInstance = null;
-        let frameIndex = 0;
-        
-        let isScanning = false;
-        let recordedSequence = [];
-        let latestMapPayload = { sequence: [] };
-
-        async function initCameraFeed() {
-            if (activeStream) {
-                activeStream.getTracks().forEach(track => track.stop());
-            }
-
-            try {
-                const constraints = { video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } } };
-                activeStream = await navigator.mediaDevices.getUserMedia(constraints);
-                videoElement.srcObject = activeStream;
-
-                if (currentFacingMode === "user") {
-                    videoElement.classList.add("front-facing");
-                } else {
-                    videoElement.classList.remove("front-facing");
-                }
-            } catch (err) {
-                console.log("Camera error:", err);
-            }
-        }
-
-        function switchCamera() {
-            currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
-            initCameraFeed();
-        }
-
-        function toggleContinuousScan() {
-            isScanning = !isScanning;
-            if (isScanning) {
-                recordedSequence = [];
-                scanToggleBtn.innerText = "⏹ Stop Scan";
-                scanToggleBtn.classList.add("scanning");
-                statusBadge.innerText = "RECORDING";
-                statusBadge.classList.add("recording");
-            } else {
-                scanToggleBtn.innerText = "⏺ Start Scan";
-                scanToggleBtn.classList.remove("scanning");
-                statusBadge.innerText = "IDLE";
-                statusBadge.classList.remove("recording");
-            }
-        }
-
-        function setupOmniScanner() {
-            holistic = new Holistic({locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}`});
-            
-            holistic.setOptions({
-                modelComplexity: 1,
-                smoothLandmarks: true,
-                enableSegmentation: false,
-                refineFaceLandmarks: true,
-                minDetectionConfidence: 0.5,
-                minTrackingConfidence: 0.5
+        try {
+            activeStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } }
             });
-
-            holistic.onResults(onHolisticResults);
-
-            cameraUtilsInstance = new Camera(videoElement, {
-                onFrame: async () => {
-                    if (videoElement) {
-                        await holistic.send({image: videoElement});
-                        frameIndex++;
-                        frameCounterText.innerText = frameIndex;
-                    }
-                },
-                width: 1280,
-                height: 720
-            });
-            cameraUtilsInstance.start();
+            videoElement.srcObject = activeStream;
+            videoElement.classList.toggle("front-facing", currentFacingMode === "user");
+        } catch (err) {
+            console.error("Camera access error:", err);
         }
+    }
 
-        function onHolisticResults(results) {
-            let count = 0;
-            let currentVertices = [];
-            let currentColors = [];
+    function switchCamera() {
+        currentFacingMode = currentFacingMode === "environment" ? "user" : "environment";
+        initCameraFeed();
+    }
 
-            function extractLandmarks(landmarkObj) {
-                if (!landmarkObj || !landmarkObj.landmark) return;
-                for (let pt of landmarkObj.landmark) {
-                    const x = (pt.x - 0.5) * -3.0;
-                    const y = (pt.y - 0.5) * -3.0;
-                    const z = (pt.z || 0) * 12.0;
-
-                    currentVertices.push(x, y, z);
-                    
-                    let depthShade = Math.min(Math.max((z + 2.0) / 4.0, 0.1), 1.0);
-                    currentColors.push(0.1 + depthShade * 0.4, 0.65, 1.0 - (depthShade * 0.3));
+    function setupHolisticScanner() {
+        holistic = new Holistic({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${file}` });
+        holistic.setOptions({ modelComplexity: 1, smoothLandmarks: true, refineFaceLandmarks: true, minDetectionConfidence: 0.5 });
+        holistic.onResults((results) => {
+            if (!isScanning || recordedFrames.length === 0) return;
+            let humanVertices = [], humanColors = [];
+            const add = (lms, r, g, b) => {
+                if (!lms) return;
+                for (let pt of lms) {
+                    humanVertices.push(parseFloat(((pt.x - 0.5) * -5.2).toFixed(3)), parseFloat(((pt.y - 0.5) * -5.2).toFixed(3)), parseFloat(((pt.z || 0) * 5.2).toFixed(3)));
+                    humanColors.push(r, g, b);
                 }
-            }
-
-            if (results.faceLandmarks) { 
-                count += results.faceLandmarks.landmark.length; 
-                extractLandmarks(results.faceLandmarks);
-            }
-            if (results.poseLandmarks) { 
-                count += results.poseLandmarks.landmark.length; 
-                extractLandmarks(results.poseLandmarks);
-            }
-            if (results.leftHandLandmarks) { 
-                count += results.leftHandLandmarks.landmark.length; 
-                extractLandmarks(results.leftHandLandmarks);
-            }
-            if (results.rightHandLandmarks) { 
-                count += results.rightHandLandmarks.landmark.length; 
-                extractLandmarks(results.rightHandLandmarks);
-            }
-
-            nodeCountText.innerText = count;
-
-            if (isScanning && currentVertices.length > 0) {
-                recordedSequence.push({
-                    vertices: [...currentVertices],
-                    colors: [...currentColors]
-                });
-                capturedCountText.innerText = recordedSequence.length;
-            }
-
-            latestMapPayload = {
-                metadata: {
-                    generator: 'Spatial Camera Processor',
-                    version: '4.2',
-                    totalFrames: recordedSequence.length
-                },
-                sequence: recordedSequence
             };
-        }
-
-        function exportTelemetry() {
-            modalJsonText.value = JSON.stringify(latestMapPayload);
-            exportModal.style.display = 'flex';
-        }
-
-        function copyPayload() {
-            navigator.clipboard.writeText(modalJsonText.value).then(() => {
-                let btn = document.getElementById('modal-copy-btn');
-                btn.innerText = "COPIED!";
-                setTimeout(() => { btn.innerText = "COPY PAYLOAD"; }, 2000);
-            });
-        }
-
-        function closeModal() { exportModal.style.display = 'none'; }
-
-        window.addEventListener('load', () => {
-            initCameraFeed();
-            setupOmniScanner();
+            add(results.faceLandmarks?.landmark, 0.1, 0.9, 1.0);
+            add(results.poseLandmarks?.landmark, 0.2, 1.0, 0.4);
+            
+            if (humanVertices.length > 0) {
+                let curr = recordedFrames[recordedFrames.length - 1];
+                curr.vertices.push(...humanVertices);
+                curr.colors.push(...humanColors);
+                nodeCountText.innerText = curr.vertices.length / 3;
+            }
         });
-    </script>
+
+        cameraUtilsInstance = new Camera(videoElement, {
+            onFrame: async () => {
+                if (isScanning && videoElement) {
+                    await holistic.send({ image: videoElement });
+                    captureFrameSequence();
+                }
+            },
+            width: 1280, height: 720
+        });
+        cameraUtilsInstance.start();
+    }
+
+    function captureFrameSequence() {
+        if (!videoElement.videoWidth) return;
+        processingCanvas.width = 320; processingCanvas.height = 180;
+        canvasCtx.drawImage(videoElement, 0, 0, 320, 180);
+        const data = canvasCtx.getImageData(0, 0, 320, 180).data;
+        
+        let vertices = [], colors = [];
+        for (let y = 1; y < 179; y += 2) {
+            for (let x = 1; x < 319; x += 2) {
+                let idx = (y * 320 + x) * 4;
+                let r = data[idx], g = data[idx+1], b = data[idx+2];
+                let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
+                
+                vertices.push(parseFloat(((x / 320 - 0.5) * 5.2).toFixed(3)), parseFloat((-(y / 180 - 0.5) * 5.2).toFixed(3)), parseFloat(((lum - 0.5) * 3.4).toFixed(3)));
+                colors.push(parseFloat((r/255).toFixed(2)), parseFloat((g/255).toFixed(2)), parseFloat((b/255).toFixed(2)));
+            }
+        }
+        recordedFrames.push({ vertices, colors });
+        frameCountText.innerText = recordedFrames.length;
+        nodeCountText.innerText = vertices.length / 3;
+    }
+
+    function toggleScanState() {
+        isScanning = !isScanning;
+        if (isScanning) {
+            recordedFrames = [];
+            scanBtn.innerText = "STOP 4D";
+            scanBtn.classList.add("scanning");
+            statusBadge.innerText = "RECORDING 4D...";
+        } else {
+            scanBtn.innerText = "RECORD 4D";
+            scanBtn.classList.remove("scanning");
+            statusBadge.innerText = "READY";
+        }
+    }
+
+    function exportEnvironmentMap() {
+        if (recordedFrames.length === 0) { alert("No timeline data captured yet."); return; }
+        const payload = {
+            version: "2.0",
+            mapType: "SpatialDash3DPhotoMap",
+            frames: recordedFrames.map((f, i) => ({ frameIndex: i, geometryStream: f }))
+        };
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `spatial_map_${Date.now()}.json`;
+        a.click();
+        statusBadge.innerText = "EXPORTED";
+    }
+
+    function loadEnvironmentMap(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                const frames = json.frames ? json.frames.map(f => f.geometryStream) : json.sequence;
+                if (frames) render4DPlayback({ sequence: frames });
+            } catch (err) { alert("Corrupted or invalid map JSON file."); }
+        };
+        reader.readAsText(file);
+    }
+
+    function render4DPlayback(payload) {
+        if (activeStream) activeStream.getTracks().forEach(t => t.stop());
+        videoElement.style.display = 'none';
+        renderContainer.style.display = 'block';
+        statusBadge.innerText = "PLAYING MAP";
+
+        playbackFrames = payload.sequence || [];
+        playbackFrameIndex = 0;
+        frameCountText.innerText = playbackFrames.length;
+
+        if (!scene) {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, renderContainer.clientWidth / renderContainer.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 4.0);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(renderContainer.clientWidth, renderContainer.clientHeight);
+            renderContainer.appendChild(renderer.domElement);
+            scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+            
+            let dragging = false, prev = {x:0, y:0};
+            window.addEventListener('mousedown', e => { dragging = true; prev = {x: e.clientX, y: e.clientY}; });
+            window.addEventListener('mousemove', e => {
+                if (!dragging || !pointCloud) return;
+                pointCloud.rotation.y += (e.clientX - prev.x) * 0.005;
+                pointCloud.rotation.x += (e.clientY - prev.y) * 0.005;
+                prev = {x: e.clientX, y: e.clientY};
+            });
+            window.addEventListener('mouseup', () => { dragging = false; });
+        }
+
+        const geometry = new THREE.BufferGeometry();
+        const material = new THREE.PointsMaterial({ size: 0.022, vertexColors: true, transparent: true, opacity: 0.95 });
+        pointCloud = new THREE.Points(geometry, material);
+        scene.add(pointCloud);
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (playbackFrames.length > 0) {
+                let frame = playbackFrames[playbackFrameIndex];
+                geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(frame.vertices), 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(frame.colors), 3));
+                geometry.attributes.position.needsUpdate = true;
+                geometry.attributes.color.needsUpdate = true;
+                nodeCountText.innerText = frame.vertices.length / 3;
+                playbackFrameIndex = (playbackFrameIndex + 1) % playbackFrames.length;
+            }
+            renderer.render(scene, camera);
+        }
+        animate();
+    }
+
+    window.addEventListener('load', () => {
+        initCameraFeed();
+        setupHolisticScanner();
+    });
+</script>
 </body>
 </html>
