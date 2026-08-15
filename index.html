@@ -130,6 +130,49 @@
             z-index: 1;
             display: none;
         }
+
+        /* Modal fallback window for strict mobile restrictions */
+        #export-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(8px);
+            z-index: 10;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            background: #151515;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .modal-content h3 { font-size: 16px; color: #fff; }
+        .modal-content textarea {
+            width: 100%;
+            height: 150px;
+            background: #0a0a0a;
+            color: #0a84ff;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 11px;
+            resize: none;
+        }
+        .modal-btn-row { display: flex; gap: 10px; }
+        .modal-btn {
+            flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: 700; cursor: pointer;
+        }
+        #modal-download-btn { background: #30d158; color: white; }
+        #modal-close-btn { background: #333; color: white; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -140,6 +183,18 @@
     <video id="camera-stream" autoplay playsinline muted></video>
     <canvas id="processing-canvas"></canvas>
     <div id="render-container"></div>
+
+    <div id="export-modal" class="interactive">
+        <div class="modal-content">
+            <h3>Scan Data Ready (.JSON)</h3>
+            <p style="font-size:12px; color:#aaa;">If automatic download is blocked by your browser, use the button below or copy the payload string directly:</p>
+            <textarea id="modal-json-text" readonly></textarea>
+            <div class="modal-btn-row">
+                <button id="modal-download-btn" class="modal-btn" onclick="forceDownloadFile()">FORCE DOWNLOAD</button>
+                <button id="modal-close-btn" class="modal-btn" onclick="closeModal()">CLOSE</button>
+            </div>
+        </div>
+    </div>
 
     <div id="hud-overlay">
         <div class="top-status interactive">
@@ -187,6 +242,8 @@
         let statusBadge = document.getElementById('status-badge');
         let nodeCountText = document.getElementById('node-count');
         let surfaceStatusText = document.getElementById('surface-status');
+        let exportModal = document.getElementById('export-modal');
+        let modalJsonText = document.getElementById('modal-json-text');
 
         let isScanning = false;
         let spatialVertices = []; 
@@ -196,6 +253,7 @@
         let activeStream = null;
         let holistic = null;
         let cameraUtilsInstance = null;
+        let cachedJsonString = "";
 
         let scene, camera, renderer, pointCloud;
 
@@ -345,7 +403,7 @@
             }
         }
 
-        function exportEnvironmentMap() {
+        async function exportEnvironmentMap() {
             if (spatialVertices.length === 0) {
                 alert("No structural nodes recorded. Press start and pan your camera around the room.");
                 return;
@@ -354,7 +412,7 @@
             const environmentPayload = {
                 metadata: {
                     generator: "Spatial Dash Omni Environment Engine",
-                    version: "5.4",
+                    version: "5.5",
                     type: "BufferGeometry",
                     totalVertices: spatialVertices.length / 3,
                     timestamp: new Date().toISOString()
@@ -368,31 +426,61 @@
                 }
             };
 
-            const jsonString = JSON.stringify(environmentPayload, null, 2);
-            
-            // Universal fallback approach handling mobile browser file writing restrictions (iOS Safari / Android Chrome)
-            const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
-            
-            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-                window.navigator.msSaveOrOpenBlob(blob, `spatial_scan_${Date.now()}.json`);
-                return;
+            cachedJsonString = JSON.stringify(environmentPayload, null, 2);
+            const fileName = `spatial_scan_${Date.now()}.json`;
+
+            // Try Modern Native File System API (Supported on Chrome desktop/Android)
+            if ('showSaveFilePicker' in window) {
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: fileName,
+                        types: [{ description: 'JSON Map File', accept: { 'application/json': ['.json'] } }]
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(cachedJsonString);
+                    await writable.close();
+                    return;
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        console.log("File picker fallback triggered:", err);
+                    } else {
+                        return; // User canceled the picker dialog
+                    }
+                }
             }
 
-            const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonString);
-            const fileLink = document.createElement('a');
-            fileLink.setAttribute('href', dataUrl);
-            fileLink.setAttribute('download', `spatial_scan_${Date.now()}.json`);
-            
-            // Required for mobile Firefox / Chrome compatibility
-            fileLink.style.display = 'none';
-            document.body.appendChild(fileLink);
-            
-            // Programmatically trigger click to force device to save file
-            fileLink.click();
-            
-            setTimeout(() => {
-                document.body.removeChild(fileLink);
-            }, 100);
+            // Standard anchor download approach
+            try {
+                const blob = new Blob([cachedJsonString], { type: 'application/json;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            } catch (ex) {
+                // If browser completely blocks automated background downloads, pop open text utility modal
+                modalJsonText.value = cachedJsonString;
+                exportModal.style.display = 'flex';
+            }
+        }
+
+        function forceDownloadFile() {
+            if (!cachedJsonString) return;
+            const blob = new Blob([cachedJsonString], { type: 'application/json;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `spatial_scan_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function closeModal() {
+            exportModal.style.display = 'none';
         }
 
         function loadEnvironmentMap(event) {
