@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro – Condensed 4D Volumetric Scanner</title>
+    <title>Spatial Dash Pro – High-Density 4D Volumetric Scanner</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #030303; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
@@ -12,7 +12,7 @@
         #camera-stream.front-facing { transform: scaleX(-1); }
         #hud-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; pointer-events: none; }
         .interactive { pointer-events: auto; }
-        .top-status { background: rgba(15,15,15,0.85); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; }
+        .top-status { background: rgba(15,15,15,0.88); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; }
         .brand { font-weight: 800; letter-spacing: 1.2px; font-size: 13px; color: #f0f0f0; }
         .btn-group { display: flex; gap: 8px; }
         .ui-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
@@ -20,7 +20,7 @@
         input[type="file"] { display: none; }
         .badge { font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 12px; background: rgba(255,59,48,0.2); color: #ff453a; border: 1px solid rgba(255,59,48,0.4); }
         .badge.active { background: rgba(48,209,88,0.2); color: #30d158; border: 1px solid rgba(48,209,88,0.4); }
-        .control-dock { background: rgba(15,15,15,0.9); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+        .control-dock { background: rgba(15,15,15,0.92); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
         .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; }
         .metric-card { background: rgba(255,255,255,0.04); border-radius: 8px; padding: 6px; }
         .metric-label { font-size: 9px; color: #888; text-transform: uppercase; }
@@ -49,7 +49,7 @@
 
     <div id="export-modal" class="modal interactive">
         <div class="modal-content">
-            <h3 style="font-size: 14px;">3D Map Payload Ready</h3>
+            <h3 style="font-size: 14px;">High-Density 4D Map Payload Ready</h3>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button class="modal-btn" onclick="copyPayload()">Copy Payload</button>
@@ -71,7 +71,7 @@
 
     <div id="hud-overlay">
         <div class="top-status interactive">
-            <div class="brand">SPATIAL DASH 4D</div>
+            <div class="brand">SPATIAL DASH 4D (HD)</div>
             <div class="btn-group">
                 <button class="ui-btn" onclick="switchCamera()">📷 Flip</button>
                 <label class="ui-btn">📁 Load<input type="file" accept=".json" onchange="loadFile(event)"></label>
@@ -83,11 +83,11 @@
         <div class="control-dock interactive">
             <div class="metrics-grid">
                 <div class="metric-card"><div class="metric-label">Frames</div><div id="frame-count" class="metric-value">0</div></div>
-                <div class="metric-card"><div class="metric-label">Nodes</div><div id="node-count" class="metric-value">0</div></div>
-                <div class="metric-card"><div class="metric-label">Engine</div><div id="mode-status" class="metric-value">Active</div></div>
+                <div class="metric-card"><div class="metric-label">Nodes / Frame</div><div id="node-count" class="metric-value">0</div></div>
+                <div class="metric-card"><div class="metric-label">Buffer MB</div><div id="buffer-size" class="metric-value">0.0 MB</div></div>
             </div>
             <div class="btn-row">
-                <button id="scan-btn" class="action-btn" onclick="toggleScan()">RECORD 4D STREAM</button>
+                <button id="scan-btn" class="action-btn" onclick="toggleScan()">RECORD HIGH-DENSITY 4D</button>
                 <button id="save-btn" class="action-btn" onclick="exportMap()">SAVE MAP (.JSON)</button>
             </div>
         </div>
@@ -104,11 +104,13 @@
         
         let isScanning = false, frames = [], stream = null, holistic = null, cameraUtil = null;
         let cachedJSON = "", scene, camera, renderer, pointCloud, playback = [], frameIdx = 0, facing = "environment";
+        let totalByteSize = 0;
 
         async function initCam() {
             if (stream) stream.getTracks().forEach(t => t.stop());
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 960 }, height: { ideal: 540 } } });
+                // Higher resolution stream configuration for dense node capture
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 } } });
                 video.srcObject = stream;
                 video.className = facing === "user" ? "front-facing" : "";
             } catch (e) { console.error("Camera error:", e); }
@@ -128,12 +130,15 @@
                 const addPts = (pts, r, g, b) => {
                     if (!pts) return;
                     pts.landmark.forEach(p => {
-                        hVerts.push(((p.x - 0.5) * -5.2).toFixed(3), ((p.y - 0.5) * -5.2).toFixed(3), ((p.z || 0) * 5.2).toFixed(3));
+                        hVerts.push(((p.x - 0.5) * -6.0).toFixed(3), ((p.y - 0.5) * -6.0).toFixed(3), ((p.z || 0) * 6.0).toFixed(3));
                         hCols.push(r, g, b);
                     });
                 };
                 addPts(res.faceLandmarks, 0.1, 0.9, 1.0);
                 addPts(res.poseLandmarks, 0.2, 1.0, 0.4);
+                addPts(res.leftHandLandmarks, 1.0, 0.6, 0.1);
+                addPts(res.rightHandLandmarks, 1.0, 0.2, 0.8);
+
                 if (hVerts.length) {
                     let cur = frames[frames.length - 1];
                     cur.vertices.push(...hVerts);
@@ -143,45 +148,53 @@
             });
 
             cameraUtil = new Camera(video, {
-                onFrame: async () => { if (isScanning && video) { await holistic.send({ image: video }); sampleFrame(); } },
-                width: 960, height: 540
+                onFrame: async () => { if (isScanning && video) { await holistic.send({ image: video }); sampleHighDensityFrame(); } },
+                width: 1280, height: 720
             });
             cameraUtil.start();
         }
 
-        // Optimized Condensed Frame Sampler & Depth Processor
-        function sampleFrame() {
-            canvas.width = 240; canvas.height = 135;
-            ctx.drawImage(video, 0, 0, 240, 135);
-            const img = ctx.getImageData(0, 0, 240, 135).data;
+        // High-Density Frame Sampler (Denser mesh grid sample steps)
+        function sampleHighDensityFrame() {
+            canvas.width = 480; canvas.height = 270;
+            ctx.drawImage(video, 0, 0, 480, 270);
+            const img = ctx.getImageData(0, 0, 480, 270).data;
             let v = [], c = [];
 
-            for (let y = 1; y < 134; y += 2) {
-                for (let x = 1; x < 239; x += 2) {
-                    let i = (y * 240 + x) * 4;
+            // Reduced step size to collect substantially more points per frame
+            for (let y = 1; y < 269; y += 1) {
+                for (let x = 1; x < 479; x += 1) {
+                    let i = (y * 480 + x) * 4;
                     let r = img[i], g = img[i+1], b = img[i+2];
                     let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
                     
-                    v.push(((x / 240 - 0.5) * 5.2).toFixed(3), (-(y / 135 - 0.5) * 5.2).toFixed(3), ((lum - 0.5) * 3.4).toFixed(3));
+                    v.push(((x / 480 - 0.5) * 6.0).toFixed(3), (-(y / 270 - 0.5) * 6.0).toFixed(3), ((lum - 0.5) * 4.0).toFixed(3));
                     c.push((r/255).toFixed(2), (g/255).toFixed(2), (b/255).toFixed(2));
                 }
             }
-            frames.push({ vertices: v, colors: c });
+            
+            const frameObj = { vertices: v, colors: c };
+            frames.push(frameObj);
+            
+            // Approximate byte accumulation tracking
+            totalByteSize += (v.length * 4 + c.length * 4);
             document.getElementById('frame-count').innerText = frames.length;
             document.getElementById('node-count').innerText = v.length / 3;
+            document.getElementById('buffer-size').innerText = (totalByteSize / (1024 * 1024)).toFixed(1) + " MB";
         }
 
         function toggleScan() {
             isScanning = !isScanning;
             if (isScanning) {
                 frames = [];
+                totalByteSize = 0;
                 scanBtn.innerText = "STOP RECORDING";
                 scanBtn.classList.add("scanning");
-                badge.innerText = "RECORDING...";
+                badge.innerText = "RECORDING HD...";
                 badge.classList.add("active");
                 saveBtn.style.display = "block";
             } else {
-                scanBtn.innerText = "RECORD 4D STREAM";
+                scanBtn.innerText = "RECORD HIGH-DENSITY 4D";
                 scanBtn.classList.remove("scanning");
                 badge.innerText = "READY";
                 badge.classList.remove("active");
@@ -190,14 +203,14 @@
 
         function exportMap() {
             if (!frames.length) return alert("No frames recorded.");
-            badge.innerText = "BUILDING...";
+            badge.innerText = "BUILDING HD MAP...";
             setTimeout(() => {
-                const payload = { version: "2.0", frames: frames.map((f, i) => ({ frameIndex: i, geometryStream: f })) };
+                const payload = { version: "3.0", density: "High", frames: frames.map((f, i) => ({ frameIndex: i, geometryStream: f })) };
                 cachedJSON = JSON.stringify(payload);
-                document.getElementById('modal-json-text').value = cachedJSON.substring(0, 600) + "\n...[Payload Ready]";
+                document.getElementById('modal-json-text').value = cachedJSON.substring(0, 600) + "\n...[High-Density Payload Ready]";
                 openModal('export-modal');
                 badge.innerText = "READY";
-            }, 30);
+            }, 50);
         }
 
         function processJSONText() {
@@ -223,7 +236,7 @@
             if (stream) stream.getTracks().forEach(t => t.stop());
             video.style.display = 'none';
             renderContainer.style.display = 'block';
-            badge.innerText = "PLAYING MAP";
+            badge.innerText = "PLAYING HD MAP";
             badge.classList.add("active");
 
             playback = seq || [];
@@ -251,7 +264,7 @@
             }
 
             const geom = new THREE.BufferGeometry();
-            const mat = new THREE.PointsMaterial({ size: 0.02, vertexColors: true, transparent: true, opacity: 0.95 });
+            const mat = new THREE.PointsMaterial({ size: 0.015, vertexColors: true, transparent: true, opacity: 0.95 });
             pointCloud = new THREE.Points(geom, mat);
             scene.add(pointCloud);
 
