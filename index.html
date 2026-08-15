@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - Photo Processor & Scanner</title>
+    <title>Spatial Dash Pro</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -14,9 +14,7 @@
             height: 100vh;
             width: 100vw;
         }
-        
-        /* Viewport containers */
-        .view-screen {
+        #camera-stream {
             position: absolute;
             top: 0;
             left: 0;
@@ -26,15 +24,8 @@
             z-index: 1;
         }
         #camera-stream.front-facing {
-            transform: scaleX(-1);
+            transform: scaleX(-1); /* Mirrors the front camera preview naturally */
         }
-
-        #processor-canvas {
-            display: none;
-            background: #111;
-            z-index: 1;
-        }
-
         #hud-overlay {
             position: absolute;
             top: 0;
@@ -49,7 +40,6 @@
             pointer-events: none;
         }
         .interactive { pointer-events: auto; }
-        
         .top-status {
             background: rgba(15, 15, 15, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -63,19 +53,18 @@
         .brand-group { display: flex; align-items: center; gap: 12px; }
         .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #f0f0f0; }
         
-        .nav-tabs { display: flex; gap: 6px; }
-        .tab-btn {
+        .camera-switch-btn {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #aaa;
+            color: #ffffff;
             padding: 6px 12px;
             border-radius: 8px;
             font-size: 11px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background 0.2s;
         }
-        .tab-btn.active { background: #0a84ff; color: white; border-color: #0a84ff; }
+        .camera-switch-btn:hover { background: rgba(255, 255, 255, 0.2); }
 
         .badge {
             font-size: 11px;
@@ -91,7 +80,6 @@
             color: #30d158;
             border: 1px solid rgba(48, 209, 88, 0.4);
         }
-
         .control-dock {
             background: rgba(15, 15, 15, 0.90);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -102,9 +90,6 @@
             flex-direction: column;
             gap: 14px;
         }
-
-        /* Mode Panels */
-        .panel { display: flex; flex-direction: column; gap: 12px; }
         .metrics-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -118,20 +103,6 @@
         }
         .metric-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
         .metric-value { font-size: 14px; font-weight: 700; color: #0a84ff; }
-
-        /* Sliders for Photo Processor */
-        .sliders-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 12px;
-            border-radius: 10px;
-        }
-        .slider-group { display: flex; flex-direction: column; gap: 4px; }
-        .slider-group label { font-size: 10px; color: #aaa; text-transform: uppercase; }
-        .slider-group input { width: 100%; cursor: pointer; accent-color: #0a84ff; }
-
         .btn-row { display: flex; gap: 10px; }
         button.action-btn {
             flex: 1;
@@ -147,90 +118,46 @@
         #scan-btn { background: #0a84ff; color: white; }
         #scan-btn.scanning { background: #ff453a; }
         #save-btn { background: #30d158; color: white; display: none; }
-        
-        #process-upload-btn { background: #30d158; color: white; }
-        #process-download-btn { background: #0a84ff; color: white; }
-        
         button.action-btn:active { transform: scale(0.97); opacity: 0.8; }
-        input[type="file"] { display: none; }
     </style>
 </head>
 <body>
 
-    <video id="camera-stream" class="view-screen" autoplay playsinline muted></video>
-    
-    <canvas id="processor-canvas" class="view-screen"></canvas>
+    <video id="camera-stream" autoplay playsinline muted></video>
 
     <div id="hud-overlay">
         <div class="top-status interactive">
             <div class="brand-group">
-                <span class="brand">SPATIAL DASH PRO</span>
-                <div class="nav-tabs">
-                    <button id="tab-scanner" class="tab-btn active" onclick="switchMode('scanner')">Scanner</button>
-                    <button id="tab-processor" class="tab-btn" onclick="switchMode('processor')">Photo Processor</button>
-                </div>
+                <span class="brand">SPATIAL DASH</span>
+                <button class="camera-switch-btn" onclick="switchCamera()">📷 Flip Camera</button>
             </div>
             <span id="status-badge" class="badge">SYSTEM READY</span>
         </div>
 
         <div class="control-dock interactive">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Nodes</div>
+                    <div id="node-count" class="metric-value">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Surface</div>
+                    <div id="surface-status" class="metric-value">Calibrating</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Mode</div>
+                    <div class="metric-value">Structured Vector</div>
+                </div>
+            </div>
             
-            <div id="panel-scanner" class="panel">
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-label">Nodes</div>
-                        <div id="node-count" class="metric-value">0</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Surface</div>
-                        <div id="surface-status" class="metric-value">Calibrating</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-label">Camera</div>
-                        <button class="tab-btn" style="width:100%; margin-top:2px;" onclick="switchCamera()">Flip</button>
-                    </div>
-                </div>
-                
-                <div class="btn-row">
-                    <button id="scan-btn" class="action-btn" onclick="toggleScanState()">START SCANNING</button>
-                    <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
-                </div>
+            <div class="btn-row">
+                <button id="scan-btn" class="action-btn" onclick="toggleScanState()">START SCANNING</button>
+                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
             </div>
-
-            <div id="panel-processor" class="panel" style="display: none;">
-                <div class="sliders-grid">
-                    <div class="slider-group">
-                        <label>Brightness: <span id="val-brightness">100</span>%</label>
-                        <input type="range" id="range-brightness" min="0" max="200" value="100" oninput="applyImageFilters()">
-                    </div>
-                    <div class="slider-group">
-                        <label>Contrast: <span id="val-contrast">100</span>%</label>
-                        <input type="range" id="range-contrast" min="0" max="200" value="100" oninput="applyImageFilters()">
-                    </div>
-                    <div class="slider-group">
-                        <label>Grayscale: <span id="val-grayscale">0</span>%</label>
-                        <input type="range" id="range-grayscale" min="0" max="100" value="0" oninput="applyImageFilters()">
-                    </div>
-                    <div class="slider-group">
-                        <label>Invert: <span id="val-invert">0</span>%</label>
-                        <input type="range" id="range-invert" min="0" max="100" value="0" oninput="applyImageFilters()">
-                    </div>
-                </div>
-
-                <div class="btn-row">
-                    <input type="file" id="image-file-input" accept="image/*" onchange="handleImageUpload(event)">
-                    <button id="process-upload-btn" class="action-btn" onclick="document.getElementById('image-file-input').click()">UPLOAD PHOTO</button>
-                    <button id="process-download-btn" class="action-btn" onclick="downloadProcessedImage()">DOWNLOAD PROCESSED</button>
-                </div>
-            </div>
-
         </div>
     </div>
 
     <script>
-        let currentMode = 'scanner';
-        
-        // Scanner Elements
         let videoElement = document.getElementById('camera-stream');
         let scanBtn = document.getElementById('scan-btn');
         let saveBtn = document.getElementById('save-btn');
@@ -242,13 +169,8 @@
         let spatialVertices = []; 
         let scanInterval = null;
         let angleStep = 0;
-        let currentFacingMode = "environment";
+        let currentFacingMode = "environment"; // Starts with rear camera
         let activeStream = null;
-
-        // Processor Elements
-        let processorCanvas = document.getElementById('processor-canvas');
-        let processorCtx = processorCanvas.getContext('2d');
-        let loadedImage = null;
 
         async function initCameraFeed() {
             if (activeStream) {
@@ -256,10 +178,13 @@
             }
 
             try {
-                const constraints = { video: { facingMode: currentFacingMode } };
+                const constraints = {
+                    video: { facingMode: currentFacingMode }
+                };
                 activeStream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = activeStream;
 
+                // Handle front camera mirroring style toggle
                 if (currentFacingMode === "user") {
                     videoElement.classList.add("front-facing");
                 } else {
@@ -270,7 +195,7 @@
                     activeStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     videoElement.srcObject = activeStream;
                 } catch (e) {
-                    console.log("Camera permissions not granted or unavailable.");
+                    alert("Camera permissions required or device camera unavailable.");
                 }
             }
         }
@@ -280,37 +205,6 @@
             initCameraFeed();
         }
 
-        function switchMode(mode) {
-            currentMode = mode;
-            let tabScanner = document.getElementById('tab-scanner');
-            let tabProcessor = document.getElementById('tab-processor');
-            let panelScanner = document.getElementById('panel-scanner');
-            let panelProcessor = document.getElementById('panel-processor');
-
-            if (mode === 'scanner') {
-                tabScanner.classList.add('active');
-                tabProcessor.classList.remove('active');
-                panelScanner.style.display = 'flex';
-                panelProcessor.style.display = 'none';
-                videoElement.style.display = 'block';
-                processorCanvas.style.display = 'none';
-                statusBadge.innerText = isScanning ? "MAPPING ACTIVE" : "SYSTEM READY";
-            } else {
-                tabProcessor.classList.add('active');
-                tabScanner.classList.remove('active');
-                panelProcessor.style.display = 'flex';
-                panelScanner.style.display = 'none';
-                videoElement.style.display = 'none';
-                processorCanvas.style.display = 'block';
-                statusBadge.innerText = "PROCESSOR READY";
-                
-                if (!loadedImage) {
-                    drawDefaultCanvasMessage();
-                }
-            }
-        }
-
-        // --- SCANNER FUNCTIONS ---
         function toggleScanState() {
             isScanning = !isScanning;
 
@@ -327,6 +221,7 @@
 
                 scanInterval = setInterval(() => {
                     angleStep += 0.15;
+                    
                     let x = parseFloat((Math.sin(angleStep) * 1.2).toFixed(3));
                     let y = parseFloat((Math.cos(angleStep * 0.5) * 0.6 + (Math.random() * 0.1)).toFixed(3));
                     let z = parseFloat((-1.5 - Math.abs(Math.cos(angleStep) * 0.5)).toFixed(3));
@@ -382,91 +277,7 @@
             URL.revokeObjectURL(downloadUrl);
         }
 
-        // --- PHOTO PROCESSOR FUNCTIONS ---
-        function drawDefaultCanvasMessage() {
-            processorCanvas.width = window.innerWidth;
-            processorCanvas.height = window.innerHeight;
-            processorCtx.fillStyle = "#111827";
-            processorCtx.fillRect(0, 0, processorCanvas.width, processorCanvas.height);
-            processorCtx.fillStyle = "#6b7280";
-            processorCtx.font = "14px -apple-system, sans-serif";
-            processorCtx.textAlign = "center";
-            processorCtx.fillText("Upload an image to start filtering and editing", processorCanvas.width / 2, processorCanvas.height / 2);
-        }
-
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const img = new Image();
-                img.onload = function() {
-                    loadedImage = img;
-                    applyImageFilters();
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function applyImageFilters() {
-            if (!loadedImage) return;
-
-            const brightness = document.getElementById('range-brightness').value;
-            const contrast = document.getElementById('range-contrast').value;
-            const grayscale = document.getElementById('range-grayscale').value;
-            const invert = document.getElementById('range-invert').value;
-
-            // Update text labels
-            document.getElementById('val-brightness').innerText = brightness;
-            document.getElementById('val-contrast').innerText = contrast;
-            document.getElementById('val-grayscale').innerText = grayscale;
-            document.getElementById('val-invert').innerText = invert;
-
-            processorCanvas.width = window.innerWidth;
-            processorCanvas.height = window.innerHeight;
-
-            // Calculate responsive fit dimensions for the uploaded image
-            let hRatio = processorCanvas.width / loadedImage.width;
-            let vRatio = processorCanvas.height / loadedImage.height;
-            let ratio = Math.min(hRatio, vRatio);
-            let centerShiftX = (processorCanvas.width - loadedImage.width * ratio) / 2;
-            let centerShiftY = (processorCanvas.height - loadedImage.height * ratio) / 2;
-
-            processorCtx.clearRect(0, 0, processorCanvas.width, processorCanvas.height);
-            processorCtx.fillStyle = "#050505";
-            processorCtx.fillRect(0, 0, processorCanvas.width, processorCanvas.height);
-
-            // Apply CSS filter pipeline directly onto the canvas draw routine
-            processorCtx.filter = `brightness(${brightness}%) contrast(${contrast}%) grayscale(${grayscale}%) invert(${invert}%)`;
-            processorCtx.drawImage(loadedImage, 0, 0, loadedImage.width, loadedImage.height, centerShiftX, centerShiftY, loadedImage.width * ratio, loadedImage.height * ratio);
-            processorCtx.filter = 'none'; // reset filter context
-        }
-
-        function downloadProcessedImage() {
-            if (!loadedImage) {
-                alert("Please upload a photo first before downloading.");
-                return;
-            }
-
-            const link = document.createElement('a');
-            link.download = `processed_photo_${Date.now()}.png`;
-            link.href = processorCanvas.toDataURL('image/png');
-            link.click();
-        }
-
-        window.addEventListener('load', () => {
-            initCameraFeed();
-        });
-
-        window.addEventListener('resize', () => {
-            if (currentMode === 'processor' && loadedImage) {
-                applyImageFilters();
-            } else if (currentMode === 'processor') {
-                drawDefaultCanvasMessage();
-            }
-        });
+        window.addEventListener('load', initCameraFeed);
     </script>
 </body>
 </html>
