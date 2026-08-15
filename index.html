@@ -24,7 +24,7 @@
             z-index: 1;
         }
         #camera-stream.front-facing {
-            transform: scaleX(-1); /* Mirrors the front camera preview naturally */
+            transform: scaleX(-1);
         }
         #hud-overlay {
             position: absolute;
@@ -53,7 +53,7 @@
         .brand-group { display: flex; align-items: center; gap: 12px; }
         .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #f0f0f0; }
         
-        .camera-switch-btn {
+        .camera-switch-btn, .file-upload-btn {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #ffffff;
@@ -64,7 +64,9 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .camera-switch-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .camera-switch-btn:hover, .file-upload-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .file-upload-btn { display: inline-block; text-align: center; }
+        #json-file-input { display: none; }
 
         .badge {
             font-size: 11px;
@@ -119,17 +121,34 @@
         #scan-btn.scanning { background: #ff453a; }
         #save-btn { background: #30d158; color: white; display: none; }
         button.action-btn:active { transform: scale(0.97); opacity: 0.8; }
+        
+        #render-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            display: none;
+        }
     </style>
+    <!-- Include Three.js for 3D model reconstruction from JSON -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
     <video id="camera-stream" autoplay playsinline muted></video>
+    <div id="render-container"></div>
 
     <div id="hud-overlay">
         <div class="top-status interactive">
             <div class="brand-group">
                 <span class="brand">SPATIAL DASH</span>
-                <button class="camera-switch-btn" onclick="switchCamera()">📷 Flip Camera</button>
+                <button class="camera-switch-btn" onclick="switchCamera()">📷 Flip</button>
+                <label class="file-upload-btn">
+                    📁 Load JSON
+                    <input type="file" id="json-file-input" accept=".json" onchange="loadEnvironmentMap(event)">
+                </label>
             </div>
             <span id="status-badge" class="badge">SYSTEM READY</span>
         </div>
@@ -146,7 +165,7 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Mode</div>
-                    <div class="metric-value">Structured Vector</div>
+                    <div id="mode-status" class="metric-value">Live Vector</div>
                 </div>
             </div>
             
@@ -159,32 +178,35 @@
 
     <script>
         let videoElement = document.getElementById('camera-stream');
+        let renderContainer = document.getElementById('render-container');
         let scanBtn = document.getElementById('scan-btn');
         let saveBtn = document.getElementById('save-btn');
         let statusBadge = document.getElementById('status-badge');
         let nodeCountText = document.getElementById('node-count');
         let surfaceStatusText = document.getElementById('surface-status');
+        let modeStatusText = document.getElementById('mode-status');
 
         let isScanning = false;
         let spatialVertices = []; 
         let scanInterval = null;
         let angleStep = 0;
-        let currentFacingMode = "environment"; // Starts with rear camera
+        let currentFacingMode = "environment";
         let activeStream = null;
 
+        // Three.js variables for rendering loaded JSON maps
+        let scene, camera, renderer, pointCloud;
+
         async function initCameraFeed() {
+            if (renderContainer.style.display === "block") return; // Keep camera hidden if rendering 3D model
             if (activeStream) {
                 activeStream.getTracks().forEach(track => track.stop());
             }
 
             try {
-                const constraints = {
-                    video: { facingMode: currentFacingMode }
-                };
+                const constraints = { video: { facingMode: currentFacingMode } };
                 activeStream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = activeStream;
 
-                // Handle front camera mirroring style toggle
                 if (currentFacingMode === "user") {
                     videoElement.classList.add("front-facing");
                 } else {
@@ -195,7 +217,7 @@
                     activeStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     videoElement.srcObject = activeStream;
                 } catch (e) {
-                    alert("Camera permissions required or device camera unavailable.");
+                    console.log("Camera unavailable, running in simulation mode.");
                 }
             }
         }
@@ -220,15 +242,19 @@
                 angleStep = 0;
 
                 scanInterval = setInterval(() => {
-                    angleStep += 0.15;
-                    
-                    let x = parseFloat((Math.sin(angleStep) * 1.2).toFixed(3));
-                    let y = parseFloat((Math.cos(angleStep * 0.5) * 0.6 + (Math.random() * 0.1)).toFixed(3));
-                    let z = parseFloat((-1.5 - Math.abs(Math.cos(angleStep) * 0.5)).toFixed(3));
+                    angleStep += 0.12;
+                    // Generate rich geometric point cloud data simulating a room scan
+                    let radius = 1.5 + Math.sin(angleStep * 2) * 0.3;
+                    let x = parseFloat((Math.sin(angleStep) * radius).toFixed(3));
+                    let y = parseFloat((Math.cos(angleStep * 1.5) * 0.8 + (Math.random() * 0.05)).toFixed(3));
+                    let z = parseFloat((-2.0 + Math.cos(angleStep) * radius).toFixed(3));
 
                     spatialVertices.push(x, y, z);
+                    // Add secondary density point for rich mesh generation payload
+                    spatialVertices.push(x * 0.9, y - 0.2, z * 0.9);
+                    
                     nodeCountText.innerText = spatialVertices.length / 3;
-                }, 100);
+                }, 80);
 
             } else {
                 scanBtn.innerText = "START SCANNING";
@@ -249,7 +275,7 @@
             const environmentPayload = {
                 metadata: {
                     generator: "Spatial Dash Pro Web Engine",
-                    version: "2.3",
+                    version: "3.0",
                     type: "BufferGeometry",
                     totalVertices: spatialVertices.length / 3,
                     timestamp: new Date().toISOString()
@@ -275,6 +301,109 @@
             fileLink.click();
             document.body.removeChild(fileLink);
             URL.revokeObjectURL(downloadUrl);
+        }
+
+        // Feature: Load JSON file and render a complete 3D interactive model using Three.js
+        function loadEnvironmentMap(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const jsonContent = JSON.parse(e.target.result);
+                    render3DModelFromJSON(jsonContent);
+                } catch (err) {
+                    alert("Invalid JSON environment map file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function render3DModelFromJSON(payload) {
+            // Stop camera stream & switch view container
+            if (activeStream) {
+                activeStream.getTracks().forEach(track => track.stop());
+            }
+            videoElement.style.display = 'none';
+            renderContainer.style.display = 'block';
+            
+            modeStatusText.innerText = "3D Reconstructed";
+            statusBadge.innerText = "MODEL LOADED";
+            statusBadge.classList.add("active");
+
+            // Extract vertices array safely from standard or custom schemas
+            let rawArray = [];
+            if (payload.data && payload.data.attributes && payload.data.attributes.position) {
+                rawArray = payload.data.attributes.position.array;
+            } else if (payload.vertices) {
+                rawArray = payload.vertices;
+            } else {
+                alert("Unrecognized JSON structural format.");
+                return;
+            }
+
+            nodeCountText.innerText = rawArray.length / 3;
+            surfaceStatusText.innerText = "Mesh Active";
+
+            // Initialize Three.js scene if not already initialized
+            if (!scene) {
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.set(0, 0, 3.5);
+
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderContainer.appendChild(renderer.domElement);
+
+                // Add ambient lights & directional lighting for depth
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+                scene.add(ambientLight);
+                
+                // Mouse rotation interaction variables
+                let isDragging = false;
+                let prevMousePos = { x: 0, y: 0 };
+
+                window.addEventListener('mousedown', (e) => { isDragging = true; prevMousePos = { x: e.clientX, y: e.clientY }; });
+                window.addEventListener('mousemove', (e) => {
+                    if (!isDragging || !pointCloud) return;
+                    let deltaX = e.clientX - prevMousePos.x;
+                    let deltaY = e.clientY - prevMousePos.y;
+                    pointCloud.rotation.y += deltaX * 0.005;
+                    pointCloud.rotation.x += deltaY * 0.005;
+                    prevMousePos = { x: e.clientX, y: e.clientY };
+                });
+                window.addEventListener('mouseup', () => { isDragging = false; });
+            }
+
+            // Remove previous model if exists
+            if (pointCloud) scene.remove(pointCloud);
+
+            // Create Three.js BufferGeometry from JSON array values
+            const geometry = new THREE.BufferGeometry();
+            const floatArray = new Float32Array(rawArray);
+            geometry.setAttribute('position', new THREE.BufferAttribute(floatArray, 3));
+
+            // Style point cloud nodes with glowing material
+            const material = new THREE.PointsMaterial({
+                size: 0.06,
+                color: 0x0a84ff,
+                transparent: true,
+                opacity: 0.85
+            });
+
+            pointCloud = new THREE.Points(geometry, material);
+            scene.add(pointCloud);
+
+            // Animation loop to render 3D space
+            function animate() {
+                requestAnimationFrame(animate);
+                if (pointCloud && !window.isDraggingModel) {
+                    pointCloud.rotation.y += 0.003; // Gentle auto-rotation
+                }
+                renderer.render(scene, camera);
+            }
+            animate();
         }
 
         window.addEventListener('load', initCameraFeed);
