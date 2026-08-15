@@ -3,275 +3,923 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperStream4D • Infinite Dense Volumetric Streamer</title>
+<title>HyperStream XD • Dimensional Volumetric Video Engine</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#030712;color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:400px;background:#0b0f19;border-right:1px solid #1f2937;display:flex;flex-direction:column;padding:14px;gap:10px;z-index:10;overflow-y:auto}
-.brand{font-size:15px;font-weight:800;letter-spacing:1.2px;color:#38bdf8}
-.brand span{background: -webkit-linear-gradient(#7dd3fc, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
-.section-card{background:rgba(17,24,39,.7);border:1px solid #1f2937;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
-.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8}
-button.primary-btn{background:#4f46e5;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:11px}
-button.primary-btn:hover{background:#4338ca}
-button.danger-btn{background:#dc2626;color:#fff;border:none;padding:8px;border-radius:8px;font-weight:700;cursor:pointer;font-size:11px;width:100%}
+#sidebar{width:390px;min-width:270px;background:#0b0f19;border-right:1px solid #1f2937;display:flex;flex-direction:column;padding:10px;gap:6px;z-index:10;overflow-y:auto}
+.brand{font-size:13px;font-weight:800;letter-spacing:1px;color:#38bdf8;line-height:1.25}
+.brand span{background:linear-gradient(90deg,#38bdf8,#a855f7,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.section-card{background:rgba(17,24,39,.82);border:1px solid #1f2937;border-radius:9px;padding:8px;display:flex;flex-direction:column;gap:5px}
+.card-title{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#94a3b8}
+.action-toggle-row{display:flex;gap:4px}
+.tab-btn{flex:1;padding:6px 2px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;font-size:10px;font-weight:600;cursor:pointer}
+.tab-btn.active{background:#7c3aed;color:#fff;border-color:#6d28d9}
+.upload-section{border:2px dashed #334155;padding:8px;border-radius:7px;text-align:center;background:rgba(255,255,255,.015);cursor:pointer;font-size:10px}
+.upload-section.dragover{border-color:#a855f7;background:rgba(168,85,247,.08)}
+input[type=file]{display:none}
+textarea{width:100%;height:44px;background:#1e293b;border:1px solid #334155;padding:5px;border-radius:5px;color:#e2e8f0;font-family:monospace;font-size:9px;resize:none}
+.layer-control-row{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#cbd5e1;gap:5px}
+input[type=range]{accent-color:#a855f7;cursor:pointer;width:98px}
+select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;padding:2px 3px;font-size:10px}
+#chat-container{flex:1;min-height:36px;max-height:58px;background:#1e293b;border-radius:7px;padding:4px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;font-size:9px}
+.chat-message{padding:3px 5px;border-radius:4px;background:#334155;color:#e2e8f0;word-break:break-word}
+.chat-message.system{background:#581c87;color:#e9d5ff}
+.chat-message.error{background:#7f1d1d;color:#fecaca}
+input[type=text]{flex:1;background:#1e293b;border:1px solid #334155;padding:5px;border-radius:5px;color:#fff;font-size:10px}
+button.primary-btn{background:#7c3aed;color:#fff;border:none;padding:6px 8px;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px}
+button.primary-btn:hover{background:#6d28d9}
+button.danger-btn{background:#dc2626;color:#fff;border:none;padding:6px;border-radius:6px;font-weight:700;cursor:pointer;font-size:10px;width:100%}
 button.danger-btn.scanning{background:#ea580c}
-#viewer-container{flex:1;position:relative;background:radial-gradient(circle at center,#0f172a 0%,#030712 100%)}
+button.secondary-btn{background:#334155;color:#f1f5f9;border:none;padding:6px;border-radius:6px;font-weight:600;cursor:pointer;font-size:10px}
+#viewer-container{flex:1;position:relative;background:radial-gradient(ellipse at center,#0f172a 0%,#030712 70%)}
 canvas{display:block;width:100%;height:100%}
+.stats-overlay{position:absolute;top:12px;right:12px;background:rgba(3,7,18,.92);backdrop-filter:blur(10px);padding:8px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.08);font-size:10px;color:#94a3b8;z-index:5;line-height:1.45}
+.stats-overlay span{color:#a855f7;font-weight:700}
+.progress-bar{height:3px;background:#1e293b;border-radius:1.5px;overflow:hidden;margin-top:2px}
+.progress-fill{height:100%;background:#a855f7;width:0%;transition:width .15s}
+.vault-item{display:flex;justify-content:space-between;align-items:center;background:#1e293b;padding:3px 5px;border-radius:4px;font-size:9px}
 #webcam-video{display:none}
-.stats-overlay{position:absolute;top:16px;right:16px;background:rgba(3,7,18,.85);backdrop-filter:blur(8px);padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:#94a3b8;z-index:5}
-.stats-overlay span{color:#818cf8;font-weight:700}
-.layer-control-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#cbd5e1}
-input[type=range]{accent-color:#818cf8;cursor:pointer;width:110px}
-textarea { width: 100%; background: #030712; color: #38bdf8; border: 1px solid #1f2937; border-radius: 6px; padding: 6px; font-size: 10px; font-family: monospace; resize: vertical; }
+.layer-toggles{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.layer-chip{font-size:9px;padding:3px 6px;border-radius:4px;background:#1e293b;border:1px solid #334155;cursor:pointer;user-select:none}
+.layer-chip.on{background:#7c3aed;border-color:#6d28d9;color:#fff}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
 </head>
 <body>
-
 <div id="sidebar">
-    <div class="brand">INFINITE 4D STREAMER<br><span>DENSE PIXEL-DEPTH VOLUMETRICS</span></div>
-    
-    <div class="section-card">
-        <div class="card-title">Live 4D Infinite Capture</div>
-        <button id="scan-toggle-btn" class="danger-btn" onclick="toggleInfiniteScanning()">START INFINITE 4D STREAM</button>
-        <button class="primary-btn" onclick="exportInfiniteStream()" style="background:#059669;margin-top:4px;">Export Infinite 4D JSON</button>
-    </div>
+  <div class="brand">HYPERSTREAM XD<br><span>DIMENSIONAL VOLUMETRIC VIDEO</span></div>
 
-    <div class="section-card">
-        <div class="card-title">JSON Data Clipboard</div>
-        <button class="primary-btn" onclick="copyJSONToClipboard()" style="background:#2563eb;">Copy JSON to Clipboard</button>
-        <textarea id="json-output-box" rows="4" placeholder="Recorded JSON payload will appear here for instant copying..." readonly></textarea>
-    </div>
+  <div class="action-toggle-row">
+    <button id="btn-tab-capture" class="tab-btn active" onclick="switchMode('capture')">📡 Capture</button>
+    <button id="btn-tab-load" class="tab-btn" onclick="switchMode('load')">📂 Load</button>
+    <button id="btn-tab-paste" class="tab-btn" onclick="switchMode('paste')">📋 Paste</button>
+  </div>
 
-    <div class="section-card">
-        <div class="card-title">Volumetric & Temporal Controls</div>
-        <div class="layer-control-row"><span>Node Density Step</span><input type="range" id="density-step" min="2" max="10" step="1" value="3" oninput="updateDensity(this.value)"><span id="density-val">3px</span></div>
-        <div class="layer-control-row"><span>Depth Amplitude Z</span><input type="range" id="depth-z" min="1" max="25" step="0.5" value="10" oninput="updateDepth(this.value)"></div>
-        <div class="layer-control-row"><span>Node Point Size</span><input type="range" id="point-size" min="0.01" max="0.1" step="0.005" value="0.025" oninput="updatePointSize(this.value)"></div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:4px">Active Nodes/Frame: <span id="node-counter">0</span></div>
-        <div style="font-size:11px;color:#94a3b8">Recorded Frames: <span id="frame-counter">0</span></div>
-    </div>
+  <div id="panel-capture" class="section-card">
+    <div class="card-title">Live Dimensional Video Capture → Multi-Layer 5D+</div>
+    <button id="scan-toggle-btn" class="danger-btn" onclick="toggleInfiniteScanning()">START DIMENSIONAL STREAM</button>
+    <div class="layer-control-row"><span>Node Step</span><input type="range" id="density-step" min="1" max="5" step="1" value="2" oninput="stepSize=parseInt(this.value);document.getElementById('density-val').innerText=this.value+'px'"><span id="density-val">2px</span></div>
+    <div class="layer-control-row"><span>Depth Amp</span><input type="range" id="depth-z" min="4" max="48" step="0.5" value="28" oninput="depthMultiplier=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Point Size</span><input type="range" id="point-size" min="0.012" max="0.09" step="0.002" value="0.038" oninput="currentPointSize=parseFloat(this.value);updatePointSizes()"></div>
+    <div class="layer-control-row"><span>Layers</span><input type="range" id="layer-count" min="1" max="8" step="1" value="5" oninput="layerCount=parseInt(this.value);document.getElementById('layer-val').innerText=this.value;rebuildLayerChips()"><span id="layer-val">5</span></div>
+    <div class="layer-control-row"><span>Layer Depth</span><input type="range" id="layer-spread" min="0.08" max="0.85" step="0.01" value="0.40" oninput="layerSpread=parseFloat(this.value)"></div>
+    <div class="layer-control-row"><span>Temporal Smooth</span><input type="range" id="smooth-factor" min="0" max="0.92" step="0.02" value="0.68" oninput="smoothFactor=parseFloat(this.value)"></div>
+    <div style="font-size:9px;color:#94a3b8">Live Nodes: <span id="node-counter">0</span> · Frames: <span id="frame-counter">0</span> · Layers: <span id="live-layers">5</span></div>
+    <button class="primary-btn" style="background:#059669" onclick="exportRecordedJSON()">Export JSON</button>
+    <button class="secondary-btn" onclick="copyJSONToClipboard()">Copy JSON</button>
+    <textarea id="json-output-box" readonly placeholder="Dimensional HyperStream payload..."></textarea>
+  </div>
 
-    <div class="section-card" style="flex:1">
-        <div class="card-title">Matrix Status Console</div>
-        <div id="console-log" style="font-size:11px;color:#38bdf8;font-family:monospace;overflow-y:auto;max-height:120px;">System initialized. Camera feed ready for infinite point sampling.</div>
+  <div id="panel-load" class="section-card" style="display:none">
+    <div class="card-title">Load HyperStream Dimensional Payload</div>
+    <div id="drop-zone" class="upload-section" onclick="document.getElementById('file-input').click()">
+      Drop JSON or click<br><small style="opacity:.55">HyperStream5D / MultiLayer</small>
+      <input type="file" id="file-input" accept=".json" onchange="handleFileUpload(event)">
     </div>
+    <div style="display:flex;gap:4px">
+      <button class="secondary-btn" style="flex:1" onclick="clearScene()">Clear</button>
+      <button class="secondary-btn" style="flex:1" onclick="loadVaultList()">Vault</button>
+    </div>
+  </div>
+
+  <div id="panel-paste" class="section-card" style="display:none">
+    <div class="card-title">Paste HyperStream Matrix</div>
+    <textarea id="json-paste-box" placeholder='{"HyperStream5D":[...]}'></textarea>
+    <button class="primary-btn" onclick="handleCodePaste()">Process Matrix</button>
+  </div>
+
+  <div class="section-card">
+    <div class="card-title">Dimensional · Temporal · Meta Controls</div>
+    <div class="layer-control-row"><span>Render</span>
+      <select id="render-mode-select" onchange="updateRenderMode(this.value)">
+        <option value="points" selected>Glowing Volumetric</option>
+        <option value="solid">Solid Mesh</option>
+        <option value="wireframe">Wireframe</option>
+      </select>
+    </div>
+    <div class="layer-control-row"><span>Meta-Axis E</span><input type="range" id="e-meta-range" min="0" max="100" step="1" value="12" oninput="updateMetaDimension(this.value)"><span id="e-meta-val">0.12</span></div>
+    <div class="layer-control-row"><span>Time Scrub T</span><input type="range" id="t-scrub-range" min="0" max="100" step="1" value="0" oninput="updateTScrubs(this.value)"><span id="t-scrub-val">0 / 0</span></div>
+    <div class="layer-control-row"><span>Playback FPS</span><input type="range" id="fps-range" min="6" max="30" step="1" value="18" oninput="currentFPS=parseInt(this.value);document.getElementById('fps-label').innerText=this.value"><span id="fps-label">18</span></div>
+    <div class="layer-control-row"><span>Grid</span><input type="checkbox" id="grid-toggle" checked onchange="toggleGrid(this.checked)"></div>
+    <div class="layer-control-row"><span>Auto Orbit</span><input type="checkbox" id="orbit-toggle" checked onchange="autoOrbit=this.checked"></div>
+    <div class="layer-control-row"><span>Layer Pulse</span><input type="checkbox" id="pulse-toggle" checked onchange="layerPulse=this.checked"></div>
+    <div class="layer-control-row"><span>Pins</span><button class="primary-btn" style="padding:2px 6px;font-size:9px" id="map-mode-btn" onclick="toggleMappingMode()">Enable Pinning</button></div>
+    <div class="card-title" style="margin-top:4px">Active Dimensional Layers</div>
+    <div id="layer-chips" class="layer-toggles"></div>
+    <div style="font-size:9px;color:#94a3b8;margin-top:3px">Active Nodes: <span id="node-counter-main">0</span>
+      <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+    </div>
+  </div>
+
+  <div class="section-card">
+    <div class="card-title">Mapped Spatial Pins</div>
+    <div id="pins-list" style="display:flex;flex-direction:column;gap:3px;max-height:48px;overflow-y:auto"><small style="color:#64748b">No anchors</small></div>
+  </div>
+
+  <div class="section-card">
+    <div class="card-title">Vaulted Cores</div>
+    <div id="vault-list" style="display:flex;flex-direction:column;gap:3px;max-height:48px;overflow-y:auto"><small style="color:#64748b">Empty</small></div>
+  </div>
+
+  <div class="section-card">
+    <div class="card-title">Render & Export</div>
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <button class="primary-btn" style="background:#0f766e" onclick="exportCurrentPNG()">📸 PNG Frame</button>
+      <button class="primary-btn" style="background:#7c3aed" onclick="exportOrbitGIF()">🖼 Orbit GIF</button>
+      <button class="primary-btn" style="background:#2563eb" id="export-video-btn" onclick="exportWebMVideo()">🎥 WebM Stream</button>
+    </div>
+  </div>
+
+  <div class="section-card" style="flex:1">
+    <div class="card-title">Systems Console</div>
+    <div id="chat-container"><div class="chat-message system">Dimensional Volumetric Video engine online.</div></div>
+    <div style="display:flex;gap:4px;margin-top:2px">
+      <input type="text" id="chat-input" placeholder="Query matrix..." onkeypress="if(event.key==='Enter')sendChatMessage()">
+      <button class="primary-btn" onclick="sendChatMessage()">Send</button>
+    </div>
+  </div>
 </div>
 
 <div id="viewer-container">
-    <div class="stats-overlay">Mode: <span id="mode-status">Interactive 3D/4D Space</span><br>FPS: <span id="fps-display">60</span></div>
-    <video id="webcam-video" autoplay playsinline muted></video>
-    <canvas id="three-canvas"></canvas>
+  <div class="stats-overlay">
+    Status: <span id="render-status">Idle</span><br>
+    <span id="bbox-info" style="font-size:9px;color:#64748b"></span><br>
+    FPS: <span id="fps-display">—</span> · Nodes: <span id="stats-nodes">0</span>
+  </div>
+  <video id="webcam-video" autoplay playsinline muted></video>
+  <canvas id="three-canvas"></canvas>
 </div>
 
 <script>
-let scene, camera, renderer, controls, particleCloud;
+/* ========== CORE STATE ========== */
+let scene, camera, renderer, controls, gridHelper;
+let spatialLayers = [];
 let video, canvas2D, ctx2D;
-let isInfiniteScanning = false;
-let recorded4DFrames = [];
-let frameIndex = 0;
-let stepSize = 3;
-let depthMultiplier = 10.0;
-let currentPointSize = 0.025;
-let frameCount = 0;
-let fpsTimer = 0;
+let isInfiniteScanning = false, recorded4DFrames = [], frameIndex = 0;
+let stepSize = 2, depthMultiplier = 28, currentPointSize = 0.038;
+let layerCount = 5, layerSpread = 0.40, smoothFactor = 0.68;
+let currentRenderMode = 'points', currentMetaValue = 0.12, currentFPS = 18;
+let isPlayMode = true, playbackFrames = [], playbackFrameIndex = 0, lastFrameTime = 0;
+let rawSourceFrames = [];
+let isMappingActive = false, mappedPins = [];
+let frameCount = 0, fpsTimer = 0;
+let autoOrbit = true, layerPulse = true;
+let layerVisibility = [];
+const VAULT_KEY = 'hyperstream_xd_vault_v3';
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
+/* Temporal smoothing buffers */
+let prevLayerPos = [];
+let timePhase = 0;
+
+/* ========== INIT ========== */
 window.addEventListener('DOMContentLoaded', () => {
-    initEngine3D();
-    initWebcam();
+  init3D();
+  initWebcam();
+  setupDragDrop();
+  loadVaultList();
+  rebuildLayerChips();
 });
 
-function initEngine3D() {
-    const container = document.getElementById('viewer-container');
-    scene = new THREE.Scene();
-    
-    camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.05, 1000);
-    camera.position.set(0, 0, 3.5);
-
-    renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), antialias: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setClearColor(0x030712);
-
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.8));
-
-    const geometry = new THREE.BufferGeometry();
-    const material = new THREE.PointsMaterial({
-        size: currentPointSize,
-        vertexColors: true,
-        sizeAttenuation: true,
-        transparent: true,
-        opacity: 0.95
-    });
-    particleCloud = new THREE.Points(geometry, material);
-    scene.add(particleCloud);
-
-    window.addEventListener('resize', () => {
-        camera.aspect = container.clientWidth / container.clientHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
-    });
-
-    animateEngine();
+function init3D() {
+  const c = document.getElementById('viewer-container');
+  scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x030712, 0.045);
+  camera = new THREE.PerspectiveCamera(52, c.clientWidth / c.clientHeight, 0.03, 3000);
+  camera.position.set(0, 0.35, 3.8);
+  const canvas = document.getElementById('three-canvas');
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
+  renderer.setSize(c.clientWidth, c.clientHeight);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+  renderer.setClearColor(0x030712);
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.055;
+  controls.rotateSpeed = 0.65;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.9;
+  gridHelper = new THREE.GridHelper(36, 36, 0x1e293b, 0x0f172a);
+  gridHelper.position.y = -1.65;
+  scene.add(gridHelper);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const d1 = new THREE.DirectionalLight(0xffffff, 0.9); d1.position.set(2.5, 4.5, 5); scene.add(d1);
+  const d2 = new THREE.DirectionalLight(0xa855f7, 0.5); d2.position.set(-4, -1.5, -3); scene.add(d2);
+  const d3 = new THREE.DirectionalLight(0x38bdf8, 0.25); d3.position.set(0, 3, -4); scene.add(d3);
+  window.addEventListener('resize', onWindowResize);
+  renderer.domElement.addEventListener('click', handleCanvasClick);
+  animate();
 }
 
 function initWebcam() {
-    video = document.getElementById('webcam-video');
-    canvas2D = document.createElement('canvas');
-    ctx2D = canvas2D.getContext('2d', { willReadFrequently: true });
-
-    navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 } } })
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
-            logConsole("Webcam connected successfully.");
-        })
-        .catch(err => {
-            logConsole("Error accessing webcam: " + err.message);
-        });
+  video = document.getElementById('webcam-video');
+  canvas2D = document.createElement('canvas');
+  ctx2D = canvas2D.getContext('2d', { willReadFrequently: true });
+  navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } } })
+    .then(stream => { video.srcObject = stream; video.play(); appendChat('Webcam linked · dimensional video ready.', 'system'); })
+    .catch(err => appendChat('Webcam error: ' + err.message, 'error'));
 }
 
-function logConsole(msg) {
-    const c = document.getElementById('console-log');
-    c.innerText += "\n> " + msg;
-    c.scrollTop = c.scrollHeight;
+function onWindowResize() {
+  const c = document.getElementById('viewer-container');
+  if (!c || !camera || !renderer) return;
+  camera.aspect = c.clientWidth / c.clientHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(c.clientWidth, c.clientHeight);
 }
 
-function updateDensity(v) { stepSize = parseInt(v); document.getElementById('density-val').innerText = v + 'px'; }
-function updateDepth(v) { depthMultiplier = parseFloat(v); }
-function updatePointSize(v) { currentPointSize = parseFloat(v); if(particleCloud) particleCloud.material.size = currentPointSize; }
+/* ========== ANIMATION LOOP ========== */
+function animate(now) {
+  requestAnimationFrame(animate);
+  if (controls) controls.update();
 
-function animateEngine(now) {
-    requestAnimationFrame(animateEngine);
-    if (controls) controls.update();
+  timePhase = now * 0.001;
 
-    frameCount++;
-    if (now - fpsTimer > 1000) {
-        document.getElementById('fps-display').innerText = Math.round((frameCount * 1000) / (now - fpsTimer));
-        frameCount = 0;
-        fpsTimer = now;
+  if (autoOrbit && controls) {
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.85;
+  } else if (controls) {
+    controls.autoRotate = false;
+  }
+
+  frameCount++;
+  if (now - fpsTimer > 1000) {
+    document.getElementById('fps-display').innerText = Math.round((frameCount * 1000) / (now - fpsTimer));
+    frameCount = 0; fpsTimer = now;
+  }
+
+  if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
+    const vw = video.videoWidth, vh = video.videoHeight;
+    if (canvas2D.width !== vw || canvas2D.height !== vh) { canvas2D.width = vw; canvas2D.height = vh; }
+    ctx2D.drawImage(video, 0, 0, vw, vh);
+    const pixels = ctx2D.getImageData(0, 0, vw, vh).data;
+
+    // Advanced subject-centric depth mapping for dimensional video
+    const basePos = [], baseCol = [];
+    const invW = 1 / vw, invH = 1 / vh;
+    const cx = vw * 0.5, cy = vh * 0.5;
+    const maxR = Math.sqrt(cx * cx + cy * cy);
+
+    for (let y = 0; y < vh; y += stepSize) {
+      for (let x = 0; x < vw; x += stepSize) {
+        const idx = (y * vw + x) * 4;
+        const r = pixels[idx] / 255, g = pixels[idx + 1] / 255, b = pixels[idx + 2] / 255;
+
+        const nx = ((vw - x) * invW) * 2 - 1;
+        const ny = -(y * invH * 2 - 1);
+
+        // Perceptual luminance
+        const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+        // Soft subject mask: suppress dark/background regions so the volume focuses on the person
+        const subjectMask = Math.pow(Math.max(0.02, lum), 0.55);
+        if (subjectMask < 0.12) continue; // skip very dark background pixels → cleaner volume
+
+        // Depth from luminance with stronger midtone expansion
+        let depthRaw = Math.pow(lum, 0.68);
+        // Mild center bias so face/body pushes forward naturally
+        const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
+        const centerBias = 1 - 0.18 * (dx * dx + dy * dy);
+        depthRaw *= centerBias;
+
+        const nz = (depthRaw - 0.32) * (depthMultiplier * 0.168);
+
+        // Gentle cylindrical wrap so the subject feels rounded in 3D space
+        const wrap = 1 + 0.045 * (nx * nx);
+        const px = nx * 1.58 * wrap;
+        const py = ny * 1.58;
+
+        basePos.push(px, py, nz);
+        // Boost saturation slightly for clearer color separation across layers
+        const sat = 1.12;
+        const avg = (r + g + b) / 3;
+        baseCol.push(
+          Math.min(1, avg + (r - avg) * sat),
+          Math.min(1, avg + (g - avg) * sat),
+          Math.min(1, avg + (b - avg) * sat)
+        );
+      }
     }
 
-    if (video && video.readyState === video.HAVE_ENOUGH_DATA) {
-        const vw = video.videoWidth;
-        const vh = video.videoHeight;
-        
-        if (canvas2D.width !== vw || canvas2D.height !== vh) {
-            canvas2D.width = vw;
-            canvas2D.height = vh;
-        }
+    const nodeCount = basePos.length / 3;
+    document.getElementById('node-counter').innerText = nodeCount.toLocaleString();
+    document.getElementById('stats-nodes').innerText = (nodeCount * layerCount).toLocaleString();
+    document.getElementById('live-layers').innerText = layerCount;
 
-        ctx2D.drawImage(video, 0, 0, vw, vh);
-        const imgData = ctx2D.getImageData(0, 0, vw, vh);
-        const pixels = imgData.data;
-
-        const positions = [];
-        const colors = [];
-        const tVal = frameIndex;
-
-        for (let y = 0; y < vh; y += stepSize) {
-            for (let x = 0; x < vw; x += stepSize) {
-                const idx = (y * vw + x) * 4;
-                const r = pixels[idx] / 255;
-                const g = pixels[idx + 1] / 255;
-                const b = pixels[idx + 2] / 255;
-
-                const nx = ((vw - x) / vw) * 2.0 - 1.0;
-                const ny = -((y / vh) * 2.0 - 1.0);
-                
-                const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
-                const nz = (luminance - 0.5) * (depthMultiplier * 0.2);
-
-                positions.push(nx * 1.8, ny * 1.8, nz);
-                colors.push(r, g, b);
-            }
-        }
-
-        const posArr = new Float32Array(positions);
-        const colArr = new Float32Array(colors);
-
-        particleCloud.geometry.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
-        particleCloud.geometry.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
-        particleCloud.geometry.attributes.position.needsUpdate = true;
-        particleCloud.geometry.attributes.color.needsUpdate = true;
-
-        document.getElementById('node-counter').innerText = (positions.length / 3).toLocaleString();
-
-        if (isInfiniteScanning) {
-            const condensedV = [];
-            for(let i=0; i<positions.length; i+=3) {
-                condensedV.push(Number(positions[i].toFixed(4)), Number(positions[i+1].toFixed(4)), Number(positions[i+2].toFixed(4)), Number(tVal));
-            }
-            const condensedC = colors.map(val => Number(val.toFixed(2)));
-
-            recorded4DFrames.push({ v: condensedV, c: condensedC });
-            frameIndex++;
-            document.getElementById('frame-counter').innerText = recorded4DFrames.length;
-            
-            // Real-time update to text box during recording
-            updateJSONTextBox();
-        }
+    if (!rawSourceFrames.length || isInfiniteScanning) {
+      updateLiveMultiLayers(basePos, baseCol, now);
+      document.getElementById('node-counter-main').innerText = (nodeCount * layerCount).toLocaleString();
     }
 
-    if (renderer && scene && camera) renderer.render(scene, camera);
+    if (isInfiniteScanning) {
+      const condensedV = [];
+      for (let i = 0; i < basePos.length; i += 3) {
+        condensedV.push(+basePos[i].toFixed(4), +basePos[i + 1].toFixed(4), +basePos[i + 2].toFixed(4), frameIndex);
+      }
+      recorded4DFrames.push({
+        v: condensedV,
+        c: baseCol.map(v => +v.toFixed(2)),
+        meta: 0.35 + Math.random() * 0.3,
+        layers: layerCount,
+        spread: layerSpread
+      });
+      frameIndex++;
+      document.getElementById('frame-counter').innerText = recorded4DFrames.length;
+      if (frameIndex % 5 === 0) updateJSONTextBox();
+    }
+  }
+
+  if (layerPulse && spatialLayers.length && currentRenderMode === 'points') {
+    for (let L = 0; L < spatialLayers.length; L++) {
+      const obj = spatialLayers[L];
+      if (!obj || !obj.visible) continue;
+      const breath = 1 + Math.sin(timePhase * 1.4 + L * 0.7) * 0.018;
+      obj.scale.set(breath, breath, breath);
+    }
+  }
+
+  if (isPlayMode && playbackFrames.length > 0 && now - lastFrameTime > (1000 / currentFPS)) {
+    applyFrameAndRender(playbackFrameIndex, currentMetaValue);
+    playbackFrameIndex = (playbackFrameIndex + 1) % playbackFrames.length;
+    const scrub = document.getElementById('t-scrub-range');
+    if (scrub) scrub.value = playbackFrameIndex;
+    document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${playbackFrames.length - 1}`;
+    lastFrameTime = now;
+  }
+
+  if (renderer && scene && camera) renderer.render(scene, camera);
+}
+
+/* ========== MULTI-LAYER WITH TEMPORAL SMOOTHING + STRONG SPATIAL SEPARATION ========== */
+function clearSpatialLayers() {
+  for (const obj of spatialLayers) {
+    scene.remove(obj);
+    if (obj.geometry) obj.geometry.dispose();
+    if (obj.material) obj.material.dispose();
+  }
+  spatialLayers = [];
+  prevLayerPos = [];
+}
+
+function updateLiveMultiLayers(basePos, baseCol, now) {
+  while (spatialLayers.length > layerCount) {
+    const obj = spatialLayers.pop();
+    scene.remove(obj);
+    obj.geometry.dispose();
+    obj.material.dispose();
+    prevLayerPos.pop();
+  }
+
+  const nodeCount = basePos.length / 3;
+  if (nodeCount < 8) return;
+
+  const metaOffset = currentMetaValue * 0.34;
+  const maxL = Math.max(1, layerCount - 1);
+
+  for (let L = 0; L < layerCount; L++) {
+    // Smooth eased distribution — front layers tight, rear layers more spaced
+    const t = L / maxL;                          // 0 → 1 (front → back)
+    const ease = t * t * (3 - 2 * t);             // smoothstep
+    const signed = ease - 0.5;                    // -0.5 → +0.5
+
+    // Cleaner dimensional separation focused on Z (depth)
+    const depthOffset = signed * layerSpread * 3.1;
+    const yOffset     = signed * layerSpread * 0.28;
+    const xParallax   = signed * layerSpread * 0.14;
+    // Deeper layers expand slightly for cinematic perspective
+    const scale = 1 + signed * 0.055;
+
+    // Front = warmer & denser, rear = cooler & softer
+    const frontness = 1 - t;
+    const warm = 0.94 + frontness * 0.14;
+    const cool = 0.82 + (1 - frontness) * 0.38;
+
+    const pos = new Float32Array(nodeCount * 3);
+    const col = new Float32Array(nodeCount * 3);
+
+    for (let i = 0, j = 0; i < nodeCount; i++, j += 3) {
+      let px = basePos[j]     * scale + xParallax;
+      let py = basePos[j + 1] * scale + yOffset + metaOffset * (0.5 + L * 0.05);
+      let pz = basePos[j + 2] * scale + depthOffset;
+
+      // Temporal smoothing for continuous video feel
+      if (prevLayerPos[L] && prevLayerPos[L].length === pos.length && smoothFactor > 0.01) {
+        const prev = prevLayerPos[L];
+        const s = smoothFactor;
+        px = px * (1 - s) + prev[j]     * s;
+        py = py * (1 - s) + prev[j + 1] * s;
+        pz = pz * (1 - s) + prev[j + 2] * s;
+      }
+
+      pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
+
+      col[j]     = Math.min(1, baseCol[j]     * warm);
+      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.98 + L * 0.012));
+      col[j + 2] = Math.min(1, baseCol[j + 2] * cool);
+    }
+
+    prevLayerPos[L] = pos;
+
+    // Size & opacity tuned so the volume reads as solid, not grainy
+    const sizeMul = 1.12 - L * 0.055;
+    const opac    = 0.90 - L * 0.08;
+
+    let obj = spatialLayers[L];
+    if (!obj) {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      const mat = new THREE.PointsMaterial({
+        size: currentPointSize * sizeMul,
+        sizeAttenuation: true,
+        vertexColors: true,
+        transparent: true,
+        opacity: opac,
+        depthWrite: false,
+        blending: THREE.NormalBlending
+      });
+      obj = new THREE.Points(g, mat);
+      scene.add(obj);
+      spatialLayers[L] = obj;
+    } else {
+      // Re-create buffer attributes only when node count changes significantly
+      const oldCount = obj.geometry.attributes.position ? obj.geometry.attributes.position.count : 0;
+      if (oldCount !== nodeCount) {
+        obj.geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        obj.geometry.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      } else {
+        obj.geometry.attributes.position.array.set(pos);
+        obj.geometry.attributes.color.array.set(col);
+        obj.geometry.attributes.position.needsUpdate = true;
+        obj.geometry.attributes.color.needsUpdate = true;
+      }
+      if (obj.material.size !== undefined) {
+        obj.material.size = currentPointSize * sizeMul;
+        obj.material.opacity = opac;
+      }
+    }
+    obj.visible = layerVisibility[L] !== false;
+  }
+  rebuildLayerChips();
+}
+
+function updatePointSizes() {
+  spatialLayers.forEach((obj, L) => {
+    if (obj && obj.material && obj.material.size !== undefined) {
+      obj.material.size = currentPointSize * (1.12 - L * 0.055);
+    }
+  });
+}
+
+/* ========== CAPTURE ========== */
+function toggleInfiniteScanning() {
+  isInfiniteScanning = !isInfiniteScanning;
+  const btn = document.getElementById('scan-toggle-btn');
+  if (isInfiniteScanning) {
+    recorded4DFrames = []; frameIndex = 0;
+    btn.innerText = 'HALT DIMENSIONAL STREAM';
+    btn.classList.add('scanning');
+    appendChat(`Dimensional stream started · ${layerCount} layers · depth ${layerSpread.toFixed(2)}`, 'system');
+    document.getElementById('render-status').innerText = 'Recording';
+  } else {
+    btn.innerText = 'START DIMENSIONAL STREAM';
+    btn.classList.remove('scanning');
+    appendChat(`Stream finished · ${recorded4DFrames.length} frames captured.`, 'system');
+    document.getElementById('render-status').innerText = 'Capture Ready';
+    updateJSONTextBox();
+    if (recorded4DFrames.length > 0) {
+      processEnvironmentData({ HyperStream5D: recorded4DFrames, multiLayer: true, layers: layerCount, spread: layerSpread });
+    }
+  }
 }
 
 function updateJSONTextBox() {
-    const payload = { HyperStream4D: recorded4DFrames };
-    document.getElementById('json-output-box').value = JSON.stringify(payload);
+  document.getElementById('json-output-box').value = JSON.stringify({
+    HyperStream5D: recorded4DFrames,
+    multiLayer: true,
+    layers: layerCount,
+    spread: layerSpread
+  });
 }
 
-function toggleInfiniteScanning() {
-    isInfiniteScanning = !isInfiniteScanning;
-    const btn = document.getElementById('scan-toggle-btn');
-    if (isInfiniteScanning) {
-        recorded4DFrames = [];
-        frameIndex = 0;
-        btn.innerText = 'HALT & FINISH INFINITE STREAM';
-        btn.classList.add('scanning');
-        logConsole("Infinite 4D recording stream started...");
-    } else {
-        btn.innerText = 'START INFINITE 4D STREAM';
-        btn.classList.remove('scanning');
-        logConsole(`Recording finalized. Total recorded 4D frames: ${recorded4DFrames.length}`);
-        updateJSONTextBox();
-    }
-}
-
-function exportInfiniteStream() {
-    if (recorded4DFrames.length === 0) {
-        alert('No 4D frames recorded yet. Start capture first.');
-        return;
-    }
-    logConsole("Packaging infinite 4D JSON payload...");
-    const payload = { HyperStream4D: recorded4DFrames };
-    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `infinite_hyperstream_4d_${Date.now()}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    logConsole("Export complete!");
+function exportRecordedJSON() {
+  if (!recorded4DFrames.length) { alert('No frames recorded.'); return; }
+  const payload = { HyperStream5D: recorded4DFrames, multiLayer: true, layers: layerCount, spread: layerSpread };
+  const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `hyperstream_xd_dim_${Date.now()}.json`;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 800);
+  appendChat('Dimensional JSON exported.', 'system');
 }
 
 function copyJSONToClipboard() {
-    const textBox = document.getElementById('json-output-box');
-    if (!textBox.value) {
-        alert('No data available in JSON payload box yet.');
-        return;
+  const t = document.getElementById('json-output-box').value;
+  if (!t) { alert('Nothing to copy.'); return; }
+  navigator.clipboard.writeText(t).then(() => appendChat('JSON copied.', 'system'))
+    .catch(e => appendChat('Copy failed: ' + e, 'error'));
+}
+
+/* ========== MODE SWITCH ========== */
+function switchMode(m) {
+  ['capture', 'load', 'paste'].forEach(x => {
+    document.getElementById('btn-tab-' + x)?.classList.remove('active');
+    document.getElementById('panel-' + x).style.display = 'none';
+  });
+  document.getElementById('btn-tab-' + m)?.classList.add('active');
+  document.getElementById('panel-' + m).style.display = 'flex';
+}
+
+/* ========== DATA ========== */
+function toNumberArray(arr) {
+  if (!arr) return [];
+  const out = [];
+  for (let i = 0; i < arr.length; i++) {
+    const n = parseFloat(arr[i]);
+    if (isFinite(n)) out.push(n);
+  }
+  return out;
+}
+
+function extractSequence(data) {
+  if (!data) return null;
+  let raw = data.HyperStream5D || data.HyperStream4D || data.hyperStream || data.condensedNodes || (Array.isArray(data) ? data : null);
+  if (!raw) {
+    const key = Object.keys(data).find(k => Array.isArray(data[k]));
+    if (key) raw = data[key];
+  }
+  if (!raw) return null;
+  return raw.map(f => {
+    let v = f.v || f.vertices || f.vertices4D || [];
+    let c = f.c || f.colors || [];
+    let meta = f.meta !== undefined ? f.meta : (f.m !== undefined ? f.m : 0.5);
+    let layers = f.layers || data.layers || layerCount;
+    let spread = f.spread !== undefined ? f.spread : (data.spread || layerSpread);
+    return {
+      vertices: toNumberArray(v),
+      colors: toNumberArray(c),
+      meta: typeof meta === 'number' ? meta : 0.5,
+      layers: layers,
+      spread: spread
+    };
+  }).filter(f => f.vertices.length > 0);
+}
+
+function getMeshIndices(count) {
+  const indices = [];
+  const side = Math.round(Math.sqrt(count));
+  if (side > 4) {
+    for (let i = 0; i < count - side - 1; i++) {
+      if ((i + 1) % side !== 0) {
+        indices.push(i, i + 1, i + side);
+        indices.push(i + 1, i + side + 1, i + side);
+      }
     }
-    navigator.clipboard.writeText(textBox.value).then(() => {
-        logConsole("JSON payload successfully copied to clipboard!");
-        alert('JSON data copied to clipboard!');
-    }).catch(err => {
-        logConsole("Failed to copy JSON: " + err);
+  }
+  return indices;
+}
+
+function applyFrameAndRender(frameIdx, metaBlend) {
+  if (!rawSourceFrames.length) return;
+  const target = rawSourceFrames[frameIdx % rawSourceFrames.length];
+  const src = target.vertices;
+  const cols = target.colors;
+  const Lcount = target.layers || layerCount;
+  const spread = target.spread !== undefined ? target.spread : layerSpread;
+
+  const tupleSize = (src.length % 4 === 0) ? 4 : 3;
+  const basePos = [], baseCol = [];
+  for (let i = 0; i < src.length; i += tupleSize) {
+    const metaOffset = (target.meta || 0.5) * metaBlend * 0.38;
+    basePos.push(src[i], src[i + 1] + metaOffset, src[i + 2]);
+    const ci = (i / tupleSize) * 3;
+    if (cols.length >= ci + 3) baseCol.push(cols[ci], cols[ci + 1], cols[ci + 2]);
+    else baseCol.push(0.55, 0.4, 0.9);
+  }
+
+  const prevCount = layerCount;
+  const prevSpread = layerSpread;
+  layerCount = Lcount;
+  layerSpread = spread;
+
+  if (currentRenderMode === 'points') {
+    updateLiveMultiLayers(basePos, baseCol, performance.now());
+  } else {
+    clearSpatialLayers();
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(basePos), 3));
+    g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(baseCol), 3));
+    const indices = getMeshIndices(basePos.length / 3);
+    if (indices.length) g.setIndex(indices);
+    g.computeVertexNormals();
+    const mat = new THREE.MeshStandardMaterial({
+      vertexColors: true, roughness: 0.3, metalness: 0.18,
+      wireframe: currentRenderMode === 'wireframe', side: THREE.DoubleSide
     });
+    const mesh = new THREE.Mesh(g, mat);
+    mesh.rotation.y = Math.PI;
+    scene.add(mesh);
+    spatialLayers = [mesh];
+  }
+
+  layerCount = prevCount;
+  layerSpread = prevSpread;
+  document.getElementById('node-counter-main').innerText = ((basePos.length / 3) * Lcount).toLocaleString();
+  document.getElementById('stats-nodes').innerText = ((basePos.length / 3) * Lcount).toLocaleString();
+}
+
+function processEnvironmentData(data) {
+  try {
+    setProgress(10);
+    appendChat('Injecting dimensional stream…', 'system');
+    const seq = extractSequence(data);
+    if (seq && seq.length) {
+      rawSourceFrames = seq;
+      playbackFrames = seq;
+      playbackFrameIndex = 0;
+      isPlayMode = true;
+      if (data.layers) layerCount = data.layers;
+      if (data.spread) layerSpread = data.spread;
+      document.getElementById('layer-count').value = layerCount;
+      document.getElementById('layer-val').innerText = layerCount;
+      document.getElementById('layer-spread').value = layerSpread;
+      const scrub = document.getElementById('t-scrub-range');
+      if (scrub) { scrub.max = seq.length - 1; scrub.value = 0; }
+      document.getElementById('t-scrub-val').innerText = `0 / ${seq.length - 1}`;
+      applyFrameAndRender(0, currentMetaValue);
+      setProgress(100);
+      document.getElementById('render-status').innerText = 'Dimensional Active';
+      document.getElementById('bbox-info').innerText = `${seq.length} frames · ${layerCount} layers`;
+      appendChat(`✓ ${seq.length} frames · ${layerCount} dimensional layers.`, 'system');
+      if (seq.length < 100) saveToVault(`CORE_DIM_${Date.now()}`, { HyperStream5D: seq, multiLayer: true, layers: layerCount, spread: layerSpread });
+      rebuildLayerChips();
+      return;
+    }
+    appendChat('Unrecognized payload.', 'error');
+    setProgress(0);
+  } catch (e) {
+    appendChat('Parse error: ' + e.message, 'error');
+    setProgress(0);
+  }
+}
+
+/* ========== LAYER CHIPS ========== */
+function rebuildLayerChips() {
+  const container = document.getElementById('layer-chips');
+  if (!container) return;
+  container.innerHTML = '';
+  for (let L = 0; L < layerCount; L++) {
+    if (layerVisibility[L] === undefined) layerVisibility[L] = true;
+    const chip = document.createElement('div');
+    chip.className = 'layer-chip' + (layerVisibility[L] ? ' on' : '');
+    chip.innerText = `L${L + 1}`;
+    chip.onclick = () => {
+      layerVisibility[L] = !layerVisibility[L];
+      if (spatialLayers[L]) spatialLayers[L].visible = layerVisibility[L];
+      chip.classList.toggle('on', layerVisibility[L]);
+    };
+    container.appendChild(chip);
+  }
+}
+
+/* ========== UI ========== */
+function setProgress(p) { document.getElementById('progress-fill').style.width = Math.min(100, Math.max(0, p)) + '%'; }
+function appendChat(t, s = '') {
+  const b = document.getElementById('chat-container');
+  const d = document.createElement('div');
+  d.className = 'chat-message ' + s;
+  d.innerText = t;
+  b.appendChild(d);
+  b.scrollTop = b.scrollHeight;
+}
+function clearScene() {
+  isPlayMode = false; playbackFrames = []; playbackFrameIndex = 0; rawSourceFrames = [];
+  clearPins();
+  clearSpatialLayers();
+  document.getElementById('node-counter-main').innerText = '0';
+  document.getElementById('stats-nodes').innerText = '0';
+  document.getElementById('render-status').innerText = 'Cleared';
+  document.getElementById('bbox-info').innerText = '';
+  setProgress(0);
+}
+function updateRenderMode(m) {
+  currentRenderMode = m;
+  if (rawSourceFrames.length) applyFrameAndRender(playbackFrameIndex, currentMetaValue);
+}
+function updateMetaDimension(val) {
+  currentMetaValue = parseFloat(val) / 100;
+  document.getElementById('e-meta-val').innerText = currentMetaValue.toFixed(2);
+  isPlayMode = false;
+  if (rawSourceFrames.length) applyFrameAndRender(playbackFrameIndex, currentMetaValue);
+}
+function updateTScrubs(val) {
+  playbackFrameIndex = parseInt(val);
+  isPlayMode = false;
+  if (rawSourceFrames.length) {
+    applyFrameAndRender(playbackFrameIndex, currentMetaValue);
+    document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${playbackFrames.length - 1}`;
+  }
+}
+function toggleGrid(v) { if (gridHelper) gridHelper.visible = v; }
+
+/* ========== FILE ========== */
+function setupDragDrop() {
+  const dz = document.getElementById('drop-zone');
+  if (!dz) return;
+  ['dragenter', 'dragover'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.add('dragover'); }));
+  ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, e => { e.preventDefault(); dz.classList.remove('dragover'); }));
+  dz.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if (f) readFile(f); });
+}
+function readFile(file) {
+  const r = new FileReader();
+  r.onload = ev => { try { processEnvironmentData(JSON.parse(ev.target.result)); } catch (err) { appendChat('Invalid JSON: ' + err.message, 'error'); } };
+  r.readAsText(file);
+}
+function handleFileUpload(e) { const f = e.target.files[0]; if (f) readFile(f); }
+function handleCodePaste() {
+  const t = document.getElementById('json-paste-box').value.trim();
+  if (!t) return;
+  try { processEnvironmentData(JSON.parse(t)); } catch (err) { appendChat('Paste error: ' + err.message, 'error'); }
+}
+
+/* ========== PINS ========== */
+function toggleMappingMode() {
+  isMappingActive = !isMappingActive;
+  const btn = document.getElementById('map-mode-btn');
+  if (isMappingActive) {
+    btn.style.background = '#059669';
+    btn.innerText = 'Pinning Active';
+    appendChat('Click surface to place anchors.', 'system');
+  } else {
+    btn.style.background = '#7c3aed';
+    btn.innerText = 'Enable Pinning';
+  }
+}
+function handleCanvasClick(event) {
+  if (!isMappingActive || !spatialLayers.length) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(spatialLayers.filter(o => o.visible));
+  if (hits.length) addSpatialPin(hits[0].point);
+}
+function addSpatialPin(vec) {
+  const id = mappedPins.length + 1;
+  mappedPins.push({ id, vector: vec, meta: currentMetaValue });
+  renderPinsList();
+  appendChat(`Pin #${id} @ [${vec.x.toFixed(2)}, ${vec.y.toFixed(2)}, ${vec.z.toFixed(2)}]`, 'system');
+}
+function clearPins() { mappedPins = []; renderPinsList(); }
+function renderPinsList() {
+  const list = document.getElementById('pins-list');
+  if (!mappedPins.length) { list.innerHTML = '<small style="color:#64748b">No anchors</small>'; return; }
+  list.innerHTML = '';
+  mappedPins.forEach(p => {
+    const d = document.createElement('div');
+    d.className = 'vault-item';
+    d.innerHTML = `<span>📌 #${p.id} <small style="color:#38bdf8">[${p.vector.x.toFixed(1)},${p.vector.y.toFixed(1)}]</small></span>
+      <button onclick="removePin(${p.id})" style="background:#dc2626;color:#fff;border:none;padding:1px 4px;border-radius:3px;cursor:pointer;font-size:8px">X</button>`;
+    list.appendChild(d);
+  });
+}
+function removePin(id) { mappedPins = mappedPins.filter(p => p.id !== id); renderPinsList(); }
+
+/* ========== VAULT ========== */
+function saveToVault(name, payload) {
+  try {
+    const raw = JSON.stringify(payload);
+    if (raw.length > 4500000) { appendChat('Vault limit >4.5 MB', 'error'); return; }
+    const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
+    vault.unshift({ id: Date.now(), name, size: raw.length, payload });
+    if (vault.length > 10) vault.pop();
+    localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
+    loadVaultList();
+  } catch (e) {}
+}
+function loadVaultList() {
+  try {
+    const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
+    const list = document.getElementById('vault-list');
+    if (!vault.length) { list.innerHTML = '<small style="color:#64748b">Empty</small>'; return; }
+    list.innerHTML = '';
+    vault.forEach(it => {
+      const d = document.createElement('div');
+      d.className = 'vault-item';
+      d.innerHTML = `<span>📦 ${it.name} <small style="color:#64748b">${(it.size / 1024).toFixed(0)}KB</small></span>
+        <span>
+          <button onclick="loadFromVault(${it.id})" style="background:#7c3aed;color:#fff;border:none;padding:1px 4px;border-radius:3px;cursor:pointer;font-size:8px;margin-right:2px">Boot</button>
+          <button onclick="deleteFromVault(${it.id})" style="background:#334155;color:#fff;border:none;padding:1px 4px;border-radius:3px;cursor:pointer;font-size:8px">X</button>
+        </span>`;
+      list.appendChild(d);
+    });
+  } catch (e) {}
+}
+function loadFromVault(id) {
+  try {
+    const vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
+    const it = vault.find(v => v.id === id);
+    if (it) processEnvironmentData(it.payload);
+  } catch (e) {}
+}
+function deleteFromVault(id) {
+  let vault = JSON.parse(localStorage.getItem(VAULT_KEY) || '[]');
+  vault = vault.filter(v => v.id !== id);
+  localStorage.setItem(VAULT_KEY, JSON.stringify(vault));
+  loadVaultList();
+}
+
+/* ========== EXPORTS ========== */
+function exportCurrentPNG() {
+  if (!spatialLayers.length) { appendChat('Nothing rendered', 'error'); return; }
+  renderer.render(scene, camera);
+  const url = document.getElementById('three-canvas').toDataURL('image/png');
+  const a = document.createElement('a');
+  a.href = url; a.download = `hyperstream_xd_${Date.now()}.png`; a.click();
+  appendChat('PNG exported.', 'system');
+}
+
+function exportOrbitGIF() {
+  if (!spatialLayers.length) { appendChat('No model', 'error'); return; }
+  appendChat('Rendering orbit GIF…', 'system');
+  const gif = new GIF({ workers: 2, quality: 12, width: 640, height: 480, workerScript: 'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js' });
+  const orig = camera.position.clone();
+  let f = 0; const total = 36; const rad = camera.position.distanceTo(controls.target);
+  function cap() {
+    const ang = (f / total) * Math.PI * 2;
+    camera.position.x = Math.sin(ang) * rad;
+    camera.position.z = Math.cos(ang) * rad;
+    camera.lookAt(controls.target);
+    renderer.render(scene, camera);
+    const c = document.createElement('canvas'); c.width = 640; c.height = 480;
+    c.getContext('2d').drawImage(renderer.domElement, 0, 0, 640, 480);
+    gif.addFrame(c, { delay: 70 });
+    f++;
+    if (f < total) requestAnimationFrame(cap);
+    else {
+      camera.position.copy(orig); controls.update();
+      gif.on('finished', blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `hyperstream_orbit_${Date.now()}.gif`;
+        a.click();
+        appendChat('Orbit GIF complete.', 'system');
+      });
+      gif.render();
+    }
+  }
+  cap();
+}
+
+function exportWebMVideo() {
+  if (!renderer || !spatialLayers.length) { appendChat('No stream to encode.', 'error'); return; }
+  const btn = document.getElementById('export-video-btn');
+  btn.disabled = true; btn.style.opacity = '0.55';
+  appendChat('Encoding WebM…', 'system');
+  const recordedChunks = [];
+  const stream = document.getElementById('three-canvas').captureStream(24);
+  let mediaRecorder;
+  try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' }); }
+  catch (e) {
+    try { mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' }); }
+    catch (err) { appendChat('Codec unsupported.', 'error'); btn.disabled = false; btn.style.opacity = '1'; return; }
+  }
+  mediaRecorder.ondataavailable = e => { if (e.data?.size) recordedChunks.push(e.data); };
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `hyperstream_xd_${Date.now()}.webm`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+    appendChat('WebM exported.', 'system');
+    btn.disabled = false; btn.style.opacity = '1';
+    setProgress(0);
+  };
+  mediaRecorder.start();
+  let frameCounter = 0;
+  const totalFrames = Math.max(72, playbackFrames.length || 72);
+  const originalPos = camera.position.clone();
+  function loop() {
+    frameCounter++;
+    renderer.render(scene, camera);
+    setProgress((frameCounter / totalFrames) * 100);
+    if (frameCounter < totalFrames) requestAnimationFrame(loop);
+    else { camera.position.copy(originalPos); controls.update(); mediaRecorder.stop(); }
+  }
+  loop();
+}
+
+function sendChatMessage() {
+  const i = document.getElementById('chat-input');
+  const t = i.value.trim();
+  if (!t) return;
+  appendChat(t);
+  i.value = '';
 }
 </script>
 </body>
