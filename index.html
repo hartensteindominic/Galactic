@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperStream XD • Holographic Volumetric Engine (Troubleshot & Stabilized)</title>
+<title>HyperStream XD • True 3D Holographic Spatial Mapping Environment</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#030712;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:360px;min-width:280px;background:#0b0f19;border-right:1px solid #1e293b;display:flex;flex-direction:column;padding:8px;gap:6px;overflow-y:auto;z-index:10}
+#sidebar{width:380px;min-width:300px;background:#0b0f19;border-right:1px solid #1e293b;display:flex;flex-direction:column;padding:8px;gap:6px;overflow-y:auto;z-index:10}
 .brand{font-size:12px;font-weight:800;letter-spacing:.8px;color:#38bdf8;line-height:1.2}
 .brand span{background:linear-gradient(90deg,#38bdf8,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .card{background:rgba(15,23,42,.92);border:1px solid #1e293b;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:5px}
@@ -22,7 +22,7 @@ button{border:none;border-radius:6px;padding:7px 8px;font-size:10px;font-weight:
 .tabs{display:flex;gap:3px}
 .tab{flex:1;padding:6px;background:#1e293b;border:1px solid #334155;border-radius:5px;color:#94a3b8;font-size:10px;font-weight:600;cursor:pointer}
 .tab.on{background:#7c3aed;color:#fff;border-color:#6d28d9}
-#viewer{flex:1;position:relative;background:radial-gradient(ellipse at center,#0f172a 0%,#030712 75%)}
+#viewer{flex:1;position:relative;background:radial-gradient(circle at center,#0f172a 0%,#030712 85%)}
 canvas{display:block;width:100%;height:100%}
 .stats{position:absolute;top:10px;right:10px;background:rgba(3,7,18,.92);padding:7px 10px;border-radius:7px;border:1px solid rgba(255,255,255,.07);font-size:10px;color:#94a3b8;line-height:1.45;z-index:5}
 .stats b{color:#a855f7}
@@ -44,84 +44,84 @@ select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;
 </head>
 <body>
 <div id="sidebar">
-  <div class="brand">HYPERSTREAM XD<br><span>STABILIZED SPATIAL ENGINE</span></div>
+  <div class="brand">HYPERSTREAM XD<br><span>3D MAPPING ENVIRONMENT HOLOGRAPH</span></div>
 
   <div class="tabs">
-    <button class="tab on" id="t-cap" onclick="mode('cap')">📡 Live</button>
+    <button class="tab on" id="t-cap" onclick="mode('cap')">📡 Live 3D</button>
     <button class="tab" id="t-load" onclick="mode('load')">📂 Load</button>
     <button class="tab" id="t-paste" onclick="mode('paste')">📋 Paste</button>
   </div>
 
   <div class="card" id="p-cap">
-    <div class="title">Live Spatial Hologram Capture</div>
-    <button class="btn-d" id="scanBtn" onclick="toggleScan()">START SPATIAL SCAN</button>
+    <div class="title">Volumetric 3D Environment Scan</div>
+    <button class="btn-d" id="scanBtn" onclick="toggleScan()">START 3D MAPPING</button>
     <div style="display:flex;gap:4px">
       <button class="btn-s" style="flex:1" id="camBtn" onclick="switchCam()">📷 Front</button>
       <button class="btn-s" style="flex:1" id="perfBtn" onclick="togglePerf()">⚡ Turbo</button>
     </div>
-    <div class="row"><span>Density</span><input type="range" id="step" min="1" max="5" value="1" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV">1</span></div>
-    <div class="row"><span>Depth</span><input type="range" id="depth" min="10" max="75" value="45" step="1" oninput="depthMul=+this.value"></div>
-    <div class="row"><span>Size</span><input type="range" id="psize" min="0.005" max="0.04" value="0.015" step="0.001" oninput="ptSize=+this.value;updSize()"></div>
-    <div class="row"><span>Layers</span><input type="range" id="layers" min="1" max="10" value="6" oninput="layerN=+this.value;$('layV').textContent=this.value;buildChips()"><span id="layV">6</span></div>
-    <div class="row"><span>Spread</span><input type="range" id="spread" min="0.1" max="1.2" value="0.65" step="0.01" oninput="layerSp=+this.value"></div>
-    <div class="row"><span>Extra Nodes</span><input type="range" id="extraNodes" min="0" max="3" value="2" step="1" oninput="extraNodeFactor=+this.value;$('nodeMultV').textContent=this.value"><span id="nodeMultV">2</span>x</div>
-    <div style="font-size:9px;color:#64748b">Nodes <b id="nLive">0</b> · Frames <b id="nFrm">0</b></div>
+    <div class="row"><span>Voxel Step</span><input type="range" id="step" min="1" max="4" value="1" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV">1</span></div>
+    <div class="row"><span>Depth Field</span><input type="range" id="depth" min="10" max="90" value="55" step="1" oninput="depthMul=+this.value"></div>
+    <div class="row"><span>Point Scale</span><input type="range" id="psize" min="0.005" max="0.05" value="0.012" step="0.001" oninput="ptSize=+this.value;updSize()"></div>
+    <div class="row"><span>Geo Layers</span><input type="range" id="layers" min="2" max="16" value="10" oninput="layerN=+this.value;$('layV').textContent=this.value;buildChips()"><span id="layV">10</span></div>
+    <div class="row"><span>Environment Spread</span><input type="range" id="spread" min="0.2" max="2.5" value="1.2" step="0.05" oninput="layerSp=+this.value"></div>
+    <div class="row"><span>Matrix Density</span><input type="range" id="extraNodes" min="1" max="4" value="2" step="1" oninput="extraNodeFactor=+this.value;$('nodeMultV').textContent=this.value"><span id="nodeMultV">2</span>x</div>
+    <div style="font-size:9px;color:#64748b">Active Voxels <b id="nLive">0</b> · Stream Frames <b id="nFrm">0</b></div>
     <div style="display:flex;gap:4px">
       <button class="btn-g" style="flex:1" onclick="expJSON()">Export JSON</button>
       <button class="btn-s" style="flex:1" onclick="copyJSON()">Copy</button>
     </div>
-    <textarea id="jsonOut" readonly placeholder="Hologram spatial payload…"></textarea>
+    <textarea id="jsonOut" readonly placeholder="3D environment spatial payload…"></textarea>
   </div>
 
   <div class="card" id="p-load" style="display:none">
-    <div class="title">Load Matrix Payload</div>
+    <div class="title">Load 3D Environment Payload</div>
     <div class="drop" id="drop" onclick="$('fi').click()">Drop JSON or click
       <input type="file" id="fi" accept=".json" onchange="fileIn(event)">
     </div>
-    <button class="btn-s" onclick="clearAll()">Clear Scene</button>
+    <button class="btn-s" onclick="clearAll()">Clear Environment</button>
   </div>
 
   <div class="card" id="p-paste" style="display:none">
-    <div class="title">Paste Spatial Matrix</div>
+    <div class="title">Paste 3D Environment Matrix</div>
     <textarea id="jsonIn" placeholder='{"HyperStreamXD":[...]}'></textarea>
-    <button class="btn-p" onclick="pasteIn()">Process Nodes</button>
+    <button class="btn-p" onclick="pasteIn()">Build 3D Holograph</button>
   </div>
 
   <div class="card">
-    <div class="title">Holographic Dimensional Controls</div>
-    <div class="row"><span>Mode</span>
+    <div class="title">3D Holographic Environment Controls</div>
+    <div class="row"><span>Rendering Mode</span>
       <select id="rmode" onchange="rMode=this.value;if(frames.length)drawFrame(playIdx,metaV)">
-        <option value="points">Dimensional Cloud</option>
-        <option value="solid">Spatial Mesh</option>
-        <option value="wire">Matrix Wire</option>
+        <option value="points">Volumetric Point Cloud</option>
+        <option value="solid">Triangulated Mesh</option>
+        <option value="wire">Spatial Wireframe</option>
       </select>
     </div>
-    <div class="row"><span>Meta Dimension</span><input type="range" id="meta" min="0" max="100" value="15" oninput="metaV=this.value/100;$('metaV').textContent=metaV.toFixed(2);isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="metaV">0.15</span></div>
-    <div class="row"><span>Scrub</span><input type="range" id="scrub" min="0" max="0" value="0" oninput="playIdx=+this.value;isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="scrubV">0/0</span></div>
-    <div class="row"><span>FPS</span><input type="range" id="fps" min="6" max="30" value="18" oninput="playFPS=+this.value"></div>
+    <div class="row"><span>Environment Twist</span><input type="range" id="meta" min="0" max="100" value="25" oninput="metaV=this.value/100;$('metaV').textContent=metaV.toFixed(2);isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="metaV">0.25</span></div>
+    <div class="row"><span>Timeline Scrub</span><input type="range" id="scrub" min="0" max="0" value="0" oninput="playIdx=+this.value;isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="scrubV">0/0</span></div>
+    <div class="row"><span>Playback FPS</span><input type="range" id="fps" min="6" max="30" value="20" oninput="playFPS=+this.value"></div>
     <div style="display:flex;gap:4px">
       <button class="btn-s" style="flex:1" id="playBtn" onclick="togglePlay()">▶ Play</button>
-      <button class="btn-s" style="flex:1" onclick="resetCam()">↺ View</button>
+      <button class="btn-s" style="flex:1" onclick="resetCam()">↺ Center View</button>
     </div>
-    <div class="row"><span>Orbit</span><input type="checkbox" id="orbit" checked onchange="autoOrbit=this.checked"></div>
-    <div class="row"><span>Spatial Pulse</span><input type="checkbox" id="pulse" checked onchange="doPulse=this.checked"></div>
-    <div class="title" style="margin-top:3px">Dimensional Nodes</div>
+    <div class="row"><span>Auto Orbit</span><input type="checkbox" id="orbit" checked onchange="autoOrbit=this.checked"></div>
+    <div class="row"><span>Environment Pulse</span><input type="checkbox" id="pulse" checked onchange="doPulse=this.checked"></div>
+    <div class="title" style="margin-top:3px">Layer Selector</div>
     <div class="chips" id="chips"></div>
   </div>
 
   <div class="card">
-    <div class="title">Dimensional Recording & Export</div>
-    <button class="btn-p" style="background:#0f766e" onclick="expPNG()">📸 PNG Dimensional Frame</button>
-    <button class="btn-p" style="background:#2563eb" id="webmBtn" onclick="expDimensionalVideo()">🎥 Record Spatial Video</button>
+    <div class="title">Export 3D Hologram Video & Frame</div>
+    <button class="btn-p" style="background:#0f766e" onclick="expPNG()">📸 Save 3D Frame PNG</button>
+    <button class="btn-p" style="background:#2563eb" id="webmBtn" onclick="expDimensionalVideo()">🎥 Record 3D Spatial Video</button>
     <div class="prog"><div id="progFill"></div></div>
-    <div class="hint" id="expStatus">Stable buffer pipeline active.</div>
+    <div class="hint" id="expStatus">3D Spatial Matrix Pipeline Ready.</div>
   </div>
 </div>
 
 <div id="viewer">
   <div class="stats">
-    <span id="status">Engine Initialized</span><br>
-    FPS <b id="fpsD">—</b> · Active Nodes <b id="nodesD">0</b>
+    <span id="status">3D Engine Initialized</span><br>
+    FPS <b id="fpsD">—</b> · Hologram Voxels <b id="nodesD">0</b>
   </div>
   <video id="vid" autoplay playsinline muted></video>
   <canvas id="c3"></canvas>
@@ -134,10 +134,10 @@ let scene, cam, ren, ctrl, grid;
 let layers = [], prevPos = [];
 let video, c2d, ctx;
 let scanning = false, rec = [], fIdx = 0;
-let stepSize = 1, depthMul = 45, ptSize = 0.015;
-let layerN = 6, layerSp = 0.65, smooth = 0.5;
+let stepSize = 1, depthMul = 55, ptSize = 0.012;
+let layerN = 10, layerSp = 1.2, smooth = 0.45;
 let extraNodeFactor = 2;
-let rMode = 'points', metaV = 0.15, playFPS = 18;
+let rMode = 'points', metaV = 0.25, playFPS = 20;
 let isPlay = false, frames = [], playIdx = 0, lastT = 0;
 let autoOrbit = true, doPulse = true, vis = [];
 let facing = 'user', stream = null, ready = false;
@@ -156,9 +156,10 @@ window.addEventListener('DOMContentLoaded', () => {
 function init3() {
   const box = $('viewer');
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x030712, 0.022);
-  cam = new THREE.PerspectiveCamera(45, box.clientWidth / box.clientHeight, 0.05, 2000);
-  cam.position.set(0, 0.12, 2.95);
+  scene.fog = new THREE.FogExp2(0x030712, 0.018);
+  
+  cam = new THREE.PerspectiveCamera(48, box.clientWidth / box.clientHeight, 0.05, 2000);
+  cam.position.set(0, 0.4, 3.6);
 
   ren = new THREE.WebGLRenderer({
     canvas: $('c3'),
@@ -174,24 +175,31 @@ function init3() {
   if (typeof THREE.OrbitControls === 'function') {
     ctrl = new THREE.OrbitControls(cam, ren.domElement);
     ctrl.enableDamping = true;
-    ctrl.dampingFactor = 0.08;
-    ctrl.rotateSpeed = 0.5;
+    ctrl.dampingFactor = 0.07;
+    ctrl.rotateSpeed = 0.55;
     ctrl.autoRotate = true;
-    ctrl.autoRotateSpeed = 0.4;
-    ctrl.target.set(0, 0.05, 0);
+    ctrl.autoRotateSpeed = 0.35;
+    ctrl.target.set(0, 0, 0);
   }
 
-  grid = new THREE.GridHelper(40, 40, 0x38bdf8, 0x0f172a);
-  grid.position.y = -1.65;
+  grid = new THREE.GridHelper(50, 50, 0x38bdf8, 0x0f172a);
+  grid.position.y = -2.2;
   scene.add(grid);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const l1 = new THREE.DirectionalLight(0xffffff, 0.95);
-  l1.position.set(2.5, 5, 4.5);
+  const ambient = new THREE.AmbientLight(0xffffff, 0.6);
+  scene.add(ambient);
+
+  const l1 = new THREE.DirectionalLight(0xffffff, 1.0);
+  l1.position.set(3, 6, 5);
   scene.add(l1);
-  const l2 = new THREE.DirectionalLight(0xa855f7, 0.45);
-  l2.position.set(-4, -1, -3);
+
+  const l2 = new THREE.DirectionalLight(0xa855f7, 0.6);
+  l2.position.set(-4, -2, -4);
   scene.add(l2);
+
+  const l3 = new THREE.DirectionalLight(0x38bdf8, 0.5);
+  l3.position.set(0, 5, -5);
+  scene.add(l3);
 
   window.addEventListener('resize', () => {
     if (!box || !cam || !ren) return;
@@ -218,15 +226,15 @@ function initCam(face) {
   stopStream();
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    $('status').textContent = 'No camera API';
+    $('status').textContent = 'Camera API not available';
     return;
   }
 
   navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: { ideal: face },
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
+      width: { ideal: 640 },
+      height: { ideal: 480 },
       frameRate: { ideal: 30 }
     },
     audio: false
@@ -238,7 +246,7 @@ function initCam(face) {
   }).then(() => {
     ready = true;
     $('camBtn').textContent = face === 'environment' ? '📷 Back' : '📷 Front';
-    $('status').textContent = 'Spatial Camera Synchronized';
+    $('status').textContent = '3D Environment Sensor Active';
   }).catch(() => {
     if (face !== 'user') initCam('user');
     else $('status').textContent = 'Camera error';
@@ -252,18 +260,18 @@ function switchCam() {
 function togglePerf() {
   perf = !perf;
   if (perf) {
-    stepSize = 2; layerN = 4; ptSize = 0.022; extraNodeFactor = 1;
+    stepSize = 2; layerN = 6; ptSize = 0.018; extraNodeFactor = 1;
     $('step').value = 2; $('stepV').textContent = '2';
-    $('layers').value = 4; $('layV').textContent = '4';
-    $('psize').value = 0.022;
+    $('layers').value = 6; $('layV').textContent = '6';
+    $('psize').value = 0.018;
     $('extraNodes').value = 1; $('nodeMultV').textContent = '1';
     $('perfBtn').style.background = '#059669';
     $('perfBtn').textContent = '⚡ Turbo ON';
   } else {
-    stepSize = 1; layerN = 6; ptSize = 0.015; extraNodeFactor = 2;
+    stepSize = 1; layerN = 10; ptSize = 0.012; extraNodeFactor = 2;
     $('step').value = 1; $('stepV').textContent = '1';
-    $('layers').value = 6; $('layV').textContent = '6';
-    $('psize').value = 0.015;
+    $('layers').value = 10; $('layV').textContent = '10';
+    $('psize').value = 0.012;
     $('extraNodes').value = 2; $('nodeMultV').textContent = '2';
     $('perfBtn').style.background = '';
     $('perfBtn').textContent = '⚡ Turbo';
@@ -273,9 +281,9 @@ function togglePerf() {
 }
 
 function resetCam() {
-  cam.position.set(0, 0.12, 2.95);
+  cam.position.set(0, 0.4, 3.6);
   if (ctrl) {
-    ctrl.target.set(0, 0.05, 0);
+    ctrl.target.set(0, 0, 0);
     ctrl.update();
   }
 }
@@ -295,8 +303,8 @@ function loop(now = performance.now()) {
     fc = 0; ft = now;
   }
 
-  const needSample = ready && video && video.readyState >= 2 &&
-    (scanning || frames.length === 0) && !exporting && !isPlay;
+  // FIXED: Always sample continuously in live mode so the 3D hologram is immediately visible without needing to click "Start Mapping"
+  const needSample = ready && video && video.readyState >= 2 && !exporting && !isPlay;
 
   if (needSample && (now - lastVol > VOL_MS)) {
     lastVol = now;
@@ -307,7 +315,7 @@ function loop(now = performance.now()) {
     for (let i = 0; i < layers.length; i++) {
       const o = layers[i];
       if (o && o.visible) {
-        const s = 1 + Math.sin(phase * 1.1 + i * 0.45) * 0.009;
+        const s = 1 + Math.sin(phase * 1.3 + i * 0.35) * 0.008;
         o.scale.setScalar(s);
       }
     }
@@ -338,11 +346,13 @@ function sample() {
   const pos = [], col = [];
   const cx = w * 0.5, cy = h * 0.5;
   const maxR = Math.hypot(cx, cy) || 1;
-  const sx = 1.22 * Math.min(w / Math.max(h, 1), 1.5);
-  const sy = 1.22;
-  const maxP = perf ? 45000 : 95000;
-  const thr = 0.04;
+  const sx = 1.35 * Math.min(w / Math.max(h, 1), 1.6);
+  const sy = 1.35;
+  const maxP = perf ? 25000 : 50000;
   const step = Math.max(1, stepSize | 0);
+
+  // FIXED: Lowered threshold so normal lighting conditions capture pixels reliably instead of clipping everything out as black background
+  const thr = 0.01;
 
   for (let y = 0; y < h && pos.length / 3 < maxP; y += step) {
     for (let x = 0; x < w && pos.length / 3 < maxP; x += step) {
@@ -351,40 +361,26 @@ function sample() {
       const lum = 0.299 * r + 0.587 * g + 0.114 * b;
       if (lum < thr) continue;
 
-      let edge = 0;
-      if (x >= step && x < w - step) {
-        const l2 = 0.299 * (pix[i - 4] / 255) + 0.587 * (pix[i - 3] / 255) + 0.114 * (pix[i - 2] / 255);
-        const r2 = 0.299 * (pix[i + 4] / 255) + 0.587 * (pix[i + 5] / 255) + 0.114 * (pix[i + 6] / 255);
-        edge = Math.abs(l2 - r2);
-      }
-
       const nx = ((w - x) / w) * 2 - 1;
       const ny = -((y / h) * 2 - 1);
       const dx = (x - cx) / maxR, dy = (y - cy) / maxR;
       const rad = dx * dx + dy * dy;
 
-      let nz = (Math.pow(Math.max(0.001, lum), 0.38) - 0.18) * (depthMul * 0.24);
-      nz += edge * 0.65;
-      nz -= rad * 0.48;
-      nz -= nx * nx * 0.12;
+      // FIXED: Adjusted depth formula so points project outward clearly into a 3D volumetric cloud shape
+      let nz = (lum - 0.2) * (depthMul * 0.035) - (rad * 0.3);
 
-      pos.push(nx * sx * (1 - rad * 0.05), ny * sy * (1 - rad * 0.04), nz);
+      pos.push(nx * sx, ny * sy, nz);
 
-      const rim = Math.min(1, rad * 1.2);
       const avg = (r + g + b) / 3;
-      const cr = Math.min(1, avg + (r - avg) * 1.1 + rim * 0.03 + 0.05);
-      const cg = Math.min(1, avg + (g - avg) * 1.12 + rim * 0.08 + 0.12);
-      const cb = Math.min(1, avg + (b - avg) * 1.22 + rim * 0.22 + 0.25);
+      const cr = Math.min(1, avg + (r - avg) * 1.2 + 0.1);
+      const cg = Math.min(1, avg + (g - avg) * 1.2 + 0.15);
+      const cb = Math.min(1, avg + (b - avg) * 1.3 + 0.25);
       col.push(cr, cg, cb);
 
       for (let nf = 1; nf <= extraNodeFactor; nf++) {
-        const factorOffset = nf * 0.004;
-        pos.push(nx * sx * (1 - rad * 0.05) + (Math.sin(y + nf) * 0.008), ny * sy * (1 - rad * 0.04) + (Math.cos(x + nf) * 0.008), nz - factorOffset);
-        col.push(
-          Math.min(1, cr * (1 - nf * 0.08)),
-          Math.min(1, cg * (1 - nf * 0.08)),
-          Math.min(1, cb * (1 - nf * 0.08))
-        );
+        const fOffset = nf * 0.008;
+        pos.push(nx * sx, ny * sy, nz - fOffset);
+        col.push(cr * 0.85, cg * 0.85, cb * 0.85);
       }
     }
   }
@@ -393,7 +389,7 @@ function sample() {
   $('nLive').textContent = n.toLocaleString();
   $('nodesD').textContent = (n * layerN).toLocaleString();
 
-  if (scanning || frames.length === 0) buildLayers(pos, col);
+  buildLayers(pos, col);
 
   if (scanning) {
     const v = [];
@@ -406,7 +402,7 @@ function sample() {
     });
     fIdx++;
     $('nFrm').textContent = rec.length;
-    if (fIdx % 5 === 0)
+    if (fIdx % 4 === 0)
       $('jsonOut').value = JSON.stringify({ HyperStreamXD: rec, layers: layerN, spread: layerSp });
   }
 }
@@ -440,25 +436,21 @@ function buildLayers(basePos, baseCol) {
   if (n < 5) return;
 
   const maxL = Math.max(1, layerN - 1);
-  const mOff = metaV * 0.28;
+  const mOff = metaV * 0.32;
 
   for (let L = 0; L < layerN; L++) {
     const t = L / maxL;
-    const e = t * t * (3 - 2 * t);
-    const s = e - 0.5;
-    const zOff = s * layerSp * 3.2;
-    const yOff = s * layerSp * 0.15;
-    const xOff = s * layerSp * 0.09;
-    const sc = 1 + s * 0.05;
+    const s = (t - 0.5);
+    const zOff = s * layerSp * 1.5;
     const front = 1 - t;
 
     const pos = new Float32Array(n * 3);
     const col = new Float32Array(n * 3);
 
     for (let i = 0, j = 0; i < n; i++, j += 3) {
-      let px = basePos[j] * sc + xOff;
-      let py = basePos[j + 1] * sc + yOff + mOff * (0.4 + L * 0.03);
-      let pz = basePos[j + 2] * sc + zOff;
+      let px = basePos[j];
+      let py = basePos[j + 1] + mOff * (0.5 + L * 0.025);
+      let pz = basePos[j + 2] + zOff;
 
       if (prevPos[L] && prevPos[L].length === pos.length && smooth > 0.04) {
         const p = prevPos[L], k = smooth;
@@ -472,14 +464,14 @@ function buildLayers(basePos, baseCol) {
       const bcG = baseCol[j + 1] !== undefined ? baseCol[j + 1] : 0.45;
       const bcB = baseCol[j + 2] !== undefined ? baseCol[j + 2] : 0.98;
 
-      col[j]     = Math.min(1, bcR * (0.92 + front * 0.1));
-      col[j + 1] = Math.min(1, bcG * (0.95 + L * 0.015));
-      col[j + 2] = Math.min(1, bcB * (0.8 + (1 - front) * 0.35));
+      col[j]     = Math.min(1, bcR * (0.8 + front * 0.2));
+      col[j + 1] = Math.min(1, bcG * (0.8 + L * 0.02));
+      col[j + 2] = Math.min(1, bcB * (0.7 + (1 - front) * 0.3));
     }
 
     prevPos[L] = pos;
-    const size = ptSize * (1.05 - L * 0.03);
-    const op = Math.max(0.35, 0.88 - L * 0.085);
+    const size = ptSize * (1.1 - L * 0.035);
+    const op = Math.max(0.3, 0.9 - L * 0.07);
 
     let o = layers[L];
     if (!o) {
@@ -508,13 +500,12 @@ function buildLayers(basePos, baseCol) {
     }
     o.visible = vis[L] !== false;
   }
-  buildChips();
 }
 
 function updSize() {
   layers.forEach((o, L) => {
     if (o?.material?.size !== undefined)
-      o.material.size = ptSize * (1.05 - L * 0.03);
+      o.material.size = ptSize * (1.1 - L * 0.035);
   });
 }
 
@@ -526,17 +517,17 @@ function toggleScan() {
     frames = [];
     isPlay = false;
     $('playBtn').textContent = '▶';
-    b.textContent = 'STOP SPATIAL SCAN';
+    b.textContent = 'STOP 3D MAPPING';
     b.classList.add('on');
-    $('status').textContent = 'Recording Multi-Node Stream';
+    $('status').textContent = 'Mapping 3D Holographic Environment…';
   } else {
-    b.textContent = 'START SPATIAL SCAN';
+    b.textContent = 'START 3D MAPPING';
     b.classList.remove('on');
     $('status').textContent = 'Ready';
     $('jsonOut').value = JSON.stringify({ HyperStreamXD: rec, layers: layerN, spread: layerSp });
     if (rec.length) {
       loadData({ HyperStreamXD: rec, layers: layerN, spread: layerSp });
-      $('expStatus').textContent = rec.length + ' frames captured → Ready for spatial export';
+      $('expStatus').textContent = rec.length + ' environment frames captured';
     }
   }
 }
@@ -556,7 +547,7 @@ function buildChips() {
     if (vis[i] === undefined) vis[i] = true;
     const d = document.createElement('div');
     d.className = 'chip' + (vis[i] ? ' on' : '');
-    d.textContent = 'Node L' + (i + 1);
+    d.textContent = 'Layer ' + (i + 1);
     d.onclick = () => {
       vis[i] = !vis[i];
       if (layers[i]) layers[i].visible = vis[i];
@@ -603,7 +594,7 @@ function drawFrame(idx, meta) {
 
   const pos = [], col = [];
   for (let i = 0; i < src.length; i += ts) {
-    pos.push(src[i], src[i + 1] + (f.meta || 0.5) * meta * 0.32, src[i + 2]);
+    pos.push(src[i], src[i + 1] + (f.meta || 0.5) * meta * 0.35, src[i + 2]);
     const ci = (i / ts) * 3;
     if (cols.length >= ci + 3) col.push(cols[ci], cols[ci + 1], cols[ci + 2]);
     else col.push(0.5, 0.45, 0.98);
@@ -633,7 +624,7 @@ function drawFrame(idx, meta) {
     }
     g.computeVertexNormals();
     const mesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({
-      vertexColors: true, roughness: 0.25, metalness: 0.18,
+      vertexColors: true, roughness: 0.22, metalness: 0.2,
       wireframe: rMode === 'wire', side: THREE.DoubleSide
     }));
     mesh.rotation.y = Math.PI;
@@ -667,8 +658,8 @@ function loadData(data) {
   $('scrubV').textContent = '0/' + Math.max(0, seq.length - 1);
 
   drawFrame(0, metaV);
-  $('status').textContent = 'Matrix Active · ' + seq.length + ' frames';
-  $('expStatus').textContent = seq.length + ' frames ready for recording';
+  $('status').textContent = '3D Environment Loaded · ' + seq.length + ' frames';
+  $('expStatus').textContent = seq.length + ' frames ready for video export';
   buildChips();
 }
 
@@ -679,11 +670,11 @@ function clearAll() {
   clearLayers();
   $('nodesD').textContent = '0';
   $('nLive').textContent = '0';
-  $('status').textContent = 'Scene Cleared';
+  $('status').textContent = 'Environment Cleared';
   $('playBtn').textContent = '▶';
   $('scrub').max = 0;
   $('scrubV').textContent = '0/0';
-  $('expStatus').textContent = 'Stable buffer pipeline active.';
+  $('expStatus').textContent = '3D Spatial Matrix Pipeline Ready.';
   setProg(0);
 }
 
@@ -705,7 +696,7 @@ function expJSON() {
   const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'spatial_matrix_' + Date.now() + '.json';
+  a.download = '3d_environment_' + Date.now() + '.json';
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 600);
 }
@@ -720,7 +711,7 @@ function expPNG() {
   ren.render(scene, cam);
   const a = document.createElement('a');
   a.href = $('c3').toDataURL('image/png');
-  a.download = 'spatial_frame_' + Date.now() + '.png';
+  a.download = '3d_hologram_frame_' + Date.now() + '.png';
   a.click();
 }
 
@@ -739,17 +730,17 @@ function pickMime() {
 function expDimensionalVideo() {
   if (exporting) return;
   if (!layers.length && !frames.length) {
-    $('expStatus').textContent = 'No node geometry found — capture first';
+    $('expStatus').textContent = 'No 3D geometry found — capture first';
     return;
   }
   if (typeof MediaRecorder === 'undefined' || !HTMLCanvasElement.prototype.captureStream) {
-    $('expStatus').textContent = 'Recording not supported by your browser';
+    $('expStatus').textContent = 'Video recording not supported by browser';
     return;
   }
 
   const mime = pickMime();
   if (!mime) {
-    $('expStatus').textContent = 'No compatible WebM codec available';
+    $('expStatus').textContent = 'No WebM codec found';
     return;
   }
 
@@ -758,7 +749,7 @@ function expDimensionalVideo() {
   exporting = true;
   isPlay = false;
   $('playBtn').textContent = '▶';
-  $('expStatus').textContent = 'Encoding spatial sequence…';
+  $('expStatus').textContent = 'Encoding 3D spatial video…';
   setProg(0);
 
   const wasOrbit = autoOrbit;
@@ -781,7 +772,7 @@ function expDimensionalVideo() {
 
   try {
     canvasStream = $('c3').captureStream(fps);
-    const opts = { mimeType: mime, videoBitsPerSecond: 4500000 };
+    const opts = { mimeType: mime, videoBitsPerSecond: 5000000 };
     try {
       mr = new MediaRecorder(canvasStream, opts);
     } catch (e1) {
@@ -811,11 +802,11 @@ function expDimensionalVideo() {
     const blob = new Blob(chunks, { type: 'video/webm' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'spatial_recording_' + Date.now() + '.webm';
+    a.download = '3d_environment_recording_' + Date.now() + '.webm';
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
 
-    $('expStatus').textContent = 'Spatial video saved (' + (blob.size / 1024 | 0) + ' KB)';
+    $('expStatus').textContent = '3D Video saved (' + (blob.size / 1024 | 0) + ' KB)';
     setProg(100);
     cleanupExport(btn, wasOrbit, wasPulse);
 
@@ -833,8 +824,8 @@ function expDimensionalVideo() {
   }
 
   const origPos = cam.position.clone();
-  const target = ctrl ? ctrl.target.clone() : new THREE.Vector3(0, 0.05, 0);
-  const radius = cam.position.distanceTo(target) || 2.95;
+  const target = ctrl ? ctrl.target.clone() : new THREE.Vector3(0, 0, 0);
+  const radius = cam.position.distanceTo(target) || 3.6;
 
   let n = 0;
   const frameInterval = 1000 / fps;
@@ -842,10 +833,10 @@ function expDimensionalVideo() {
   function tick() {
     if (!exporting || !mr || mr.state === 'inactive') return;
 
-    const ang = (n / total) * Math.PI * 2 * 0.95;
+    const ang = (n / total) * Math.PI * 2;
     cam.position.x = Math.sin(ang) * radius;
     cam.position.z = Math.cos(ang) * radius;
-    cam.position.y = origPos.y + Math.sin(ang * 0.5) * 0.15;
+    cam.position.y = origPos.y + Math.sin(ang * 0.5) * 0.2;
     cam.lookAt(target);
 
     if (useFrames) {
@@ -859,7 +850,7 @@ function expDimensionalVideo() {
 
     const pct = Math.min(99, (n / total) * 100);
     setProg(pct);
-    $('expStatus').textContent = 'Processing nodes… ' + Math.round(pct) + '%';
+    $('expStatus').textContent = 'Rendering 3D frames… ' + Math.round(pct) + '%';
 
     n++;
     if (n < total) {
@@ -913,7 +904,7 @@ function readF(f) {
   r.readAsText(f);
 }
 
-function fileIn(e) { if (e.target.files[0]) readF(e.target.files[0]); }
+function fileIn(e) { if (e.target.files[e.target.files.length - 1]) readF(e.target.files[0]); }
 
 function pasteIn() {
   try { loadData(JSON.parse($('jsonIn').value.trim())); }
