@@ -58,6 +58,18 @@
             transition: background 0.2s;
         }
         .btn-style:hover { background: rgba(255, 255, 255, 0.2); }
+        .btn-style.scanning {
+            background: #ea580c;
+            border-color: #f97316;
+            color: #fff;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
 
         .badge {
             font-size: 11px;
@@ -68,6 +80,12 @@
             color: #30d158;
             border: 1px solid rgba(48, 209, 88, 0.4);
         }
+        .badge.recording {
+            background: rgba(234, 88, 12, 0.2);
+            color: #fb923c;
+            border-color: rgba(234, 88, 12, 0.4);
+        }
+
         .control-dock {
             background: rgba(15, 15, 15, 0.92);
             border: 1px solid rgba(255, 255, 255, 0.18);
@@ -145,7 +163,7 @@
     <div id="export-modal" class="interactive">
         <div class="modal-content">
             <h3>Condensed Camera Telemetry Payload</h3>
-            <p style="font-size:11px; color:#aaa;">Compact JSON export containing normalized tracking matrices and metadata ready to copy.</p>
+            <p style="font-size:11px; color:#aaa;">Compact JSON export containing normalized tracking matrices and sequential 4D frames ready to copy.</p>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button id="modal-copy-btn" class="modal-btn" onclick="copyPayload()">COPY PAYLOAD</button>
@@ -159,9 +177,10 @@
             <div class="brand-group">
                 <span class="brand">CAMERA PROCESSOR</span>
                 <button class="btn-style" onclick="switchCamera()">📷 Flip</button>
+                <button id="scan-toggle-btn" class="btn-style" onclick="toggleContinuousScan()">⏺ Start Scan</button>
                 <button class="btn-style" onclick="exportTelemetry()">📋 Export Data</button>
             </div>
-            <span id="status-badge" class="badge">ACTIVE</span>
+            <span id="status-badge" class="badge">READY</span>
         </div>
 
         <div class="control-dock interactive">
@@ -175,8 +194,8 @@
                     <div id="node-count" class="metric-value">0</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Mode</div>
-                    <div class="metric-value">Realtime</div>
+                    <div class="metric-label">4D Frames Captured</div>
+                    <div id="captured-count" class="metric-value">0</div>
                 </div>
             </div>
         </div>
@@ -189,6 +208,8 @@
         let statusBadge = document.getElementById('status-badge');
         let nodeCountText = document.getElementById('node-count');
         let frameCounterText = document.getElementById('frame-counter');
+        let capturedCountText = document.getElementById('captured-count');
+        let scanToggleBtn = document.getElementById('scan-toggle-btn');
         let exportModal = document.getElementById('export-modal');
         let modalJsonText = document.getElementById('modal-json-text');
 
@@ -197,7 +218,11 @@
         let holistic = null;
         let cameraUtilsInstance = null;
         let frameIndex = 0;
-        let latestTelemetry = { timestamp: null, facing: currentFacingMode, landmarksDetected: 0, summary: [] };
+        
+        let isScanning = false;
+        let recordedSequence = [];
+        let latestFramePayload = null;
+        let latestTelemetry = { timestamp: null, facing: currentFacingMode, landmarksDetected: 0, sequence: [] };
 
         async function initCameraFeed() {
             if (activeStream) {
@@ -222,6 +247,22 @@
         function switchCamera() {
             currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
             initCameraFeed();
+        }
+
+        function toggleContinuousScan() {
+            isScanning = !isScanning;
+            if (isScanning) {
+                recordedSequence = [];
+                scanToggleBtn.innerText = "⏹ Stop Scan";
+                scanToggleBtn.classList.add("scanning");
+                statusBadge.innerText = "RECORDING";
+                statusBadge.classList.add("recording");
+            } else {
+                scanToggleBtn.innerText = "⏺ Start Scan";
+                scanToggleBtn.classList.remove("scanning");
+                statusBadge.innerText = "IDLE";
+                statusBadge.classList.remove("recording");
+            }
         }
 
         function setupOmniScanner() {
@@ -255,22 +296,56 @@
         function onHolisticResults(results) {
             let count = 0;
             let summaryData = {};
+            let currentVertices = [];
 
-            if (results.faceLandmarks) { count += results.faceLandmarks.landmark.length; summaryData.face = results.faceLandmarks.landmark.length; }
-            if (results.poseLandmarks) { count += results.poseLandmarks.landmark.length; summaryData.pose = results.poseLandmarks.landmark.length; }
-            if (results.leftHandLandmarks) { count += results.leftHandLandmarks.landmark.length; summaryData.leftHand = results.leftHandLandmarks.landmark.length; }
-            if (results.rightHandLandmarks) { count += results.rightHandLandmarks.landmark.length; summaryData.rightHand = results.rightHandLandmarks.landmark.length; }
+            function extractLandmarks(landmarkObj) {
+                if (!landmarkObj || !landmarkObj.landmark) return;
+                for (let pt of landmarkObj.landmark) {
+                    currentVertices.push(pt.x, pt.y, pt.z || 0);
+                }
+            }
+
+            if (results.faceLandmarks) { 
+                count += results.faceLandmarks.landmark.length; 
+                summaryData.face = results.faceLandmarks.landmark.length;
+                extractLandmarks(results.faceLandmarks);
+            }
+            if (results.poseLandmarks) { 
+                count += results.poseLandmarks.landmark.length; 
+                summaryData.pose = results.poseLandmarks.landmark.length;
+                extractLandmarks(results.poseLandmarks);
+            }
+            if (results.leftHandLandmarks) { 
+                count += results.leftHandLandmarks.landmark.length; 
+                summaryData.leftHand = results.leftHandLandmarks.landmark.length;
+                extractLandmarks(results.leftHandLandmarks);
+            }
+            if (results.rightHandLandmarks) { 
+                count += results.rightHandLandmarks.landmark.length; 
+                summaryData.rightHand = results.rightHandLandmarks.landmark.length;
+                extractLandmarks(results.rightHandLandmarks);
+            }
 
             nodeCountText.innerText = count;
 
+            latestFramePayload = {
+                frameIndex: frameIndex,
+                vertices: currentVertices
+            };
+
+            if (isScanning && currentVertices.length > 0) {
+                recordedSequence.push(latestFramePayload);
+                capturedCountText.innerText = recordedSequence.length;
+            }
+
             latestTelemetry = {
-                version: "1.0",
-                type: "CameraProcessorSnapshot",
+                version: "1.1",
+                type: "CameraProcessorSequenceSnapshot",
                 timestamp: new Date().toISOString(),
                 facingMode: currentFacingMode,
-                frame: frameIndex,
                 totalLandmarks: count,
-                breakdown: summaryData
+                breakdown: summaryData,
+                sequence: recordedSequence
             };
         }
 
