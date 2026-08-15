@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperStream XD • Holographic Volumetric Engine (Extended Node Matrix)</title>
+<title>HyperStream XD • Holographic Volumetric Engine (Troubleshot & Stabilized)</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#030712;color:#e2e8f0;font-family:system-ui,-apple-system,sans-serif;height:100vh;display:flex;overflow:hidden}
@@ -44,7 +44,7 @@ select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;
 </head>
 <body>
 <div id="sidebar">
-  <div class="brand">HYPERSTREAM XD<br><span>HOLOGRAPHIC SPATIAL ENGINE</span></div>
+  <div class="brand">HYPERSTREAM XD<br><span>STABILIZED SPATIAL ENGINE</span></div>
 
   <div class="tabs">
     <button class="tab on" id="t-cap" onclick="mode('cap')">📡 Live</button>
@@ -114,7 +114,7 @@ select{background:#1e293b;color:#fff;border:1px solid #334155;border-radius:4px;
     <button class="btn-p" style="background:#0f766e" onclick="expPNG()">📸 PNG Dimensional Frame</button>
     <button class="btn-p" style="background:#2563eb" id="webmBtn" onclick="expDimensionalVideo()">🎥 Record Spatial Video</button>
     <div class="prog"><div id="progFill"></div></div>
-    <div class="hint" id="expStatus">Advanced WebM multi-node encoder active. High density ready.</div>
+    <div class="hint" id="expStatus">Stable buffer pipeline active.</div>
   </div>
 </div>
 
@@ -241,7 +241,7 @@ function initCam(face) {
     $('status').textContent = 'Spatial Camera Synchronized';
   }).catch(() => {
     if (face !== 'user') initCam('user');
-    else $('status').textContent = 'Camera initialization error';
+    else $('status').textContent = 'Camera error';
   });
 }
 
@@ -372,20 +372,18 @@ function sample() {
 
       const rim = Math.min(1, rad * 1.2);
       const avg = (r + g + b) / 3;
-      col.push(
-        Math.min(1, avg + (r - avg) * 1.1 + rim * 0.03 + 0.05),
-        Math.min(1, avg + (g - avg) * 1.12 + rim * 0.08 + 0.12),
-        Math.min(1, avg + (b - avg) * 1.22 + rim * 0.22 + 0.25)
-      );
+      const cr = Math.min(1, avg + (r - avg) * 1.1 + rim * 0.03 + 0.05);
+      const cg = Math.min(1, avg + (g - avg) * 1.12 + rim * 0.08 + 0.12);
+      const cb = Math.min(1, avg + (b - avg) * 1.22 + rim * 0.22 + 0.25);
+      col.push(cr, cg, cb);
 
-      // Node density expansion nodes
       for (let nf = 1; nf <= extraNodeFactor; nf++) {
         const factorOffset = nf * 0.004;
         pos.push(nx * sx * (1 - rad * 0.05) + (Math.sin(y + nf) * 0.008), ny * sy * (1 - rad * 0.04) + (Math.cos(x + nf) * 0.008), nz - factorOffset);
         col.push(
-          Math.min(1, col[col.length - 3] * (1 - nf * 0.08)),
-          Math.min(1, col[col.length - 2] * (1 - nf * 0.08)),
-          Math.min(1, col[col.length - 1] * (1 - nf * 0.08))
+          Math.min(1, cr * (1 - nf * 0.08)),
+          Math.min(1, cg * (1 - nf * 0.08)),
+          Math.min(1, cb * (1 - nf * 0.08))
         );
       }
     }
@@ -469,9 +467,14 @@ function buildLayers(basePos, baseCol) {
         pz = pz * (1 - k) + p[j + 2] * k;
       }
       pos[j] = px; pos[j + 1] = py; pos[j + 2] = pz;
-      col[j]     = Math.min(1, basePos[j] ? baseCol[j] * (0.92 + front * 0.1) : 0.5);
-      col[j + 1] = Math.min(1, baseCol[j + 1] * (0.95 + L * 0.015));
-      col[j + 2] = Math.min(1, baseCol[j + 2] * (0.8 + (1 - front) * 0.35));
+      
+      const bcR = baseCol[j] !== undefined ? baseCol[j] : 0.5;
+      const bcG = baseCol[j + 1] !== undefined ? baseCol[j + 1] : 0.45;
+      const bcB = baseCol[j + 2] !== undefined ? baseCol[j + 2] : 0.98;
+
+      col[j]     = Math.min(1, bcR * (0.92 + front * 0.1));
+      col[j + 1] = Math.min(1, bcG * (0.95 + L * 0.015));
+      col[j + 2] = Math.min(1, bcB * (0.8 + (1 - front) * 0.35));
     }
 
     prevPos[L] = pos;
@@ -680,7 +683,7 @@ function clearAll() {
   $('playBtn').textContent = '▶';
   $('scrub').max = 0;
   $('scrubV').textContent = '0/0';
-  $('expStatus').textContent = 'Advanced WebM multi-node encoder active.';
+  $('expStatus').textContent = 'Stable buffer pipeline active.';
   setProg(0);
 }
 
