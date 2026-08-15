@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro – Maximum Speed 4D Engine</title>
+    <title>Spatial Dash Pro – Maximum Speed 5D Engine</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #030303; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
@@ -49,7 +49,7 @@
 
     <div id="export-modal" class="modal interactive">
         <div class="modal-content">
-            <h3 style="font-size: 14px;">High-Speed Payload Ready</h3>
+            <h3 style="font-size: 14px;">High-Speed 5D Payload Ready</h3>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button class="modal-btn" onclick="copyPayload()">Copy Payload</button>
@@ -60,7 +60,7 @@
 
     <div id="paste-modal" class="modal interactive">
         <div class="modal-content">
-            <h3 style="font-size: 14px;">Import Dataset JSON</h3>
+            <h3 style="font-size: 14px;">Import 5D Dataset JSON</h3>
             <textarea id="paste-json-text" placeholder="Paste JSON data here..."></textarea>
             <div class="modal-btn-row">
                 <button class="modal-btn" onclick="processJSONText()">Process & Play</button>
@@ -71,7 +71,7 @@
 
     <div id="hud-overlay">
         <div class="top-status interactive">
-            <div class="brand">SPATIAL DASH 4D (MAX SPEED)</div>
+            <div class="brand">SPATIAL DASH 5D (MAX SPEED)</div>
             <div class="btn-group">
                 <button class="ui-btn" onclick="switchCamera()">📷 Flip</button>
                 <label class="ui-btn">📁 Load<input type="file" accept=".json" onchange="loadFile(event)"></label>
@@ -87,8 +87,8 @@
                 <div class="metric-card"><div class="metric-label">Nodes / Frame</div><div id="node-count" class="metric-value">0</div></div>
             </div>
             <div class="btn-row">
-                <button id="scan-btn" class="action-btn" onclick="toggleScan()">START MAX SPEED RECORD</button>
-                <button id="save-btn" class="action-btn" onclick="exportMap()">SAVE MAP (.JSON)</button>
+                <button id="scan-btn" class="action-btn" onclick="toggleScan()">START 5D SPEED RECORD</button>
+                <button id="save-btn" class="action-btn" onclick="exportMap()">SAVE 5D MAP (.JSON)</button>
             </div>
         </div>
     </div>
@@ -104,12 +104,11 @@
         
         let isScanning = false, frames = [], stream = null, holistic = null;
         let cachedJSON = "", scene, camera, renderer, pointCloud, playback = [], frameIdx = 0, facing = "environment";
-        let lastCaptureTime = 0, frameCounter = 0, lastFpsUpdate = 0;
+        let frameCounter = 0, lastFpsUpdate = 0, recordingStartTime = 0;
 
         async function initCam() {
             if (stream) stream.getTracks().forEach(t => t.stop());
             try {
-                // Request maximum supported camera constraints
                 stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 60, max: 120 } } 
                 });
@@ -127,60 +126,68 @@
             holistic = new Holistic({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${f}` });
             holistic.setOptions({ modelComplexity: 0, smoothLandmarks: false, refineFaceLandmarks: false, minDetectionConfidence: 0.4 });
             
-            // Bypass standard async queue locks by using high-speed direct request tick
             function highSpeedLoop() {
                 if (isScanning && video.readyState === video.HAVE_ENOUGH_DATA) {
                     const now = performance.now();
-                    // Measure capture throughput rate
                     frameCounter++;
                     if (now - lastFpsUpdate > 1000) {
                         document.getElementById('fps-count').innerText = frameCounter + " FPS";
                         frameCounter = 0;
                         lastFpsUpdate = now;
                     }
-                    
-                    sampleFrameFast();
+                    sampleFrameFast(now);
                 }
                 requestAnimationFrame(highSpeedLoop);
             }
             requestAnimationFrame(highSpeedLoop);
         }
 
-        // Maximum-speed unrolled canvas pixel sampler bypassing async lag
-        function sampleFrameFast() {
+        // Expanded 5D data sampler: [x, y, z (spatial depth), t (temporal timestamp), w (wave-phase modulation index)]
+        function sampleFrameFast(now) {
             canvas.width = 120; canvas.height = 68;
             ctx.drawImage(video, 0, 0, 120, 68);
             const img = ctx.getImageData(0, 0, 120, 68).data;
             let v = [], c = [];
+            
+            const relativeTime = ((now - recordingStartTime) / 1000.0).toFixed(3);
 
-            // Optimized step size to ensure high collection velocity without thread-locking
             for (let y = 0; y < 68; y += 4) {
                 for (let x = 0; x < 120; x += 4) {
                     let i = (y * 120 + x) * 4;
                     let r = img[i], g = img[i+1], b = img[i+2];
                     let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
                     
-                    v.push(((x / 120 - 0.5) * 4.0).toFixed(2), (-(y / 68 - 0.5) * 4.0).toFixed(2), ((lum - 0.5) * 3.0).toFixed(2));
+                    // Spatial Coordinates (x, y, z)
+                    let pxCoord = ((x / 120 - 0.5) * 4.0).toFixed(2);
+                    let pyCoord = (-(y / 68 - 0.5) * 4.0).toFixed(2);
+                    let pzCoord = ((lum - 0.5) * 3.0).toFixed(2);
+                    
+                    // 5D Extra Dimensions: Temporal offset (t) and Phase Modulation Index (w) calculated via luminosity/coordinates
+                    let ptCoord = relativeTime;
+                    let pwCoord = (Math.sin(x * 0.1 + y * 0.1 + (now * 0.005)) * lum * 1.5).toFixed(2);
+
+                    v.push(pxCoord, pyCoord, pzCoord, ptCoord, pwCoord);
                     c.push((r/255).toFixed(2), (g/255).toFixed(2), (b/255).toFixed(2));
                 }
             }
             
             frames.push({ vertices: v, colors: c });
             document.getElementById('frame-count').innerText = frames.length;
-            document.getElementById('node-count').innerText = v.length / 3;
+            document.getElementById('node-count').innerText = v.length / 5; // 5 components per node entry
         }
 
         function toggleScan() {
             isScanning = !isScanning;
             if (isScanning) {
                 frames = [];
+                recordingStartTime = performance.now();
                 scanBtn.innerText = "STOP RECORDING";
                 scanBtn.classList.add("scanning");
-                badge.innerText = "MAX SPEED CAPTURE...";
+                badge.innerText = "MAX SPEED 5D CAPTURE...";
                 badge.classList.add("active");
                 saveBtn.style.display = "block";
             } else {
-                scanBtn.innerText = "START MAX SPEED RECORD";
+                scanBtn.innerText = "START 5D SPEED RECORD";
                 scanBtn.classList.remove("scanning");
                 badge.innerText = "READY";
                 badge.classList.remove("active");
@@ -189,11 +196,16 @@
 
         function exportMap() {
             if (!frames.length) return alert("No frames recorded.");
-            badge.innerText = "BUILDING...";
+            badge.innerText = "BUILDING 5D DATA...";
             setTimeout(() => {
-                const payload = { version: "5.0", frames: frames.map((f, i) => ({ frameIndex: i, geometryStream: f })) };
+                const payload = { 
+                    version: "5.0-5D", 
+                    dimensions: 5, 
+                    axes: ["x", "y", "z", "t", "w"],
+                    frames: frames.map((f, i) => ({ frameIndex: i, geometryStream5D: f })) 
+                };
                 cachedJSON = JSON.stringify(payload);
-                document.getElementById('modal-json-text').value = cachedJSON.substring(0, 600) + "\n...[Payload Ready]";
+                document.getElementById('modal-json-text').value = cachedJSON.substring(0, 600) + "\n...[5D Payload Ready]";
                 openModal('export-modal');
                 badge.innerText = "READY";
             }, 30);
@@ -202,7 +214,8 @@
         function processJSONText() {
             try {
                 const data = JSON.parse(document.getElementById('paste-json-text').value);
-                playSequence(data.frames ? data.frames.map(f => f.geometryStream) : data.sequence);
+                const seq = data.frames ? data.frames.map(f => f.geometryStream5D || f.geometryStream) : data.sequence;
+                playSequence(seq);
                 closeModal('paste-modal');
             } catch (e) { alert("Invalid JSON format."); }
         }
@@ -212,7 +225,8 @@
             reader.onload = (evt) => {
                 try {
                     const data = JSON.parse(evt.target.result);
-                    playSequence(data.frames ? data.frames.map(f => f.geometryStream) : data.sequence);
+                    const seq = data.frames ? data.frames.map(f => f.geometryStream5D || f.geometryStream) : data.sequence;
+                    playSequence(seq);
                 } catch (err) { alert("Invalid Map file."); }
             };
             reader.readAsText(e.target.files[0]);
@@ -222,7 +236,7 @@
             if (stream) stream.getTracks().forEach(t => t.stop());
             video.style.display = 'none';
             renderContainer.style.display = 'block';
-            badge.innerText = "PLAYING STREAM";
+            badge.innerText = "PLAYING 5D STREAM";
             badge.classList.add("active");
 
             playback = seq || [];
@@ -258,11 +272,22 @@
                 requestAnimationFrame(loop);
                 if (playback.length) {
                     let f = playback[frameIdx];
-                    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(f.vertices), 3));
+                    // Map 5D attribute buffer stream back into 3D projection coordinates for visualization
+                    let rawVals = f.vertices;
+                    let posArr = [];
+                    for(let k = 0; k < rawVals.length; k += 5) {
+                        // Apply wave-phase modulation (w) to offset spatial z depth dynamically for 5D effect view
+                        let x = parseFloat(rawVals[k]);
+                        let y = parseFloat(rawVals[k+1]);
+                        let z = parseFloat(rawVals[k+2]) + parseFloat(rawVals[k+4]) * 0.1;
+                        posArr.push(x, y, z);
+                    }
+
+                    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(posArr), 3));
                     geom.setAttribute('color', new THREE.BufferAttribute(new Float32Array(f.colors), 3));
                     geom.attributes.position.needsUpdate = true;
                     geom.attributes.color.needsUpdate = true;
-                    document.getElementById('node-count').innerText = f.vertices.length / 3;
+                    document.getElementById('node-count').innerText = posArr.length / 3;
                     frameIdx = (frameIdx + 1) % playback.length;
                 }
                 renderer.render(scene, camera);
@@ -272,7 +297,7 @@
 
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-        function copyPayload() { navigator.clipboard.writeText(cachedJSON); alert("Copied!"); }
+        function copyPayload() { navigator.clipboard.writeText(cachedJSON); alert("Copied 5D Payload!"); }
 
         window.addEventListener('load', () => { initCam(); initHolistic(); });
     </script>
