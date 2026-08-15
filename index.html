@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro – Maximum Speed 5D Engine</title>
+    <title>Spatial Dash Pro – Maximum Speed 5D Engine (High Density)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #030303; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
@@ -142,7 +142,7 @@
             requestAnimationFrame(highSpeedLoop);
         }
 
-        // Expanded 5D data sampler: [x, y, z (spatial depth), t (temporal timestamp), w (wave-phase modulation index)]
+        // Expanded 5D data sampler with higher density step interval (step = 2)
         function sampleFrameFast(now) {
             canvas.width = 120; canvas.height = 68;
             ctx.drawImage(video, 0, 0, 120, 68);
@@ -151,8 +151,8 @@
             
             const relativeTime = ((now - recordingStartTime) / 1000.0).toFixed(3);
 
-            for (let y = 0; y < 68; y += 4) {
-                for (let x = 0; x < 120; x += 4) {
+            for (let y = 0; y < 68; y += 2) {
+                for (let x = 0; x < 120; x += 2) {
                     let i = (y * 120 + x) * 4;
                     let r = img[i], g = img[i+1], b = img[i+2];
                     let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
@@ -162,7 +162,7 @@
                     let pyCoord = (-(y / 68 - 0.5) * 4.0).toFixed(2);
                     let pzCoord = ((lum - 0.5) * 3.0).toFixed(2);
                     
-                    // 5D Extra Dimensions: Temporal offset (t) and Phase Modulation Index (w) calculated via luminosity/coordinates
+                    // 5D Extra Dimensions: Temporal offset (t) and Phase Modulation Index (w)
                     let ptCoord = relativeTime;
                     let pwCoord = (Math.sin(x * 0.1 + y * 0.1 + (now * 0.005)) * lum * 1.5).toFixed(2);
 
@@ -264,7 +264,7 @@
             }
 
             const geom = new THREE.BufferGeometry();
-            const mat = new THREE.PointsMaterial({ size: 0.02, vertexColors: true, transparent: true, opacity: 0.95 });
+            const mat = new THREE.PointsMaterial({ size: 0.015, vertexColors: true, transparent: true, opacity: 0.95 });
             pointCloud = new THREE.Points(geom, mat);
             scene.add(pointCloud);
 
@@ -272,11 +272,9 @@
                 requestAnimationFrame(loop);
                 if (playback.length) {
                     let f = playback[frameIdx];
-                    // Map 5D attribute buffer stream back into 3D projection coordinates for visualization
                     let rawVals = f.vertices;
                     let posArr = [];
                     for(let k = 0; k < rawVals.length; k += 5) {
-                        // Apply wave-phase modulation (w) to offset spatial z depth dynamically for 5D effect view
                         let x = parseFloat(rawVals[k]);
                         let y = parseFloat(rawVals[k+1]);
                         let z = parseFloat(rawVals[k+2]) + parseFloat(rawVals[k+4]) * 0.1;
