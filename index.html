@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - 4D Volumetric Time-Series Scanner</title>
+    <title>Spatial Dash Pro - Enhanced 4D Volumetric Time-Series Scanner</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -131,7 +131,6 @@
             display: none;
         }
 
-        /* Modal for Paste & Export */
         #export-modal, #paste-modal {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -184,11 +183,10 @@
     <canvas id="processing-canvas"></canvas>
     <div id="render-container"></div>
 
-    <!-- Export Modal -->
     <div id="export-modal" class="interactive">
         <div class="modal-content">
             <h3>4D Video Payload Ready</h3>
-            <p id="modal-desc" style="font-size:11px; color:#aaa;">Temporal sequence compiled successfully. Stream optimized via delta-compression.</p>
+            <p id="modal-desc" style="font-size:11px; color:#aaa;">Temporal sequence compiled successfully. Stream optimized via high-density depth reconstruction.</p>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button id="modal-copy-btn" class="modal-btn" onclick="copyPayloadToClipboard()">COPY DATA</button>
@@ -197,7 +195,6 @@
         </div>
     </div>
 
-    <!-- Paste Modal for High-Performance Chunk Ingestion -->
     <div id="paste-modal" class="interactive">
         <div class="modal-content">
             <h3>Paste Large 4D JSON Dataset</h3>
@@ -236,7 +233,7 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Engine Mode</div>
-                    <div id="mode-status" class="metric-value">Stream Buffer</div>
+                    <div id="mode-status" class="metric-value">HD Stream</div>
                 </div>
             </div>
             
@@ -281,7 +278,7 @@
             }
 
             try {
-                const constraints = { video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 360 } } };
+                const constraints = { video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } } };
                 activeStream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = activeStream;
 
@@ -306,12 +303,12 @@
             }});
             
             holistic.setOptions({
-                modelComplexity: 0, // Lower complexity for higher processing frame-rate
+                modelComplexity: 1, // Balanced setting for detailed spatial depth parsing
                 smoothLandmarks: true,
                 enableSegmentation: false,
-                refineFaceLandmarks: false,
-                minDetectionConfidence: 0.3,
-                minTrackingConfidence: 0.3
+                refineFaceLandmarks: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
             });
 
             holistic.onResults(onHolisticResults);
@@ -323,22 +320,22 @@
                         captureFrameSequence();
                     }
                 },
-                width: 640,
-                height: 360
+                width: 1280,
+                height: 720
             });
             cameraUtilsInstance.start();
         }
 
-        // Optimized downsampled frame condenser for high performance
+        // Improved high-resolution depth and volumetric frame map generator
         function captureFrameSequence() {
             if (!videoElement.videoWidth) return;
             
-            processingCanvas.width = 160; // Reduced resolution grid for data condensation
-            processingCanvas.height = 90;
+            processingCanvas.width = 320; // Increased width resolution for sharper depth maps
+            processingCanvas.height = 180;
             canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
             
             const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
-            const step = 2; // Step configuration to balance performance and density
+            const step = 1; // Full step sample density mapping
 
             let envVertices = [];
             let envColors = [];
@@ -352,12 +349,12 @@
 
                     let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
                     
-                    let posX = parseFloat(((x / processingCanvas.width - 0.5) * 4.0).toFixed(2));
-                    let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 4.0).toFixed(2));
-                    let posZ = parseFloat(((luminance - 0.5) * 2.0).toFixed(2));
+                    let posX = parseFloat(((x / processingCanvas.width - 0.5) * 5.0).toFixed(3));
+                    let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 5.0).toFixed(3));
+                    let posZ = parseFloat(((luminance - 0.5) * 3.2).toFixed(3)); // Enhanced dimensional depth range
 
                     envVertices.push(posX, posY, posZ);
-                    envColors.push(parseFloat((r/255).toFixed(1)), parseFloat((g/255).toFixed(1)), parseFloat((b/255).toFixed(1)));
+                    envColors.push(parseFloat((r/255).toFixed(2)), parseFloat((g/255).toFixed(2)), parseFloat((b/255).toFixed(2)));
                 }
             }
 
@@ -378,19 +375,21 @@
 
             function addLandmarks(landmarks, rc, gc, bc) {
                 if (!landmarks) return;
-                for (let i = 0; i < landmarks.length; i += 2) { // Downsample landmarks for performance
+                for (let i = 0; i < landmarks.length; i++) {
                     let pt = landmarks[i];
-                    let x = parseFloat(((pt.x - 0.5) * -4.0).toFixed(2));
-                    let y = parseFloat(((pt.y - 0.5) * -4.0).toFixed(2));
-                    let z = parseFloat(((pt.z || 0) * 4.0).toFixed(2));
+                    let x = parseFloat(((pt.x - 0.5) * -5.0).toFixed(3));
+                    let y = parseFloat(((pt.y - 0.5) * -5.0).toFixed(3));
+                    let z = parseFloat(((pt.z || 0) * 5.0).toFixed(3));
 
                     humanVertices.push(x, y, z);
                     humanColors.push(rc, gc, bc);
                 }
             }
 
-            if (results.faceLandmarks) addLandmarks(results.faceLandmarks.landmark, 0.0, 0.8, 1.0);
-            if (results.poseLandmarks) addLandmarks(results.poseLandmarks.landmark, 0.1, 0.9, 0.3);
+            if (results.faceLandmarks) addLandmarks(results.faceLandmarks.landmark, 0.1, 0.9, 1.0);
+            if (results.poseLandmarks) addLandmarks(results.poseLandmarks.landmark, 0.2, 1.0, 0.4);
+            if (results.leftHandLandmarks) addLandmarks(results.leftHandLandmarks.landmark, 1.0, 0.6, 0.1);
+            if (results.rightHandLandmarks) addLandmarks(results.rightHandLandmarks.landmark, 1.0, 0.2, 0.8);
 
             if (humanVertices.length > 0) {
                 let currentFrame = recordedFrames[recordedFrames.length - 1];
@@ -429,8 +428,8 @@
             setTimeout(() => {
                 const video4DPayload = {
                     metadata: {
-                        generator: "Spatial Dash 4D Engine",
-                        version: "7.2",
+                        generator: "Spatial Dash 4D HD Engine",
+                        version: "8.0",
                         type: "VolumetricSequence",
                         totalFrames: recordedFrames.length,
                         timestamp: new Date().toISOString()
@@ -461,7 +460,6 @@
         function openPasteModal() { pasteModal.style.display = 'flex'; }
         function closePasteModal() { pasteModal.style.display = 'none'; }
 
-        // Chunk-based asynchronous parser to handle massive pasted datasets without crashing UI
         function processPastedJSON() {
             let rawText = document.getElementById('paste-json-text').value.trim();
             if (!rawText) {
@@ -521,13 +519,13 @@
             if (!scene) {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 0, 3.5);
+                camera.position.set(0, 0, 4.0);
 
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderContainer.appendChild(renderer.domElement);
 
-                scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+                scene.add(new THREE.AmbientLight(0xffffff, 1.2));
                 
                 let isDragging = false;
                 let prevMousePos = { x: 0, y: 0 };
@@ -543,7 +541,7 @@
             }
 
             const geometry = new THREE.BufferGeometry();
-            const material = new THREE.PointsMaterial({ size: 0.025, vertexColors: true, transparent: true, opacity: 0.9 });
+            const material = new THREE.PointsMaterial({ size: 0.02, vertexColors: true, transparent: true, opacity: 0.95 });
             pointCloud = new THREE.Points(geometry, material);
             scene.add(pointCloud);
 
