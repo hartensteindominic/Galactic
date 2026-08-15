@@ -186,7 +186,7 @@
     <div id="export-modal" class="interactive">
         <div class="modal-content">
             <h3>4D Video Payload Ready</h3>
-            <p id="modal-desc" style="font-size:11px; color:#aaa;">Temporal sequence compiled successfully. Stream optimized via high-density depth reconstruction.</p>
+            <p id="modal-desc" style="font-size:11px; color:#aaa;">Temporal sequence compiled successfully. Stream optimized via condensed depth reconstruction.</p>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button id="modal-copy-btn" class="modal-btn" onclick="copyPayloadToClipboard()">COPY DATA</button>
@@ -233,7 +233,7 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Engine Mode</div>
-                    <div id="mode-status" class="metric-value">HD Stream</div>
+                    <div id="mode-status" class="metric-value">Condensed Stream</div>
                 </div>
             </div>
             
@@ -303,7 +303,7 @@
             }});
             
             holistic.setOptions({
-                modelComplexity: 1, // Balanced setting for detailed spatial depth parsing
+                modelComplexity: 1,
                 smoothLandmarks: true,
                 enableSegmentation: false,
                 refineFaceLandmarks: true,
@@ -326,16 +326,16 @@
             cameraUtilsInstance.start();
         }
 
-        // Improved high-resolution depth and volumetric frame map generator
+        // Optimized depth generator with a higher step value for better compression & smooth flow
         function captureFrameSequence() {
             if (!videoElement.videoWidth) return;
             
-            processingCanvas.width = 320; // Increased width resolution for sharper depth maps
-            processingCanvas.height = 180;
+            processingCanvas.width = 240; // Reduced canvas sampling resolution for fluid performance
+            processingCanvas.height = 135;
             canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
             
             const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
-            const step = 1; // Full step sample density mapping
+            const step = 2; // Increased step size to condense payload volume and boost processing flow
 
             let envVertices = [];
             let envColors = [];
@@ -351,7 +351,7 @@
                     
                     let posX = parseFloat(((x / processingCanvas.width - 0.5) * 5.0).toFixed(3));
                     let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 5.0).toFixed(3));
-                    let posZ = parseFloat(((luminance - 0.5) * 3.2).toFixed(3)); // Enhanced dimensional depth range
+                    let posZ = parseFloat(((luminance - 0.5) * 3.2).toFixed(3));
 
                     envVertices.push(posX, posY, posZ);
                     envColors.push(parseFloat((r/255).toFixed(2)), parseFloat((g/255).toFixed(2)), parseFloat((b/255).toFixed(2)));
@@ -428,8 +428,8 @@
             setTimeout(() => {
                 const video4DPayload = {
                     metadata: {
-                        generator: "Spatial Dash 4D HD Engine",
-                        version: "8.0",
+                        generator: "Spatial Dash 4D Condensed Engine",
+                        version: "8.1",
                         type: "VolumetricSequence",
                         totalFrames: recordedFrames.length,
                         timestamp: new Date().toISOString()
@@ -475,7 +475,7 @@
                     const parsedData = JSON.parse(rawText);
                     render4DVideoFromJSON(parsedData);
                 } catch (err) {
-                    alert("JSON parsing error: The format may be malformed or too large for immediate string parsing.");
+                    alert("JSON parsing error: The format may be malformed or too large.");
                     statusBadge.innerText = "SYSTEM READY";
                 }
             }, 50);
@@ -541,7 +541,7 @@
             }
 
             const geometry = new THREE.BufferGeometry();
-            const material = new THREE.PointsMaterial({ size: 0.02, vertexColors: true, transparent: true, opacity: 0.95 });
+            const material = new THREE.PointsMaterial({ size: 0.025, vertexColors: true, transparent: true, opacity: 0.95 });
             pointCloud = new THREE.Points(geometry, material);
             scene.add(pointCloud);
 
