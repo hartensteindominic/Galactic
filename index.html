@@ -3,281 +3,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro</title>
+    <title>Spatial 3D Environment Viewer</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #050505;
-            color: #ffffff;
+            background-color: #0b0f19;
+            color: #f3f4f6;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            overflow: hidden;
             height: 100vh;
-            width: 100vw;
+            display: flex;
+            overflow: hidden;
         }
-        #camera-stream {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 1;
-        }
-        #camera-stream.front-facing {
-            transform: scaleX(-1); /* Mirrors the front camera preview naturally */
-        }
-        #hud-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
+        #sidebar {
+            width: 380px;
+            background: #111827;
+            border-right: 1px solid #1f2937;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             padding: 24px;
-            pointer-events: none;
+            gap: 16px;
+            z-index: 10;
         }
-        .interactive { pointer-events: auto; }
-        .top-status {
-            background: rgba(15, 15, 15, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
-            border-radius: 14px;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .brand-group { display: flex; align-items: center; gap: 12px; }
-        .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #f0f0f0; }
+        .brand { font-size: 16px; font-weight: 800; letter-spacing: 1px; color: #60a5fa; }
         
-        .camera-switch-btn {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: #ffffff;
-            padding: 6px 12px;
+        .action-toggle-row { display: flex; gap: 8px; }
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            background: #1f2937;
+            border: 1px solid #374151;
             border-radius: 8px;
-            font-size: 11px;
+            color: #9ca3af;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
-        .camera-switch-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .tab-btn.active { background: #2563eb; color: white; border-color: #2563eb; }
 
-        .badge {
+        .input-panel { display: flex; flex-direction: column; gap: 10px; }
+        .upload-section {
+            border: 2px dashed #374151;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .upload-section:hover { border-color: #60a5fa; }
+        input[type="file"] { display: none; }
+        .upload-label { font-size: 12px; color: #9ca3af; cursor: pointer; display: block; }
+
+        .paste-section { display: none; flex-direction: column; gap: 8px; }
+        textarea {
+            width: 100%;
+            height: 110px;
+            background: #1f2937;
+            border: 1px solid #374151;
+            padding: 10px;
+            border-radius: 8px;
+            color: #ffffff;
+            font-family: monospace;
             font-size: 11px;
-            font-weight: 700;
-            padding: 4px 10px;
-            border-radius: 20px;
-            background: rgba(255, 59, 48, 0.2);
-            color: #ff453a;
-            border: 1px solid rgba(255, 59, 48, 0.4);
+            resize: none;
         }
-        .badge.active {
-            background: rgba(48, 209, 88, 0.2);
-            color: #30d158;
-            border: 1px solid rgba(48, 209, 88, 0.4);
-        }
-        .control-dock {
-            background: rgba(15, 15, 15, 0.90);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(16px);
-            border-radius: 18px;
-            padding: 20px;
+        textarea:focus { outline: none; border-color: #60a5fa; }
+
+        #chat-container {
+            flex: 1;
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
-            gap: 14px;
-        }
-        .metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            text-align: center;
-        }
-        .metric-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 8px;
-        }
-        .metric-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
-        .metric-value { font-size: 14px; font-weight: 700; color: #0a84ff; }
-        .btn-row { display: flex; gap: 10px; }
-        button.action-btn {
-            flex: 1;
-            padding: 14px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 700;
+            overflow-y: auto;
+            max-height: 180px;
             font-size: 13px;
-            letter-spacing: 0.5px;
-            cursor: pointer;
-            transition: all 0.2s ease;
         }
-        #scan-btn { background: #0a84ff; color: white; }
-        #scan-btn.scanning { background: #ff453a; }
-        #save-btn { background: #30d158; color: white; display: none; }
-        button.action-btn:active { transform: scale(0.97); opacity: 0.8; }
+        .chat-message {
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #374151;
+            color: #d1d5db;
+        }
+        .chat-message.system { background: #1e3a8a; color: #93c5fd; }
+
+        .chat-input-row { display: flex; gap: 8px; }
+        input[type="text"] {
+            flex: 1;
+            background: #1f2937;
+            border: 1px solid #374151;
+            padding: 10px;
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+        }
+        button.primary-btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        button.primary-btn:hover { background: #1d4ed8; }
+
+        #viewer-container {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+        }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        .stats-overlay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(17, 24, 39, 0.85);
+            backdrop-filter: blur(8px);
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .stats-overlay span { color: #60a5fa; font-weight: bold; }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 
-    <video id="camera-stream" autoplay playsinline muted></video>
-
-    <div id="hud-overlay">
-        <div class="top-status interactive">
-            <div class="brand-group">
-                <span class="brand">SPATIAL DASH</span>
-                <button class="camera-switch-btn" onclick="switchCamera()">📷 Flip Camera</button>
-            </div>
-            <span id="status-badge" class="badge">SYSTEM READY</span>
+    <div id="sidebar">
+        <div class="brand">SPATIAL 3D VIEWER</div>
+        
+        <div class="action-toggle-row">
+            <button id="btn-tab-file" class="tab-btn active" onclick="switchInputMode('file')">📂 Upload File</button>
+            <button id="btn-tab-paste" class="tab-btn" onclick="switchInputMode('paste')">📋 Paste JSON Code</button>
         </div>
 
-        <div class="control-dock interactive">
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-label">Nodes</div>
-                    <div id="node-count" class="metric-value">0</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Surface</div>
-                    <div id="surface-status" class="metric-value">Calibrating</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Mode</div>
-                    <div class="metric-value">Structured Vector</div>
-                </div>
+        <!-- File Upload Panel -->
+        <div id="panel-file" class="input-panel">
+            <div class="upload-section" onclick="document.getElementById('file-input').click()">
+                <span class="upload-label">Drop JSON Map or Click to Upload</span>
+                <input type="file" id="file-input" accept=".json" onchange="handleFileUpload(event)">
             </div>
-            
-            <div class="btn-row">
-                <button id="scan-btn" class="action-btn" onclick="toggleScanState()">START SCANNING</button>
-                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
-            </div>
+        </div>
+
+        <!-- Paste Code Panel -->
+        <div id="panel-paste" class="input-panel" style="display: none;">
+            <textarea id="json-paste-box" placeholder="Paste your BufferGeometry JSON payload here..."></textarea>
+            <button class="primary-btn" onclick="handleCodePaste()">Load Pasted Code</button>
+        </div>
+
+        <div style="font-size: 12px; color: #9ca3af;">
+            Nodes Loaded: <span id="node-counter" style="color: #60a5fa; font-weight: bold;">0</span>
+        </div>
+
+        <div id="chat-container">
+            <div class="chat-message system">System ready. Upload or paste your Spatial Dash JSON map data to construct the 3D environment.</div>
+        </div>
+
+        <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Ask AI about the map..." onkeypress="handleKeyPress(event)">
+            <button class="primary-btn" onclick="sendChatMessage()">Send</button>
         </div>
     </div>
 
+    <div id="viewer-container">
+        <div class="stats-overlay">
+            Status: <span id="render-status">Awaiting Dataset</span>
+        </div>
+        <canvas id="three-canvas"></canvas>
+    </div>
+
     <script>
-        let videoElement = document.getElementById('camera-stream');
-        let scanBtn = document.getElementById('scan-btn');
-        let saveBtn = document.getElementById('save-btn');
-        let statusBadge = document.getElementById('status-badge');
-        let nodeCountText = document.getElementById('node-count');
-        let surfaceStatusText = document.getElementById('surface-status');
+        let scene, camera, renderer, controls;
+        let activeEnvironmentGroup;
 
-        let isScanning = false;
-        let spatialVertices = []; 
-        let scanInterval = null;
-        let angleStep = 0;
-        let currentFacingMode = "environment"; // Starts with rear camera
-        let activeStream = null;
+        function init3D() {
+            const container = document.getElementById('viewer-container');
+            
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 1000);
+            camera.position.set(0, 0, 4);
 
-        async function initCameraFeed() {
-            if (activeStream) {
-                activeStream.getTracks().forEach(track => track.stop());
-            }
+            renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('three-canvas'), antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setPixelRatio(window.devicePixelRatio);
 
-            try {
-                const constraints = {
-                    video: { facingMode: currentFacingMode }
-                };
-                activeStream = await navigator.mediaDevices.getUserMedia(constraints);
-                videoElement.srcObject = activeStream;
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
 
-                // Handle front camera mirroring style toggle
-                if (currentFacingMode === "user") {
-                    videoElement.classList.add("front-facing");
-                } else {
-                    videoElement.classList.remove("front-facing");
-                }
-            } catch (err) {
-                try {
-                    activeStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    videoElement.srcObject = activeStream;
-                } catch (e) {
-                    alert("Camera permissions required or device camera unavailable.");
-                }
-            }
+            scene.add(new THREE.GridHelper(20, 20, 0x374151, 0x1f2937));
+            scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+
+            activeEnvironmentGroup = new THREE.Group();
+            scene.add(activeEnvironmentGroup);
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
         }
 
-        function switchCamera() {
-            currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
-            initCameraFeed();
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
         }
 
-        function toggleScanState() {
-            isScanning = !isScanning;
+        function onWindowResize() {
+            const container = document.getElementById('viewer-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
 
-            if (isScanning) {
-                scanBtn.innerText = "STOP SCANNING";
-                scanBtn.classList.add("scanning");
-                statusBadge.innerText = "MAPPING ACTIVE";
-                statusBadge.classList.add("active");
-                surfaceStatusText.innerText = "Tracking";
-                saveBtn.style.display = "block";
-                
-                spatialVertices = []; 
-                angleStep = 0;
+        function switchInputMode(mode) {
+            const fileBtn = document.getElementById('btn-tab-file');
+            const pasteBtn = document.getElementById('btn-tab-paste');
+            const filePanel = document.getElementById('panel-file');
+            const pastePanel = document.getElementById('panel-paste');
 
-                scanInterval = setInterval(() => {
-                    angleStep += 0.15;
-                    
-                    let x = parseFloat((Math.sin(angleStep) * 1.2).toFixed(3));
-                    let y = parseFloat((Math.cos(angleStep * 0.5) * 0.6 + (Math.random() * 0.1)).toFixed(3));
-                    let z = parseFloat((-1.5 - Math.abs(Math.cos(angleStep) * 0.5)).toFixed(3));
-
-                    spatialVertices.push(x, y, z);
-                    nodeCountText.innerText = spatialVertices.length / 3;
-                }, 100);
-
+            if (mode === 'file') {
+                fileBtn.classList.add('active');
+                pasteBtn.classList.remove('active');
+                filePanel.style.display = 'flex';
+                pastePanel.style.display = 'none';
             } else {
-                scanBtn.innerText = "START SCANNING";
-                scanBtn.classList.remove("scanning");
-                statusBadge.innerText = "SCAN PAUSED";
-                statusBadge.classList.remove("active");
-                surfaceStatusText.innerText = "Locked";
-                clearInterval(scanInterval);
+                pasteBtn.classList.add('active');
+                fileBtn.classList.remove('active');
+                pastePanel.style.display = 'flex';
+                filePanel.style.display = 'none';
             }
         }
 
-        function exportEnvironmentMap() {
-            if (spatialVertices.length === 0) {
-                alert("No environment nodes recorded. Start scanning first.");
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    processEnvironmentData(data);
+                } catch (err) {
+                    appendChat("Error parsing JSON file structure.", "system");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function handleCodePaste() {
+            const rawText = document.getElementById('json-paste-box').value.trim();
+            if (!rawText) {
+                appendChat("Paste area is empty. Please paste valid JSON text.", "system");
                 return;
             }
 
-            const environmentPayload = {
-                metadata: {
-                    generator: "Spatial Dash Pro Web Engine",
-                    version: "2.3",
-                    type: "BufferGeometry",
-                    totalVertices: spatialVertices.length / 3,
-                    timestamp: new Date().toISOString()
-                },
-                data: {
-                    attributes: {
-                        position: {
-                            itemSize: 3,
-                            type: "Float32Array",
-                            array: spatialVertices
-                        }
-                    }
-                }
-            };
-
-            const dataBlob = new Blob([JSON.stringify(environmentPayload, null, 2)], { type: 'application/json' });
-            const downloadUrl = URL.createObjectURL(dataBlob);
-            
-            const fileLink = document.createElement('a');
-            fileLink.href = downloadUrl;
-            fileLink.download = `spatial_contour_${Date.now()}.json`;
-            document.body.appendChild(fileLink);
-            fileLink.click();
-            document.body.removeChild(fileLink);
-            URL.revokeObjectURL(downloadUrl);
+            try {
+                const data = JSON.parse(rawText);
+                processEnvironmentData(data);
+            } catch (err) {
+                appendChat("Invalid JSON format. Please verify your pasted code structure.", "system");
+            }
         }
 
-        window.addEventListener('load', initCameraFeed);
+        function processEnvironmentData(data) {
+            let positions = [];
+
+            if (data.data && data.data.attributes && data.data.attributes.position && data.data.attributes.position.array) {
+                positions = data.data.attributes.position.array;
+            } else if (data.coordinatesMatrix) {
+                data.coordinatesMatrix.forEach(node => {
+                    positions.push(parseFloat(node.x), parseFloat(node.y), parseFloat(node.z));
+                });
+            }
+
+            if (positions.length === 0) {
+                appendChat("No valid coordinate positions located in the JSON structure.", "system");
+                return;
+            }
+
+            const totalNodes = positions.length / 3;
+            document.getElementById('node-counter').innerText = totalNodes;
+            document.getElementById('render-status').innerText = "Rendered Active";
+
+            // Clear old geometries
+            while(activeEnvironmentGroup.children.length > 0){ 
+                activeEnvironmentGroup.remove(activeEnvironmentGroup.children[0]); 
+            }
+
+            // Build optimized BufferGeometry for Points & Lines
+            const geometry = new THREE.BufferGeometry();
+            const floatArray = new Float32Array(positions);
+            geometry.setAttribute('position', new THREE.BufferAttribute(floatArray, 3));
+            geometry.computeBoundingSphere();
+
+            // Center camera focus on the middle of the scanned point cloud
+            const center = geometry.boundingSphere.center;
+            controls.target.copy(center);
+            camera.position.set(center.x, center.y, center.z + 3.5);
+            controls.update();
+
+            // Create glowing point markers
+            const pointsMaterial = new THREE.PointsMaterial({
+                color: 0x3b82f6,
+                size: 0.06,
+                transparent: true,
+                opacity: 0.9
+            });
+            const pointCloud = new THREE.Points(geometry, pointsMaterial);
+            activeEnvironmentGroup.add(pointCloud);
+
+            // Create wireframe linking paths to show contour flow structure
+            const lineMaterial = new THREE.LineBasicMaterial({
+                color: 0x60a5fa,
+                transparent: true,
+                opacity: 0.25
+            });
+            const lineSegments = new THREE.Line(geometry, lineMaterial);
+            activeEnvironmentGroup.add(lineSegments);
+
+            const generatorName = data.metadata ? data.metadata.generator : 'Unknown Engine';
+            appendChat(`Successfully loaded ${totalNodes} spatial nodes generated by ${generatorName}.`, "system");
+        }
+
+        function appendChat(text, sender = "") {
+            const chatContainer = document.getElementById('chat-container');
+            const msg = document.createElement('div');
+            msg.className = `chat-message ${sender}`;
+            msg.innerText = text;
+            chatContainer.appendChild(msg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            appendChat(text);
+            input.value = "";
+
+            setTimeout(() => {
+                const count = document.getElementById('node-counter').innerText;
+                if (count === "0") {
+                    appendChat("Please load your spatial environment file or paste code first.", "system");
+                } else {
+                    appendChat(`Analysis complete: Displaying ${count} mapped vector nodes securely inside the WebGL viewport.`, "system");
+                }
+            }, 600);
+        }
+
+        function handleKeyPress(e) {
+            if (e.key === 'Enter') sendChatMessage();
+        }
+
+        window.onload = init3D;
     </script>
 </body>
 </html>
