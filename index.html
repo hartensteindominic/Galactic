@@ -326,16 +326,15 @@
             cameraUtilsInstance.start();
         }
 
-        // Optimized depth generator with a higher step value for better compression & smooth flow
         function captureFrameSequence() {
             if (!videoElement.videoWidth) return;
             
-            processingCanvas.width = 240; // Reduced canvas sampling resolution for fluid performance
+            processingCanvas.width = 240;
             processingCanvas.height = 135;
             canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
             
             const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
-            const step = 2; // Increased step size to condense payload volume and boost processing flow
+            const step = 2;
 
             let envVertices = [];
             let envColors = [];
@@ -473,12 +472,23 @@
             setTimeout(() => {
                 try {
                     const parsedData = JSON.parse(rawText);
-                    render4DVideoFromJSON(parsedData);
+                    
+                    if (!parsedData.sequence || !Array.isArray(parsedData.sequence)) {
+                        throw new Error("Invalid payload structure: missing sequence array.");
+                    }
+
+                    statusBadge.innerText = "INITIALIZING 4D STREAM...";
+                    
+                    setTimeout(() => {
+                        render4DVideoFromJSON(parsedData);
+                    }, 50);
+
                 } catch (err) {
-                    alert("JSON parsing error: The format may be malformed or too large.");
+                    console.error("Parsing error:", err);
+                    alert("JSON parsing error: The payload might be truncated, malformed, or exceed memory limits.");
                     statusBadge.innerText = "SYSTEM READY";
                 }
-            }, 50);
+            }, 100);
         }
 
         function loadEnvironmentMap(event) {
