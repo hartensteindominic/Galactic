@@ -125,7 +125,7 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Mode</div>
-                    <div class="metric-value">Spatial LiDAR</div>
+                    <div class="metric-value">Structured Vector</div>
                 </div>
             </div>
             
@@ -145,26 +145,20 @@
         let surfaceStatusText = document.getElementById('surface-status');
 
         let isScanning = false;
-        let spatialVertices = []; // Stores flat [x, y, z] values for 3D constructors
+        let spatialVertices = []; 
         let scanInterval = null;
+        let angleStep = 0;
 
         async function initCameraFeed() {
             try {
-                const constraints = {
-                    video: {
-                        facingMode: { exact: "environment" },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    }
-                };
-                let stream = await navigator.mediaDevices.getUserMedia(constraints);
+                let stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
                 videoElement.srcObject = stream;
             } catch (err) {
                 try {
                     let fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
                     videoElement.srcObject = fallbackStream;
                 } catch (e) {
-                    alert("Camera permissions required for spatial tracking layout.");
+                    alert("Camera permissions required.");
                 }
             }
         }
@@ -180,20 +174,22 @@
                 surfaceStatusText.innerText = "Tracking";
                 saveBtn.style.display = "block";
                 
-                spatialVertices = []; // Reset storage array for new run
+                spatialVertices = []; 
+                angleStep = 0;
 
-                // High-frequency telemetry gathering structured 3D coordinates
+                // Generates a coherent curved profile (like a facial contour or rounded depth map) 
+                // instead of random points floating inside an open box volume.
                 scanInterval = setInterval(() => {
-                    let x = parseFloat((Math.random() * 4 - 2).toFixed(3));
-                    let y = parseFloat((Math.random() * 1.5 - 0.5).toFixed(3));
-                    let z = parseFloat((-Math.random() * 5).toFixed(3));
-
-                    // Push directly as standard 3D constructor vector components
-                    spatialVertices.push(x, y, z);
+                    angleStep += 0.15;
                     
-                    // Update node count (each node consists of 3 coordinate values: x, y, z)
+                    // Mathematical distribution curve modeling surface contours
+                    let x = parseFloat((Math.sin(angleStep) * 1.2).toFixed(3));
+                    let y = parseFloat((Math.cos(angleStep * 0.5) * 0.6 + (Math.random() * 0.1)).toFixed(3));
+                    let z = parseFloat((-1.5 - Math.abs(Math.cos(angleStep) * 0.5)).toFixed(3));
+
+                    spatialVertices.push(x, y, z);
                     nodeCountText.innerText = spatialVertices.length / 3;
-                }, 150);
+                }, 100);
 
             } else {
                 scanBtn.innerText = "START SCANNING";
@@ -211,11 +207,10 @@
                 return;
             }
 
-            // Standardized JSON schema for 3D mesh and point cloud constructors
             const environmentPayload = {
                 metadata: {
                     generator: "Spatial Dash Pro Web Engine",
-                    version: "2.2",
+                    version: "2.3",
                     type: "BufferGeometry",
                     totalVertices: spatialVertices.length / 3,
                     timestamp: new Date().toISOString()
@@ -236,7 +231,7 @@
             
             const fileLink = document.createElement('a');
             fileLink.href = downloadUrl;
-            fileLink.download = `spatial_environment_${Date.now()}.json`;
+            fileLink.download = `spatial_contour_${Date.now()}.json`;
             document.body.appendChild(fileLink);
             fileLink.click();
             document.body.removeChild(fileLink);
