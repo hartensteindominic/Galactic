@@ -2,31 +2,27 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>HyperStream XD • Stable v4.6</title>
+<title>HyperStream XD • Stable v4.7</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#020617;color:#f8fafc;font-family:system-ui,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:360px;background:#030712;border-right:1px solid #1e293b;padding:12px;display:flex;flex-direction:column;gap:8px;z-index:10}
+#sidebar{width:320px;background:#030712;border-right:1px solid #1e293b;padding:12px;display:flex;flex-direction:column;gap:8px;z-index:10}
 .card{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px}
 .title{font-size:9px;font-weight:800;text-transform:uppercase;color:#94a3b8}
 .row{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#cbd5e1}
-button{border:none;border-radius:6px;padding:7px;font-size:10px;font-weight:800;cursor:pointer;color:#fff;background:linear-gradient(135deg,#8b5cf6,#ec4899)}
-input[type=range]{accent-color:#ec4899;width:100px}
 #viewer{flex:1;position:relative}
 canvas{display:block;width:100%;height:100%}
 .stats{position:absolute;top:10px;right:10px;background:rgba(2,6,23,0.8);padding:6px 10px;border-radius:6px;font-size:10px;color:#94a3b8;z-index:5}
 video{display:none}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 <div id="sidebar">
-  <div style="font-size:12px;font-weight:900;color:#38bdf8">HYPERSTREAM XD • STABLE v4.6</div>
+  <div style="font-size:12px;font-weight:900;color:#38bdf8">HYPERSTREAM XD • v4.7</div>
   <div class="card">
-    <div class="title">Performance Controls</div>
-    <div class="row"><span>Voxel Step Size</span><input type="range" min="2" max="6" value="3" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV" style="color:#ec4899">3</span></div>
-    <div class="row"><span>Strata Layers</span><input type="range" min="2" max="12" value="6" oninput="layerN=+this.value;$('layV').textContent=this.value"><span id="layV" style="color:#ec4899">6</span></div>
+    <div class="title">System Status</div>
     <div class="row"><span>Active Voxels</span><b id="nLive" style="color:#ec4899">0</b></div>
   </div>
 </div>
@@ -38,7 +34,11 @@ video{display:none}
 <script>
 const $=id=>document.getElementById(id);
 let scene,cam,ren,ctrl,video,c2d,ctx,stream=null,ready=false;
-let cloudMesh=null,stepSize=3,layerN=6,fc=0,ft=0,phase=0;
+let cloudMesh=null,posAttr=null,colAttr=null;
+let fc=0,ft=0;
+
+// Fixed safe buffer size to prevent memory reallocation crashes
+const MAX_POINTS = 15000;
 
 window.addEventListener('DOMContentLoaded',()=>{init3();initCam();});
 
@@ -48,7 +48,7 @@ function init3(){
   cam=new THREE.PerspectiveCamera(48,box.clientWidth/box.clientHeight,0.1,1000);
   cam.position.set(0,0,3.5);
 
-  ren=new THREE.WebGLRenderer({canvas:$('c3'),antialias:false,powerPreference:'high-performance'});
+  ren=new THREE.WebGLRenderer({canvas:$('c3'),powerPreference:'high-performance'});
   ren.setSize(box.clientWidth,box.clientHeight);
   ren.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
   ren.setClearColor(0x020617);
@@ -56,6 +56,23 @@ function init3(){
   ctrl=new THREE.OrbitControls(cam,ren.domElement);
   ctrl.enableDamping=true;ctrl.autoRotate=true;
   scene.add(new THREE.AmbientLight(0xffffff,1.2));
+
+  // Pre-allocate permanent geometry buffers to eliminate memory leaks
+  const geom=new THREE.BufferGeometry();
+  const initPos=new Float32Array(MAX_POINTS*3);
+  const initCol=new Float32Array(MAX_POINTS*3);
+
+  posAttr=new THREE.BufferAttribute(initPos,3);
+  colAttr=new THREE.BufferAttribute(initCol,3);
+  posAttr.setUsage(THREE.DynamicDrawUsage);
+  colAttr.setUsage(THREE.DynamicDrawUsage);
+
+  geom.setAttribute('position',posAttr);
+  geom.setAttribute('color',colAttr);
+
+  const mat=new THREE.PointsMaterial({size:0.015,vertexColors:true,transparent:true,opacity:0.9});
+  cloudMesh=new THREE.Points(geom,mat);
+  scene.add(cloudMesh);
 
   window.addEventListener('resize',()=>{
     cam.aspect=box.clientWidth/box.clientHeight;
@@ -69,61 +86,55 @@ function initCam(){
   video=$('vid');
   c2d=document.createElement('canvas');
   ctx=c2d.getContext('2d',{willReadFrequently:true});
-  navigator.mediaDevices?.getUserMedia({video:{width:{ideal:480},height:{ideal:360},frameRate:{ideal:24}},audio:false})
+  navigator.mediaDevices?.getUserMedia({video:{width:{ideal:320},height:{ideal:240},frameRate:{ideal:20}},audio:false})
   .then(s=>{stream=s;video.srcObject=s;return video.play();})
   .then(()=>{ready=true;})
-  .catch(()=>{/* Fallback handled gracefully */});
+  .catch(()=>{/* Fallback handling */});
 }
 
 function loop(now){
   ctrl.update();
-  phase=now*0.001;
   fc++;
   if(now-ft>1000){$('fpsD').textContent=Math.round(fc*1000/(now-ft));fc=0;ft=now;}
-  if(ready&&video.readyState>=2&&fc%2===0)sample(); // Sample every 2nd frame to protect CPU/GPU
+  if(ready&&video.readyState>=2&&fc%3===0)sample();
   ren.render(scene,cam);
 }
 
 function sample(){
-  const w=320,h=240; // Low resolution target to ensure zero crashing
+  const w=160,h=120; // Ultra-safe low resolution
   if(c2d.width!==w||c2d.height!==h){c2d.width=w;c2d.height=h;}
   try{ctx.drawImage(video,0,0,w,h);}catch{return;}
   let pix;
   try{pix=ctx.getImageData(0,0,w,h).data;}catch{return;}
 
-  const pos=[],col=[];
-  const step=stepSize;
+  const posArr=posAttr.array;
+  const colArr=colAttr.array;
+  let pIdx=0;
 
-  for(let y=0;y<h;y+=step){
-    for(let x=0;x<w;x+=step){
+  for(let y=0;y<h;y+=4){
+    for(let x=0;x<w;x+=4){
+      if(pIdx>=MAX_POINTS*3)break;
       const i=(y*w+x)*4;
       const r=pix[i]/255,g=pix[i+1]/255,b=pix[i+2]/255;
       const lum=0.299*r+0.587*g+0.114*b;
-      if(lum<0.05)continue;
+      if(lum<0.08)continue;
 
-      const nx=((w-x)/w)*2-1,ny=-((y/h)*2-1);
-      
-      for(let L=0;L<layerN;L++){
-        const nz=(L/(layerN-1)-0.5)*1.5+(lum-0.5)*0.5;
-        pos.push(nx*1.5,ny*1.5,nz);
-        col.push(r*(1-L*0.05),g*(1-L*0.05),b*(1-L*0.05));
-      }
+      posArr[pIdx]=((w-x)/w)*2-1;
+      posArr[pIdx+1]=-((y/h)*2-1);
+      posArr[pIdx+2]=(lum-0.5)*1.2;
+
+      colArr[pIdx]=r;
+      colArr[pIdx+1]=g;
+      colArr[pIdx+2]=b;
+
+      pIdx+=3;
     }
   }
 
-  $('nLive').textContent=(pos.length/3).toLocaleString();
-  updateCloud(pos,col);
-}
-
-function updateCloud(pos,col){
-  if(cloudMesh){scene.remove(cloudMesh);cloudMesh.geometry.dispose();cloudMesh.material.dispose();}
-  const g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
-
-  const mat=new THREE.PointsMaterial({size:0.012,vertexColors:true,transparent:true,opacity:0.9});
-  cloudMesh=new THREE.Points(g,mat);
-  scene.add(cloudMesh);
+  $('nLive').textContent=(pIdx/3).toLocaleString();
+  posAttr.needsUpdate=true;
+  colAttr.needsUpdate=true;
+  cloudMesh.geometry.setDrawRange(0,pIdx/3);
 }
 </script>
 </body>
