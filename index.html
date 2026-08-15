@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - 3D Mesh Reconstructor</title>
+    <title>Spatial Dash Pro - WebXR AR Hit-Test</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -14,23 +14,13 @@
             height: 100vh;
             width: 100vw;
         }
-        #camera-stream {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 1;
-        }
         #webgl-canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 2;
-            pointer-events: none;
+            z-index: 1;
         }
         #hud-overlay {
             position: absolute;
@@ -106,42 +96,39 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        #scan-btn { background: #0a84ff; color: white; }
-        #scan-btn.scanning { background: #ff453a; }
+        #ar-button { background: #0a84ff; color: white; }
         #save-btn { background: #30d158; color: white; display: none; }
         button:active { transform: scale(0.97); opacity: 0.8; }
     </style>
 </head>
 <body>
 
-    <video id="camera-stream" autoplay playsinline muted></video>
-
     <canvas id="webgl-canvas"></canvas>
 
     <div id="hud-overlay">
         <div class="top-status interactive">
-            <span class="brand">SPATIAL DASH MESH</span>
-            <span id="status-badge" class="badge">SYSTEM READY</span>
+            <span class="brand">SPATIAL DASH WEBXR</span>
+            <span id="status-badge" class="badge">READY FOR AR</span>
         </div>
 
         <div class="control-dock interactive">
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-label">Mesh Nodes</div>
+                    <div class="metric-label">AR Anchors</div>
                     <div id="node-count" class="metric-value">0</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Surfaces</div>
-                    <div id="surface-status" class="metric-value">Idle</div>
+                    <div class="metric-label">Surface</div>
+                    <div id="surface-status" class="metric-value">Scanning</div>
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Mode</div>
-                    <div class="metric-value">Live Wireframe</div>
+                    <div class="metric-value">WebXR Hit-Test</div>
                 </div>
             </div>
             
             <div class="btn-row">
-                <button id="scan-btn" onclick="toggleScanState()">START SCANNING</button>
+                <button id="ar-button">START AR SCAN</button>
                 <button id="save-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
             </div>
         </div>
@@ -150,140 +137,194 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        let videoElement = document.getElementById('camera-stream');
-        let scanBtn = document.getElementById('scan-btn');
-        let saveBtn = document.getElementById('save-btn');
-        let statusBadge = document.getElementById('status-badge');
+        let container;
+        let camera, scene, renderer;
+        let controller;
+
+        let spatialNodes = [];
+        let vectorPoints = [];
+        let worldGroup = new THREE.Group();
+
         let nodeCountText = document.getElementById('node-count');
         let surfaceStatusText = document.getElementById('surface-status');
+        let statusBadge = document.getElementById('status-badge');
+        let saveBtn = document.getElementById('save-btn');
+        let arButton = document.getElementById('ar-button');
 
-        let isScanning = false;
-        let spatialNodes = [];
-        let scanInterval = null;
+        let reticle;
+        let hitTestSource = null;
+        let hitTestSourceRequested = false;
 
-        // Three.js Scene Components
-        let scene, camera, renderer;
-        let worldGroup = new THREE.Group();
-        let vectorPoints = [];
+        init();
 
-        function initThreeJS() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, 0);
+        function init() {
+            container = document.createElement('div');
+            document.body.appendChild(container);
 
             const canvas = document.getElementById('webgl-canvas');
-            renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
+            scene = new THREE.Scene();
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
             scene.add(worldGroup);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
             scene.add(ambientLight);
 
-            function animate() {
-                requestAnimationFrame(animate);
-                worldGroup.rotation.y += 0.0015; // Gentle rotation to view the constructed room mesh
-                renderer.render(scene, camera);
-            }
-            animate();
-        }
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.xr.enabled = true; // Enable native WebXR rendering pipeline
 
-        async function initCameraFeed() {
-            try {
-                const constraints = {
-                    video: {
-                        facingMode: { exact: "environment" },
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
+            // Setup Reticle (The surface tracking target ring)
+            initReticle();
+
+            // Handle Controller / Screen Tap Events in AR
+            controller = renderer.xr.getController(0);
+            controller.addEventListener('select', onSelectPointPlaced);
+            scene.add(controller);
+
+            // Configure WebXR AR Session startup button trigger
+            if ('xr' in navigator) {
+                navigator.xr.isSessionSupported('immersive-ar').then((supported) => {
+                    if (supported) {
+                        arButton.onclick = () => {
+                            let sessionInit = { requiredFeatures: ['hit-test', 'local-floor'] };
+                            navigator.xr.requestSession('immersive-ar', sessionInit).then(onSessionStarted);
+                        };
+                    } else {
+                        arButton.innerText = "AR NOT SUPPORTED ON DEVICE";
+                        arButton.style.background = "#333";
                     }
-                };
-                let stream = await navigator.mediaDevices.getUserMedia(constraints);
-                videoElement.srcObject = stream;
-            } catch (err) {
-                try {
-                    let fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    videoElement.srcObject = fallbackStream;
-                } catch (e) {
-                    alert("Camera permissions required.");
-                }
-            }
-        }
-
-        function toggleScanState() {
-            isScanning = !isScanning;
-
-            if (isScanning) {
-                scanBtn.innerText = "STOP SCANNING";
-                scanBtn.classList.add("scanning");
-                statusBadge.innerText = "RECONSTRUCTING MESH";
-                statusBadge.classList.add("active");
-                surfaceStatusText.innerText = "Constructing";
-                saveBtn.style.display = "block";
-                
-                spatialNodes = [];
-                vectorPoints = [];
-                
-                while(worldGroup.children.length > 0){ 
-                    worldGroup.remove(worldGroup.children[0]); 
-                }
-
-                // Scan loop generating spatial points and rebuilding live structural meshes
-                scanInterval = setInterval(() => {
-                    let px = (Math.random() * 4 - 2);
-                    let py = (Math.random() * 1.5 - 0.7);
-                    let pz = (-Math.random() * 4 - 1);
-
-                    let newVector = new THREE.Vector3(px, py, pz);
-                    vectorPoints.push(newVector);
-
-                    let mockNode = {
-                        id: spatialNodes.length + 1,
-                        x: px.toFixed(3),
-                        y: py.toFixed(3),
-                        z: pz.toFixed(3),
-                        timestamp: new Date().toISOString()
-                    };
-                    spatialNodes.push(mockNode);
-                    nodeCountText.innerText = spatialNodes.length;
-
-                    // 1. Drop a node marker sphere
-                    const sphereGeo = new THREE.SphereGeometry(0.03, 8, 8);
-                    const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
-                    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-                    sphere.position.copy(newVector);
-                    worldGroup.add(sphere);
-
-                    // 2. Connect new nodes with structural wireframe lines if we have multiple points
-                    if (vectorPoints.length > 1) {
-                        let prevVector = vectorPoints[vectorPoints.length - 2];
-                        const lineGeo = new THREE.BufferGeometry().setFromPoints([prevVector, newVector]);
-                        const lineMat = new THREE.LineBasicMaterial({ color: 0x0088ff, transparent: true, opacity: 0.7 });
-                        const connectingLine = new THREE.Line(lineGeo, lineMat);
-                        worldGroup.add(connectingLine);
-                    }
-
-                }, 200);
-
+                });
             } else {
-                scanBtn.innerText = "START SCANNING";
-                scanBtn.classList.remove("scanning");
-                statusBadge.innerText = "MESH LOCKED";
-                statusBadge.classList.remove("active");
-                surfaceStatusText.innerText = "Ready";
-                clearInterval(scanInterval);
+                arButton.innerText = "WEBXR UNAVAILABLE";
+                arButton.style.background = "#333";
+            }
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function initReticle() {
+            let ringGeo = new THREE.RingGeometry(0.15, 0.18, 32).rotateX(-Math.PI / 2);
+            let ringMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
+            reticle = new THREE.Mesh(ringGeo, ringMat);
+            reticle.matrixAutoUpdate = false;
+            reticle.visible = false;
+            scene.add(reticle);
+        }
+
+        function onSessionStarted(session) {
+            session.addEventListener('end', onSessionEnded);
+            renderer.xr.setSession(session);
+            
+            arButton.innerText = "AR ACTIVE";
+            arButton.style.background = "#ff453a";
+            statusBadge.innerText = "MAPPING SURFACE";
+            statusBadge.classList.add("active");
+            surfaceStatusText.innerText = "Detecting";
+            saveBtn.style.display = "block";
+        }
+
+        function onSessionEnded() {
+            arButton.innerText = "START AR SCAN";
+            arButton.style.background = "#0a84ff";
+            statusBadge.innerText = "SESSION ENDED";
+            statusBadge.classList.remove("active");
+            surfaceStatusText.innerText = "Idle";
+            reticle.visible = false;
+            hitTestSourceRequested = false;
+            hitTestSource = null;
+        }
+
+        // Triggered every time you tap your phone screen while pointing at a surface
+        function onSelectPointPlaced() {
+            if (reticle.visible) {
+                let position = new THREE.Vector3();
+                let quaternion = new THREE.Quaternion();
+                let scale = new THREE.Vector3();
+                reticle.matrix.decompose(position, quaternion, scale);
+
+                vectorPoints.push(position);
+
+                let mockNode = {
+                    id: spatialNodes.length + 1,
+                    x: position.x.toFixed(3),
+                    y: position.y.toFixed(3),
+                    z: position.z.toFixed(3),
+                    timestamp: new Date().toISOString()
+                };
+                spatialNodes.push(mockNode);
+                nodeCountText.innerText = spatialNodes.length;
+                surfaceStatusText.innerText = "Surface Locked";
+
+                // Drop physical anchor sphere directly onto the real-world surface point
+                const sphereGeo = new THREE.SphereGeometry(0.025, 16, 16);
+                const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
+                const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+                sphere.position.copy(position);
+                worldGroup.add(sphere);
+
+                // Draw connecting wireframe line across physical anchors
+                if (vectorPoints.length > 1) {
+                    let prevPos = vectorPoints[vectorPoints.length - 2];
+                    const lineGeo = new THREE.BufferGeometry().setFromPoints([prevPos, position]);
+                    const lineMat = new THREE.LineBasicMaterial({ color: 0x0a84ff, linewidth: 3 });
+                    const connectingLine = new THREE.Line(lineGeo, lineMat);
+                    worldGroup.add(connectingLine);
+                }
             }
         }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // WebXR Render Loop handling real-world surface hit-testing updates
+        renderer.setAnimationLoop(function (timestamp, frame) {
+            if (frame) {
+                let referenceSpace = renderer.xr.getReferenceSpace();
+                let session = renderer.xr.getSession();
+
+                if (!hitTestSourceRequested) {
+                    session.requestReferenceSpace('viewer').then((viewerSpace) => {
+                        session.requestHitTestSource({ space: viewerSpace }).then((source) => {
+                            hitTestSource = source;
+                        });
+                    });
+                    session.addEventListener('end', () => {
+                        hitTestSourceRequested = false;
+                        hitTestSource = null;
+                    });
+                    hitTestSourceRequested = true;
+                }
+
+                if (hitTestSource) {
+                    let hitTestResults = frame.getHitTestResults(hitTestSource);
+                    if (hitTestResults.length > 0) {
+                        let hit = hitTestResults[0];
+                        let hitPose = hit.getPose(referenceSpace);
+                        reticle.visible = true;
+                        reticle.matrix.fromArray(hitPose.transform.matrix);
+                    } else {
+                        reticle.visible = false;
+                    }
+                }
+            }
+            renderer.render(scene, camera);
+        });
 
         function exportEnvironmentMap() {
             if (spatialNodes.length === 0) {
-                alert("No environment nodes recorded.");
+                alert("No AR surface anchors placed yet. Tap your screen during AR mode to place nodes.");
                 return;
             }
 
             const environmentPayload = {
-                generator: "Spatial Dash Pro 3D Mesh Engine",
-                version: "4.0",
+                generator: "Spatial Dash WebXR Hit-Test Engine",
+                version: "5.0",
                 sessionDate: new Date().toISOString(),
                 totalMeshNodes: spatialNodes.length,
                 coordinatesMatrix: spatialNodes
@@ -294,23 +335,12 @@
             
             const fileLink = document.createElement('a');
             fileLink.href = downloadUrl;
-            fileLink.download = `spatial_mesh_environment_${Date.now()}.json`;
+            fileLink.download = `spatial_webxr_map_${Date.now()}.json`;
             document.body.appendChild(fileLink);
             fileLink.click();
             document.body.removeChild(fileLink);
             URL.revokeObjectURL(downloadUrl);
         }
-
-        window.addEventListener('load', () => {
-            initCameraFeed();
-            initThreeJS();
-        });
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
