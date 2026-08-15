@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - Universal Omni Scanner HD</title>
+    <title>Spatial Dash Pro - 4D Volumetric Time-Series Scanner</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -185,8 +185,8 @@
 
     <div id="export-modal" class="interactive">
         <div class="modal-content">
-            <h3>Scan Payload Ready</h3>
-            <p id="modal-desc" style="font-size:11px; color:#aaa;">Scan payload successfully packaged. Tap copy to save data.</p>
+            <h3>4D Video Payload Ready</h3>
+            <p id="modal-desc" style="font-size:11px; color:#aaa;">Temporal sequence compiled successfully. Tap copy to save data.</p>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button id="modal-copy-btn" class="modal-btn" onclick="copyPayloadToClipboard()">COPY DATA</button>
@@ -198,10 +198,10 @@
     <div id="hud-overlay">
         <div class="top-status interactive">
             <div class="brand-group">
-                <span class="brand">SPATIAL DASH HD</span>
+                <span class="brand">SPATIAL DASH 4D</span>
                 <button class="camera-switch-btn" onclick="switchCamera()">📷 Flip</button>
                 <label class="file-upload-btn">
-                    📁 Load JSON
+                    📁 Load 4D JSON
                     <input type="file" id="json-file-input" accept=".json" onchange="loadEnvironmentMap(event)">
                 </label>
             </div>
@@ -211,22 +211,22 @@
         <div class="control-dock interactive">
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-label">Total Nodes</div>
+                    <div class="metric-label">Timeline Frames</div>
+                    <div id="frame-count" class="metric-value">0</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Nodes / Frame</div>
                     <div id="node-count" class="metric-value">0</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Scan Field</div>
-                    <div id="surface-status" class="metric-value">Standby</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-label">Engine</div>
-                    <div id="mode-status" class="metric-value">HD Dense Grid</div>
+                    <div class="metric-label">Engine Mode</div>
+                    <div id="mode-status" class="metric-value">4D Sequence</div>
                 </div>
             </div>
             
             <div class="btn-row">
-                <button id="scan-btn" class="action-btn" onclick="toggleScanState()">START OMNI SCAN</button>
-                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">SAVE FILE (.JSON)</button>
+                <button id="scan-btn" class="action-btn" onclick="toggleScanState()">RECORD 4D VIDEO</button>
+                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">SAVE 4D (.JSON)</button>
             </div>
         </div>
     </div>
@@ -239,16 +239,14 @@
         let scanBtn = document.getElementById('scan-btn');
         let saveBtn = document.getElementById('save-btn');
         let statusBadge = document.getElementById('status-badge');
+        let frameCountText = document.getElementById('frame-count');
         let nodeCountText = document.getElementById('node-count');
-        let surfaceStatusText = document.getElementById('surface-status');
         let exportModal = document.getElementById('export-modal');
         let modalJsonText = document.getElementById('modal-json-text');
         let modalDesc = document.getElementById('modal-desc');
 
         let isScanning = false;
-        let spatialVertices = []; 
-        let spatialColors = [];
-        let spatialIntensity = [];
+        let recordedFrames = []; // Stores sequence of frames over time (4D format)
         let currentFacingMode = "environment";
         let activeStream = null;
         let holistic = null;
@@ -256,6 +254,8 @@
         let cachedJsonString = "";
 
         let scene, camera, renderer, pointCloud;
+        let playbackFrames = [];
+        let playbackFrameIndex = 0;
 
         async function initCameraFeed() {
             if (renderContainer.style.display === "block") return; 
@@ -303,7 +303,7 @@
                 onFrame: async () => {
                     if (isScanning && videoElement) {
                         await holistic.send({image: videoElement});
-                        captureEnvironmentPointCloud();
+                        captureFrameSequence();
                     }
                 },
                 width: 1280,
@@ -312,20 +312,18 @@
             cameraUtilsInstance.start();
         }
 
-        function captureEnvironmentPointCloud() {
+        function captureFrameSequence() {
             if (!videoElement.videoWidth) return;
             
-            // Scaled up resolution to allow thousands of dense nodes
-            processingCanvas.width = 640;
-            processingCanvas.height = 360;
+            processingCanvas.width = 480;
+            processingCanvas.height = 270;
             canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
             
             const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
-            const step = 3; // Lower step = massively higher node count (approx ~25,000+ points)
+            const step = 2; // Ultra-dense tracking nodes per frame (~15,000+ points per frame)
 
             let envVertices = [];
             let envColors = [];
-            let envIntensity = [];
 
             for (let y = 0; y < processingCanvas.height; y += step) {
                 for (let x = 0; x < processingCanvas.width; x += step) {
@@ -342,24 +340,24 @@
 
                     envVertices.push(posX, posY, posZ);
                     envColors.push(parseFloat((r/255).toFixed(2)), parseFloat((g/255).toFixed(2)), parseFloat((b/255).toFixed(2)));
-                    envIntensity.push(parseFloat(luminance.toFixed(2)));
                 }
             }
 
-            spatialVertices = envVertices;
-            spatialColors = envColors;
-            spatialIntensity = envIntensity;
+            // Append current frame data to the 4D timeline sequence buffer
+            recordedFrames.push({
+                vertices: envVertices,
+                colors: envColors
+            });
 
-            nodeCountText.innerText = spatialVertices.length / 3;
-            surfaceStatusText.innerText = "HD Dense Active";
+            frameCountText.innerText = recordedFrames.length;
+            nodeCountText.innerText = envVertices.length / 3;
         }
 
         function onHolisticResults(results) {
-            if (!isScanning) return;
+            if (!isScanning || recordedFrames.length === 0) return;
             
             let humanVertices = [];
             let humanColors = [];
-            let humanIntensity = [];
 
             function addLandmarks(landmarks, rc, gc, bc) {
                 if (!landmarks) return;
@@ -370,7 +368,6 @@
 
                     humanVertices.push(x, y, z);
                     humanColors.push(rc, gc, bc);
-                    humanIntensity.push(1.0);
                 }
             }
 
@@ -380,9 +377,10 @@
             if (results.rightHandLandmarks) addLandmarks(results.rightHandLandmarks.landmark, 0.9, 0.1, 0.9);
 
             if (humanVertices.length > 0) {
-                spatialVertices.push(...humanVertices);
-                spatialColors.push(...humanColors);
-                spatialIntensity.push(...humanIntensity);
+                let currentFrame = recordedFrames[recordedFrames.length - 1];
+                currentFrame.vertices.push(...humanVertices);
+                currentFrame.colors.push(...humanColors);
+                nodeCountText.innerText = currentFrame.vertices.length / 3;
             }
         }
 
@@ -390,53 +388,47 @@
             isScanning = !isScanning;
 
             if (isScanning) {
-                scanBtn.innerText = "STOP SCANNING";
+                recordedFrames = []; // reset timeline buffer
+                scanBtn.innerText = "STOP RECORDING";
                 scanBtn.classList.add("scanning");
-                statusBadge.innerText = "HD DENSE ACTIVE";
+                statusBadge.innerText = "RECORDING 4D VIDEO...";
                 statusBadge.classList.add("active");
                 saveBtn.style.display = "block";
             } else {
-                scanBtn.innerText = "START OMNI SCAN";
+                scanBtn.innerText = "RECORD 4D VIDEO";
                 scanBtn.classList.remove("scanning");
-                statusBadge.innerText = "SCAN CAPTURED";
+                statusBadge.innerText = "4D SEQUENCE READY";
                 statusBadge.classList.remove("active");
-                surfaceStatusText.innerText = "Ready to Save";
             }
         }
 
         function exportEnvironmentMap() {
-            if (spatialVertices.length === 0) {
-                alert("No structural nodes recorded. Press start and point your camera at a scene.");
+            if (recordedFrames.length === 0) {
+                alert("No timeline frames recorded. Press record and capture motion.");
                 return;
             }
 
-            statusBadge.innerText = "PACKAGING FILE...";
+            statusBadge.innerText = "PACKAGING 4D PAYLOAD...";
 
             setTimeout(() => {
-                const environmentPayload = {
+                const video4DPayload = {
                     metadata: {
-                        generator: "Spatial Dash HD Engine",
-                        version: "6.0",
-                        type: "BufferGeometry",
-                        totalVertices: spatialVertices.length / 3,
+                        generator: "Spatial Dash 4D Engine",
+                        version: "7.0",
+                        type: "VolumetricSequence",
+                        totalFrames: recordedFrames.length,
                         timestamp: new Date().toISOString()
                     },
-                    data: {
-                        attributes: {
-                            position: { itemSize: 3, type: "Float32Array", array: spatialVertices },
-                            color: { itemSize: 3, type: "Float32Array", array: spatialColors },
-                            intensity: { itemSize: 1, type: "Float32Array", array: spatialIntensity }
-                        }
-                    }
+                    sequence: recordedFrames
                 };
 
-                cachedJsonString = JSON.stringify(environmentPayload);
+                cachedJsonString = JSON.stringify(video4DPayload);
                 
-                modalJsonText.value = cachedJsonString.substring(0, 1000) + "\n\n... [Full payload cached safely in memory (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB). Tap copy to get all data] ...";
-                modalDesc.innerText = `Payload ready! Size: ${(cachedJsonString.length / 1024 / 1024).toFixed(2)} MB. Tap copy to grab everything.`;
+                modalJsonText.value = cachedJsonString.substring(0, 1000) + "\n\n... [Full 4D sequence cached in memory (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB). Tap copy to get all data] ...";
+                modalDesc.innerText = `4D Video ready! Frames: ${recordedFrames.length}, Size: ${(cachedJsonString.length / 1024 / 1024).toFixed(2)} MB.`;
                 
                 exportModal.style.display = 'flex';
-                statusBadge.innerText = "SCAN CAPTURED";
+                statusBadge.innerText = "4D SEQUENCE READY";
             }, 100);
         }
 
@@ -476,27 +468,27 @@
             reader.onload = function(e) {
                 try {
                     const jsonContent = JSON.parse(e.target.result);
-                    render3DModelFromJSON(jsonContent);
+                    render4DVideoFromJSON(jsonContent);
                 } catch (err) {
-                    alert("Invalid JSON map file.");
+                    alert("Invalid 4D JSON sequence file.");
                 }
             };
             reader.readAsText(file);
         }
 
-        function render3DModelFromJSON(payload) {
+        function render4DVideoFromJSON(payload) {
             if (activeStream) {
                 activeStream.getTracks().forEach(track => track.stop());
             }
             videoElement.style.display = 'none';
             renderContainer.style.display = 'block';
             
-            statusBadge.innerText = "ENVIRONMENT LOADED";
+            statusBadge.innerText = "PLAYING 4D VIDEO";
             statusBadge.classList.add("active");
 
-            let rawArray = payload.data.attributes.position.array;
-            nodeCountText.innerText = rawArray.length / 3;
-            surfaceStatusText.innerText = "Mesh Active";
+            playbackFrames = payload.sequence;
+            playbackFrameIndex = 0;
+            frameCountText.innerText = playbackFrames.length;
 
             if (!scene) {
                 scene = new THREE.Scene();
@@ -522,27 +514,30 @@
                 window.addEventListener('mouseup', () => { isDragging = false; });
             }
 
-            if (pointCloud) scene.remove(pointCloud);
-
             const geometry = new THREE.BufferGeometry();
-            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(rawArray), 3));
-
-            let materialConfig = { size: 0.02, transparent: true, opacity: 0.85 };
-            if (payload.data.attributes.color) {
-                geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(payload.data.attributes.color.array), 3));
-                materialConfig.vertexColors = true;
-            } else {
-                materialConfig.color = 0x0a84ff;
-            }
-
-            pointCloud = new THREE.Points(geometry, new THREE.PointsMaterial(materialConfig));
+            const material = new THREE.PointsMaterial({ size: 0.02, vertexColors: true, transparent: true, opacity: 0.85 });
+            pointCloud = new THREE.Points(geometry, material);
             scene.add(pointCloud);
 
-            function animate() {
-                requestAnimationFrame(animate);
+            function animate4D() {
+                requestAnimationFrame(animate4D);
+
+                if (playbackFrames.length > 0) {
+                    let frame = playbackFrames[playbackFrameIndex];
+                    geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(frame.vertices), 3));
+                    geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(frame.colors), 3));
+                    geometry.attributes.position.needsUpdate = true;
+                    geometry.attributes.color.needsUpdate = true;
+
+                    nodeCountText.innerText = frame.vertices.length / 3;
+
+                    // Loop timeline forward
+                    playbackFrameIndex = (playbackFrameIndex + 1) % playbackFrames.length;
+                }
+
                 renderer.render(scene, camera);
             }
-            animate();
+            animate4D();
         }
 
         window.addEventListener('load', () => {
