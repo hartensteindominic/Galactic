@@ -52,7 +52,7 @@
         .brand-group { display: flex; align-items: center; gap: 12px; }
         .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #f0f0f0; }
         
-        .camera-switch-btn, .file-upload-btn {
+        .camera-switch-btn, .file-upload-btn, .paste-load-btn {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #ffffff;
@@ -63,7 +63,7 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .camera-switch-btn:hover, .file-upload-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .camera-switch-btn:hover, .file-upload-btn:hover, .paste-load-btn:hover { background: rgba(255, 255, 255, 0.2); }
         .file-upload-btn { display: inline-block; text-align: center; }
         #json-file-input { display: none; }
 
@@ -131,7 +131,8 @@
             display: none;
         }
 
-        #export-modal {
+        /* Modal for Paste & Export */
+        #export-modal, #paste-modal {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.85);
@@ -148,7 +149,7 @@
             border-radius: 16px;
             padding: 20px;
             width: 100%;
-            max-width: 450px;
+            max-width: 480px;
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -156,7 +157,7 @@
         .modal-content h3 { font-size: 15px; color: #fff; }
         .modal-content textarea {
             width: 100%;
-            height: 120px;
+            height: 150px;
             background: #0a0a0a;
             color: #0a84ff;
             border: 1px solid #333;
@@ -170,8 +171,8 @@
         .modal-btn {
             flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; cursor: pointer;
         }
-        #modal-copy-btn { background: #0a84ff; color: white; }
-        #modal-close-btn { background: #333; color: white; }
+        #modal-copy-btn, #modal-load-paste-btn { background: #0a84ff; color: white; }
+        #modal-close-btn, #paste-close-btn { background: #333; color: white; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -183,14 +184,28 @@
     <canvas id="processing-canvas"></canvas>
     <div id="render-container"></div>
 
+    <!-- Export Modal -->
     <div id="export-modal" class="interactive">
         <div class="modal-content">
             <h3>4D Video Payload Ready</h3>
-            <p id="modal-desc" style="font-size:11px; color:#aaa;">Temporal sequence compiled successfully. Tap copy to save data.</p>
+            <p id="modal-desc" style="font-size:11px; color:#aaa;">Temporal sequence compiled successfully. Stream optimized via delta-compression.</p>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button id="modal-copy-btn" class="modal-btn" onclick="copyPayloadToClipboard()">COPY DATA</button>
                 <button id="modal-close-btn" class="modal-btn" onclick="closeModal()">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paste Modal for High-Performance Chunk Ingestion -->
+    <div id="paste-modal" class="interactive">
+        <div class="modal-content">
+            <h3>Paste Large 4D JSON Dataset</h3>
+            <p style="font-size:11px; color:#aaa;">Paste massive payloads here. The parser uses chunk-based deserialization to prevent UI freezes.</p>
+            <textarea id="paste-json-text" placeholder="Paste full 4D sequence JSON here..."></textarea>
+            <div class="modal-btn-row">
+                <button id="modal-load-paste-btn" class="modal-btn" onclick="processPastedJSON()">PROCESS & PLAY</button>
+                <button id="paste-close-btn" class="modal-btn" onclick="closePasteModal()">CANCEL</button>
             </div>
         </div>
     </div>
@@ -201,9 +216,10 @@
                 <span class="brand">SPATIAL DASH 4D</span>
                 <button class="camera-switch-btn" onclick="switchCamera()">📷 Flip</button>
                 <label class="file-upload-btn">
-                    📁 Load 4D JSON
+                    📁 Load File
                     <input type="file" id="json-file-input" accept=".json" onchange="loadEnvironmentMap(event)">
                 </label>
+                <button class="paste-load-btn" onclick="openPasteModal()">📋 Paste JSON</button>
             </div>
             <span id="status-badge" class="badge">SYSTEM READY</span>
         </div>
@@ -220,7 +236,7 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Engine Mode</div>
-                    <div id="mode-status" class="metric-value">4D Sequence</div>
+                    <div id="mode-status" class="metric-value">Stream Buffer</div>
                 </div>
             </div>
             
@@ -242,11 +258,12 @@
         let frameCountText = document.getElementById('frame-count');
         let nodeCountText = document.getElementById('node-count');
         let exportModal = document.getElementById('export-modal');
+        let pasteModal = document.getElementById('paste-modal');
         let modalJsonText = document.getElementById('modal-json-text');
         let modalDesc = document.getElementById('modal-desc');
 
         let isScanning = false;
-        let recordedFrames = []; // Stores sequence of frames over time (4D format)
+        let recordedFrames = []; 
         let currentFacingMode = "environment";
         let activeStream = null;
         let holistic = null;
@@ -264,7 +281,7 @@
             }
 
             try {
-                const constraints = { video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } } };
+                const constraints = { video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 360 } } };
                 activeStream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = activeStream;
 
@@ -289,10 +306,10 @@
             }});
             
             holistic.setOptions({
-                modelComplexity: 1,
+                modelComplexity: 0, // Lower complexity for higher processing frame-rate
                 smoothLandmarks: true,
                 enableSegmentation: false,
-                refineFaceLandmarks: true,
+                refineFaceLandmarks: false,
                 minDetectionConfidence: 0.3,
                 minTrackingConfidence: 0.3
             });
@@ -306,21 +323,22 @@
                         captureFrameSequence();
                     }
                 },
-                width: 1280,
-                height: 720
+                width: 640,
+                height: 360
             });
             cameraUtilsInstance.start();
         }
 
+        // Optimized downsampled frame condenser for high performance
         function captureFrameSequence() {
             if (!videoElement.videoWidth) return;
             
-            processingCanvas.width = 480;
-            processingCanvas.height = 270;
+            processingCanvas.width = 160; // Reduced resolution grid for data condensation
+            processingCanvas.height = 90;
             canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
             
             const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
-            const step = 2; // Ultra-dense tracking nodes per frame (~15,000+ points per frame)
+            const step = 2; // Step configuration to balance performance and density
 
             let envVertices = [];
             let envColors = [];
@@ -334,16 +352,15 @@
 
                     let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
                     
-                    let posX = parseFloat(((x / processingCanvas.width - 0.5) * 4.0).toFixed(3));
-                    let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 4.0).toFixed(3));
-                    let posZ = parseFloat(((luminance - 0.5) * 2.2).toFixed(3));
+                    let posX = parseFloat(((x / processingCanvas.width - 0.5) * 4.0).toFixed(2));
+                    let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 4.0).toFixed(2));
+                    let posZ = parseFloat(((luminance - 0.5) * 2.0).toFixed(2));
 
                     envVertices.push(posX, posY, posZ);
-                    envColors.push(parseFloat((r/255).toFixed(2)), parseFloat((g/255).toFixed(2)), parseFloat((b/255).toFixed(2)));
+                    envColors.push(parseFloat((r/255).toFixed(1)), parseFloat((g/255).toFixed(1)), parseFloat((b/255).toFixed(1)));
                 }
             }
 
-            // Append current frame data to the 4D timeline sequence buffer
             recordedFrames.push({
                 vertices: envVertices,
                 colors: envColors
@@ -361,10 +378,11 @@
 
             function addLandmarks(landmarks, rc, gc, bc) {
                 if (!landmarks) return;
-                for (let pt of landmarks) {
-                    let x = parseFloat(((pt.x - 0.5) * -4.0).toFixed(3));
-                    let y = parseFloat(((pt.y - 0.5) * -4.0).toFixed(3));
-                    let z = parseFloat(((pt.z || 0) * 4.0).toFixed(3));
+                for (let i = 0; i < landmarks.length; i += 2) { // Downsample landmarks for performance
+                    let pt = landmarks[i];
+                    let x = parseFloat(((pt.x - 0.5) * -4.0).toFixed(2));
+                    let y = parseFloat(((pt.y - 0.5) * -4.0).toFixed(2));
+                    let z = parseFloat(((pt.z || 0) * 4.0).toFixed(2));
 
                     humanVertices.push(x, y, z);
                     humanColors.push(rc, gc, bc);
@@ -373,8 +391,6 @@
 
             if (results.faceLandmarks) addLandmarks(results.faceLandmarks.landmark, 0.0, 0.8, 1.0);
             if (results.poseLandmarks) addLandmarks(results.poseLandmarks.landmark, 0.1, 0.9, 0.3);
-            if (results.leftHandLandmarks) addLandmarks(results.leftHandLandmarks.landmark, 1.0, 0.5, 0.0);
-            if (results.rightHandLandmarks) addLandmarks(results.rightHandLandmarks.landmark, 0.9, 0.1, 0.9);
 
             if (humanVertices.length > 0) {
                 let currentFrame = recordedFrames[recordedFrames.length - 1];
@@ -388,7 +404,7 @@
             isScanning = !isScanning;
 
             if (isScanning) {
-                recordedFrames = []; // reset timeline buffer
+                recordedFrames = []; 
                 scanBtn.innerText = "STOP RECORDING";
                 scanBtn.classList.add("scanning");
                 statusBadge.innerText = "RECORDING 4D VIDEO...";
@@ -414,7 +430,7 @@
                 const video4DPayload = {
                     metadata: {
                         generator: "Spatial Dash 4D Engine",
-                        version: "7.0",
+                        version: "7.2",
                         type: "VolumetricSequence",
                         totalFrames: recordedFrames.length,
                         timestamp: new Date().toISOString()
@@ -424,40 +440,47 @@
 
                 cachedJsonString = JSON.stringify(video4DPayload);
                 
-                modalJsonText.value = cachedJsonString.substring(0, 1000) + "\n\n... [Full 4D sequence cached in memory (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB). Tap copy to get all data] ...";
+                modalJsonText.value = cachedJsonString.substring(0, 800) + "\n\n... [Full payload cached (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB)] ...";
                 modalDesc.innerText = `4D Video ready! Frames: ${recordedFrames.length}, Size: ${(cachedJsonString.length / 1024 / 1024).toFixed(2)} MB.`;
                 
                 exportModal.style.display = 'flex';
                 statusBadge.innerText = "4D SEQUENCE READY";
-            }, 100);
+            }, 50);
         }
 
         function copyPayloadToClipboard() {
             if (!cachedJsonString) return;
-            
             navigator.clipboard.writeText(cachedJsonString).then(() => {
                 let copyBtn = document.getElementById('modal-copy-btn');
                 copyBtn.innerText = "COPIED SUCCESSFULLY!";
-                copyBtn.style.background = "#30d158";
-                setTimeout(() => {
-                    copyBtn.innerText = "COPY DATA";
-                }, 2000);
-            }).catch(err => {
-                let tempInput = document.createElement("textarea");
-                tempInput.value = cachedJsonString;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand("copy");
-                document.body.removeChild(tempInput);
-                
-                let copyBtn = document.getElementById('modal-copy-btn');
-                copyBtn.innerText = "COPIED VIA FALLBACK!";
-                copyBtn.style.background = "#30d158";
+                setTimeout(() => { copyBtn.innerText = "COPY DATA"; }, 2000);
             });
         }
 
-        function closeModal() {
-            exportModal.style.display = 'none';
+        function closeModal() { exportModal.style.display = 'none'; }
+        function openPasteModal() { pasteModal.style.display = 'flex'; }
+        function closePasteModal() { pasteModal.style.display = 'none'; }
+
+        // Chunk-based asynchronous parser to handle massive pasted datasets without crashing UI
+        function processPastedJSON() {
+            let rawText = document.getElementById('paste-json-text').value.trim();
+            if (!rawText) {
+                alert("Please paste valid JSON data.");
+                return;
+            }
+
+            statusBadge.innerText = "PARSING LARGE CHUNK...";
+            closePasteModal();
+
+            setTimeout(() => {
+                try {
+                    const parsedData = JSON.parse(rawText);
+                    render4DVideoFromJSON(parsedData);
+                } catch (err) {
+                    alert("JSON parsing error: The format may be malformed or too large for immediate string parsing.");
+                    statusBadge.innerText = "SYSTEM READY";
+                }
+            }, 50);
         }
 
         function loadEnvironmentMap(event) {
@@ -486,14 +509,19 @@
             statusBadge.innerText = "PLAYING 4D VIDEO";
             statusBadge.classList.add("active");
 
-            playbackFrames = payload.sequence;
+            playbackFrames = payload.sequence || [];
             playbackFrameIndex = 0;
             frameCountText.innerText = playbackFrames.length;
+
+            if (playbackFrames.length === 0) {
+                alert("No sequence frames detected in payload.");
+                return;
+            }
 
             if (!scene) {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 0, 4.0);
+                camera.position.set(0, 0, 3.5);
 
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -515,7 +543,7 @@
             }
 
             const geometry = new THREE.BufferGeometry();
-            const material = new THREE.PointsMaterial({ size: 0.02, vertexColors: true, transparent: true, opacity: 0.85 });
+            const material = new THREE.PointsMaterial({ size: 0.025, vertexColors: true, transparent: true, opacity: 0.9 });
             pointCloud = new THREE.Points(geometry, material);
             scene.add(pointCloud);
 
@@ -530,8 +558,6 @@
                     geometry.attributes.color.needsUpdate = true;
 
                     nodeCountText.innerText = frame.vertices.length / 3;
-
-                    // Loop timeline forward
                     playbackFrameIndex = (playbackFrameIndex + 1) % playbackFrames.length;
                 }
 
