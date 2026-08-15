@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - Enhanced 4D Volumetric Time-Series Scanner</title>
+    <title>Spatial Dash Pro - Advanced 4D Volumetric Time-Series Scanner</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #050505;
+            background-color: #030303;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow: hidden;
@@ -40,9 +40,9 @@
         }
         .interactive { pointer-events: auto; }
         .top-status {
-            background: rgba(15, 15, 15, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(12px);
+            background: rgba(15, 15, 15, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(14px);
             border-radius: 14px;
             padding: 14px 20px;
             display: flex;
@@ -82,9 +82,9 @@
             border: 1px solid rgba(48, 209, 88, 0.4);
         }
         .control-dock {
-            background: rgba(15, 15, 15, 0.90);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(16px);
+            background: rgba(15, 15, 15, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(18px);
             border-radius: 18px;
             padding: 20px;
             display: flex;
@@ -185,11 +185,11 @@
 
     <div id="export-modal" class="interactive">
         <div class="modal-content">
-            <h3>4D Video Payload Ready</h3>
-            <p id="modal-desc" style="font-size:11px; color:#aaa;">Temporal sequence compiled successfully. Stream optimized via condensed depth reconstruction.</p>
+            <h3>3D Photo Map Payload Ready</h3>
+            <p id="modal-desc" style="font-size:11px; color:#aaa;">Temporal sequence converted into an optimized 3D Photo Map stream format.</p>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
-                <button id="modal-copy-btn" class="modal-btn" onclick="copyPayloadToClipboard()">COPY DATA</button>
+                <button id="modal-copy-btn" class="modal-btn" onclick="copyPayloadToClipboard()">COPY 3D MAP PAYLOAD</button>
                 <button id="modal-close-btn" class="modal-btn" onclick="closeModal()">CLOSE</button>
             </div>
         </div>
@@ -197,9 +197,9 @@
 
     <div id="paste-modal" class="interactive">
         <div class="modal-content">
-            <h3>Paste Large 4D JSON Dataset</h3>
-            <p style="font-size:11px; color:#aaa;">Paste massive payloads here. The parser uses chunk-based deserialization to prevent UI freezes.</p>
-            <textarea id="paste-json-text" placeholder="Paste full 4D sequence JSON here..."></textarea>
+            <h3>Paste 3D Photo Map / 4D Dataset</h3>
+            <p style="font-size:11px; color:#aaa;">Paste your structured Map or 4D JSON sequence here for direct parsing.</p>
+            <textarea id="paste-json-text" placeholder="Paste JSON data here..."></textarea>
             <div class="modal-btn-row">
                 <button id="modal-load-paste-btn" class="modal-btn" onclick="processPastedJSON()">PROCESS & PLAY</button>
                 <button id="paste-close-btn" class="modal-btn" onclick="closePasteModal()">CANCEL</button>
@@ -233,13 +233,13 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Engine Mode</div>
-                    <div id="mode-status" class="metric-value">Condensed Stream</div>
+                    <div id="mode-status" class="metric-value">Optimized 3D Map</div>
                 </div>
             </div>
             
             <div class="btn-row">
                 <button id="scan-btn" class="action-btn" onclick="toggleScanState()">RECORD 4D VIDEO</button>
-                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">SAVE 4D (.JSON)</button>
+                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">SAVE MAP (.JSON)</button>
             </div>
         </div>
     </div>
@@ -326,31 +326,42 @@
             cameraUtilsInstance.start();
         }
 
+        // Upgraded Processor: Dual-Layer Volumetric Sampling with Edge-Weighted Depth Reconstruction
         function captureFrameSequence() {
             if (!videoElement.videoWidth) return;
             
-            processingCanvas.width = 240;
-            processingCanvas.height = 135;
+            processingCanvas.width = 320;
+            processingCanvas.height = 180;
             canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
             
-            const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
+            const imgDataObj = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height);
+            const frameData = imgDataObj.data;
+            const width = processingCanvas.width;
+            const height = processingCanvas.height;
             const step = 2;
 
             let envVertices = [];
             let envColors = [];
 
-            for (let y = 0; y < processingCanvas.height; y += step) {
-                for (let x = 0; x < processingCanvas.width; x += step) {
-                    let index = (y * processingCanvas.width + x) * 4;
-                    let r = frameData[index];
-                    let g = frameData[index + 1];
-                    let b = frameData[index + 2];
+            for (let y = 1; y < height - 1; y += step) {
+                for (let x = 1; x < width - 1; x += step) {
+                    let idx = (y * width + x) * 4;
+                    let r = frameData[idx];
+                    let g = frameData[idx + 1];
+                    let b = frameData[idx + 2];
 
-                    let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
-                    
-                    let posX = parseFloat(((x / processingCanvas.width - 0.5) * 5.0).toFixed(3));
-                    let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 5.0).toFixed(3));
-                    let posZ = parseFloat(((luminance - 0.5) * 3.2).toFixed(3));
+                    let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
+
+                    // Compute local luminance gradients for edge reinforcement
+                    let idxRight = (y * width + (x + 1)) * 4;
+                    let idxDown = ((y + 1) * width + x) * 4;
+                    let lumR = (0.299 * frameData[idxRight] + 0.587 * frameData[idxRight + 1] + 0.114 * frameData[idxRight + 2]) / 255.0;
+                    let lumD = (0.299 * frameData[idxDown] + 0.587 * frameData[idxDown + 1] + 0.114 * frameData[idxDown + 2]) / 255.0;
+                    let edgeWeight = Math.abs(lum - lumR) + Math.abs(lum - lumD);
+
+                    let posX = parseFloat(((x / width - 0.5) * 5.2).toFixed(3));
+                    let posY = parseFloat((-(y / height - 0.5) * 5.2).toFixed(3));
+                    let posZ = parseFloat(((lum - 0.5) * 3.4 + (edgeWeight * 0.4)).toFixed(3));
 
                     envVertices.push(posX, posY, posZ);
                     envColors.push(parseFloat((r/255).toFixed(2)), parseFloat((g/255).toFixed(2)), parseFloat((b/255).toFixed(2)));
@@ -376,9 +387,9 @@
                 if (!landmarks) return;
                 for (let i = 0; i < landmarks.length; i++) {
                     let pt = landmarks[i];
-                    let x = parseFloat(((pt.x - 0.5) * -5.0).toFixed(3));
-                    let y = parseFloat(((pt.y - 0.5) * -5.0).toFixed(3));
-                    let z = parseFloat(((pt.z || 0) * 5.0).toFixed(3));
+                    let x = parseFloat(((pt.x - 0.5) * -5.2).toFixed(3));
+                    let y = parseFloat(((pt.y - 0.5) * -5.2).toFixed(3));
+                    let z = parseFloat(((pt.z || 0) * 5.2).toFixed(3));
 
                     humanVertices.push(x, y, z);
                     humanColors.push(rc, gc, bc);
@@ -411,38 +422,47 @@
             } else {
                 scanBtn.innerText = "RECORD 4D VIDEO";
                 scanBtn.classList.remove("scanning");
-                statusBadge.innerText = "4D SEQUENCE READY";
+                statusBadge.innerText = "3D MAP PAYLOAD READY";
                 statusBadge.classList.remove("active");
             }
         }
 
+        // Upgraded Exporter: Converts 4D data into a structured 3D Photo Map payload schema
         function exportEnvironmentMap() {
             if (recordedFrames.length === 0) {
                 alert("No timeline frames recorded. Press record and capture motion.");
                 return;
             }
 
-            statusBadge.innerText = "PACKAGING 4D PAYLOAD...";
+            statusBadge.innerText = "BUILDING 3D PHOTO MAP...";
 
             setTimeout(() => {
-                const video4DPayload = {
+                const map3DPayload = {
+                    version: "2.0",
+                    mapType: "SpatialDash3DPhotoMap",
                     metadata: {
-                        generator: "Spatial Dash 4D Condensed Engine",
-                        version: "8.1",
-                        type: "VolumetricSequence",
+                        generator: "Spatial Dash Advanced Engine",
                         totalFrames: recordedFrames.length,
-                        timestamp: new Date().toISOString()
+                        exportTimestamp: new Date().toISOString(),
+                        coordinateSystem: "Cartesian-RightHanded"
                     },
-                    sequence: recordedFrames
+                    frames: recordedFrames.map((frame, index) => ({
+                        frameIndex: index,
+                        nodeCount: frame.vertices.length / 3,
+                        geometryStream: {
+                            positions: frame.vertices,
+                            colors: frame.colors
+                        }
+                    }))
                 };
 
-                cachedJsonString = JSON.stringify(video4DPayload);
+                cachedJsonString = JSON.stringify(map3DPayload);
                 
-                modalJsonText.value = cachedJsonString.substring(0, 800) + "\n\n... [Full payload cached (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB)] ...";
-                modalDesc.innerText = `4D Video ready! Frames: ${recordedFrames.length}, Size: ${(cachedJsonString.length / 1024 / 1024).toFixed(2)} MB.`;
+                modalJsonText.value = cachedJsonString.substring(0, 900) + "\n\n... [Structured 3D Map Payload Cached (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB)] ...";
+                modalDesc.innerText = `3D Photo Map compiled! Frames: ${recordedFrames.length}, Size: ${(cachedJsonString.length / 1024 / 1024).toFixed(2)} MB. Optimized for map photo processors.`;
                 
                 exportModal.style.display = 'flex';
-                statusBadge.innerText = "4D SEQUENCE READY";
+                statusBadge.innerText = "3D MAP PAYLOAD READY";
             }, 50);
         }
 
@@ -450,8 +470,8 @@
             if (!cachedJsonString) return;
             navigator.clipboard.writeText(cachedJsonString).then(() => {
                 let copyBtn = document.getElementById('modal-copy-btn');
-                copyBtn.innerText = "COPIED SUCCESSFULLY!";
-                setTimeout(() => { copyBtn.innerText = "COPY DATA"; }, 2000);
+                copyBtn.innerText = "MAP COPIED SUCCESSFULLY!";
+                setTimeout(() => { copyBtn.innerText = "COPY 3D MAP PAYLOAD"; }, 2000);
             });
         }
 
@@ -459,6 +479,7 @@
         function openPasteModal() { pasteModal.style.display = 'flex'; }
         function closePasteModal() { pasteModal.style.display = 'none'; }
 
+        // Upgraded Parser: Handles both legacy sequence arrays and structured 3D photo map schemas
         function processPastedJSON() {
             let rawText = document.getElementById('paste-json-text').value.trim();
             if (!rawText) {
@@ -466,26 +487,33 @@
                 return;
             }
 
-            statusBadge.innerText = "PARSING LARGE CHUNK...";
+            statusBadge.innerText = "PARSING 3D MAP CHUNK...";
             closePasteModal();
 
             setTimeout(() => {
                 try {
                     const parsedData = JSON.parse(rawText);
-                    
-                    if (!parsedData.sequence || !Array.isArray(parsedData.sequence)) {
-                        throw new Error("Invalid payload structure: missing sequence array.");
+                    let framesArray = [];
+
+                    if (parsedData.frames && Array.isArray(parsedData.frames)) {
+                        // Structured 3D Photo Map format
+                        framesArray = parsedData.frames.map(f => f.geometryStream);
+                    } else if (parsedData.sequence && Array.isArray(parsedData.sequence)) {
+                        // Standard sequence format
+                        framesArray = parsedData.sequence;
+                    } else {
+                        throw new Error("Unrecognized schema format.");
                     }
 
-                    statusBadge.innerText = "INITIALIZING 4D STREAM...";
+                    statusBadge.innerText = "INITIALIZING MAP STREAM...";
                     
                     setTimeout(() => {
-                        render4DVideoFromJSON(parsedData);
+                        render4DVideoFromJSON({ sequence: framesArray });
                     }, 50);
 
                 } catch (err) {
                     console.error("Parsing error:", err);
-                    alert("JSON parsing error: The payload might be truncated, malformed, or exceed memory limits.");
+                    alert("JSON parsing error: Invalid schema structure or corrupted stream data.");
                     statusBadge.innerText = "SYSTEM READY";
                 }
             }, 100);
@@ -499,9 +527,17 @@
             reader.onload = function(e) {
                 try {
                     const jsonContent = JSON.parse(e.target.result);
-                    render4DVideoFromJSON(jsonContent);
+                    let framesArray = [];
+                    if (jsonContent.frames && Array.isArray(jsonContent.frames)) {
+                        framesArray = jsonContent.frames.map(f => f.geometryStream);
+                    } else if (jsonContent.sequence && Array.isArray(jsonContent.sequence)) {
+                        framesArray = jsonContent.sequence;
+                    } else {
+                        throw new Error();
+                    }
+                    render4DVideoFromJSON({ sequence: framesArray });
                 } catch (err) {
-                    alert("Invalid 4D JSON sequence file.");
+                    alert("Invalid 3D Map JSON sequence file.");
                 }
             };
             reader.readAsText(file);
@@ -514,7 +550,7 @@
             videoElement.style.display = 'none';
             renderContainer.style.display = 'block';
             
-            statusBadge.innerText = "PLAYING 4D VIDEO";
+            statusBadge.innerText = "PLAYING 3D PHOTO MAP";
             statusBadge.classList.add("active");
 
             playbackFrames = payload.sequence || [];
@@ -551,7 +587,7 @@
             }
 
             const geometry = new THREE.BufferGeometry();
-            const material = new THREE.PointsMaterial({ size: 0.025, vertexColors: true, transparent: true, opacity: 0.95 });
+            const material = new THREE.PointsMaterial({ size: 0.022, vertexColors: true, transparent: true, opacity: 0.95 });
             pointCloud = new THREE.Points(geometry, material);
             scene.add(pointCloud);
 
