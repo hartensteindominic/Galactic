@@ -2,17 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>HyperStream XD • Ultra-Dense Engine v4.5</title>
+<title>HyperStream XD • Stable v4.6</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#020617;color:#f8fafc;font-family:system-ui,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:380px;background:#030712;border-right:1px solid #1e293b;padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;z-index:10}
+#sidebar{width:360px;background:#030712;border-right:1px solid #1e293b;padding:12px;display:flex;flex-direction:column;gap:8px;z-index:10}
 .card{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px}
 .title{font-size:9px;font-weight:800;text-transform:uppercase;color:#94a3b8}
 .row{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#cbd5e1}
-button{border:none;border-radius:6px;padding:7px;font-size:10px;font-weight:800;cursor:pointer;color:#fff}
-.btn-p{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
-.btn-d{background:#ef4444;width:100%}.btn-d.on{background:#f97316}
+button{border:none;border-radius:6px;padding:7px;font-size:10px;font-weight:800;cursor:pointer;color:#fff;background:linear-gradient(135deg,#8b5cf6,#ec4899)}
 input[type=range]{accent-color:#ec4899;width:100px}
 #viewer{flex:1;position:relative}
 canvas{display:block;width:100%;height:100%}
@@ -24,46 +22,41 @@ video{display:none}
 </head>
 <body>
 <div id="sidebar">
-  <div style="font-size:12px;font-weight:900;color:#38bdf8">HYPERSTREAM XD • v4.5 MAX NODES</div>
+  <div style="font-size:12px;font-weight:900;color:#38bdf8">HYPERSTREAM XD • STABLE v4.6</div>
   <div class="card">
-    <div class="title">Maximum Density Configuration</div>
-    <div class="row"><span>Dimensional Strata Layers</span><input type="range" min="4" max="32" value="32" id="layerRange" oninput="layerN=+this.value;$('layV').textContent=this.value"><span id="layV" style="color:#ec4899">32</span></div>
-    <div class="row"><span>Depth Dispersion Field</span><input type="range" min="0.5" max="5.0" value="2.4" step="0.1" oninput="layerSp=+this.value"></div>
-    <div class="row"><span>Total Active Voxels</span><b id="nLive" style="color:#ec4899">0</b></div>
-    <button class="btn-p" onclick="expJSON()">Export Hyper-Matrix JSON</button>
+    <div class="title">Performance Controls</div>
+    <div class="row"><span>Voxel Step Size</span><input type="range" min="2" max="6" value="3" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV" style="color:#ec4899">3</span></div>
+    <div class="row"><span>Strata Layers</span><input type="range" min="2" max="12" value="6" oninput="layerN=+this.value;$('layV').textContent=this.value"><span id="layV" style="color:#ec4899">6</span></div>
+    <div class="row"><span>Active Voxels</span><b id="nLive" style="color:#ec4899">0</b></div>
   </div>
 </div>
 <div id="viewer">
-  <div class="stats">FPS <b id="fpsD" style="color:#ec4899">—</b> · Nodes <b id="nodesD" style="color:#38bdf8">0</b></div>
+  <div class="stats">FPS <b id="fpsD" style="color:#ec4899">—</b></div>
   <video id="vid" autoplay playsinline muted></video>
   <canvas id="c3"></canvas>
 </div>
 <script>
 const $=id=>document.getElementById(id);
 let scene,cam,ren,ctrl,video,c2d,ctx,stream=null,ready=false;
-let layers=[],layerN=32,layerSp=2.4,fc=0,ft=0,phase=0;
+let cloudMesh=null,stepSize=3,layerN=6,fc=0,ft=0,phase=0;
 
-window.addEventListener('DOMContentLoaded',()=>{
-  init3();
-  initCam();
-});
+window.addEventListener('DOMContentLoaded',()=>{init3();initCam();});
 
 function init3(){
   const box=$('viewer');
   scene=new THREE.Scene();
-  scene.fog=new THREE.FogExp2(0x020617,0.008);
-  cam=new THREE.PerspectiveCamera(48,box.clientWidth/box.clientHeight,0.05,2000);
-  cam.position.set(0,0.5,3.8);
+  cam=new THREE.PerspectiveCamera(48,box.clientWidth/box.clientHeight,0.1,1000);
+  cam.position.set(0,0,3.5);
 
-  ren=new THREE.WebGLRenderer({canvas:$('c3'),antialias:true,powerPreference:'high-performance'});
+  ren=new THREE.WebGLRenderer({canvas:$('c3'),antialias:false,powerPreference:'high-performance'});
   ren.setSize(box.clientWidth,box.clientHeight);
-  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
   ren.setClearColor(0x020617);
 
   ctrl=new THREE.OrbitControls(cam,ren.domElement);
   ctrl.enableDamping=true;ctrl.autoRotate=true;
+  scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
-  scene.add(new THREE.AmbientLight(0xffffff,1.4));
   window.addEventListener('resize',()=>{
     cam.aspect=box.clientWidth/box.clientHeight;
     cam.updateProjectionMatrix();
@@ -76,10 +69,10 @@ function initCam(){
   video=$('vid');
   c2d=document.createElement('canvas');
   ctx=c2d.getContext('2d',{willReadFrequently:true});
-  navigator.mediaDevices?.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}},audio:false})
+  navigator.mediaDevices?.getUserMedia({video:{width:{ideal:480},height:{ideal:360},frameRate:{ideal:24}},audio:false})
   .then(s=>{stream=s;video.srcObject=s;return video.play();})
   .then(()=>{ready=true;})
-  .catch(()=>{/* Fallback handling */});
+  .catch(()=>{/* Fallback handled gracefully */});
 }
 
 function loop(now){
@@ -87,95 +80,50 @@ function loop(now){
   phase=now*0.001;
   fc++;
   if(now-ft>1000){$('fpsD').textContent=Math.round(fc*1000/(now-ft));fc=0;ft=now;}
-  if(ready&&video.readyState>=2)sample();
+  if(ready&&video.readyState>=2&&fc%2===0)sample(); // Sample every 2nd frame to protect CPU/GPU
   ren.render(scene,cam);
 }
 
 function sample(){
-  const w=video.videoWidth||640,h=video.videoHeight||480;
+  const w=320,h=240; // Low resolution target to ensure zero crashing
   if(c2d.width!==w||c2d.height!==h){c2d.width=w;c2d.height=h;}
   try{ctx.drawImage(video,0,0,w,h);}catch{return;}
   let pix;
   try{pix=ctx.getImageData(0,0,w,h).data;}catch{return;}
 
-  const basePos=[],baseCol=[];
-  const cx=w*0.5,cy=h*0.5,maxR=Math.hypot(cx,cy)||1;
-  const sx=1.6,sy=1.6;
-  const step=1; // Strict 1:1 max pixel resolution node sampling
+  const pos=[],col=[];
+  const step=stepSize;
 
   for(let y=0;y<h;y+=step){
     for(let x=0;x<w;x+=step){
       const i=(y*w+x)*4;
       const r=pix[i]/255,g=pix[i+1]/255,b=pix[i+2]/255;
       const lum=0.299*r+0.587*g+0.114*b;
-      if(lum<0.01)continue;
+      if(lum<0.05)continue;
 
       const nx=((w-x)/w)*2-1,ny=-((y/h)*2-1);
-      const nz=(lum-0.5)*1.8;
-
-      basePos.push(nx*sx,ny*sy,nz);
-      baseCol.push(r,g,b);
+      
+      for(let L=0;L<layerN;L++){
+        const nz=(L/(layerN-1)-0.5)*1.5+(lum-0.5)*0.5;
+        pos.push(nx*1.5,ny*1.5,nz);
+        col.push(r*(1-L*0.05),g*(1-L*0.05),b*(1-L*0.05));
+      }
     }
   }
 
-  const n=basePos.length/3;
-  $('nLive').textContent=n.toLocaleString();
-  $('nodesD').textContent=(n*layerN).toLocaleString();
-  buildMultiStrata(basePos,baseCol);
+  $('nLive').textContent=(pos.length/3).toLocaleString();
+  updateCloud(pos,col);
 }
 
-function buildMultiStrata(basePos,baseCol){
-  while(layers.length>layerN){const o=layers.pop();scene.remove(o);o.geometry.dispose();o.material.dispose();}
-  const n=basePos.length/3;
-  if(n<5)return;
+function updateCloud(pos,col){
+  if(cloudMesh){scene.remove(cloudMesh);cloudMesh.geometry.dispose();cloudMesh.material.dispose();}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
 
-  const maxL=Math.max(1,layerN-1);
-  for(let L=0;L<layerN;L++){
-    const t=L/maxL;
-    const zOff=(t-0.5)*layerSp;
-    const depthTint=1.0-(L/layerN)*0.3;
-
-    const pos=new Float32Array(n*3);
-    const col=new Float32Array(n*3);
-
-    for(let i=0,j=0;i<n;i++,j+=3){
-      pos[j]=basePos[j];
-      pos[j+1]=basePos[j+1];
-      pos[j+2]=basePos[j+2]+zOff+Math.sin(phase+basePos[j]*2)*0.04;
-
-      col[j]=Math.min(1,baseCol[j]*depthTint);
-      col[j+1]=Math.min(1,baseCol[j+1]*depthTint);
-      col[j+2]=Math.min(1,baseCol[j+2]*depthTint);
-    }
-
-    let o=layers[L];
-    if(!o){
-      const g=new THREE.BufferGeometry();
-      g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-      g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
-      const mat=new THREE.PointsMaterial({
-        size:0.009,
-        vertexColors:true,
-        transparent:true,
-        opacity:0.85,
-        blending:THREE.AdditiveBlending
-      });
-      o=new THREE.Points(g,mat);
-      scene.add(o);
-      layers[L]=o;
-    }else{
-      o.geometry.attributes.position.array.set(pos);
-      o.geometry.attributes.color.array.set(col);
-      o.geometry.attributes.position.needsUpdate=true;
-      o.geometry.attributes.color.needsUpdate=true;
-    }
-  }
-}
-
-function expJSON(){
-  const blob=new Blob([JSON.stringify({HyperStreamXD:'max-density',layers:layerN})],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='ultra_dense_matrix.json';a.click();
+  const mat=new THREE.PointsMaterial({size:0.012,vertexColors:true,transparent:true,opacity:0.9});
+  cloudMesh=new THREE.Points(g,mat);
+  scene.add(cloudMesh);
 }
 </script>
 </body>
