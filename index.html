@@ -132,7 +132,6 @@
             display: none;
         }
     </style>
-    <!-- Include Three.js for 3D model reconstruction from JSON -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
@@ -188,6 +187,8 @@
 
         let isScanning = false;
         let spatialVertices = []; 
+        let spatialColors = [];
+        let spatialIntensity = [];
         let scanInterval = null;
         let angleStep = 0;
         let currentFacingMode = "environment";
@@ -197,7 +198,7 @@
         let scene, camera, renderer, pointCloud;
 
         async function initCameraFeed() {
-            if (renderContainer.style.display === "block") return; // Keep camera hidden if rendering 3D model
+            if (renderContainer.style.display === "block") return; 
             if (activeStream) {
                 activeStream.getTracks().forEach(track => track.stop());
             }
@@ -239,20 +240,30 @@
                 saveBtn.style.display = "block";
                 
                 spatialVertices = []; 
+                spatialColors = [];
+                spatialIntensity = [];
                 angleStep = 0;
 
                 scanInterval = setInterval(() => {
                     angleStep += 0.12;
-                    // Generate rich geometric point cloud data simulating a room scan
                     let radius = 1.5 + Math.sin(angleStep * 2) * 0.3;
                     let x = parseFloat((Math.sin(angleStep) * radius).toFixed(3));
                     let y = parseFloat((Math.cos(angleStep * 1.5) * 0.8 + (Math.random() * 0.05)).toFixed(3));
                     let z = parseFloat((-2.0 + Math.cos(angleStep) * radius).toFixed(3));
 
+                    // Store spatial position coordinates
                     spatialVertices.push(x, y, z);
-                    // Add secondary density point for rich mesh generation payload
-                    spatialVertices.push(x * 0.9, y - 0.2, z * 0.9);
                     
+                    // Store detailed dynamic color attributes (RGB)
+                    spatialColors.push(
+                        parseFloat((Math.abs(Math.sin(angleStep))).toFixed(2)), 
+                        0.5,                                                   
+                        parseFloat((Math.abs(Math.cos(angleStep))).toFixed(2))  
+                    );
+
+                    // Store sensor surface intensity/confidence metrics
+                    spatialIntensity.push(parseFloat((0.7 + Math.random() * 0.3).toFixed(2)));
+
                     nodeCountText.innerText = spatialVertices.length / 3;
                 }, 80);
 
@@ -275,7 +286,7 @@
             const environmentPayload = {
                 metadata: {
                     generator: "Spatial Dash Pro Web Engine",
-                    version: "3.0",
+                    version: "4.0",
                     type: "BufferGeometry",
                     totalVertices: spatialVertices.length / 3,
                     timestamp: new Date().toISOString()
@@ -286,6 +297,16 @@
                             itemSize: 3,
                             type: "Float32Array",
                             array: spatialVertices
+                        },
+                        color: {
+                            itemSize: 3,
+                            type: "Float32Array",
+                            array: spatialColors
+                        },
+                        intensity: {
+                            itemSize: 1,
+                            type: "Float32Array",
+                            array: spatialIntensity
                         }
                     }
                 }
@@ -303,7 +324,6 @@
             URL.revokeObjectURL(downloadUrl);
         }
 
-        // Feature: Load JSON file and render a complete 3D interactive model using Three.js
         function loadEnvironmentMap(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -321,7 +341,6 @@
         }
 
         function render3DModelFromJSON(payload) {
-            // Stop camera stream & switch view container
             if (activeStream) {
                 activeStream.getTracks().forEach(track => track.stop());
             }
@@ -332,7 +351,6 @@
             statusBadge.innerText = "MODEL LOADED";
             statusBadge.classList.add("active");
 
-            // Extract vertices array safely from standard or custom schemas
             let rawArray = [];
             if (payload.data && payload.data.attributes && payload.data.attributes.position) {
                 rawArray = payload.data.attributes.position.array;
@@ -346,7 +364,6 @@
             nodeCountText.innerText = rawArray.length / 3;
             surfaceStatusText.innerText = "Mesh Active";
 
-            // Initialize Three.js scene if not already initialized
             if (!scene) {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -356,11 +373,9 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderContainer.appendChild(renderer.domElement);
 
-                // Add ambient lights & directional lighting for depth
                 const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
                 scene.add(ambientLight);
                 
-                // Mouse rotation interaction variables
                 let isDragging = false;
                 let prevMousePos = { x: 0, y: 0 };
 
@@ -376,30 +391,31 @@
                 window.addEventListener('mouseup', () => { isDragging = false; });
             }
 
-            // Remove previous model if exists
             if (pointCloud) scene.remove(pointCloud);
 
-            // Create Three.js BufferGeometry from JSON array values
             const geometry = new THREE.BufferGeometry();
             const floatArray = new Float32Array(rawArray);
             geometry.setAttribute('position', new THREE.BufferAttribute(floatArray, 3));
 
-            // Style point cloud nodes with glowing material
-            const material = new THREE.PointsMaterial({
-                size: 0.06,
-                color: 0x0a84ff,
-                transparent: true,
-                opacity: 0.85
-            });
+            let materialConfig = { size: 0.06, transparent: true, opacity: 0.85 };
 
+            // Check if enhanced color data is present inside the payload
+            if (payload.data && payload.data.attributes && payload.data.attributes.color) {
+                const colorArray = new Float32Array(payload.data.attributes.color.array);
+                geometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+                materialConfig.vertexColors = true;
+            } else {
+                materialConfig.color = 0x0a84ff;
+            }
+
+            const material = new THREE.PointsMaterial(materialConfig);
             pointCloud = new THREE.Points(geometry, material);
             scene.add(pointCloud);
 
-            // Animation loop to render 3D space
             function animate() {
                 requestAnimationFrame(animate);
                 if (pointCloud && !window.isDraggingModel) {
-                    pointCloud.rotation.y += 0.003; // Gentle auto-rotation
+                    pointCloud.rotation.y += 0.003;
                 }
                 renderer.render(scene, camera);
             }
