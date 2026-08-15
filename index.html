@@ -39,7 +39,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-
     <div class="scanline"></div>
     <video id="cam" autoplay playsinline muted></video>
     <canvas id="cvs"></canvas>
@@ -95,7 +94,7 @@
         const video = document.getElementById('cam'), canvas = document.getElementById('cvs'), ctx = canvas.getContext('2d', { willReadFrequently: true });
         const renderBox = document.getElementById('rnd'), scanBtn = document.getElementById('scan-btn'), saveBtn = document.getElementById('save-btn'), badge = document.getElementById('badge');
         let isScanning = false, frames = [], stream = null, cachedJSON = "", scene, camera, renderer, cloud, playback = [], fIdx = 0, facing = "environment";
-        let fCount = 0, lastTime = 0, recStart = 0;
+        let fCount = 0, lastTime = 0, recStart = 0, targetFPS = 60, frameInterval = 1000 / targetFPS, lastFrameTime = 0;
 
         async function initCam() {
             if (stream) stream.getTracks().forEach(t => t.stop());
@@ -106,28 +105,31 @@
             } catch(e) { console.error(e); }
         }
 
-        function loop() {
-            if (isScanning && video.readyState >= video.HAVE_ENOUGH_DATA) {
-                const now = performance.now();
-                fCount++;
-                if (now - lastTime > 1000) { document.getElementById('fps').innerText = fCount + " FPS"; fCount = 0; lastTime = now; }
-                
-                canvas.width = 160; canvas.height = 90;
-                ctx.drawImage(video, 0, 0, 160, 90);
-                const img = ctx.getImageData(0, 0, 160, 90).data, v = [], c = [], t = ((now - recStart) / 1000).toFixed(3);
-
-                for (let y = 0; y < 90; y += 2) {
-                    for (let x = 0; x < 160; x += 2) {
-                        let i = (y * 160 + x) * 4, r = img[i], g = img[i+1], b = img[i+2], lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                        v.push(((x / 160 - 0.5) * 4.5).toFixed(2), (-(y / 90 - 0.5) * 4.5).toFixed(2), ((lum - 0.5) * 3.5).toFixed(2), t);
-                        c.push((r/255).toFixed(2), (g/255).toFixed(2), (b/255).toFixed(2));
-                    }
-                }
-                frames.push({ vertices: v, colors: c });
-                document.getElementById('f-count').innerText = frames.length;
-                document.getElementById('v-count').innerText = v.length / 4;
-            }
+        function loop(now) {
             requestAnimationFrame(loop);
+            if (!isScanning || video.readyState < video.HAVE_ENOUGH_DATA) return;
+
+            const delta = now - lastFrameTime;
+            if (delta < frameInterval) return;
+            lastFrameTime = now - (delta % frameInterval);
+
+            fCount++;
+            if (now - lastTime > 1000) { document.getElementById('fps').innerText = fCount + " FPS"; fCount = 0; lastTime = now; }
+            
+            canvas.width = 160; canvas.height = 90;
+            ctx.drawImage(video, 0, 0, 160, 90);
+            const img = ctx.getImageData(0, 0, 160, 90).data, v = [], c = [], t = ((now - recStart) / 1000).toFixed(3);
+
+            for (let y = 0; y < 90; y += 2) {
+                for (let x = 0; x < 160; x += 2) {
+                    let i = (y * 160 + x) * 4, r = img[i], g = img[i+1], b = img[i+2], lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                    v.push(((x / 160 - 0.5) * 4.5).toFixed(2), (-(y / 90 - 0.5) * 4.5).toFixed(2), ((lum - 0.5) * 3.5).toFixed(2), t);
+                    c.push((r/255).toFixed(2), (g/255).toFixed(2), (b/255).toFixed(2));
+                }
+            }
+            frames.push({ vertices: v, colors: c });
+            document.getElementById('f-count').innerText = frames.length;
+            document.getElementById('v-count').innerText = v.length / 4;
         }
 
         function toggleScan() {
@@ -181,7 +183,7 @@
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.set(0, 0, 4);
-                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
                 renderBox.appendChild(renderer.domElement);
@@ -202,17 +204,31 @@
             cloud = new THREE.Points(geom, mat);
             scene.add(cloud);
 
+            // Pre-parse TypedArrays for smooth Zero-GC playback
+            const parsedPlayback = playback.map(f => {
+                const raw = f.vertices;
+                const pos = new Float32Array(raw.length / 4 * 3);
+                for (let k = 0, p = 0; k < raw.length; k += 4, p += 3) {
+                    pos[p] = parseFloat(raw[k]);
+                    pos[p+1] = parseFloat(raw[k+1]);
+                    pos[p+2] = parseFloat(raw[k+2]);
+                }
+                return {
+                    pos: pos,
+                    colors: new Float32Array(f.colors)
+                };
+            });
+
             (function anim() {
                 requestAnimationFrame(anim);
-                if (playback.length) {
-                    let f = playback[fIdx], raw = f.vertices, pos = [];
-                    for(let k = 0; k < raw.length; k += 4) pos.push(parseFloat(raw[k]), parseFloat(raw[k+1]), parseFloat(raw[k+2]));
-                    geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(pos), 3));
-                    geom.setAttribute('color', new THREE.BufferAttribute(new Float32Array(f.colors), 3));
+                if (parsedPlayback.length) {
+                    let f = parsedPlayback[fIdx];
+                    geom.setAttribute('position', new THREE.BufferAttribute(f.pos, 3));
+                    geom.setAttribute('color', new THREE.BufferAttribute(f.colors, 3));
                     geom.attributes.position.needsUpdate = true;
                     geom.attributes.color.needsUpdate = true;
-                    document.getElementById('v-count').innerText = pos.length / 3;
-                    fIdx = (fIdx + 1) % playback.length;
+                    document.getElementById('v-count').innerText = f.pos.length / 3;
+                    fIdx = (fIdx + 1) % parsedPlayback.length;
                     cloud.rotation.z = Math.sin(Date.now() * 0.001) * 0.03;
                 }
                 renderer.render(scene, camera);
@@ -220,7 +236,7 @@
         }
 
         function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-        window.addEventListener('load', () => { initCam(); loop(); });
+        window.addEventListener('load', () => { initCam(); requestAnimationFrame(loop); });
     </script>
 </body>
 </html>
