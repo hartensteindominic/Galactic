@@ -1,257 +1,439 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro – Ultimate 4D Engine</title>
-    <style>
-        *{box-sizing:border-box;margin:0;padding:0;}
-        body{background:#010103;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden;height:100vh;width:100vw;}
-        #cam,#cvs,#rnd{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;}
-        #cvs,#rnd{display:none;}
-        #cam.front{transform:scaleX(-1);}
-        #hud{position:absolute;top:0;left:0;width:100%;height:100%;z-index:2;display:flex;flex-direction:column;justify-content:space-between;padding:16px;pointer-events:none;}
-        .interact{pointer-events:auto;}
-        .panel{background:rgba(12,12,18,0.85);backdrop-filter:blur(16px);border:1px solid rgba(0,243,255,0.25);border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
-        .top-bar{padding:10px 16px;display:flex;justify-content:space-between;align-items:center;}
-        .brand{font-weight:900;letter-spacing:1px;font-size:12px;background:linear-gradient(45deg,#00f3ff,#b537f2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
-        .btn-group{display:flex;gap:6px;}
-        .btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;transition:0.2s;}
-        .btn:hover{background:rgba(0,243,255,0.2);border-color:rgba(0,243,255,0.5);}
-        input[type="file"]{display:none;}
-        .badge{font-size:9px;font-weight:700;padding:4px 8px;border-radius:10px;background:rgba(255,59,48,0.15);color:#ff453a;border:1px solid rgba(255,59,48,0.3);}
-        .badge.active{background:rgba(48,209,88,0.15);color:#30d158;border:1px solid rgba(48,209,88,0.3);box-shadow:0 0 10px rgba(48,209,88,0.3);}
-        .dock{padding:14px;display:flex;flex-direction:column;gap:10px;}
-        .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center;}
-        .m-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:8px;padding:6px;}
-        .m-lbl{font-size:8px;color:#8a8fa3;text-transform:uppercase;}
-        .m-val{font-size:13px;font-weight:800;color:#00f3ff;margin-top:1px;}
-        .row{display:flex;gap:6px;}
-        .act-btn{flex:1;padding:12px;border-radius:10px;border:none;font-weight:800;font-size:11px;cursor:pointer;letter-spacing:0.5px;}
-        #scan-btn{background:linear-gradient(135deg,#00f3ff,#0066ff);color:#000;box-shadow:0 4px 15px rgba(0,243,255,0.4);}
-        #scan-btn.scanning{background:linear-gradient(135deg,#ff453a,#ff9500);color:#fff;box-shadow:0 4px 15px rgba(255,69,58,0.4);}
-        #save-btn{background:linear-gradient(135deg,#30d158,#00a86b);color:#000;display:none;box-shadow:0 4px 15px rgba(48,209,88,0.4);}
-        .modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);z-index:10;display:none;justify-content:center;align-items:center;padding:16px;}
-        .modal-box{background:#0b0c10;border:1px solid rgba(0,243,255,0.3);border-radius:14px;padding:16px;width:100%;max-width:400px;display:flex;flex-direction:column;gap:10px;}
-        .modal-box textarea{width:100%;height:120px;background:#040406;color:#00f3ff;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px;font-family:monospace;font-size:9px;resize:none;}
-        .scanline{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%);background-size:100% 4px;z-index:3;pointer-events:none;opacity:0.25;}
-    </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HyperStream4D • Enhanced Spatial Mapping Processor v2</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#030712;color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;height:100vh;display:flex;overflow:hidden}
+#sidebar{width:440px;min-width:320px;background:#0b0f19;border-right:1px solid #1f2937;display:flex;flex-direction:column;padding:14px;gap:10px;z-index:10;overflow-y:auto}
+.brand{font-size:15px;font-weight:800;letter-spacing:1.2px;color:#38bdf8}
+.brand span{background: -webkit-linear-gradient(#7dd3fc, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent;}
+.section-card{background:rgba(17,24,39,.7);border:1px solid #1f2937;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#94a3b8}
+.action-toggle-row{display:flex;gap:6px}
+.tab-btn{flex:1;padding:8px 4px;background:#1e293b;border:1px solid #334155;border-radius:8px;color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer}
+.tab-btn.active{background:#4f46e5;color:#fff;border-color:#4338ca}
+.upload-section{border:2px dashed #334155;padding:12px;border-radius:10px;text-align:center;background:rgba(255,255,255,.01);cursor:pointer}
+.upload-section.dragover{border-color:#818cf8;background:rgba(129,140,248,.08)}
+input[type=file]{display:none} textarea{width:100%;height:70px;background:#1e293b;border:1px solid #334155;padding:8px;border-radius:8px;color:#fff;font-family:monospace;font-size:11px;resize:none}
+.layer-control-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#cbd5e1}
+input[type=range]{accent-color:#818cf8;cursor:pointer;width:110px}
+#chat-container{flex:1;min-height:55px;max-height:85px;background:#1e293b;border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:4px;overflow-y:auto;font-size:11px}
+.chat-message{padding:5px 7px;border-radius:6px;background:#334155;color:#e2e8f0;word-break:break-word}
+.chat-message.system{background:#3730a3;color:#c7d2fe}.chat-message.error{background:#7f1d1d;color:#fecaca}
+input[type=text]{flex:1;background:#1e293b;border:1px solid #334155;padding:7px;border-radius:8px;color:#fff;font-size:11px}
+button.primary-btn{background:#4f46e5;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer;font-size:11px}
+button.primary-btn:hover{background:#4338ca}
+button.danger-btn{background:#dc2626;color:#fff;border:none;padding:8px;border-radius:8px;font-weight:700;cursor:pointer;font-size:11px;width:100%}
+button.danger-btn.scanning{background:#ea580c} button.secondary-btn{background:#334155;color:#f1f5f9;border:none;padding:8px;border-radius:8px;font-weight:600;cursor:pointer;font-size:11px}
+#viewer-container{flex:1;position:relative;background:radial-gradient(circle at center,#0f172a 0%,#030712 100%)}
+canvas{display:block;width:100%;height:100%} #webcam-preview{position:absolute;bottom:20px;left:20px;width:140px;height:105px;border:2px solid #334155;border-radius:8px;object-fit:cover;transform:scaleX(-1);background:#000;z-index:5}
+.stats-overlay{position:absolute;top:16px;right:16px;background:rgba(3,7,18,.85);backdrop-filter:blur(8px);padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.08);font-size:11px;color:#94a3b8}
+.stats-overlay span{color:#818cf8;font-weight:700}.progress-bar{height:3px;background:#1e293b;border-radius:1.5px;overflow:hidden;margin-top:3px}.progress-fill{height:100%;background:#818cf8;width:0%;transition:width.2s}
+.vault-item{display:flex;justify-content:space-between;align-items:center;background:#1e293b;padding:5px 7px;border-radius:6px;font-size:11px}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.js"></script>
 </head>
 <body>
-    <div class="scanline"></div>
-    <video id="cam" autoplay playsinline muted></video>
-    <canvas id="cvs"></canvas>
-    <div id="rnd"></div>
+<div id="sidebar">
+<div class="brand">SPATIAL MAPPING PROCESSOR<br><span>HYPERSTREAM 4D VOLUMETRICS v2</span></div>
+<div class="action-toggle-row">
+<button id="btn-tab-file" class="tab-btn active" onclick="switchInputMode('file')">📂 Upload</button>
+<button id="btn-tab-paste" class="tab-btn" onclick="switchInputMode('paste')">📋 Paste Data</button>
+<button id="btn-tab-scan" class="tab-btn" onclick="switchInputMode('scan')">👤 Live Map</button>
+</div>
+<div id="panel-file" class="section-card">
+<div class="card-title">HyperStream4D Input</div>
+<div id="drop-zone" class="upload-section" onclick="document.getElementById('file-input').click()">
+<span class="upload-label">Drop Condensed HyperStream Payload<br><small style="opacity:.6">Format: { HyperStream4D: [...] }</small></span>
+<input type="file" id="file-input" accept=".json" onchange="handleFileUpload(event)">
+</div>
+<div style="display:flex;gap:6px"><button class="secondary-btn" style="flex:1" onclick="clearScene()">Clear Engine</button><button class="secondary-btn" style="flex:1" onclick="loadVaultList()">Core Vault</button></div>
+</div>
+<div id="panel-paste" class="section-card" style="display:none">
+<div class="card-title">Paste HyperStream4D Node</div>
+<textarea id="json-paste-box" placeholder='Paste payload: {"HyperStream4D":[{"v":[...],"c":[...]}]}'></textarea>
+<button class="primary-btn" onclick="handleCodePaste()">Process Data Core</button>
+</div>
+<div id="panel-scan" class="section-card" style="display:none">
+<div class="card-title">Live Spatial 4D Recording & Camera Feed</div>
+<button id="scan-toggle-btn" class="danger-btn" onclick="toggleFaceScanning()">START 4D STREAM CAPTURE</button>
+<button class="primary-btn" onclick="exportScannedMap()" style="background:#059669;margin-top:4px;">Export Live 4D Data Stream</button>
+</div>
+<div class="section-card">
+<div class="card-title">Volumetric & Temporal Controls</div>
+<div class="layer-control-row"><span>Render Mode</span>
+  <select id="render-mode-select" onchange="updateRenderMode(this.value)" style="background:#1e293b;color:#fff;border:1px solid #334155;border-radius:6px;padding:3px;font-size:11px;">
+    <option value="points">Glowing Points</option>
+    <option value="solid" selected>Solid Volumetric Mesh</option>
+    <option value="wireframe">Wireframe Mesh</option>
+  </select>
+</div>
+<div class="layer-control-row"><span>Point/Node Size</span><input type="range" id="point-size-range" min="0.01" max="0.15" step="0.005" value="0.04" oninput="updatePointSize(this.value)"></div>
+<div class="layer-control-row"><span>Time Scrub (Frame T)</span><input type="range" id="t-scrub-range" min="0" max="100" step="1" value="0" oninput="updateTScrubs(this.value)"><span id="t-scrub-val">0 / 0</span></div>
+<div class="layer-control-row"><span>Depth Scale Z</span><input type="range" id="depth-scale-range" min="1" max="25" step="0.5" value="12" oninput="updateDepthScale(this.value)"></div>
+<div class="layer-control-row"><span>Playback FPS</span><input type="range" id="fps-range" min="1" max="30" step="1" value="18" oninput="updateFPS(this.value)"><span id="fps-label">18</span></div>
+<div class="layer-control-row"><span>Grid Matrix</span><input type="checkbox" id="grid-toggle" checked onchange="toggleGrid(this.checked)"></div>
+<div style="font-size:11px;color:#94a3b8">Data Nodes: <span id="node-counter">0</span><div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div></div>
+</div>
+<div class="section-card">
+<div class="card-title">Vaulted Cores</div>
+<div id="vault-list" style="display:flex;flex-direction:column;gap:5px;max-height:80px;overflow-y:auto"><small style="color:#64748b">Empty</small></div>
+</div>
+<div class="section-card">
+<div class="card-title">Render Media</div>
+<div style="display:flex;flex-direction:column;gap:5px">
+<button class="primary-btn" onclick="exportCurrentPNG()" style="background:#0f766e;">📸 Render Hi-Res Frame</button>
+<button class="primary-btn" onclick="export4DPhotoGIF()" style="background:#7c3aed;">Render Orbit Matrix (GIF)</button>
+<button class="primary-btn" onclick="export4DWebMVideo()" style="background:#2563eb;">🎥 Export .webm Stream</button>
+</div>
+</div>
+<div class="section-card" style="flex:1">
+<div class="card-title">Systems Console</div>
+<div id="chat-container"><div class="chat-message system">HyperStream4D v2 pipeline active. Camera streaming engine initialized.</div></div>
+<div style="display:flex;gap:6px;margin-top:2px"><input type="text" id="chat-input" placeholder="Query Matrix..." onkeypress="handleKeyPress(event)"><button class="primary-btn" onclick="sendChatMessage()">Send</button></div>
+</div>
+</div>
+<div id="viewer-container">
+<div class="stats-overlay">Status: <span id="render-status">Awaiting HyperStream</span><br><span id="bbox-info" style="font-size:10px;color:#64748b"></span></div>
+<video id="webcam-video" autoplay playsinline muted style="display:none"></video>
+<video id="webcam-preview" autoplay playsinline muted></video>
+<canvas id="three-canvas"></canvas>
+</div>
+<script>
+let scene,camera,renderer,controls,gridHelper,spatialObject=null,faceMesh=null,cameraUtils=null;
+let isFaceScanning=false,liveVertices=[],liveColors=[],currentDepthScale=12,currentFPS=18,lastFrameTime=0;
+let is4DPlayMode=true,playbackFrames=[],playbackFrameIndex=0,recorded4DSequence=[],mediaRecorder,recordedChunks=[];
+let raw4DSourceFrames=[];
+let currentRenderMode = 'solid';
+const VAULT_KEY='hyperstream_4d_vault_v2';
 
-    <div id="export-modal" class="modal interact">
-        <div class="modal-box">
-            <h3 style="font-size:13px;color:#00f3ff;">Hyper-Compressed 4D Payload</h3>
-            <textarea id="json-out" readonly></textarea>
-            <div class="row">
-                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="navigator.clipboard.writeText(cachedPayload);alert('Compressed Stream Copied!');">Copy Compressed</button>
-                <button class="btn act-btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="toggleModal('export-modal',false)">Close</button>
-            </div>
-        </div>
-    </div>
+window.addEventListener('DOMContentLoaded',()=>{init3D();setupDragDrop();loadVaultList()});
 
-    <div id="paste-modal" class="modal interact">
-        <div class="modal-box">
-            <h3 style="font-size:13px;color:#00f3ff;">Import 4D Payload</h3>
-            <textarea id="json-in" placeholder="Paste raw JSON or LZ-string compressed token payload here..."></textarea>
-            <div class="row">
-                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="importData()">Play Stream</button>
-                <button class="btn act-btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="toggleModal('paste-modal',false)">Cancel</button>
-            </div>
-        </div>
-    </div>
+function init3D(){
+const c=document.getElementById('viewer-container'); scene=new THREE.Scene();
+camera=new THREE.PerspectiveCamera(55,c.clientWidth/c.clientHeight,0.05,2000); camera.position.set(0,0.2,3.2);
+const canvas=document.getElementById('three-canvas');
+renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,preserveDrawingBuffer:true});
+renderer.setSize(c.clientWidth,c.clientHeight); renderer.setPixelRatio(Math.min(window.devicePixelRatio,2)); renderer.setClearColor(0x030712);
+controls=new THREE.OrbitControls(camera,renderer.domElement); controls.enableDamping=true; controls.dampingFactor=0.08;
+gridHelper=new THREE.GridHelper(30,30,0x1e293b,0x0f172a); gridHelper.position.y=-1.5; scene.add(gridHelper);
 
-    <div id="hud">
-        <div class="panel top-bar interact">
-            <div class="brand">SPATIAL DASH 4D+</div>
-            <div class="btn-group">
-                <button class="btn" onclick="facing=facing==='environment'?'user':'environment';initCam();">📷 Flip</button>
-                <label class="btn">📁 Load<input type="file" accept=".json,.txt" onchange="loadFile(event)"></label>
-                <button class="btn" onclick="toggleModal('paste-modal',true)">📋 Paste</button>
-            </div>
-            <span id="badge" class="badge">READY</span>
-        </div>
+scene.add(new THREE.AmbientLight(0xffffff,0.7)); 
+const d1=new THREE.DirectionalLight(0xffffff,1.0); d1.position.set(2,4,5); scene.add(d1);
+const d2=new THREE.DirectionalLight(0x818cf8,0.5); d2.position.set(-5,-2,-3); scene.add(d2);
 
-        <div class="panel dock interact">
-            <div class="metrics">
-                <div class="m-card"><div class="m-lbl">Frames</div><div id="f-count" class="m-val">0</div></div>
-                <div class="m-card"><div class="m-lbl">Rate</div><div id="fps" class="m-val">0 FPS</div></div>
-                <div class="m-card"><div class="m-lbl">Voxels</div><div id="v-count" class="m-val">0</div></div>
-            </div>
-            <div class="row">
-                <button id="scan-btn" class="act-btn" onclick="toggleScan()">START 4D SPEED RECORD</button>
-                <button id="save-btn" class="act-btn" onclick="exportData()">EXPORT COMPRESSED (.JSON)</button>
-            </div>
-        </div>
-    </div>
+window.addEventListener('resize',onWindowResize); initFaceMeshPipeline(); animate();
+}
 
-    <script>
-        const video = document.getElementById('cam'), canvas = document.getElementById('cvs'), ctx = canvas.getContext('2d', { willReadFrequently: true });
-        const renderBox = document.getElementById('rnd'), scanBtn = document.getElementById('scan-btn'), saveBtn = document.getElementById('save-btn'), badge = document.getElementById('badge');
-        let isScanning = false, frames = [], stream = null, cachedPayload = "", scene, camera, renderer, cloud, playback = [], fIdx = 0, facing = "environment";
-        let fCount = 0, lastTime = 0, recStart = 0, targetFPS = 60, frameInterval = 1000 / targetFPS, lastFrameTime = 0;
+function animate(now){
+requestAnimationFrame(animate); if(controls)controls.update();
+if(is4DPlayMode && playbackFrames.length>0 && spatialObject && now-lastFrameTime > (1000/currentFPS)){
+apply4DFrameAndRender(playbackFrameIndex);
+playbackFrameIndex=(playbackFrameIndex+1)%playbackFrames.length;
+const scrubRange = document.getElementById('t-scrub-range');
+if(scrubRange) scrubRange.value = playbackFrameIndex;
+document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${playbackFrames.length - 1}`;
+lastFrameTime=now;
+}
+if(renderer&&scene&&camera)renderer.render(scene,camera);
+}
 
-        async function initCam() {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 60 } } });
-                video.srcObject = stream;
-                video.className = facing === "user" ? "front" : "";
-            } catch(e) { console.error(e); }
+function onWindowResize(){const c=document.getElementById('viewer-container'); if(!c||!camera||!renderer)return; camera.aspect=c.clientWidth/c.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(c.clientWidth,c.clientHeight)}
+function switchInputMode(m){['file','paste','scan'].forEach(x=>{document.getElementById('btn-tab-'+x)?.classList.remove('active'); document.getElementById('panel-'+x).style.display='none'}); document.getElementById('btn-tab-'+m)?.classList.add('active'); document.getElementById('panel-'+m).style.display='flex'}
+function setProgress(p){document.getElementById('progress-fill').style.width=Math.min(100,Math.max(0,p))+'%'}
+function appendChat(t,s=''){const b=document.getElementById('chat-container'); const d=document.createElement('div'); d.className='chat-message '+s; d.innerText=t; b.appendChild(d); b.scrollTop=b.scrollHeight}
+function clearScene(){is4DPlayMode=false; playbackFrames=[]; playbackFrameIndex=0; raw4DSourceFrames=[]; if(spatialObject){scene.remove(spatialObject); spatialObject.geometry.dispose(); spatialObject.material.dispose(); spatialObject=null} document.getElementById('node-counter').innerText='0'; document.getElementById('render-status').innerText='Matrix Cleared'; document.getElementById('bbox-info').innerText=''; setProgress(0)}
+function updatePointSize(v){if(spatialObject && currentRenderMode==='points')spatialObject.material.size=parseFloat(v)} 
+function updateDepthScale(v){currentDepthScale=parseFloat(v)} 
+function updateFPS(v){currentFPS=parseInt(v); document.getElementById('fps-label').innerText=v} 
+function toggleGrid(v){if(gridHelper)gridHelper.visible=v}
+function updateRenderMode(m){currentRenderMode = m; if(raw4DSourceFrames.length > 0) apply4DFrameAndRender(playbackFrameIndex);}
+
+function updateTScrubs(val){
+  playbackFrameIndex = parseInt(val);
+  is4DPlayMode = false;
+  if(raw4DSourceFrames.length > 0){
+    apply4DFrameAndRender(playbackFrameIndex);
+    document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${playbackFrames.length - 1}`;
+  }
+}
+
+function toNumberArray(arr){
+ if(!arr) return []; const out=[]; for(let i=0;i<arr.length;i++){const n=parseFloat(arr[i]); if(isFinite(n)) out.push(n);} return out;
+}
+
+function extract4DSequence(data){
+ if(!data) return null;
+ if(data.sequence || data.frames || data.metadata?.axes) {
+     throw new Error("Legacy verbose formatting detected. Engine expects condensed HyperStream4D mapping.");
+ }
+ let raw = data.HyperStream4D || data.hyperStream || data.condensedNodes || (Array.isArray(data) ? data : null);
+ if(!raw) return null;
+ return raw.map(f=>{
+  let v = f.v || f.vertices || [];
+  let c = f.c || f.colors || [];
+  return {vertices4D: toNumberArray(v), colors: toNumberArray(c)};
+ }).filter(f=>f.vertices4D.length > 0);
+}
+
+function getMeshIndices(count){
+  const indices = [];
+  const side = Math.round(Math.sqrt(count));
+  if(side > 5){
+    for (let i = 0; i < count - side - 1; i++) {
+      if ((i + 1) % side !== 0) {
+        indices.push(i, i + 1, i + side);
+        indices.push(i + 1, i + side + 1, i + side);
+      }
+    }
+  }
+  return indices;
+}
+
+function apply4DFrameAndRender(frameIdx){
+  if(!raw4DSourceFrames || raw4DSourceFrames.length === 0) return;
+  const targetFrame = raw4DSourceFrames[frameIdx % raw4DSourceFrames.length];
+  const src = targetFrame.vertices4D;
+  const cols = targetFrame.colors;
+  
+  const filteredPositions = [];
+  const filteredColors = [];
+  const tupleSize = (src.length % 4 === 0) ? 4 : 3;
+  
+  for(let i=0; i<src.length; i+=tupleSize){
+    filteredPositions.push(src[i], src[i+1], src[i+2]);
+    if(cols.length >= (i/tupleSize)*3 + 3){
+      filteredColors.push(cols[(i/tupleSize)*3], cols[(i/tupleSize)*3+1], cols[(i/tupleSize)*3+2]);
+    } else {
+      filteredColors.push(0.85, 0.68, 0.55);
+    }
+  }
+  
+  const posArr = new Float32Array(filteredPositions);
+  const colArr = new Float32Array(filteredColors);
+  
+  if(spatialObject){scene.remove(spatialObject); spatialObject.geometry.dispose(); spatialObject.material.dispose();}
+  
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
+  
+  if(currentRenderMode === 'solid' || currentRenderMode === 'wireframe'){
+    const indices = getMeshIndices(filteredPositions.length / 3);
+    if(indices.length > 0) g.setIndex(indices);
+    g.computeVertexNormals();
+    
+    const mat = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.45,
+      metalness: 0.1,
+      wireframe: currentRenderMode === 'wireframe',
+      side: THREE.DoubleSide
+    });
+    spatialObject = new THREE.Mesh(g, mat);
+  } else {
+    const mat = new THREE.PointsMaterial({
+      size: parseFloat(document.getElementById('point-size-range').value),
+      sizeAttenuation: true,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.95
+    });
+    spatialObject = new THREE.Points(g, mat);
+  }
+  
+  spatialObject.rotation.y = Math.PI; 
+  scene.add(spatialObject);
+  document.getElementById('node-counter').innerText = (filteredPositions.length/3).toLocaleString();
+}
+
+function processEnvironmentData(data){
+ try{
+  setProgress(10); appendChat('Injecting 4D video stream matrix...','system');
+  const seq = extract4DSequence(data);
+  if(seq && seq.length > 0){
+   raw4DSourceFrames = seq;
+   playbackFrames = seq; 
+   playbackFrameIndex = 0; 
+   is4DPlayMode = true;
+   
+   const scrub = document.getElementById('t-scrub-range');
+   if(scrub){ scrub.max = seq.length - 1; scrub.value = 0; }
+   document.getElementById('t-scrub-val').innerText = `0 / ${seq.length - 1}`;
+
+   apply4DFrameAndRender(0);
+   setProgress(100); 
+   document.getElementById('render-status').innerText='HyperStream4D Active'; 
+   document.getElementById('bbox-info').innerText=`${seq.length} temporal sequences`;
+   appendChat(`✓ Stream playback ready. Parsed ${seq.length} frames.`,'system'); 
+   if(seq.length < 150) saveToVault(`CORE_4D_${Date.now()}`,{HyperStream4D:seq.map(s=>({v:s.vertices4D, c:s.colors}))}); 
+   return;
+  }
+  appendChat('Unrecognized payload format.','error'); setProgress(0);
+ }catch(e){appendChat('Matrix Parsing Error: '+e.message,'error'); setProgress(0); console.error(e)}
+}
+
+function setupDragDrop(){const dz=document.getElementById('drop-zone'); if(!dz)return; ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault(); dz.classList.add('dragover')})); ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault(); dz.classList.remove('dragover')})); dz.addEventListener('drop',e=>{const file=e.dataTransfer.files[0]; if(file) readFile(file)})}
+function readFile(file){const r=new FileReader(); r.onload=ev=>{try{processEnvironmentData(JSON.parse(ev.target.result))}catch(err){appendChat('Invalid core payload '+err.message,'error')}}; r.readAsText(file)}
+function handleFileUpload(e){const f=e.target.files[0]; if(f) readFile(f)} 
+function handleCodePaste(){const t=document.getElementById('json-paste-box').value.trim(); if(!t)return; try{processEnvironmentData(JSON.parse(t))}catch(err){appendChat('Corrupt paste syntax: '+err.message,'error')}}
+
+function saveToVault(name,payload){try{const raw=JSON.stringify(payload); if(raw.length>4500000){appendChat('Vault bypass >4.5MB','error'); return;} const vault=JSON.parse(localStorage.getItem(VAULT_KEY)||'[]'); vault.unshift({id:Date.now(),name,size:raw.length,payload}); if(vault.length>12) vault.pop(); localStorage.setItem(VAULT_KEY,JSON.stringify(vault)); loadVaultList()}catch(e){}}
+function loadVaultList(){try{const vault=JSON.parse(localStorage.getItem(VAULT_KEY)||'[]'); const list=document.getElementById('vault-list'); if(vault.length===0){list.innerHTML='<small style="color:#64748b">Empty</small>'; return;} list.innerHTML=''; vault.forEach(it=>{const d=document.createElement('div'); d.className='vault-item'; d.innerHTML=`<span>📦 ${it.name} <small style="color:#64748b">${(it.size/1024).toFixed(0)}KB</small></span><span><button onclick="loadFromVault(${it.id})" style="background:#4f46e5;color:#fff;border:none;padding:3px 6px;border-radius:4px;cursor:pointer;font-size:10px;margin-right:4px">Boot</button><button onclick="deleteFromVault(${it.id})" style="background:#334155;color:#fff;border:none;padding:3px 6px;border-radius:4px;cursor:pointer;font-size:10px">X</button></span>`; list.appendChild(d)})}catch(e){}}
+function loadFromVault(id){try{const vault=JSON.parse(localStorage.getItem(VAULT_KEY)||'[]'); const it=vault.find(v=>v.id===id); if(it) processEnvironmentData(it.payload)}catch(e){}} 
+function deleteFromVault(id){let vault=JSON.parse(localStorage.getItem(VAULT_KEY)||'[]'); vault=vault.filter(v=>v.id!==id); localStorage.setItem(VAULT_KEY,JSON.stringify(vault)); loadVaultList()}
+
+function initFaceMeshPipeline(){
+ const video=document.getElementById('webcam-video'); const preview=document.getElementById('webcam-preview'); if(typeof FaceMesh==='undefined')return;
+ faceMesh=new FaceMesh({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${f}`}); 
+ faceMesh.setOptions({maxNumFaces:1,refineLandmarks:true,minDetectionConfidence:0.7,minTrackingConfidence:0.7});
+ 
+ faceMesh.onResults(r=>{
+   if(!isFaceScanning) return; 
+   if(r.multiFaceLandmarks?.length > 0){
+     const lm = r.multiFaceLandmarks[0]; 
+     liveVertices = []; 
+     liveColors = []; 
+     const tVal = recorded4DSequence.length; 
+     
+     for(const pt of lm){
+       const x = (pt.x - 0.5) * -3.2;
+       const y = (pt.y - 0.5) * -3.2;
+       const z = (pt.z || 0) * currentDepthScale; 
+       liveVertices.push(x, y, z, tVal);
+       liveColors.push(0.85, 0.68, 0.55);
+     }
+     
+     recorded4DSequence.push({ vertices4D: [...liveVertices], colors: [...liveColors] });
+     
+     raw4DSourceFrames = recorded4DSequence;
+     playbackFrames = recorded4DSequence;
+     playbackFrameIndex = recorded4DSequence.length - 1;
+     
+     const scrub = document.getElementById('t-scrub-range');
+     if(scrub){
+       scrub.max = Math.max(0, recorded4DSequence.length - 1);
+       scrub.value = playbackFrameIndex;
+     }
+     document.getElementById('t-scrub-val').innerText = `${playbackFrameIndex} / ${playbackFrames.length - 1}`;
+     
+     apply4DFrameAndRender(playbackFrameIndex);
+     document.getElementById('render-status').innerText = `Capturing 4D Stream (${recorded4DSequence.length} frames)`;
+   }
+ });
+ 
+ navigator.mediaDevices?.getUserMedia({video:{width:640,height:480}}).then(s=>{
+   if(preview) preview.srcObject=s; 
+   if(video){
+     video.srcObject=s; 
+     if(typeof Camera!=='undefined'){
+       cameraUtils=new Camera(video,{
+         onFrame:async()=>{if(isFaceScanning) await faceMesh.send({image:video})},
+         width:640,
+         height:480
+       }); 
+       cameraUtils.start();
+     }
+   }
+ }).catch(()=>appendChat('Camera feed offline','error'));
+}
+
+function toggleFaceScanning(){
+  isFaceScanning=!isFaceScanning; 
+  const b=document.getElementById('scan-toggle-btn'); 
+  if(isFaceScanning){
+    recorded4DSequence=[]; 
+    is4DPlayMode=false; 
+    b.innerText='HALT & PROCESS STREAM'; 
+    b.classList.add('scanning'); 
+    appendChat('Live camera stream capturing 4D spatial data...','system');
+  } else {
+    b.innerText='START 4D STREAM CAPTURE'; 
+    b.classList.remove('scanning'); 
+    is4DPlayMode=true;
+    appendChat(`✓ 4D stream successfully recorded with ${recorded4DSequence.length} data frames.`,'system');
+  }
+}
+
+function exportScannedMap(){
+    if(recorded4DSequence.length===0){alert('No camera stream recorded.');return;} 
+    const condensedStream = recorded4DSequence.map(f => ({
+        v: f.vertices4D.map(n => Number(n.toFixed(4))),
+        c: f.colors.map(n => Number(n.toFixed(2)))
+    }));
+
+    const payload = { HyperStream4D: condensedStream }; 
+    const blob=new Blob([JSON.stringify(payload)],{type:'application/json'}); 
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); 
+    a.download=`hyperstream_4d_video_${Date.now()}.json`; a.click(); 
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000); 
+    saveToVault(`HS_CamExport_${Date.now()}`,payload);
+}
+
+function exportCurrentPNG(){if(!spatialObject){appendChat('No map rendered','error');return;} renderer.render(scene,camera); const url=document.getElementById('three-canvas').toDataURL('image/png'); const a=document.createElement('a'); a.href=url; a.download=`hyperstream_snap_${Date.now()}.png`; a.click(); appendChat('High-res snapshot exported','system')}
+function export4DPhotoGIF(){if(!spatialObject){appendChat('No map model','error');return;} appendChat('Rendering orbit GIF...','system'); const gif=new GIF({workers:2,quality:10,width:640,height:480,workerScript:'https://cdn.jsdelivr.net/npm/gif.js@0.2.0/dist/gif.worker.js'}); const orig=camera.position.clone(); let f=0; const total=36; const rad=camera.position.distanceTo(controls.target); function cap(){const ang=(f/total)*Math.PI*2; camera.position.x=Math.sin(ang)*rad; camera.position.z=Math.cos(ang)*rad; camera.lookAt(controls.target); renderer.render(scene,camera); const c=document.createElement('canvas'); c.width=640; c.height=480; c.getContext('2d').drawImage(renderer.domElement,0,0,640,480); gif.addFrame(c,{delay:80}); f++; if(f<total) requestAnimationFrame(cap); else{camera.position.copy(orig); controls.update(); gif.on('finished',blob=>{const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`hyperstream_orbit_${Date.now()}.gif`; a.click(); appendChat('Orbit render complete','system')}); gif.render()}} cap()}
+
+function export4DWebMVideo(){
+    if(!renderer || !spatialObject){
+        appendChat('No active playback stream to encode.', 'error');
+        return;
+    }
+    appendChat('Compiling stream multiplex (.webm)...', 'system');
+    recordedChunks = [];
+    const canvas = document.getElementById('three-canvas');
+    const stream = canvas.captureStream(30); 
+    try {
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9' });
+    } catch (e) {
+        try {
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+        } catch (err) {
+            appendChat('Media codec rejected by environment.', 'error');
+            return;
         }
-
-        function loop(now) {
-            requestAnimationFrame(loop);
-            if (!isScanning || video.readyState < video.HAVE_ENOUGH_DATA) return;
-
-            const delta = now - lastFrameTime;
-            if (delta < frameInterval) return;
-            lastFrameTime = now - (delta % frameInterval);
-
-            fCount++;
-            if (now - lastTime > 1000) { document.getElementById('fps').innerText = fCount + " FPS"; fCount = 0; lastTime = now; }
-            
-            canvas.width = 120; canvas.height = 68; // Optimized spatial matrix footprint
-            ctx.drawImage(video, 0, 0, 120, 68);
-            const img = ctx.getImageData(0, 0, 120, 68).data, v = [], c = [];
-
-            for (let y = 0; y < 68; y += 2) {
-                for (let x = 0; x < 120; x += 2) {
-                    let i = (y * 120 + x) * 4, r = img[i], g = img[i+1], b = img[i+2], lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                    // Store delta positions rounded tightly to optimize token count
-                    v.push(Math.round((x / 120 - 0.5) * 400), Math.round((-(y / 68 - 0.5) * 400)), Math.round((lum - 0.5) * 300));
-                    // Quantize RGB into compact 4-bit indices or compact packed integer format
-                    c.push((r >> 4) << 8 | (g >> 4) << 4 | (b >> 4)); 
-                }
-            }
-            frames.push({ p: v, cols: c });
-            document.getElementById('f-count').innerText = frames.length;
-            document.getElementById('v-count').innerText = v.length / 3;
+    }
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+            recordedChunks.push(event.data);
         }
-
-        function toggleScan() {
-            isScanning = !isScanning;
-            if (isScanning) {
-                frames = []; recStart = performance.now();
-                scanBtn.innerText = "STOP RECORDING"; scanBtn.classList.add("scanning");
-                badge.innerText = "CAPTURING 4D..."; badge.classList.add("active"); saveBtn.style.display = "block";
-            } else {
-                scanBtn.innerText = "START 4D SPEED RECORD"; scanBtn.classList.remove("scanning");
-                badge.innerText = "READY"; badge.classList.remove("active");
-            }
+    };
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download=`hyperstream_vid_${Date.now()}.webm`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+        appendChat('✓ Sequence exported successfully!', 'system');
+    };
+    mediaRecorder.start();
+    let frameCounter = 0;
+    const totalFrames = Math.max(90, playbackFrames.length);
+    const originalPos = camera.position.clone();
+    function recordVideoLoop(){
+        frameCounter++;
+        renderer.render(scene, camera);
+        if(frameCounter < totalFrames){
+            requestAnimationFrame(recordVideoLoop);
+        } else {
+            camera.position.copy(originalPos);
+            controls.update();
+            mediaRecorder.stop();
         }
+    }
+    recordVideoLoop();
+}
 
-        function exportData() {
-            if (!frames.length) return alert("No frames recorded.");
-            badge.innerText = "COMPRESSING STREAM...";
-            setTimeout(() => {
-                const payload = JSON.stringify({ ver: "4.7", seq: frames });
-                // LZ-String compression for text sharing & clipboard optimization
-                cachedPayload = LZString.compressToEncodedURIComponent(payload);
-                document.getElementById('json-out').value = cachedPayload;
-                toggleModal('export-modal', true); badge.innerText = "READY";
-            }, 20);
-        }
-
-        function importData() {
-            try {
-                let val = document.getElementById('json-in').value.trim();
-                let raw = val.startsWith('{') ? val : LZString.decompressFromEncodedURIComponent(val) || LZString.decompress(val);
-                let data = JSON.parse(raw);
-                startPlayback(data.seq || data.frames);
-                toggleModal('paste-modal', false);
-            } catch(e) { alert("Invalid compressed payload or JSON structure."); }
-        }
-
-        function loadFile(e) {
-            const r = new FileReader();
-            r.onload = (evt) => {
-                try {
-                    let val = evt.target.result.trim();
-                    let raw = val.startsWith('{') ? val : LZString.decompressFromEncodedURIComponent(val) || LZString.decompress(val);
-                    let data = JSON.parse(raw);
-                    startPlayback(data.seq || data.frames);
-                } catch(err) { alert("Failed to parse file input."); }
-            };
-            r.readAsText(e.target.files[0]);
-        }
-
-        function startPlayback(seq) {
-            if (stream) stream.getTracks().forEach(t => t.stop());
-            video.style.display = 'none'; renderBox.style.display = 'block';
-            badge.innerText = "PLAYING 4D STREAM"; badge.classList.add("active");
-            playback = seq || []; fIdx = 0; if (!playback.length) return alert("Empty sequence data.");
-
-            if (!scene) {
-                scene = new THREE.Scene();
-                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 0, 4);
-                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-                renderBox.appendChild(renderer.domElement);
-                scene.add(new THREE.AmbientLight(0xffffff, 1.5));
-
-                let drag = false, px = 0, py = 0;
-                const updateRot = (x, y) => { if(cloud) { cloud.rotation.y += x; cloud.rotation.x += y; } };
-                window.addEventListener('mousedown', e => { drag = true; px = e.clientX; py = e.clientY; });
-                window.addEventListener('mousemove', e => { if (!drag) return; updateRot((e.clientX - px) * 0.005, (e.clientY - py) * 0.005); px = e.clientX; py = e.clientY; });
-                window.addEventListener('mouseup', () => drag = false);
-                window.addEventListener('touchstart', e => { if(e.touches.length === 1){ drag = true; px = e.touches[0].clientX; py = e.touches[0].clientY; } });
-                window.addEventListener('touchmove', e => { if (!drag || e.touches.length !== 1) return; updateRot((e.touches[0].clientX - px) * 0.005, (e.touches[0].clientY - py) * 0.005); px = e.touches[0].clientX; py = e.touches[0].clientY; });
-                window.addEventListener('touchend', () => drag = false);
-            }
-
-            const geom = new THREE.BufferGeometry();
-            const mat = new THREE.PointsMaterial({ size: 0.025, vertexColors: true, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending });
-            cloud = new THREE.Points(geom, mat);
-            scene.add(cloud);
-
-            // Pre-process buffers for zero GC allocation overhead during rendering loop
-            const parsedPlayback = playback.map(f => {
-                const rawP = f.p;
-                const rawC = f.cols;
-                const pos = new Float32Array(rawP.length);
-                const col = new Float32Array(rawC.length * 3);
-                
-                for(let i = 0, p = 0; i < rawP.length; i += 3, p += 3) {
-                    pos[p]   = rawP[i] / 100;
-                    pos[p+1] = rawP[i+1] / 100;
-                    pos[p+2] = rawP[i+2] / 100;
-                }
-                for(let i = 0, cIdx = 0; i < rawC.length; i++, cIdx += 3) {
-                    let packed = rawC[i];
-                    col[cIdx]   = ((packed >> 8) & 0xF) / 15;
-                    col[cIdx+1] = ((packed >> 4) & 0xF) / 15;
-                    col[cIdx+2] = (packed & 0xF) / 15;
-                }
-                return { pos, colors: col };
-            });
-
-            (function anim() {
-                requestAnimationFrame(anim);
-                if (parsedPlayback.length) {
-                    let f = parsedPlayback[fIdx];
-                    geom.setAttribute('position', new THREE.BufferAttribute(f.pos, 3));
-                    geom.setAttribute('color', new THREE.BufferAttribute(f.colors, 3));
-                    geom.attributes.position.needsUpdate = true;
-                    geom.attributes.color.needsUpdate = true;
-                    document.getElementById('v-count').innerText = f.pos.length / 3;
-                    fIdx = (fIdx + 1) % parsedPlayback.length;
-                    cloud.rotation.z = Math.sin(Date.now() * 0.001) * 0.02;
-                }
-                renderer.render(scene, camera);
-            })();
-        }
-
-        function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
-        window.addEventListener('load', () => { initCam(); requestAnimationFrame(loop); });
-    </script>
+function sendChatMessage(){const i=document.getElementById('chat-input'); const t=i.value.trim(); if(!t)return; appendChat(t); i.value='';}
+function handleKeyPress(e){if(e.key==='Enter') sendChatMessage()}
+</script>
 </body>
 </html>
