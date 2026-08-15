@@ -131,7 +131,6 @@
             display: none;
         }
 
-        /* Modal popup for guaranteed copying/saving */
         #export-modal {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -221,7 +220,7 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Engine</div>
-                    <div id="mode-status" class="metric-value">Omni + Surface Mesh</div>
+                    <div id="mode-status" class="metric-value">Single-Layer Clean</div>
                 </div>
             </div>
             
@@ -338,7 +337,8 @@
                     
                     let posX = parseFloat(((x / processingCanvas.width - 0.5) * 4.0).toFixed(3));
                     let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 4.0).toFixed(3));
-                    let posZ = parseFloat(((luminance - 0.5) * 1.5).toFixed(3));
+                    // Enhanced depth variation for better single-layer relief
+                    let posZ = parseFloat(((luminance - 0.5) * 2.2).toFixed(3));
 
                     envVertices.push(posX, posY, posZ);
                     envColors.push(parseFloat((r/255).toFixed(2)), parseFloat((g/255).toFixed(2)), parseFloat((b/255).toFixed(2)));
@@ -346,12 +346,13 @@
                 }
             }
 
-            spatialVertices.push(...envVertices);
-            spatialColors.push(...envColors);
-            spatialIntensity.push(...envIntensity);
+            // OVERWRITE frame array instead of accumulating (.push) to remove stacked layers
+            spatialVertices = envVertices;
+            spatialColors = envColors;
+            spatialIntensity = envIntensity;
 
             nodeCountText.innerText = spatialVertices.length / 3;
-            surfaceStatusText.innerText = "Mapping Environment";
+            surfaceStatusText.innerText = "Single-Layer Active";
         }
 
         function onHolisticResults(results) {
@@ -380,6 +381,7 @@
             if (results.rightHandLandmarks) addLandmarks(results.rightHandLandmarks.landmark, 0.9, 0.1, 0.9);
 
             if (humanVertices.length > 0) {
+                // Append landmarks cleanly on top of the environment layer
                 spatialVertices.push(...humanVertices);
                 spatialColors.push(...humanColors);
                 spatialIntensity.push(...humanIntensity);
@@ -392,7 +394,7 @@
             if (isScanning) {
                 scanBtn.innerText = "STOP SCANNING";
                 scanBtn.classList.add("scanning");
-                statusBadge.innerText = "OMNI-SURFACE ACTIVE";
+                statusBadge.innerText = "SINGLE-LAYER ACTIVE";
                 statusBadge.classList.add("active");
                 saveBtn.style.display = "block";
             } else {
@@ -406,7 +408,7 @@
 
         function exportEnvironmentMap() {
             if (spatialVertices.length === 0) {
-                alert("No structural nodes recorded. Press start and pan your camera around the room.");
+                alert("No structural nodes recorded. Press start and point your camera at a scene.");
                 return;
             }
 
@@ -416,7 +418,7 @@
                 const environmentPayload = {
                     metadata: {
                         generator: "Spatial Dash Omni Environment Engine",
-                        version: "5.8",
+                        version: "5.9",
                         type: "BufferGeometry",
                         totalVertices: spatialVertices.length / 3,
                         timestamp: new Date().toISOString()
@@ -432,7 +434,6 @@
 
                 cachedJsonString = JSON.stringify(environmentPayload);
                 
-                // Truncate display text box to avoid browser crash, but keep full data in cache
                 modalJsonText.value = cachedJsonString.substring(0, 1000) + "\n\n... [Full payload cached safely in memory (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB). Tap copy to get all data] ...";
                 modalDesc.innerText = `Payload ready! Size: ${(cachedJsonString.length / 1024 / 1024).toFixed(2)} MB. Tap copy to grab everything.`;
                 
@@ -452,7 +453,6 @@
                     copyBtn.innerText = "COPY DATA";
                 }, 2000);
             }).catch(err => {
-                // Clipboard permissions block fallback
                 let tempInput = document.createElement("textarea");
                 tempInput.value = cachedJsonString;
                 document.body.appendChild(tempInput);
