@@ -184,11 +184,10 @@
     <canvas id="processing-canvas"></canvas>
     <div id="render-container"></div>
 
-    <!-- Export & Copy Modal Window -->
     <div id="export-modal" class="interactive">
         <div class="modal-content">
             <h3>Scan Payload Ready</h3>
-            <p style="font-size:11px; color:#aaa;">Browser secure downloads restricted this file. Copy the raw payload data below:</p>
+            <p id="modal-desc" style="font-size:11px; color:#aaa;">Scan payload successfully packaged. Tap copy to save data.</p>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button id="modal-copy-btn" class="modal-btn" onclick="copyPayloadToClipboard()">COPY DATA</button>
@@ -245,6 +244,7 @@
         let surfaceStatusText = document.getElementById('surface-status');
         let exportModal = document.getElementById('export-modal');
         let modalJsonText = document.getElementById('modal-json-text');
+        let modalDesc = document.getElementById('modal-desc');
 
         let isScanning = false;
         let spatialVertices = []; 
@@ -416,7 +416,7 @@
                 const environmentPayload = {
                     metadata: {
                         generator: "Spatial Dash Omni Environment Engine",
-                        version: "5.7",
+                        version: "5.8",
                         type: "BufferGeometry",
                         totalVertices: spatialVertices.length / 3,
                         timestamp: new Date().toISOString()
@@ -432,8 +432,10 @@
 
                 cachedJsonString = JSON.stringify(environmentPayload);
                 
-                // Trigger modal popup to guarantee copy utility access
-                modalJsonText.value = cachedJsonString;
+                // Truncate display text box to avoid browser crash, but keep full data in cache
+                modalJsonText.value = cachedJsonString.substring(0, 1000) + "\n\n... [Full payload cached safely in memory (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB). Tap copy to get all data] ...";
+                modalDesc.innerText = `Payload ready! Size: ${(cachedJsonString.length / 1024 / 1024).toFixed(2)} MB. Tap copy to grab everything.`;
+                
                 exportModal.style.display = 'flex';
                 statusBadge.innerText = "SCAN CAPTURED";
             }, 100);
@@ -441,6 +443,7 @@
 
         function copyPayloadToClipboard() {
             if (!cachedJsonString) return;
+            
             navigator.clipboard.writeText(cachedJsonString).then(() => {
                 let copyBtn = document.getElementById('modal-copy-btn');
                 copyBtn.innerText = "COPIED SUCCESSFULLY!";
@@ -449,10 +452,17 @@
                     copyBtn.innerText = "COPY DATA";
                 }, 2000);
             }).catch(err => {
-                // Fallback selection highlight if clipboard permissions block script
-                modalJsonText.select();
-                document.execCommand('copy');
-                alert("Payload highlighted and copied!");
+                // Clipboard permissions block fallback
+                let tempInput = document.createElement("textarea");
+                tempInput.value = cachedJsonString;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                
+                let copyBtn = document.getElementById('modal-copy-btn');
+                copyBtn.innerText = "COPIED VIA FALLBACK!";
+                copyBtn.style.background = "#30d158";
             });
         }
 
