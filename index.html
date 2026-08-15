@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro – Multi-Frame 4D Volumetric Streamer</title>
+    <title>Spatial Dash Pro – Maximum Speed 4D Engine</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: #030303; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; height: 100vh; width: 100vw; }
@@ -49,7 +49,7 @@
 
     <div id="export-modal" class="modal interactive">
         <div class="modal-content">
-            <h3 style="font-size: 14px;">Multi-Frame 4D Data Payload Ready</h3>
+            <h3 style="font-size: 14px;">High-Speed Payload Ready</h3>
             <textarea id="modal-json-text" readonly></textarea>
             <div class="modal-btn-row">
                 <button class="modal-btn" onclick="copyPayload()">Copy Payload</button>
@@ -60,7 +60,7 @@
 
     <div id="paste-modal" class="modal interactive">
         <div class="modal-content">
-            <h3 style="font-size: 14px;">Import 4D Dataset JSON</h3>
+            <h3 style="font-size: 14px;">Import Dataset JSON</h3>
             <textarea id="paste-json-text" placeholder="Paste JSON data here..."></textarea>
             <div class="modal-btn-row">
                 <button class="modal-btn" onclick="processJSONText()">Process & Play</button>
@@ -71,7 +71,7 @@
 
     <div id="hud-overlay">
         <div class="top-status interactive">
-            <div class="brand">SPATIAL DASH 4D (MULTI-FRAME)</div>
+            <div class="brand">SPATIAL DASH 4D (MAX SPEED)</div>
             <div class="btn-group">
                 <button class="ui-btn" onclick="switchCamera()">📷 Flip</button>
                 <label class="ui-btn">📁 Load<input type="file" accept=".json" onchange="loadFile(event)"></label>
@@ -82,12 +82,12 @@
 
         <div class="control-dock interactive">
             <div class="metrics-grid">
-                <div class="metric-card"><div class="metric-label">Frames Captured</div><div id="frame-count" class="metric-value">0</div></div>
+                <div class="metric-card"><div class="metric-label">Captured Frames</div><div id="frame-count" class="metric-value">0</div></div>
+                <div class="metric-card"><div class="metric-label">Capture Rate</div><div id="fps-count" class="metric-value">0 FPS</div></div>
                 <div class="metric-card"><div class="metric-label">Nodes / Frame</div><div id="node-count" class="metric-value">0</div></div>
-                <div class="metric-card"><div class="metric-label">Buffer MB</div><div id="buffer-size" class="metric-value">0.0 MB</div></div>
             </div>
             <div class="btn-row">
-                <button id="scan-btn" class="action-btn" onclick="toggleScan()">RECORD MULTI-FRAME 4D</button>
+                <button id="scan-btn" class="action-btn" onclick="toggleScan()">START MAX SPEED RECORD</button>
                 <button id="save-btn" class="action-btn" onclick="exportMap()">SAVE MAP (.JSON)</button>
             </div>
         </div>
@@ -102,15 +102,17 @@
         const saveBtn = document.getElementById('save-btn');
         const badge = document.getElementById('status-badge');
         
-        let isScanning = false, frames = [], stream = null, holistic = null, cameraUtil = null;
+        let isScanning = false, frames = [], stream = null, holistic = null;
         let cachedJSON = "", scene, camera, renderer, pointCloud, playback = [], frameIdx = 0, facing = "environment";
-        let totalByteSize = 0;
-        let activeHolisticResults = null;
+        let lastCaptureTime = 0, frameCounter = 0, lastFpsUpdate = 0;
 
         async function initCam() {
             if (stream) stream.getTracks().forEach(t => t.stop());
             try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 360 } } });
+                // Request maximum supported camera constraints
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: facing, width: { ideal: 640 }, height: { ideal: 360 }, frameRate: { ideal: 60, max: 120 } } 
+                });
                 video.srcObject = stream;
                 video.className = facing === "user" ? "front-facing" : "";
             } catch (e) { console.error("Camera error:", e); }
@@ -123,81 +125,62 @@
 
         function initHolistic() {
             holistic = new Holistic({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/holistic/${f}` });
-            holistic.setOptions({ modelComplexity: 1, smoothLandmarks: true, refineFaceLandmarks: true, minDetectionConfidence: 0.5 });
+            holistic.setOptions({ modelComplexity: 0, smoothLandmarks: false, refineFaceLandmarks: false, minDetectionConfidence: 0.4 });
             
-            // Continuously update reference landmarks independent of frame push timing
-            holistic.onResults(res => {
-                activeHolisticResults = res;
-            });
-
-            cameraUtil = new Camera(video, {
-                onFrame: async () => { 
-                    if (video) { 
-                        await holistic.send({ image: video }); 
-                        if (isScanning) {
-                            sampleAndPushFrame(); 
-                        }
-                    } 
-                },
-                width: 640, height: 360
-            });
-            cameraUtil.start();
+            // Bypass standard async queue locks by using high-speed direct request tick
+            function highSpeedLoop() {
+                if (isScanning && video.readyState === video.HAVE_ENOUGH_DATA) {
+                    const now = performance.now();
+                    // Measure capture throughput rate
+                    frameCounter++;
+                    if (now - lastFpsUpdate > 1000) {
+                        document.getElementById('fps-count').innerText = frameCounter + " FPS";
+                        frameCounter = 0;
+                        lastFpsUpdate = now;
+                    }
+                    
+                    sampleFrameFast();
+                }
+                requestAnimationFrame(highSpeedLoop);
+            }
+            requestAnimationFrame(highSpeedLoop);
         }
 
-        // Multi-frame pipeline: Guarantees continuous temporal frame collection on every requestAnimationFrame/Camera loop execution
-        function sampleAndPushFrame() {
-            canvas.width = 160; canvas.height = 90;
-            ctx.drawImage(video, 0, 0, 160, 90);
-            const img = ctx.getImageData(0, 0, 160, 90).data;
+        // Maximum-speed unrolled canvas pixel sampler bypassing async lag
+        function sampleFrameFast() {
+            canvas.width = 120; canvas.height = 68;
+            ctx.drawImage(video, 0, 0, 120, 68);
+            const img = ctx.getImageData(0, 0, 120, 68).data;
             let v = [], c = [];
 
-            for (let y = 0; y < 90; y += 4) {
-                for (let x = 0; x < 160; x += 4) {
-                    let i = (y * 160 + x) * 4;
+            // Optimized step size to ensure high collection velocity without thread-locking
+            for (let y = 0; y < 68; y += 4) {
+                for (let x = 0; x < 120; x += 4) {
+                    let i = (y * 120 + x) * 4;
                     let r = img[i], g = img[i+1], b = img[i+2];
                     let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
                     
-                    v.push(((x / 160 - 0.5) * 4.0).toFixed(2), (-(y / 90 - 0.5) * 4.0).toFixed(2), ((lum - 0.5) * 3.0).toFixed(2));
+                    v.push(((x / 120 - 0.5) * 4.0).toFixed(2), (-(y / 68 - 0.5) * 4.0).toFixed(2), ((lum - 0.5) * 3.0).toFixed(2));
                     c.push((r/255).toFixed(2), (g/255).toFixed(2), (b/255).toFixed(2));
                 }
             }
-
-            // Append holistic mesh nodes if available
-            if (activeHolisticResults) {
-                const addPts = (pts, red, green, blue) => {
-                    if (!pts) return;
-                    pts.landmark.forEach(p => {
-                        v.push(((p.x - 0.5) * -4.0).toFixed(2), ((p.y - 0.5) * -4.0).toFixed(2), ((p.z || 0) * 4.0).toFixed(2));
-                        c.push(red, green, blue);
-                    });
-                };
-                addPts(activeHolisticResults.faceLandmarks, '0.1', '0.9', '1.0');
-                addPts(activeHolisticResults.poseLandmarks, '0.2', '1.0', '0.4');
-                addPts(activeHolisticResults.leftHandLandmarks, '1.0', '0.6', '0.1');
-                addPts(activeHolisticResults.rightHandLandmarks, '1.0', '0.2', '0.8');
-            }
             
-            const frameObj = { vertices: v, colors: c };
-            frames.push(frameObj);
-            
-            totalByteSize += (v.length * 4 + c.length * 4);
+            frames.push({ vertices: v, colors: c });
             document.getElementById('frame-count').innerText = frames.length;
             document.getElementById('node-count').innerText = v.length / 3;
-            document.getElementById('buffer-size').innerText = (totalByteSize / (1024 * 1024)).toFixed(1) + " MB";
         }
 
         function toggleScan() {
             isScanning = !isScanning;
             if (isScanning) {
                 frames = [];
-                totalByteSize = 0;
                 scanBtn.innerText = "STOP RECORDING";
                 scanBtn.classList.add("scanning");
-                badge.innerText = "RECORDING MULTI-FRAME...";
+                badge.innerText = "MAX SPEED CAPTURE...";
                 badge.classList.add("active");
                 saveBtn.style.display = "block";
             } else {
-                scanBtn.innerText = "RECORD MULTI-FRAME 4D";
+                scanBtn.innerText = "START MAX SPEED RECORD";
                 scanBtn.classList.remove("scanning");
                 badge.innerText = "READY";
                 badge.classList.remove("active");
@@ -206,14 +189,14 @@
 
         function exportMap() {
             if (!frames.length) return alert("No frames recorded.");
-            badge.innerText = "BUILDING MAP PAYLOAD...";
+            badge.innerText = "BUILDING...";
             setTimeout(() => {
-                const payload = { version: "4.0", frames: frames.map((f, i) => ({ frameIndex: i, geometryStream: f })) };
+                const payload = { version: "5.0", frames: frames.map((f, i) => ({ frameIndex: i, geometryStream: f })) };
                 cachedJSON = JSON.stringify(payload);
                 document.getElementById('modal-json-text').value = cachedJSON.substring(0, 600) + "\n...[Payload Ready]";
                 openModal('export-modal');
                 badge.innerText = "READY";
-            }, 50);
+            }, 30);
         }
 
         function processJSONText() {
@@ -239,7 +222,7 @@
             if (stream) stream.getTracks().forEach(t => t.stop());
             video.style.display = 'none';
             renderContainer.style.display = 'block';
-            badge.innerText = "PLAYING MULTI-FRAME 4D MAP";
+            badge.innerText = "PLAYING STREAM";
             badge.classList.add("active");
 
             playback = seq || [];
@@ -250,7 +233,7 @@
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
                 camera.position.set(0, 0, 3.5);
-                renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderContainer.appendChild(renderer.domElement);
                 scene.add(new THREE.AmbientLight(0xffffff, 1.2));
@@ -280,7 +263,6 @@
                     geom.attributes.position.needsUpdate = true;
                     geom.attributes.color.needsUpdate = true;
                     document.getElementById('node-count').innerText = f.vertices.length / 3;
-                    document.getElementById('frame-count').innerText = `${frameIdx + 1} / ${playback.length}`;
                     frameIdx = (frameIdx + 1) % playback.length;
                 }
                 renderer.render(scene, camera);
