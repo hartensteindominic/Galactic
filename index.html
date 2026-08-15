@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro</title>
+    <title>Spatial Dash Pro - Face Scan Edition</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -133,6 +133,8 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -164,12 +166,12 @@
                 </div>
                 <div class="metric-card">
                     <div class="metric-label">Mode</div>
-                    <div id="mode-status" class="metric-value">Live Vector</div>
+                    <div id="mode-status" class="metric-value">Face Mesh AI</div>
                 </div>
             </div>
             
             <div class="btn-row">
-                <button id="scan-btn" class="action-btn" onclick="toggleScanState()">START SCANNING</button>
+                <button id="scan-btn" class="action-btn" onclick="toggleScanState()">START FACE SCAN</button>
                 <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
             </div>
         </div>
@@ -189,12 +191,11 @@
         let spatialVertices = []; 
         let spatialColors = [];
         let spatialIntensity = [];
-        let scanInterval = null;
-        let angleStep = 0;
-        let currentFacingMode = "environment";
+        let currentFacingMode = "user"; // Best for face tracking
         let activeStream = null;
+        let faceMesh = null;
+        let cameraUtilsInstance = null;
 
-        // Three.js variables for rendering loaded JSON maps
         let scene, camera, renderer, pointCloud;
 
         async function initCameraFeed() {
@@ -204,7 +205,7 @@
             }
 
             try {
-                const constraints = { video: { facingMode: currentFacingMode } };
+                const constraints = { video: { facingMode: currentFacingMode, width: 1280, height: 720 } };
                 activeStream = await navigator.mediaDevices.getUserMedia(constraints);
                 videoElement.srcObject = activeStream;
 
@@ -214,18 +215,79 @@
                     videoElement.classList.remove("front-facing");
                 }
             } catch (err) {
-                try {
-                    activeStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    videoElement.srcObject = activeStream;
-                } catch (e) {
-                    console.log("Camera unavailable, running in simulation mode.");
-                }
+                console.log("Camera access error:", err);
             }
         }
 
         function switchCamera() {
             currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
             initCameraFeed();
+            if (cameraUtilsInstance) {
+                // Re-initialize camera utils stream mapping if active
+            }
+        }
+
+        // Initialize MediaPipe FaceMesh
+        function setupFaceMesh() {
+            faceMesh = new FaceMesh({locateFile: (file) => {
+                return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+            }});
+            
+            faceMesh.setOptions({
+                maxNumFaces: 1,
+                refineLandmarks: true, // Adds detailed lip and iris landmarks (468+ points)
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            faceMesh.onResults(onFaceResults);
+
+            cameraUtilsInstance = new Camera(videoElement, {
+                onFrame: async () => {
+                    if (isScanning && videoElement) {
+                        await faceMesh.send({image: videoElement});
+                    }
+                },
+                width: 1280,
+                height: 720
+            });
+            cameraUtilsInstance.start();
+        }
+
+        function onFaceResults(results) {
+            if (!isScanning) return;
+            
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                let landmarks = results.multiFaceLandmarks[0];
+                
+                spatialVertices = [];
+                spatialColors = [];
+                spatialIntensity = [];
+
+                // Extract all 468+ 3D coordinates mapped directly from your face
+                for (let pt of landmarks) {
+                    // Center and scale coordinates properly for 3D space
+                    let x = parseFloat(((pt.x - 0.5) * -3.0).toFixed(3));
+                    let y = parseFloat(((pt.y - 0.5) * -3.0).toFixed(3));
+                    let z = parseFloat((pt.z * 3.0).toFixed(3)); // Depth estimation coordinate
+
+                    spatialVertices.push(x, y, z);
+                    
+                    // Assign glowing cybernetic colors based on depth (Z axis) or position
+                    spatialColors.push(
+                        parseFloat((Math.abs(x)).toFixed(2)), 
+                        0.6, 
+                        parseFloat((1.0 - Math.abs(z)).toFixed(2))
+                    );
+                    
+                    spatialIntensity.push(parseFloat((0.8 + (pt.z * 0.2)).toFixed(2)));
+                }
+
+                nodeCountText.innerText = spatialVertices.length / 3;
+                surfaceStatusText.innerText = "Face Tracked";
+            } else {
+                surfaceStatusText.innerText = "Searching Face...";
+            }
         }
 
         function toggleScanState() {
@@ -234,80 +296,41 @@
             if (isScanning) {
                 scanBtn.innerText = "STOP SCANNING";
                 scanBtn.classList.add("scanning");
-                statusBadge.innerText = "MAPPING ACTIVE";
+                statusBadge.innerText = "FACE MAPPING ACTIVE";
                 statusBadge.classList.add("active");
-                surfaceStatusText.innerText = "Tracking";
                 saveBtn.style.display = "block";
                 
                 spatialVertices = []; 
                 spatialColors = [];
                 spatialIntensity = [];
-                angleStep = 0;
-
-                scanInterval = setInterval(() => {
-                    angleStep += 0.12;
-                    let radius = 1.5 + Math.sin(angleStep * 2) * 0.3;
-                    let x = parseFloat((Math.sin(angleStep) * radius).toFixed(3));
-                    let y = parseFloat((Math.cos(angleStep * 1.5) * 0.8 + (Math.random() * 0.05)).toFixed(3));
-                    let z = parseFloat((-2.0 + Math.cos(angleStep) * radius).toFixed(3));
-
-                    // Store spatial position coordinates
-                    spatialVertices.push(x, y, z);
-                    
-                    // Store detailed dynamic color attributes (RGB)
-                    spatialColors.push(
-                        parseFloat((Math.abs(Math.sin(angleStep))).toFixed(2)), 
-                        0.5,                                                   
-                        parseFloat((Math.abs(Math.cos(angleStep))).toFixed(2))  
-                    );
-
-                    // Store sensor surface intensity/confidence metrics
-                    spatialIntensity.push(parseFloat((0.7 + Math.random() * 0.3).toFixed(2)));
-
-                    nodeCountText.innerText = spatialVertices.length / 3;
-                }, 80);
-
             } else {
-                scanBtn.innerText = "START SCANNING";
+                scanBtn.innerText = "START FACE SCAN";
                 scanBtn.classList.remove("scanning");
-                statusBadge.innerText = "SCAN PAUSED";
+                statusBadge.innerText = "SCAN CAPTURED";
                 statusBadge.classList.remove("active");
                 surfaceStatusText.innerText = "Locked";
-                clearInterval(scanInterval);
             }
         }
 
         function exportEnvironmentMap() {
             if (spatialVertices.length === 0) {
-                alert("No environment nodes recorded. Start scanning first.");
+                alert("No facial nodes recorded. Look at the camera and scan first.");
                 return;
             }
 
             const environmentPayload = {
                 metadata: {
-                    generator: "Spatial Dash Pro Web Engine",
-                    version: "4.0",
+                    generator: "Spatial Dash Pro Face Engine",
+                    version: "4.2",
                     type: "BufferGeometry",
                     totalVertices: spatialVertices.length / 3,
                     timestamp: new Date().toISOString()
                 },
                 data: {
                     attributes: {
-                        position: {
-                            itemSize: 3,
-                            type: "Float32Array",
-                            array: spatialVertices
-                        },
-                        color: {
-                            itemSize: 3,
-                            type: "Float32Array",
-                            array: spatialColors
-                        },
-                        intensity: {
-                            itemSize: 1,
-                            type: "Float32Array",
-                            array: spatialIntensity
-                        }
+                        position: { itemSize: 3, type: "Float32Array", array: spatialVertices },
+                        color: { itemSize: 3, type: "Float32Array", array: spatialColors },
+                        intensity: { itemSize: 1, type: "Float32Array", array: spatialIntensity }
                     }
                 }
             };
@@ -317,7 +340,7 @@
             
             const fileLink = document.createElement('a');
             fileLink.href = downloadUrl;
-            fileLink.download = `spatial_contour_${Date.now()}.json`;
+            fileLink.download = `face_contour_${Date.now()}.json`;
             document.body.appendChild(fileLink);
             fileLink.click();
             document.body.removeChild(fileLink);
@@ -334,7 +357,7 @@
                     const jsonContent = JSON.parse(e.target.result);
                     render3DModelFromJSON(jsonContent);
                 } catch (err) {
-                    alert("Invalid JSON environment map file.");
+                    alert("Invalid JSON map file.");
                 }
             };
             reader.readAsText(file);
@@ -347,34 +370,24 @@
             videoElement.style.display = 'none';
             renderContainer.style.display = 'block';
             
-            modeStatusText.innerText = "3D Reconstructed";
+            modeStatusText.innerText = "3D Face Reconstructed";
             statusBadge.innerText = "MODEL LOADED";
             statusBadge.classList.add("active");
 
-            let rawArray = [];
-            if (payload.data && payload.data.attributes && payload.data.attributes.position) {
-                rawArray = payload.data.attributes.position.array;
-            } else if (payload.vertices) {
-                rawArray = payload.vertices;
-            } else {
-                alert("Unrecognized JSON structural format.");
-                return;
-            }
-
+            let rawArray = payload.data.attributes.position.array;
             nodeCountText.innerText = rawArray.length / 3;
             surfaceStatusText.innerText = "Mesh Active";
 
             if (!scene) {
                 scene = new THREE.Scene();
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-                camera.position.set(0, 0, 3.5);
+                camera.position.set(0, 0, 3.0);
 
                 renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderContainer.appendChild(renderer.domElement);
 
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
-                scene.add(ambientLight);
+                scene.add(new THREE.AmbientLight(0xffffff, 0.9));
                 
                 let isDragging = false;
                 let prevMousePos = { x: 0, y: 0 };
@@ -382,10 +395,8 @@
                 window.addEventListener('mousedown', (e) => { isDragging = true; prevMousePos = { x: e.clientX, y: e.clientY }; });
                 window.addEventListener('mousemove', (e) => {
                     if (!isDragging || !pointCloud) return;
-                    let deltaX = e.clientX - prevMousePos.x;
-                    let deltaY = e.clientY - prevMousePos.y;
-                    pointCloud.rotation.y += deltaX * 0.005;
-                    pointCloud.rotation.x += deltaY * 0.005;
+                    pointCloud.rotation.y += (e.clientX - prevMousePos.x) * 0.005;
+                    pointCloud.rotation.x += (e.clientY - prevMousePos.y) * 0.005;
                     prevMousePos = { x: e.clientX, y: e.clientY };
                 });
                 window.addEventListener('mouseup', () => { isDragging = false; });
@@ -394,35 +405,32 @@
             if (pointCloud) scene.remove(pointCloud);
 
             const geometry = new THREE.BufferGeometry();
-            const floatArray = new Float32Array(rawArray);
-            geometry.setAttribute('position', new THREE.BufferAttribute(floatArray, 3));
+            geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(rawArray), 3));
 
-            let materialConfig = { size: 0.06, transparent: true, opacity: 0.85 };
-
-            // Check if enhanced color data is present inside the payload
-            if (payload.data && payload.data.attributes && payload.data.attributes.color) {
-                const colorArray = new Float32Array(payload.data.attributes.color.array);
-                geometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
+            let materialConfig = { size: 0.04, transparent: true, opacity: 0.9 };
+            if (payload.data.attributes.color) {
+                geometry.setAttribute('color', new THREE.BufferAttribute(new Float32Array(payload.data.attributes.color.array), 3));
                 materialConfig.vertexColors = true;
             } else {
                 materialConfig.color = 0x0a84ff;
             }
 
-            const material = new THREE.PointsMaterial(materialConfig);
-            pointCloud = new THREE.Points(geometry, material);
+            pointCloud = new THREE.Points(geometry, new THREE.PointsMaterial(materialConfig));
+            // Rotate model orientation to look directly forward
+            pointCloud.rotation.y = Math.PI; 
             scene.add(pointCloud);
 
             function animate() {
                 requestAnimationFrame(animate);
-                if (pointCloud && !window.isDraggingModel) {
-                    pointCloud.rotation.y += 0.003;
-                }
                 renderer.render(scene, camera);
             }
             animate();
         }
 
-        window.addEventListener('load', initCameraFeed);
+        window.addEventListener('load', () => {
+            initCameraFeed();
+            setupFaceMesh();
+        });
     </script>
 </body>
 </html>
