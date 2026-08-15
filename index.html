@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - Advanced 4D Volumetric Time-Series Scanner</title>
+    <title>Spatial Dash Pro - Advanced 4D Volumetric Time-Series Scanner & Storage Edition</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -49,10 +49,10 @@
             justify-content: space-between;
             align-items: center;
         }
-        .brand-group { display: flex; align-items: center; gap: 12px; }
+        .brand-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #f0f0f0; }
         
-        .camera-switch-btn, .file-upload-btn, .paste-load-btn {
+        .camera-switch-btn, .file-upload-btn, .paste-load-btn, .storage-btn {
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #ffffff;
@@ -63,7 +63,7 @@
             cursor: pointer;
             transition: background 0.2s;
         }
-        .camera-switch-btn:hover, .file-upload-btn:hover, .paste-load-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .camera-switch-btn:hover, .file-upload-btn:hover, .paste-load-btn:hover, .storage-btn:hover { background: rgba(255, 255, 255, 0.2); }
         .file-upload-btn { display: inline-block; text-align: center; }
         #json-file-input { display: none; }
 
@@ -131,7 +131,7 @@
             display: none;
         }
 
-        #export-modal, #paste-modal {
+        #export-modal, #paste-modal, #storage-modal {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
             background: rgba(0,0,0,0.85);
@@ -166,12 +166,33 @@
             font-size: 10px;
             resize: none;
         }
+        .saved-list {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .saved-item {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 11px;
+        }
+        .saved-item-info { display: flex; flex-direction: column; gap: 2px; }
+        .saved-item-actions { display: flex; gap: 6px; }
         .modal-btn-row { display: flex; gap: 8px; }
         .modal-btn {
             flex: 1; padding: 12px; border-radius: 8px; border: none; font-weight: 700; font-size: 12px; cursor: pointer;
         }
         #modal-copy-btn, #modal-load-paste-btn { background: #0a84ff; color: white; }
-        #modal-close-btn, #paste-close-btn { background: #333; color: white; }
+        #modal-close-btn, #paste-close-btn, #storage-close-btn { background: #333; color: white; }
+        .load-item-btn { background: #30d158; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 10px; }
+        .del-item-btn { background: #ff453a; color: white; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 10px; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -207,6 +228,18 @@
         </div>
     </div>
 
+    <div id="storage-modal" class="interactive">
+        <div class="modal-content">
+            <h3>IndexedDB / Local Map Storage</h3>
+            <p style="font-size:11px; color:#aaa;">Manage, reload, or clear your locally stored 3D volumetric sessions.</p>
+            <div id="saved-maps-container" class="saved-list">
+                </div>
+            <div class="modal-btn-row">
+                <button id="storage-close-btn" class="modal-btn" onclick="closeStorageModal()">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
     <div id="hud-overlay">
         <div class="top-status interactive">
             <div class="brand-group">
@@ -216,7 +249,8 @@
                     📁 Load File
                     <input type="file" id="json-file-input" accept=".json" onchange="loadEnvironmentMap(event)">
                 </label>
-                <button class="paste-load-btn" onclick="openPasteModal()">📋 Paste JSON</button>
+                <button class="paste-load-btn" onclick="openPasteModal()">📋 Paste</button>
+                <button class="storage-btn" onclick="openStorageModal()">💾 Storage</button>
             </div>
             <span id="status-badge" class="badge">SYSTEM READY</span>
         </div>
@@ -239,7 +273,7 @@
             
             <div class="btn-row">
                 <button id="scan-btn" class="action-btn" onclick="toggleScanState()">RECORD 4D VIDEO</button>
-                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">SAVE MAP (.JSON)</button>
+                <button id="save-btn" class="action-btn" onclick="exportAndStoreEnvironmentMap()">SAVE & STORE MAP</button>
             </div>
         </div>
     </div>
@@ -256,6 +290,7 @@
         let nodeCountText = document.getElementById('node-count');
         let exportModal = document.getElementById('export-modal');
         let pasteModal = document.getElementById('paste-modal');
+        let storageModal = document.getElementById('storage-modal');
         let modalJsonText = document.getElementById('modal-json-text');
         let modalDesc = document.getElementById('modal-desc');
 
@@ -270,6 +305,23 @@
         let scene, camera, renderer, pointCloud;
         let playbackFrames = [];
         let playbackFrameIndex = 0;
+
+        // IndexedDB Initialization Layer
+        let db = null;
+        function initIndexedDB() {
+            const request = indexedDB.open("SpatialDashDB", 1);
+            request.onerror = (event) => console.error("IndexedDB error:", event.target.error);
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                console.log("IndexedDB connection established successfully.");
+            };
+            request.onupgradeneeded = (event) => {
+                const dbInstance = event.target.result;
+                if (!dbInstance.objectStoreNames.contains("savedMaps")) {
+                    dbInstance.createObjectStore("savedMaps", { keyPath: "id", autoIncrement: true });
+                }
+            };
+        }
 
         async function initCameraFeed() {
             if (renderContainer.style.display === "block") return; 
@@ -326,7 +378,6 @@
             cameraUtilsInstance.start();
         }
 
-        // Upgraded Processor: Dual-Layer Volumetric Sampling with Edge-Weighted Depth Reconstruction
         function captureFrameSequence() {
             if (!videoElement.videoWidth) return;
             
@@ -352,7 +403,6 @@
 
                     let lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
 
-                    // Compute local luminance gradients for edge reinforcement
                     let idxRight = (y * width + (x + 1)) * 4;
                     let idxDown = ((y + 1) * width + x) * 4;
                     let lumR = (0.299 * frameData[idxRight] + 0.587 * frameData[idxRight + 1] + 0.114 * frameData[idxRight + 2]) / 255.0;
@@ -427,43 +477,53 @@
             }
         }
 
-        // Upgraded Exporter: Converts 4D data into a structured 3D Photo Map payload schema
-        function exportEnvironmentMap() {
+        function exportAndStoreEnvironmentMap() {
             if (recordedFrames.length === 0) {
                 alert("No timeline frames recorded. Press record and capture motion.");
                 return;
             }
 
-            statusBadge.innerText = "BUILDING 3D PHOTO MAP...";
+            statusBadge.innerText = "BUILDING & STORING MAP...";
 
-            setTimeout(() => {
-                const map3DPayload = {
-                    version: "2.0",
-                    mapType: "SpatialDash3DPhotoMap",
-                    metadata: {
-                        generator: "Spatial Dash Advanced Engine",
-                        totalFrames: recordedFrames.length,
-                        exportTimestamp: new Date().toISOString(),
-                        coordinateSystem: "Cartesian-RightHanded"
-                    },
-                    frames: recordedFrames.map((frame, index) => ({
-                        frameIndex: index,
-                        nodeCount: frame.vertices.length / 3,
-                        geometryStream: {
-                            positions: frame.vertices,
-                            colors: frame.colors
-                        }
-                    }))
+            const map3DPayload = {
+                version: "2.0",
+                mapType: "SpatialDash3DPhotoMap",
+                metadata: {
+                    generator: "Spatial Dash Advanced Engine",
+                    totalFrames: recordedFrames.length,
+                    exportTimestamp: new Date().toISOString(),
+                    coordinateSystem: "Cartesian-RightHanded"
+                },
+                frames: recordedFrames.map((frame, index) => ({
+                    frameIndex: index,
+                    nodeCount: frame.vertices.length / 3,
+                    geometryStream: {
+                        positions: frame.vertices,
+                        colors: frame.colors
+                    }
+                }))
+            };
+
+            // Store in IndexedDB automatically
+            if (db) {
+                const transaction = db.transaction(["savedMaps"], "readwrite");
+                const store = transaction.objectStore("savedMaps");
+                store.add({
+                    title: `Map Scan - ${new Date().toLocaleTimeString()}`,
+                    timestamp: new Date().toISOString(),
+                    payload: map3DPayload
+                });
+                transaction.oncomplete = () => {
+                    console.log("Map session successfully saved to IndexedDB storage.");
                 };
+            }
 
-                cachedJsonString = JSON.stringify(map3DPayload);
-                
-                modalJsonText.value = cachedJsonString.substring(0, 900) + "\n\n... [Structured 3D Map Payload Cached (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB)] ...";
-                modalDesc.innerText = `3D Photo Map compiled! Frames: ${recordedFrames.length}, Size: ${(cachedJsonString.length / 1024 / 1024).toFixed(2)} MB. Optimized for map photo processors.`;
-                
-                exportModal.style.display = 'flex';
-                statusBadge.innerText = "3D MAP PAYLOAD READY";
-            }, 50);
+            cachedJsonString = JSON.stringify(map3DPayload);
+            modalJsonText.value = cachedJsonString.substring(0, 900) + "\n\n... [IndexedDB Stored & Cached (" + (cachedJsonString.length / 1024 / 1024).toFixed(2) + " MB)] ...";
+            modalDesc.innerText = `3D Photo Map compiled and securely stored! Frames: ${recordedFrames.length}, Size: ${(cachedJsonString.length / 1024 / 1024).toFixed(2)} MB.`;
+            
+            exportModal.style.display = 'flex';
+            statusBadge.innerText = "3D MAP PAYLOAD READY";
         }
 
         function copyPayloadToClipboard() {
@@ -479,7 +539,77 @@
         function openPasteModal() { pasteModal.style.display = 'flex'; }
         function closePasteModal() { pasteModal.style.display = 'none'; }
 
-        // Upgraded Parser: Handles both legacy sequence arrays and structured 3D photo map schemas
+        function openStorageModal() {
+            if (!db) {
+                alert("IndexedDB is initializing. Please try again in a moment.");
+                return;
+            }
+            
+            const container = document.getElementById('saved-maps-container');
+            container.innerHTML = "<div style='font-size:11px; color:#888; text-align:center;'>Loading stored sessions...</div>";
+            storageModal.style.display = 'flex';
+
+            const transaction = db.transaction(["savedMaps"], "readonly");
+            const store = transaction.objectStore("savedMaps");
+            const request = store.getAll();
+
+            request.onsuccess = (event) => {
+                const records = event.target.result;
+                container.innerHTML = "";
+
+                if (records.length === 0) {
+                    container.innerHTML = "<div style='font-size:11px; color:#888; text-align:center;'>No saved maps found in storage.</div>";
+                    return;
+                }
+
+                records.forEach((record) => {
+                    const itemEl = document.createElement('div');
+                    itemEl.className = 'saved-item';
+                    itemEl.innerHTML = `
+                        <div class="saved-item-info">
+                            <span style="font-weight:700; color:#fff;">${record.title}</span>
+                            <span style="color:#888; font-size:9px;">${new Date(record.timestamp).toLocaleString()} (${record.payload.frames.length} frames)</span>
+                        </div>
+                        <div class="saved-item-actions">
+                            <button class="load-item-btn" onclick="loadMapFromStorage(${record.id})">Load</button>
+                            <button class="del-item-btn" onclick="deleteMapFromStorage(${record.id})">Delete</button>
+                        </div>
+                    `;
+                    container.appendChild(itemEl);
+                });
+            };
+        }
+
+        function closeStorageModal() { storageModal.style.display = 'none'; }
+
+        function loadMapFromStorage(id) {
+            if (!db) return;
+            const transaction = db.transaction(["savedMaps"], "readonly");
+            const store = transaction.objectStore("savedMaps");
+            const request = store.get(id);
+
+            request.onsuccess = (event) => {
+                const record = event.target.result;
+                if (record && record.payload) {
+                    closeStorageModal();
+                    parseAndRenderPayload(record.payload);
+                } else {
+                    alert("Record not found.");
+                }
+            };
+        }
+
+        function deleteMapFromStorage(id) {
+            if (!db) return;
+            const transaction = db.transaction(["savedMaps"], "readwrite");
+            const store = transaction.objectStore("savedMaps");
+            const request = store.delete(id);
+
+            request.onsuccess = () => {
+                openStorageModal(); // Refresh list
+            };
+        }
+
         function processPastedJSON() {
             let rawText = document.getElementById('paste-json-text').value.trim();
             if (!rawText) {
@@ -493,24 +623,7 @@
             setTimeout(() => {
                 try {
                     const parsedData = JSON.parse(rawText);
-                    let framesArray = [];
-
-                    if (parsedData.frames && Array.isArray(parsedData.frames)) {
-                        // Structured 3D Photo Map format
-                        framesArray = parsedData.frames.map(f => f.geometryStream);
-                    } else if (parsedData.sequence && Array.isArray(parsedData.sequence)) {
-                        // Standard sequence format
-                        framesArray = parsedData.sequence;
-                    } else {
-                        throw new Error("Unrecognized schema format.");
-                    }
-
-                    statusBadge.innerText = "INITIALIZING MAP STREAM...";
-                    
-                    setTimeout(() => {
-                        render4DVideoFromJSON({ sequence: framesArray });
-                    }, 50);
-
+                    parseAndRenderPayload(parsedData);
                 } catch (err) {
                     console.error("Parsing error:", err);
                     alert("JSON parsing error: Invalid schema structure or corrupted stream data.");
@@ -527,20 +640,34 @@
             reader.onload = function(e) {
                 try {
                     const jsonContent = JSON.parse(e.target.result);
-                    let framesArray = [];
-                    if (jsonContent.frames && Array.isArray(jsonContent.frames)) {
-                        framesArray = jsonContent.frames.map(f => f.geometryStream);
-                    } else if (jsonContent.sequence && Array.isArray(jsonContent.sequence)) {
-                        framesArray = jsonContent.sequence;
-                    } else {
-                        throw new Error();
-                    }
-                    render4DVideoFromJSON({ sequence: framesArray });
+                    parseAndRenderPayload(jsonContent);
                 } catch (err) {
                     alert("Invalid 3D Map JSON sequence file.");
                 }
             };
             reader.readAsText(file);
+        }
+
+        function parseAndRenderPayload(parsedData) {
+            let framesArray = [];
+
+            if (parsedData.frames && Array.isArray(parsedData.frames)) {
+                framesArray = parsedData.frames.map(f => f.geometryStream);
+            } else if (parsedData.sequence && Array.isArray(parsedData.sequence)) {
+                framesArray = parsedData.sequence;
+            } else if (parsedData.data?.attributes || parsedData.vertices) {
+                let pos = parsedData.data?.attributes?.position?.array || parsedData.vertices;
+                let col = parsedData.data?.attributes?.color?.array || parsedData.colors || [];
+                framesArray = [{ vertices: pos, colors: col }];
+            } else {
+                throw new Error("Unrecognized schema format.");
+            }
+
+            statusBadge.innerText = "INITIALIZING MAP STREAM...";
+            
+            setTimeout(() => {
+                render4DVideoFromJSON({ sequence: framesArray });
+            }, 50);
         }
 
         function render4DVideoFromJSON(payload) {
@@ -611,6 +738,7 @@
         }
 
         window.addEventListener('load', () => {
+            initIndexedDB();
             initCameraFeed();
             setupOmniScanner();
         });
