@@ -354,7 +354,7 @@
             const environmentPayload = {
                 metadata: {
                     generator: "Spatial Dash Omni Environment Engine",
-                    version: "5.3",
+                    version: "5.4",
                     type: "BufferGeometry",
                     totalVertices: spatialVertices.length / 3,
                     timestamp: new Date().toISOString()
@@ -368,16 +368,31 @@
                 }
             };
 
-            const dataBlob = new Blob([JSON.stringify(environmentPayload, null, 2)], { type: 'application/json' });
-            const downloadUrl = URL.createObjectURL(dataBlob);
+            const jsonString = JSON.stringify(environmentPayload, null, 2);
             
+            // Universal fallback approach handling mobile browser file writing restrictions (iOS Safari / Android Chrome)
+            const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8;' });
+            
+            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                window.navigator.msSaveOrOpenBlob(blob, `spatial_scan_${Date.now()}.json`);
+                return;
+            }
+
+            const dataUrl = 'data:text/json;charset=utf-8,' + encodeURIComponent(jsonString);
             const fileLink = document.createElement('a');
-            fileLink.href = downloadUrl;
-            fileLink.download = `spatial_scan_${Date.now()}.json`;
+            fileLink.setAttribute('href', dataUrl);
+            fileLink.setAttribute('download', `spatial_scan_${Date.now()}.json`);
+            
+            // Required for mobile Firefox / Chrome compatibility
+            fileLink.style.display = 'none';
             document.body.appendChild(fileLink);
+            
+            // Programmatically trigger click to force device to save file
             fileLink.click();
-            document.body.removeChild(fileLink);
-            URL.revokeObjectURL(downloadUrl);
+            
+            setTimeout(() => {
+                document.body.removeChild(fileLink);
+            }, 100);
         }
 
         function loadEnvironmentMap(event) {
