@@ -37,6 +37,7 @@
         .scanline{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(rgba(0,0,0,0) 50%, rgba(0,0,0,0.2) 50%);background-size:100% 4px;z-index:3;pointer-events:none;opacity:0.25;}
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
 </head>
 <body>
     <div class="scanline"></div>
@@ -46,10 +47,10 @@
 
     <div id="export-modal" class="modal interact">
         <div class="modal-box">
-            <h3 style="font-size:13px;color:#00f3ff;">Condensed 4D Payload Ready</h3>
+            <h3 style="font-size:13px;color:#00f3ff;">Hyper-Compressed 4D Payload</h3>
             <textarea id="json-out" readonly></textarea>
             <div class="row">
-                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="navigator.clipboard.writeText(cachedJSON);alert('Compressed Data Copied!');">Copy Stream</button>
+                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="navigator.clipboard.writeText(cachedPayload);alert('Compressed Stream Copied!');">Copy Compressed</button>
                 <button class="btn act-btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="toggleModal('export-modal',false)">Close</button>
             </div>
         </div>
@@ -57,10 +58,10 @@
 
     <div id="paste-modal" class="modal interact">
         <div class="modal-box">
-            <h3 style="font-size:13px;color:#00f3ff;">Import Condensed Dataset</h3>
-            <textarea id="json-in" placeholder="Paste 4D JSON string here..."></textarea>
+            <h3 style="font-size:13px;color:#00f3ff;">Import 4D Payload</h3>
+            <textarea id="json-in" placeholder="Paste raw JSON or LZ-string compressed token payload here..."></textarea>
             <div class="row">
-                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="importJSON()">Play Stream</button>
+                <button class="btn act-btn" style="background:#00f3ff;color:#000;" onclick="importData()">Play Stream</button>
                 <button class="btn act-btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="toggleModal('paste-modal',false)">Cancel</button>
             </div>
         </div>
@@ -71,7 +72,7 @@
             <div class="brand">SPATIAL DASH 4D+</div>
             <div class="btn-group">
                 <button class="btn" onclick="facing=facing==='environment'?'user':'environment';initCam();">📷 Flip</button>
-                <label class="btn">📁 Load<input type="file" accept=".json" onchange="loadJSONFile(event)"></label>
+                <label class="btn">📁 Load<input type="file" accept=".json,.txt" onchange="loadFile(event)"></label>
                 <button class="btn" onclick="toggleModal('paste-modal',true)">📋 Paste</button>
             </div>
             <span id="badge" class="badge">READY</span>
@@ -93,7 +94,7 @@
     <script>
         const video = document.getElementById('cam'), canvas = document.getElementById('cvs'), ctx = canvas.getContext('2d', { willReadFrequently: true });
         const renderBox = document.getElementById('rnd'), scanBtn = document.getElementById('scan-btn'), saveBtn = document.getElementById('save-btn'), badge = document.getElementById('badge');
-        let isScanning = false, frames = [], stream = null, cachedJSON = "", scene, camera, renderer, cloud, playback = [], fIdx = 0, facing = "environment";
+        let isScanning = false, frames = [], stream = null, cachedPayload = "", scene, camera, renderer, cloud, playback = [], fIdx = 0, facing = "environment";
         let fCount = 0, lastTime = 0, recStart = 0, targetFPS = 60, frameInterval = 1000 / targetFPS, lastFrameTime = 0;
 
         async function initCam() {
@@ -116,18 +117,20 @@
             fCount++;
             if (now - lastTime > 1000) { document.getElementById('fps').innerText = fCount + " FPS"; fCount = 0; lastTime = now; }
             
-            canvas.width = 128; canvas.height = 72; // Optimized resolution footprint for denser/lighter tracking
-            ctx.drawImage(video, 0, 0, 128, 72);
-            const img = ctx.getImageData(0, 0, 128, 72).data, v = [], c = [], t = ((now - recStart) / 1000).toFixed(2);
+            canvas.width = 120; canvas.height = 68; // Optimized spatial matrix footprint
+            ctx.drawImage(video, 0, 0, 120, 68);
+            const img = ctx.getImageData(0, 0, 120, 68).data, v = [], c = [];
 
-            for (let y = 0; y < 72; y += 2) {
-                for (let x = 0; x < 128; x += 2) {
-                    let i = (y * 128 + x) * 4, r = img[i], g = img[i+1], b = img[i+2], lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-                    v.push(Number(((x / 128 - 0.5) * 4.0).toFixed(2)), Number((-(y / 72 - 0.5) * 4.0).toFixed(2)), Number(((lum - 0.5) * 3.0).toFixed(2)));
-                    c.push(Math.round(r/51), Math.round(g/51), Math.round(b/51)); // Condensed color quantization mapping (0-5 range steps)
+            for (let y = 0; y < 68; y += 2) {
+                for (let x = 0; x < 120; x += 2) {
+                    let i = (y * 120 + x) * 4, r = img[i], g = img[i+1], b = img[i+2], lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+                    // Store delta positions rounded tightly to optimize token count
+                    v.push(Math.round((x / 120 - 0.5) * 400), Math.round((-(y / 68 - 0.5) * 400)), Math.round((lum - 0.5) * 300));
+                    // Quantize RGB into compact 4-bit indices or compact packed integer format
+                    c.push((r >> 4) << 8 | (g >> 4) << 4 | (b >> 4)); 
                 }
             }
-            frames.push({ v, c, t });
+            frames.push({ p: v, cols: c });
             document.getElementById('f-count').innerText = frames.length;
             document.getElementById('v-count').innerText = v.length / 3;
         }
@@ -145,36 +148,36 @@
         }
 
         function exportData() {
-            if (!frames.length) return alert("No recorded frames found.");
-            badge.innerText = "PACKAGING & COMPRESSING...";
+            if (!frames.length) return alert("No frames recorded.");
+            badge.innerText = "COMPRESSING STREAM...";
             setTimeout(() => {
-                const rawPayload = JSON.stringify({ v: "4.6", seq: frames });
-                // Compress via URI component packing for safe string transport & sharing
-                cachedJSON = LZString ? LZString.compressToUTF16(rawPayload) : rawPayload; 
-                // Fallback safe stringifier if external helper is absent
-                if(cachedJSON.length > rawPayload.length) cachedJSON = rawPayload; 
-
-                document.getElementById('json-out').value = cachedJSON.substring(0, 400) + "\n...[Compressed Stream Ready]";
+                const payload = JSON.stringify({ ver: "4.7", seq: frames });
+                // LZ-String compression for text sharing & clipboard optimization
+                cachedPayload = LZString.compressToEncodedURIComponent(payload);
+                document.getElementById('json-out').value = cachedPayload;
                 toggleModal('export-modal', true); badge.innerText = "READY";
             }, 20);
         }
 
-        function importJSON() {
+        function importData() {
             try {
                 let val = document.getElementById('json-in').value.trim();
-                let data = JSON.parse(val);
+                let raw = val.startsWith('{') ? val : LZString.decompressFromEncodedURIComponent(val) || LZString.decompress(val);
+                let data = JSON.parse(raw);
                 startPlayback(data.seq || data.frames);
                 toggleModal('paste-modal', false);
-            } catch(e) { alert("Invalid stream format."); }
+            } catch(e) { alert("Invalid compressed payload or JSON structure."); }
         }
 
-        function loadJSONFile(e) {
+        function loadFile(e) {
             const r = new FileReader();
             r.onload = (evt) => {
                 try {
-                    const data = JSON.parse(evt.target.result);
+                    let val = evt.target.result.trim();
+                    let raw = val.startsWith('{') ? val : LZString.decompressFromEncodedURIComponent(val) || LZString.decompress(val);
+                    let data = JSON.parse(raw);
                     startPlayback(data.seq || data.frames);
-                } catch(err) { alert("Invalid file structure."); }
+                } catch(err) { alert("Failed to parse file input."); }
             };
             r.readAsText(e.target.files[0]);
         }
@@ -183,7 +186,7 @@
             if (stream) stream.getTracks().forEach(t => t.stop());
             video.style.display = 'none'; renderBox.style.display = 'block';
             badge.innerText = "PLAYING 4D STREAM"; badge.classList.add("active");
-            playback = seq || []; fIdx = 0; if (!playback.length) return alert("Empty playback sequence.");
+            playback = seq || []; fIdx = 0; if (!playback.length) return alert("Empty sequence data.");
 
             if (!scene) {
                 scene = new THREE.Scene();
@@ -210,13 +213,23 @@
             cloud = new THREE.Points(geom, mat);
             scene.add(cloud);
 
+            // Pre-process buffers for zero GC allocation overhead during rendering loop
             const parsedPlayback = playback.map(f => {
-                const rawV = f.v;
-                const rawC = f.c;
-                const pos = new Float32Array(rawV);
-                const col = new Float32Array(rawC.length);
-                for(let i=0; i<rawC.length; i++) {
-                    col[i] = rawC[i] / 5; // Expand back quantized color spectrum
+                const rawP = f.p;
+                const rawC = f.cols;
+                const pos = new Float32Array(rawP.length);
+                const col = new Float32Array(rawC.length * 3);
+                
+                for(let i = 0, p = 0; i < rawP.length; i += 3, p += 3) {
+                    pos[p]   = rawP[i] / 100;
+                    pos[p+1] = rawP[i+1] / 100;
+                    pos[p+2] = rawP[i+2] / 100;
+                }
+                for(let i = 0, cIdx = 0; i < rawC.length; i++, cIdx += 3) {
+                    let packed = rawC[i];
+                    col[cIdx]   = ((packed >> 8) & 0xF) / 15;
+                    col[cIdx+1] = ((packed >> 4) & 0xF) / 15;
+                    col[cIdx+2] = (packed & 0xF) / 15;
                 }
                 return { pos, colors: col };
             });
