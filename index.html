@@ -23,6 +23,9 @@
             object-fit: cover;
             z-index: 1;
         }
+        #camera-stream.front-facing {
+            transform: scaleX(-1); /* Mirrors the front camera preview naturally */
+        }
         #hud-overlay {
             position: absolute;
             top: 0;
@@ -47,7 +50,22 @@
             justify-content: space-between;
             align-items: center;
         }
+        .brand-group { display: flex; align-items: center; gap: 12px; }
         .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #f0f0f0; }
+        
+        .camera-switch-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .camera-switch-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
         .badge {
             font-size: 11px;
             font-weight: 700;
@@ -86,7 +104,7 @@
         .metric-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
         .metric-value { font-size: 14px; font-weight: 700; color: #0a84ff; }
         .btn-row { display: flex; gap: 10px; }
-        button {
+        button.action-btn {
             flex: 1;
             padding: 14px;
             border-radius: 12px;
@@ -100,7 +118,7 @@
         #scan-btn { background: #0a84ff; color: white; }
         #scan-btn.scanning { background: #ff453a; }
         #save-btn { background: #30d158; color: white; display: none; }
-        button:active { transform: scale(0.97); opacity: 0.8; }
+        button.action-btn:active { transform: scale(0.97); opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -109,7 +127,10 @@
 
     <div id="hud-overlay">
         <div class="top-status interactive">
-            <span class="brand">SPATIAL DASH</span>
+            <div class="brand-group">
+                <span class="brand">SPATIAL DASH</span>
+                <button class="camera-switch-btn" onclick="switchCamera()">📷 Flip Camera</button>
+            </div>
             <span id="status-badge" class="badge">SYSTEM READY</span>
         </div>
 
@@ -130,8 +151,8 @@
             </div>
             
             <div class="btn-row">
-                <button id="scan-btn" onclick="toggleScanState()">START SCANNING</button>
-                <button id="save-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
+                <button id="scan-btn" class="action-btn" onclick="toggleScanState()">START SCANNING</button>
+                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
             </div>
         </div>
     </div>
@@ -148,19 +169,40 @@
         let spatialVertices = []; 
         let scanInterval = null;
         let angleStep = 0;
+        let currentFacingMode = "environment"; // Starts with rear camera
+        let activeStream = null;
 
         async function initCameraFeed() {
+            if (activeStream) {
+                activeStream.getTracks().forEach(track => track.stop());
+            }
+
             try {
-                let stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
-                videoElement.srcObject = stream;
+                const constraints = {
+                    video: { facingMode: currentFacingMode }
+                };
+                activeStream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoElement.srcObject = activeStream;
+
+                // Handle front camera mirroring style toggle
+                if (currentFacingMode === "user") {
+                    videoElement.classList.add("front-facing");
+                } else {
+                    videoElement.classList.remove("front-facing");
+                }
             } catch (err) {
                 try {
-                    let fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    videoElement.srcObject = fallbackStream;
+                    activeStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    videoElement.srcObject = activeStream;
                 } catch (e) {
-                    alert("Camera permissions required.");
+                    alert("Camera permissions required or device camera unavailable.");
                 }
             }
+        }
+
+        function switchCamera() {
+            currentFacingMode = (currentFacingMode === "environment") ? "user" : "environment";
+            initCameraFeed();
         }
 
         function toggleScanState() {
@@ -177,12 +219,9 @@
                 spatialVertices = []; 
                 angleStep = 0;
 
-                // Generates a coherent curved profile (like a facial contour or rounded depth map) 
-                // instead of random points floating inside an open box volume.
                 scanInterval = setInterval(() => {
                     angleStep += 0.15;
                     
-                    // Mathematical distribution curve modeling surface contours
                     let x = parseFloat((Math.sin(angleStep) * 1.2).toFixed(3));
                     let y = parseFloat((Math.cos(angleStep * 0.5) * 0.6 + (Math.random() * 0.1)).toFixed(3));
                     let z = parseFloat((-1.5 - Math.abs(Math.cos(angleStep) * 0.5)).toFixed(3));
