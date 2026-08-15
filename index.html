@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Spatial Dash Pro - Auto Spatial Scanner</title>
+    <title>Spatial Dash Pro - Virtual Environment Engine</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            background-color: #050505;
+            background-color: #0b0f19;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow: hidden;
             height: 100vh;
             width: 100vw;
         }
-        #webgl-canvas {
+        #viewport-canvas {
             position: absolute;
             top: 0;
             left: 0;
@@ -37,8 +37,8 @@
         }
         .interactive { pointer-events: auto; }
         .top-status {
-            background: rgba(15, 15, 15, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(12px);
             border-radius: 14px;
             padding: 14px 20px;
@@ -46,24 +46,19 @@
             justify-content: space-between;
             align-items: center;
         }
-        .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #f0f0f0; }
+        .brand { font-weight: 800; letter-spacing: 1.5px; font-size: 14px; color: #38bdf8; }
         .badge {
             font-size: 11px;
             font-weight: 700;
             padding: 4px 10px;
             border-radius: 20px;
-            background: rgba(255, 59, 48, 0.2);
-            color: #ff453a;
-            border: 1px solid rgba(255, 59, 48, 0.4);
-        }
-        .badge.active {
-            background: rgba(48, 209, 88, 0.2);
-            color: #30d158;
-            border: 1px solid rgba(48, 209, 88, 0.4);
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.3);
         }
         .control-dock {
-            background: rgba(15, 15, 15, 0.90);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(15, 23, 42, 0.90);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(16px);
             border-radius: 18px;
             padding: 20px;
@@ -78,12 +73,12 @@
             text-align: center;
         }
         .metric-card {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.04);
             border-radius: 10px;
             padding: 8px;
         }
-        .metric-label { font-size: 10px; color: #888; text-transform: uppercase; margin-bottom: 2px; }
-        .metric-value { font-size: 14px; font-weight: 700; color: #0a84ff; }
+        .metric-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; margin-bottom: 2px; }
+        .metric-value { font-size: 14px; font-weight: 700; color: #38bdf8; }
         .btn-row { display: flex; gap: 10px; }
         button {
             flex: 1;
@@ -96,41 +91,40 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-        #scan-btn { background: #0a84ff; color: white; }
-        #scan-btn.scanning { background: #ff453a; }
-        #save-btn { background: #30d158; color: white; display: none; }
+        #generate-btn { background: #0ea5e9; color: white; }
+        #export-btn { background: #10b981; color: white; }
         button:active { transform: scale(0.97); opacity: 0.8; }
     </style>
 </head>
 <body>
 
-    <canvas id="webgl-canvas"></canvas>
+    <canvas id="viewport-canvas"></canvas>
 
     <div id="hud-overlay">
         <div class="top-status interactive">
-            <span class="brand">SPATIAL DASH AUTO</span>
-            <span id="status-badge" class="badge">SYSTEM READY</span>
+            <span class="brand">SPATIAL DASH ENGINE</span>
+            <span id="status-badge" class="badge">VIRTUAL READY</span>
         </div>
 
         <div class="control-dock interactive">
             <div class="metrics-grid">
                 <div class="metric-card">
-                    <div class="metric-label">Auto Nodes</div>
-                    <div id="node-count" class="metric-value">0</div>
+                    <div class="metric-label">Entities</div>
+                    <div id="entity-count" class="metric-value">0</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Status</div>
-                    <div id="surface-status" class="metric-value">Idle</div>
+                    <div class="metric-label">Environment</div>
+                    <div id="env-status" class="metric-value">Stable</div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-label">Mode</div>
-                    <div class="metric-value">Hands-Free</div>
+                    <div class="metric-label">Format</div>
+                    <div class="metric-value">JSON Matrix</div>
                 </div>
             </div>
             
             <div class="btn-row">
-                <button id="scan-btn" onclick="toggleAutoScan()">START SCANNING</button>
-                <button id="save-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
+                <button id="generate-btn" onclick="buildVirtualEnvironment()">BUILD ENVIRONMENT</button>
+                <button id="export-btn" onclick="exportVirtualMap()">EXPORT JSON MAP</button>
             </div>
         </div>
     </div>
@@ -139,126 +133,133 @@
 
     <script>
         let scene, camera, renderer;
-        let worldGroup = new THREE.Group();
-        let spatialNodes = [];
-        let vectorPoints = [];
-        let isScanning = false;
-        let scanInterval = null;
+        let worldContainer = new THREE.Group();
+        let virtualDataPayload = null;
 
-        let scanBtn = document.getElementById('scan-btn');
-        let saveBtn = document.getElementById('save-btn');
+        let entityCountText = document.getElementById('entity-count');
+        let envStatusText = document.getElementById('env-status');
         let statusBadge = document.getElementById('status-badge');
-        let nodeCountText = document.getElementById('node-count');
-        let surfaceStatusText = document.getElementById('surface-status');
 
-        function init() {
-            const canvas = document.getElementById('webgl-canvas');
+        function initVirtualEngine() {
+            const canvas = document.getElementById('viewport-canvas');
             scene = new THREE.Scene();
-            
+            scene.fog = new THREE.FogExp2(0x0b0f19, 0.08);
+
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, 4);
+            camera.position.set(0, 2, 6);
 
             renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
 
-            scene.add(worldGroup);
+            scene.add(worldContainer);
 
-            const ambientLight = new THREE.AmbientLight(0xffffff, 1.0);
+            // Lighting setup for the virtual space
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
             scene.add(ambientLight);
 
+            const directionalLight = new THREE.DirectionalLight(0x38bdf8, 1.2);
+            directionalLight.position.set(5, 10, 7);
+            scene.add(directionalLight);
+
+            // Generate initial default environment right away
+            buildVirtualEnvironment();
+
+            // Render loop with smooth orbital rotation
             function animate() {
                 requestAnimationFrame(animate);
-                worldGroup.rotation.y += 0.002; // Gentle orbit rotation to view the auto-generated mesh framework
+                worldContainer.rotation.y += 0.002;
                 renderer.render(scene, camera);
             }
             animate();
         }
 
-        function toggleAutoScan() {
-            isScanning = !isScanning;
-
-            if (isScanning) {
-                scanBtn.innerText = "STOP SCANNING";
-                scanBtn.classList.add("scanning");
-                statusBadge.innerText = "AUTO-MAPPING ACTIVE";
-                statusBadge.classList.add("active");
-                surfaceStatusText.innerText = "Recording";
-                saveBtn.style.display = "block";
-
-                // Automatically generate and stitch nodes every 150 milliseconds hands-free
-                scanInterval = setInterval(() => {
-                    let x = (Math.random() * 3 - 1.5);
-                    let y = (Math.random() * 2 - 1);
-                    let z = (Math.random() * 3 - 1.5);
-
-                    let newVector = new THREE.Vector3(x, y, z);
-                    vectorPoints.push(newVector);
-
-                    let nodeData = {
-                        id: spatialNodes.length + 1,
-                        x: x.toFixed(3),
-                        y: y.toFixed(3),
-                        z: z.toFixed(3),
-                        timestamp: new Date().toISOString()
-                    };
-                    spatialNodes.push(nodeData);
-                    nodeCountText.innerText = spatialNodes.length;
-
-                    // Drop node sphere
-                    const sphereGeo = new THREE.SphereGeometry(0.04, 16, 16);
-                    const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc });
-                    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-                    sphere.position.copy(newVector);
-                    worldGroup.add(sphere);
-
-                    // Frame connection line automatically
-                    if (vectorPoints.length > 1) {
-                        let prevVector = vectorPoints[vectorPoints.length - 2];
-                        const lineGeo = new THREE.BufferGeometry().setFromPoints([prevVector, newVector]);
-                        const lineMat = new THREE.LineBasicMaterial({ color: 0x0a84ff, linewidth: 3 });
-                        const connectingLine = new THREE.Line(lineGeo, lineMat);
-                        worldGroup.add(connectingLine);
-                    }
-                }, 150);
-
-            } else {
-                scanBtn.innerText = "START SCANNING";
-                scanBtn.classList.remove("scanning");
-                statusBadge.innerText = "SCAN COMPLETE";
-                statusBadge.classList.remove("active");
-                surfaceStatusText.innerText = "Saved";
-                clearInterval(scanInterval);
+        function buildVirtualEnvironment() {
+            // Clear prior objects
+            while(worldContainer.children.length > 0){ 
+                worldContainer.remove(worldContainer.children[0]); 
             }
+
+            envStatusText.innerText = "Compiling";
+            statusBadge.innerText = "GENERATING NODES";
+
+            let nodeMatrix = [];
+            let geometriesList = [
+                new THREE.BoxGeometry(0.4, 0.4, 0.4),
+                new THREE.SphereGeometry(0.25, 16, 16),
+                new THREE.CylinderGeometry(0.2, 0.2, 0.5, 16)
+            ];
+
+            let colorPalette = [0x38bdf8, 0x818cf8, 0x34d399, 0xf472b6, 0xfbbf24];
+
+            // Generate structured virtual coordinates optimized for environment building
+            let totalNodes = 45;
+            for (let i = 1; i <= totalNodes; i++) {
+                let px = Number((Math.random() * 5 - 2.5).toFixed(3));
+                let py = Number((Math.random() * 2 - 0.5).toFixed(3));
+                let pz = Number((Math.random() * 5 - 2.5).toFixed(3));
+
+                nodeMatrix.push({
+                    id: i,
+                    x: px.toString(),
+                    y: py.toString(),
+                    z: pz.toString(),
+                    timestamp: new Date().toISOString()
+                });
+
+                // Pick random shape & color for visual structure
+                let randomGeo = geometriesList[Math.floor(Math.random() * geometriesList.length)];
+                let randomColor = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+
+                let material = new THREE.MeshStandardMaterial({ 
+                    color: randomColor, 
+                    roughness: 0.3, 
+                    metalness: 0.2 
+                });
+                
+                let meshObject = new THREE.Mesh(randomGeo, material);
+                meshObject.position.set(px, py, pz);
+                
+                // Add subtle random rotation
+                meshObject.rotation.x = Math.random() * Math.PI;
+                meshObject.rotation.y = Math.random() * Math.PI;
+
+                worldContainer.add(meshObject);
+            }
+
+            // Construct exportable virtual JSON payload structure
+            virtualDataPayload = {
+                generator: "Spatial Dash Virtual Environment Engine",
+                version: "8.0",
+                sessionDate: new Date().toISOString(),
+                totalMeshNodes: nodeMatrix.length,
+                coordinatesMatrix: nodeMatrix
+            };
+
+            entityCountText.innerText = nodeMatrix.length;
+            envStatusText.innerText = "Online";
+            statusBadge.innerText = "VIRTUAL READY";
         }
 
-        function exportEnvironmentMap() {
-            if (spatialNodes.length === 0) {
-                alert("No nodes recorded yet. Run a scan first.");
+        function exportVirtualMap() {
+            if (!virtualDataPayload) {
+                alert("No virtual environment generated yet.");
                 return;
             }
 
-            const environmentPayload = {
-                generator: "Spatial Dash Auto-Capture Engine",
-                version: "7.0",
-                sessionDate: new Date().toISOString(),
-                totalMeshNodes: spatialNodes.length,
-                coordinatesMatrix: spatialNodes
-            };
-
-            const dataBlob = new Blob([JSON.stringify(environmentPayload, null, 2)], { type: 'application/json' });
+            const dataBlob = new Blob([JSON.stringify(virtualDataPayload, null, 2)], { type: 'application/json' });
             const downloadUrl = URL.createObjectURL(dataBlob);
             
             const fileLink = document.createElement('a');
             fileLink.href = downloadUrl;
-            fileLink.download = `spatial_auto_map_${Date.now()}.json`;
+            fileLink.download = `spatial_virtual_environment_${Date.now()}.json`;
             document.body.appendChild(fileLink);
             fileLink.click();
             document.body.removeChild(fileLink);
             URL.revokeObjectURL(downloadUrl);
         }
 
-        window.addEventListener('load', init);
+        window.addEventListener('load', initVirtualEngine);
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
