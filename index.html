@@ -172,7 +172,7 @@
             
             <div class="btn-row">
                 <button id="scan-btn" class="action-btn" onclick="toggleScanState()">START OMNI SCAN</button>
-                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">EXPORT MAP (.JSON)</button>
+                <button id="save-btn" class="action-btn" onclick="exportEnvironmentMap()">SAVE FILE (.JSON)</button>
             </div>
         </div>
     </div>
@@ -192,7 +192,7 @@
         let spatialVertices = []; 
         let spatialColors = [];
         let spatialIntensity = [];
-        let currentFacingMode = "environment"; // Defaults to back camera for room scanning
+        let currentFacingMode = "environment";
         let activeStream = null;
         let holistic = null;
         let cameraUtilsInstance = null;
@@ -244,10 +244,7 @@
             cameraUtilsInstance = new Camera(videoElement, {
                 onFrame: async () => {
                     if (isScanning && videoElement) {
-                        // 1. Run AI skeleton/face/hand tracking
                         await holistic.send({image: videoElement});
-                        
-                        // 2. Run active environment pixel-depth surface point extraction
                         captureEnvironmentPointCloud();
                     }
                 },
@@ -257,16 +254,15 @@
             cameraUtilsInstance.start();
         }
 
-        // Active background grid generator sampling the video frame pixels as a depth grid
         function captureEnvironmentPointCloud() {
             if (!videoElement.videoWidth) return;
             
-            processingCanvas.width = 320; // Lower resolution matrix for high performance sampling
+            processingCanvas.width = 320;
             processingCanvas.height = 180;
             canvasCtx.drawImage(videoElement, 0, 0, processingCanvas.width, processingCanvas.height);
             
             const frameData = canvasCtx.getImageData(0, 0, processingCanvas.width, processingCanvas.height).data;
-            const step = 6; // Sample density step
+            const step = 6;
 
             let envVertices = [];
             let envColors = [];
@@ -279,21 +275,18 @@
                     let g = frameData[index + 1];
                     let b = frameData[index + 2];
 
-                    // Approximate surface depth using luminance contrast
                     let luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255.0;
                     
                     let posX = parseFloat(((x / processingCanvas.width - 0.5) * 4.0).toFixed(3));
                     let posY = parseFloat((-(y / processingCanvas.height - 0.5) * 4.0).toFixed(3));
-                    let posZ = parseFloat(((luminance - 0.5) * 1.5).toFixed(3)); // Depth variation mapped from light/shadow
+                    let posZ = parseFloat(((luminance - 0.5) * 1.5).toFixed(3));
 
                     envVertices.push(posX, posY, posZ);
-                    // Environment surface color mapped dynamically from feed
                     envColors.push(parseFloat((r/255).toFixed(2)), parseFloat((g/255).toFixed(2)), parseFloat((b/255).toFixed(2)));
                     envIntensity.push(parseFloat(luminance.toFixed(2)));
                 }
             }
 
-            // Append environment batch data continuously
             spatialVertices.push(...envVertices);
             spatialColors.push(...envColors);
             spatialIntensity.push(...envIntensity);
@@ -322,10 +315,10 @@
                 }
             }
 
-            if (results.faceLandmarks) addLandmarks(results.faceLandmarks.landmark, 0.0, 0.8, 1.0); // Cyan Face
-            if (results.poseLandmarks) addLandmarks(results.poseLandmarks.landmark, 0.1, 0.9, 0.3); // Green Skeleton
-            if (results.leftHandLandmarks) addLandmarks(results.leftHandLandmarks.landmark, 1.0, 0.5, 0.0); // Orange Hands
-            if (results.rightHandLandmarks) addLandmarks(results.rightHandLandmarks.landmark, 0.9, 0.1, 0.9); // Purple Hands
+            if (results.faceLandmarks) addLandmarks(results.faceLandmarks.landmark, 0.0, 0.8, 1.0);
+            if (results.poseLandmarks) addLandmarks(results.poseLandmarks.landmark, 0.1, 0.9, 0.3);
+            if (results.leftHandLandmarks) addLandmarks(results.leftHandLandmarks.landmark, 1.0, 0.5, 0.0);
+            if (results.rightHandLandmarks) addLandmarks(results.rightHandLandmarks.landmark, 0.9, 0.1, 0.9);
 
             if (humanVertices.length > 0) {
                 spatialVertices.push(...humanVertices);
@@ -348,7 +341,7 @@
                 scanBtn.classList.remove("scanning");
                 statusBadge.innerText = "SCAN CAPTURED";
                 statusBadge.classList.remove("active");
-                surfaceStatusText.innerText = "Ready to Export";
+                surfaceStatusText.innerText = "Ready to Save";
             }
         }
 
@@ -361,7 +354,7 @@
             const environmentPayload = {
                 metadata: {
                     generator: "Spatial Dash Omni Environment Engine",
-                    version: "5.2",
+                    version: "5.3",
                     type: "BufferGeometry",
                     totalVertices: spatialVertices.length / 3,
                     timestamp: new Date().toISOString()
@@ -380,7 +373,7 @@
             
             const fileLink = document.createElement('a');
             fileLink.href = downloadUrl;
-            fileLink.download = `spatial_environment_${Date.now()}.json`;
+            fileLink.download = `spatial_scan_${Date.now()}.json`;
             document.body.appendChild(fileLink);
             fileLink.click();
             document.body.removeChild(fileLink);
