@@ -1,201 +1,227 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>HyperStream XD • Engine v4.5 Pro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HyperStream XD • Engine v5.0</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#020617;color:#f8fafc;font-family:system-ui,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:380px;background:#030712;border-right:1px solid #1e293b;padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;z-index:10}
-.card{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px}
-.title{font-size:9px;font-weight:800;text-transform:uppercase;color:#94a3b8}
-.row{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#cbd5e1}
-button{border:none;border-radius:6px;padding:7px;font-size:10px;font-weight:800;cursor:pointer;color:#fff}
-.btn-p{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
-.btn-rec{background:#10b981;width:100%}.btn-rec.recording{background:#ef4444;animation:pulse 1.5s infinite}
-.btn-d{background:#ef4444;width:100%}.btn-d.on{background:#f97316}
-input[type=range]{accent-color:#ec4899;width:100px}
-#viewer{flex:1;position:relative}
-canvas{display:block;width:100%;height:100%}
-.stats{position:absolute;top:10px;right:10px;background:rgba(2,6,23,0.8);padding:6px 10px;border-radius:6px;font-size:10px;color:#94a3b8;z-index:5}
-video{display:none}
-@keyframes pulse{0%{opacity:1}50%{opacity:0.6}100%{opacity:1}}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:#020617;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;height:100vh;display:flex;overflow:hidden}
+  #sidebar{width:360px;background:#030712;border-right:1px solid #1e293b;padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;z-index:10}
+  .card{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
+  .title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8}
+  .row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#cbd5e1;gap:8px}
+  .row b{color:#e2e8f0;font-variant-numeric:tabular-nums}
+  button{border:none;border-radius:7px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#fff;transition:opacity .15s}
+  button:hover{opacity:.9}
+  .btn-p{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+  .btn-d{background:#ef4444;width:100%}
+  .btn-d.on{background:#f97316}
+  .btn-g{background:#0f766e;width:100%}
+  input[type=range]{accent-color:#ec4899;flex:1;max-width:130px}
+  #viewer{flex:1;position:relative;background:#020617}
+  canvas{display:block;width:100%;height:100%}
+  .stats{position:absolute;top:12px;right:12px;background:rgba(2,6,23,.85);padding:8px 12px;border-radius:8px;font-size:11px;color:#94a3b8;z-index:5;backdrop-filter:blur(6px);border:1px solid #1e293b}
+  .stats b{color:#ec4899}
+  #preview{position:absolute;bottom:12px;left:12px;width:160px;height:120px;border-radius:8px;overflow:hidden;border:1px solid #334155;z-index:5;background:#000}
+  #preview video{width:100%;height:100%;object-fit:cover}
+  .badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;background:#1e293b;color:#94a3b8}
+  .badge.live{background:#065f46;color:#6ee7b7}
+  .badge.frozen{background:#7c2d12;color:#fdba74}
+  .hint{font-size:10px;color:#64748b;line-height:1.35}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 <div id="sidebar">
-  <div style="font-size:12px;font-weight:900;color:#38bdf8">HYPERSTREAM XD • v4.5 PRO</div>
+  <div style="font-size:13px;font-weight:900;color:#38bdf8;letter-spacing:.02em">HYPERSTREAM XD • v5.0</div>
+
   <div class="card">
     <div class="title">Live Matrix Control</div>
-    <button class="btn-d" id="scanBtn" onclick="toggleScan()">ACTIVATE UNLIMITED SCAN</button>
-    <div class="row"><span>Voxel Step (Detail)</span><input type="range" min="1" max="3" value="1" oninput="stepSize=+this.value"></div>
-    <div class="row"><span>Depth Field</span><input type="range" min="10" max="200" value="100" oninput="depthMul=+this.value"></div>
-    <div class="row"><span>Particle Size</span><input type="range" min="0.005" max="0.04" step="0.001" value="0.012" oninput="updatePointSize(+this.value)"></div>
+    <button class="btn-d" id="scanBtn" onclick="toggleScan()">ACTIVATE SCAN (FREEZE)</button>
+    <div class="row">
+      <span>Status</span>
+      <span id="statusBadge" class="badge live">LIVE</span>
+    </div>
+    <div class="row"><span>Voxel Step</span><input type="range" min="1" max="6" value="2" oninput="stepSize=+this.value;updateLabel('stepVal',this.value)"><b id="stepVal">2</b></div>
+    <div class="row"><span>Depth Field</span><input type="range" min="20" max="200" value="100" oninput="depthMul=+this.value;updateLabel('depthVal',this.value)"><b id="depthVal">100</b></div>
+    <div class="row"><span>Point Size</span><input type="range" min="1" max="12" value="4" oninput="pointSize=this.value/100;if(mat)mat.size=pointSize;updateLabel('sizeVal',this.value)"><b id="sizeVal">4</b></div>
+    <div class="row"><span>Threshold</span><input type="range" min="0" max="40" value="8" oninput="thresh=this.value/100;updateLabel('threshVal',this.value)"><b id="threshVal">8</b></div>
     <div class="row"><span>Active Voxels</span><b id="nLive" style="color:#ec4899">0</b></div>
-    <button class="btn-p" onclick="expJSON()">Export JSON Matrix</button>
   </div>
+
   <div class="card">
-    <div class="title">Capture Engine</div>
-    <button class="btn-rec" id="recBtn" onclick="toggleRecording()">START VIDEO RECORDING</button>
+    <div class="title">Camera & View</div>
+    <button class="btn-g" onclick="toggleAutoRotate()">Toggle Auto-Rotate</button>
+    <button class="btn-g" onclick="resetCam()">Reset Camera</button>
+    <div class="row"><span>Auto-Rotate</span><b id="rotState">ON</b></div>
+  </div>
+
+  <div class="card">
+    <div class="title">Export</div>
+    <button class="btn-p" onclick="expJSON()">Export JSON Matrix</button>
+    <div class="hint">Exports the current (or frozen) point cloud as positions + colors.</div>
+  </div>
+
+  <div class="card">
+    <div class="title">Tips</div>
+    <div class="hint">• Lower Voxel Step = denser cloud (heavier)<br>
+    • Raise Threshold to cut noise<br>
+    • Freeze with Scan, then Export<br>
+    • Drag to orbit • Scroll to zoom</div>
   </div>
 </div>
+
 <div id="viewer">
-  <div class="stats">FPS <b id="fpsD" style="color:#ec4899">—</b></div>
-  <video id="vid" autoplay playsinline muted></video>
+  <div class="stats">FPS <b id="fpsD">—</b> &nbsp;|&nbsp; <span id="modeLabel">Live</span></div>
+  <div id="preview"><video id="vid" autoplay playsinline muted></video></div>
   <canvas id="c3"></canvas>
 </div>
-<script>
-const $=id=>document.getElementById(id);
-let scene,cam,ren,ctrl,video,c2d,ctx,stream=null,ready=false,scanning=false;
-let stepSize=1,depthMul=100,particleSize=0.012,layers=[],rec=[],fc=0,ft=0,phase=0;
-let mediaRecorder,recordedChunks=[];
 
-window.addEventListener('DOMContentLoaded',()=>{
+<script>
+const $ = id => document.getElementById(id);
+let scene, cam, ren, ctrl, video, c2d, ctx, stream = null, ready = false;
+let scanning = false;          // true = frozen
+let stepSize = 2, depthMul = 100, pointSize = 0.04, thresh = 0.08;
+let layers = [], rec = null;   // rec holds last captured data
+let fc = 0, ft = 0;
+let mat = null, pts = null;    // persistent objects
+const MAX_POINTS = 180000;     // hard safety cap
+
+function updateLabel(id, v){ $(id).textContent = v; }
+
+window.addEventListener('DOMContentLoaded', () => {
   init3();
   initCam();
 });
 
 function init3(){
-  const box=$('viewer');
-  scene=new THREE.Scene();
-  scene.fog=new THREE.FogExp2(0x020617,0.008);
-  cam=new THREE.PerspectiveCamera(48,box.clientWidth/box.clientHeight,0.05,2000);
-  cam.position.set(0,0.5,3.8);
+  const box = $('viewer');
+  scene = new THREE.Scene();
+  scene.fog = new THREE.FogExp2(0x020617, 0.012);
 
-  ren=new THREE.WebGLRenderer({canvas:$('c3'),antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:true});
-  ren.setSize(box.clientWidth,box.clientHeight);
-  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  cam = new THREE.PerspectiveCamera(48, box.clientWidth / box.clientHeight, 0.05, 2000);
+  cam.position.set(0, 0.4, 3.6);
+
+  ren = new THREE.WebGLRenderer({ canvas: $('c3'), antialias: true, powerPreference: 'high-performance' });
+  ren.setSize(box.clientWidth, box.clientHeight);
+  ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   ren.setClearColor(0x020617);
 
-  ctrl=new THREE.OrbitControls(cam,ren.domElement);
-  ctrl.enableDamping=true;ctrl.autoRotate=true;
+  ctrl = new THREE.OrbitControls(cam, ren.domElement);
+  ctrl.enableDamping = true;
+  ctrl.autoRotate = true;
+  ctrl.autoRotateSpeed = 1.2;
+  ctrl.target.set(0, 0, 0);
 
-  scene.add(new THREE.AmbientLight(0xffffff,1.4));
-  window.addEventListener('resize',()=>{
-    cam.aspect=box.clientWidth/box.clientHeight;
-    cam.updateProjectionMatrix();
-    ren.setSize(box.clientWidth,box.clientHeight);
+  scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+
+  // Pre-create persistent geometry + material
+  const g = new THREE.BufferGeometry();
+  const pos = new Float32Array(MAX_POINTS * 3);
+  const col = new Float32Array(MAX_POINTS * 3);
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setDrawRange(0, 0);
+
+  mat = new THREE.PointsMaterial({
+    size: pointSize,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.92,
+    sizeAttenuation: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
   });
+
+  pts = new THREE.Points(g, mat);
+  scene.add(pts);
+  layers.push(pts);
+
+  window.addEventListener('resize', () => {
+    cam.aspect = box.clientWidth / box.clientHeight;
+    cam.updateProjectionMatrix();
+    ren.setSize(box.clientWidth, box.clientHeight);
+  });
+
   ren.setAnimationLoop(loop);
 }
 
 function initCam(){
-  video=$('vid');
-  c2d=document.createElement('canvas');
-  ctx=c2d.getContext('2d',{willReadFrequently:true});
-  navigator.mediaDevices?.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60}},audio:false})
-  .then(s=>{stream=s;video.srcObject=s;return video.play();})
-  .then(()=>{ready=true;})
-  .catch(()=>{/* Fallback simulated telemetry node if sensor blocked */});
+  video = $('vid');
+  c2d = document.createElement('canvas');
+  ctx = c2d.getContext('2d', { willReadFrequently: true });
+
+  navigator.mediaDevices?.getUserMedia({
+    video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
+    audio: false
+  })
+  .then(s => {
+    stream = s;
+    video.srcObject = s;
+    return video.play();
+  })
+  .then(() => { ready = true; })
+  .catch(() => {
+    console.warn('Camera blocked – running in idle mode');
+    $('statusBadge').textContent = 'NO CAM';
+    $('statusBadge').className = 'badge';
+  });
 }
 
 function loop(now){
   ctrl.update();
-  phase=now*0.001;
   fc++;
-  if(now-ft>1000){$('fpsD').textContent=Math.round(fc*1000/(now-ft));fc=0;ft=now;}
-  if(ready&&video.readyState>=2)sample();
-  ren.render(scene,cam);
+  if (now - ft > 1000) {
+    $('fpsD').textContent = Math.round(fc * 1000 / (now - ft));
+    fc = 0; ft = now;
+  }
+
+  if (ready && video.readyState >= 2 && !scanning) {
+    sample();
+  }
+  ren.render(scene, cam);
 }
 
 function sample(){
-  const w=video.videoWidth||1280,h=video.videoHeight||720;
-  if(c2d.width!==w||c2d.height!==h){c2d.width=w;c2d.height=h;}
-  try{ctx.drawImage(video,0,0,w,h);}catch{return;}
+  const w = video.videoWidth || 640;
+  const h = video.videoHeight || 480;
+  if (c2d.width !== w || c2d.height !== h) {
+    c2d.width = w; c2d.height = h;
+  }
+
+  try { ctx.drawImage(video, 0, 0, w, h); } catch { return; }
   let pix;
-  try{pix=ctx.getImageData(0,0,w,h).data;}catch{return;}
+  try { pix = ctx.getImageData(0, 0, w, h).data; } catch { return; }
 
-  const pos=[],col=[];
-  const sx=1.8,sy=1.8,step=Math.max(1,stepSize|0);
+  const posAttr = pts.geometry.attributes.position;
+  const colAttr = pts.geometry.attributes.color;
+  const pos = posAttr.array;
+  const col = colAttr.array;
 
-  for(let y=0;y<h;y+=step){
-    for(let x=0;x<w;x+=step){
-      const i=(y*w+x)*4;
-      const r=pix[i]/255,g=pix[i+1]/255,b=pix[i+2]/255;
-      if((0.299*r+0.587*g+0.114*b)<0.015)continue;
+  const cx = w * 0.5, cy = h * 0.5;
+  const sx = 1.55, sy = 1.55;
+  const step = Math.max(1, stepSize | 0);
+  let count = 0;
 
-      const nx=((w-x)/w)*2-1,ny=-((y/h)*2-1);
-      const nz=((1.0-(0.299*r+0.587*g+0.114*b))-0.5)*(depthMul*0.035);
+  for (let y = 0; y < h && count < MAX_POINTS; y += step) {
+    for (let x = 0; x < w && count < MAX_POINTS; x += step) {
+      const i = (y * w + x) * 4;
+      const r = pix[i] / 255;
+      const g = pix[i + 1] / 255;
+      const b = pix[i + 2] / 255;
+      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+      if (lum < thresh) continue;
 
-      pos.push(nx*sx,ny*sy,nz);
-      col.push(r,g,b);
-    }
-  }
+      const nx = ((w - x) / w) * 2 - 1;
+      const ny = -((y / h) * 2 - 1);
+      const nz = (1.0 - lum - 0.5) * (depthMul * 0.035);
 
-  $('nLive').textContent=(pos.length/3).toLocaleString();
-  buildCloud(pos,col);
-}
-
-function buildCloud(pos,col){
-  while(layers.length){const o=layers.pop();scene.remove(o);o.geometry.dispose();o.material.dispose();}
-  const g=new THREE.BufferGeometry();
-  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
-
-  const mat=new THREE.PointsMaterial({
-    size:particleSize,
-    vertexColors:true,
-    transparent:true,
-    opacity:0.95,
-    blending:THREE.AdditiveBlending
-  });
-
-  const pts=new THREE.Points(g,mat);
-  scene.add(pts);
-  layers.push(pts);
-}
-
-function updatePointSize(val){
-  particleSize=val;
-  if(layers.length){
-    layers[layers.length-1].material.size=val;
-  }
-}
-
-function toggleScan(){
-  scanning=!scanning;
-  const b=$('scanBtn');
-  b.textContent=scanning?'STOP UNLIMITED SCAN':'ACTIVATE UNLIMITED SCAN';
-  b.classList.toggle('on',scanning);
-}
-
-function toggleRecording(){
-  const recBtn=$('recBtn');
-  if(!mediaRecorder||mediaRecorder.state==='inactive'){
-    recordedChunks=[];
-    const canvasStream=ren.domElement.captureStream(60);
-    try{
-      mediaRecorder=new MediaRecorder(canvasStream,{mimeType:'video/webm;codecs=vp9'});
-    }catch(e){
-      mediaRecorder=new MediaRecorder(canvasStream);
-    }
-    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordedChunks.push(e.data);};
-    mediaRecorder.onstop=()=>{
-      const blob=new Blob(recordedChunks,{type:'video/webm'});
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=url;
-      a.download=`hyperstream_capture_${Date.now()}.webm`;
-      a.click();
-      URL.revokeObjectURL(url);
-    };
-    mediaRecorder.start();
-    recBtn.textContent='STOP & SAVE VIDEO';
-    recBtn.classList.add('recording');
-  }else{
-    mediaRecorder.stop();
-    recBtn.textContent='START VIDEO RECORDING';
-    recBtn.classList.remove('recording');
-  }
-}
-
-function expJSON(){
-  const blob=new Blob([JSON.stringify({HyperStreamXD:rec})],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='quantum_matrix.json';a.click();
-}
-</script>
-</body>
-</html>
+      const idx = count * 3;
+      pos[idx]     = nx * sx;
+      pos[idx + 1] = ny * sy;
+      pos[idx + 2] = nz;
+      col[idx]     = r;
+      col[idx + 1] = g;
+      col[
