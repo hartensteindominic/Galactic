@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +7,11 @@
 <title>HyperStream XD • Room AI</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0
+}
 
 body{
   background:#020617;
@@ -34,6 +39,39 @@ body{
   font-size:12px;
   font-weight:900;
   color:#38bdf8
+}
+
+.tabs{
+  display:flex;
+  gap:5px
+}
+
+.tab{
+  flex:1;
+  background:#0f172a;
+  border:1px solid #334155;
+  color:#94a3b8;
+  padding:8px;
+  border-radius:6px;
+  font-size:9px;
+  font-weight:900;
+  cursor:pointer
+}
+
+.tab.active{
+  color:#38bdf8;
+  border-color:#38bdf8;
+  background:#172033
+}
+
+.tabPanel{
+  display:none;
+  flex-direction:column;
+  gap:8px
+}
+
+.tabPanel.active{
+  display:flex
 }
 
 .card{
@@ -71,6 +109,11 @@ button{
   color:white
 }
 
+button:disabled{
+  opacity:.45;
+  cursor:not-allowed
+}
+
 .primary{
   background:linear-gradient(135deg,#8b5cf6,#ec4899)
 }
@@ -87,7 +130,8 @@ button{
   background:#dc2626
 }
 
-input,textarea,select{
+input,
+select{
   width:100%;
   background:#020617;
   color:white;
@@ -96,11 +140,6 @@ input,textarea,select{
   padding:7px;
   font-size:10px;
   outline:none
-}
-
-textarea{
-  resize:none;
-  height:55px
 }
 
 input[type=range]{
@@ -155,6 +194,44 @@ input[type=range]{
   width:60px
 }
 
+.memoryList{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  max-height:350px;
+  overflow-y:auto
+}
+
+.memory{
+  background:#020617;
+  border:1px solid #334155;
+  border-radius:7px;
+  padding:9px;
+  cursor:pointer
+}
+
+.memory:hover{
+  border-color:#38bdf8
+}
+
+.memoryName{
+  font-size:11px;
+  font-weight:900
+}
+
+.memoryMeta{
+  font-size:9px;
+  color:#64748b;
+  margin-top:3px
+}
+
+.emptyMemory{
+  color:#64748b;
+  font-size:10px;
+  text-align:center;
+  padding:15px
+}
+
 #viewer{
   flex:1;
   position:relative
@@ -184,7 +261,8 @@ canvas{
   color:#38bdf8;
   font-size:11px;
   font-weight:900;
-  pointer-events:none
+  pointer-events:none;
+  z-index:5
 }
 
 .stats{
@@ -200,27 +278,10 @@ canvas{
   z-index:5
 }
 
-#info{
-  position:absolute;
-  left:14px;
-  bottom:14px;
-  max-width:330px;
-  background:rgba(2,6,23,.92);
-  border:1px solid #334155;
-  border-radius:8px;
-  padding:10px;
-  display:none;
-  z-index:5
-}
-
-#info b{
-  color:#ec4899
-}
-
-#info p{
-  font-size:10px;
-  color:#cbd5e1;
-  margin-top:4px
+.status{
+  font-size:9px;
+  color:#64748b;
+  min-height:12px
 }
 
 video{
@@ -240,76 +301,192 @@ video{
     HYPERSTREAM XD • ROOM AI
   </div>
 
-  <!-- ROOM SCANNER -->
-
-  <div class="card">
-
-    <div class="title">
-      Spatial Room Scanner
-    </div>
+  <div class="tabs">
 
     <button
-      id="scanBtn"
-      class="primary"
-      onclick="toggleScan()">
-      START ROOM SCAN
+      id="roomTabButton"
+      class="tab active"
+      onclick="openTab('roomTab',this)">
+      ROOM
     </button>
 
     <button
-      class="dark"
-      onclick="captureFrame()">
-      CAPTURE FRAME
+      id="memoryTabButton"
+      class="tab"
+      onclick="openTab('memoryTab',this)">
+      MEMORIES
     </button>
-
-    <div class="row">
-      <span>Frames</span>
-      <b id="frameCount">0</b>
-    </div>
-
-    <div class="row">
-      <span>Points</span>
-      <b id="pointCount">0</b>
-    </div>
-
-    <div class="row">
-      <span>Scan Time</span>
-      <b id="scanTime">0s</b>
-    </div>
-
-    <input
-      id="roomName"
-      placeholder="Room name..."
-      value="My Room">
 
   </div>
 
 
-  <!-- AI -->
+  <!-- ROOM -->
 
-  <div class="card">
+  <div
+    id="roomTab"
+    class="tabPanel active">
 
-    <div class="title">
-      AI Room Assistant
-    </div>
+    <div class="card">
 
-    <select id="model">
-      <option value="llama3.2">llama3.2</option>
-      <option value="llama3.1">llama3.1</option>
-      <option value="qwen2.5">qwen2.5</option>
-    </select>
+      <div class="title">
+        Spatial Room Scanner
+      </div>
 
-    <div id="chat"></div>
+      <button
+        id="scanBtn"
+        class="primary"
+        onclick="toggleScan()">
+        START ROOM SCAN
+      </button>
 
-    <div class="chatrow">
+      <button
+        id="captureBtn"
+        class="dark"
+        onclick="captureFrame()">
+        CAPTURE FRAME
+      </button>
+
+      <div class="row">
+        <span>Frames</span>
+        <b id="frameCount">0</b>
+      </div>
+
+      <div class="row">
+        <span>Points</span>
+        <b id="pointCount">0</b>
+      </div>
+
+      <div class="row">
+        <span>Scan Time</span>
+        <b id="scanTime">0s</b>
+      </div>
+
+      <div
+        id="cameraStatus"
+        class="status">
+        Starting camera...
+      </div>
 
       <input
-        id="chatInput"
-        placeholder="Ask the room AI...">
+        id="roomName"
+        placeholder="Room name..."
+        value="My Room">
+
+    </div>
+
+
+    <!-- AI -->
+
+    <div class="card">
+
+      <div class="title">
+        AI Room Assistant
+      </div>
+
+      <select id="model">
+        <option value="llama3.2">llama3.2</option>
+        <option value="llama3.1">llama3.1</option>
+        <option value="qwen2.5">qwen2.5</option>
+      </select>
+
+      <div id="chat"></div>
+
+      <div class="chatrow">
+
+        <input
+          id="chatInput"
+          placeholder="Ask the room AI...">
+
+        <button
+          class="primary"
+          onclick="askAI()">
+          SEND
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <!-- ROOM DATA -->
+
+    <div class="card">
+
+      <div class="title">
+        Room
+      </div>
 
       <button
         class="primary"
-        onclick="askAI()">
-        SEND
+        onclick="saveMemory()">
+        SAVE MEMORY
+      </button>
+
+      <button
+        class="blue"
+        onclick="exportRoom()">
+        EXPORT ROOM
+      </button>
+
+      <button
+        class="dark"
+        onclick="document.getElementById('import').click()">
+        IMPORT ROOM
+      </button>
+
+      <input
+        type="file"
+        id="import"
+        accept=".json,.room"
+        style="display:none"
+        onchange="importRoom(event)">
+
+    </div>
+
+
+    <!-- VIEW -->
+
+    <div class="card">
+
+      <div class="title">
+        3D View
+      </div>
+
+      <div class="row">
+        <span>Auto Rotate</span>
+
+        <input
+          type="checkbox"
+          checked
+          onchange="
+            controls.autoRotate=this.checked
+          ">
+      </div>
+
+      <div class="row">
+        <span>Point Size</span>
+
+        <input
+          type="range"
+          min="1"
+          max="10"
+          value="3"
+          oninput="
+            pointSize=+this.value;
+            updatePointSize()
+          ">
+      </div>
+
+      <button
+        class="dark"
+        onclick="resetView()">
+        RESET VIEW
+      </button>
+
+      <button
+        class="red"
+        onclick="clearCurrentRoom()">
+        CLEAR CURRENT ROOM
       </button>
 
     </div>
@@ -317,84 +494,24 @@ video{
   </div>
 
 
-  <!-- ROOM -->
+  <!-- MEMORIES -->
 
-  <div class="card">
+  <div
+    id="memoryTab"
+    class="tabPanel">
 
-    <div class="title">
-      Saved Room
+    <div class="card">
+
+      <div class="title">
+        Saved Memories
+      </div>
+
+      <div
+        id="memoryList"
+        class="memoryList">
+      </div>
+
     </div>
-
-    <button
-      class="primary"
-      onclick="saveRoom()">
-      SAVE ROOM
-    </button>
-
-    <button
-      class="blue"
-      onclick="exportRoom()">
-      EXPORT ROOM
-    </button>
-
-    <button
-      class="dark"
-      onclick="document.getElementById('import').click()">
-      IMPORT ROOM
-    </button>
-
-    <input
-      type="file"
-      id="import"
-      accept=".json,.room"
-      style="display:none"
-      onchange="importRoom(event)">
-
-  </div>
-
-
-  <!-- VIEW -->
-
-  <div class="card">
-
-    <div class="title">
-      3D View
-    </div>
-
-    <div class="row">
-      <span>Auto Rotate</span>
-      <input
-        type="checkbox"
-        checked
-        onchange="
-          controls.autoRotate=this.checked
-        ">
-    </div>
-
-    <div class="row">
-      <span>Point Size</span>
-      <input
-        type="range"
-        min="1"
-        max="10"
-        value="3"
-        oninput="
-          pointSize=+this.value;
-          updatePointSize()
-        ">
-    </div>
-
-    <button
-      class="dark"
-      onclick="resetView()">
-      RESET VIEW
-    </button>
-
-    <button
-      class="red"
-      onclick="clearRoom()">
-      CLEAR ROOM
-    </button>
 
   </div>
 
@@ -408,16 +525,17 @@ video{
   </div>
 
   <div class="stats">
-    FPS <b id="fps">—</b>
-    &nbsp;|&nbsp;
-    POINTS <b id="points">0</b>
-    &nbsp;|&nbsp;
-    FRAMES <b id="frames">0</b>
-  </div>
 
-  <div id="info">
-    <b id="infoTitle"></b>
-    <p id="infoText"></p>
+    FPS <b id="fps">—</b>
+
+    &nbsp;|&nbsp;
+
+    POINTS <b id="points">0</b>
+
+    &nbsp;|&nbsp;
+
+    FRAMES <b id="frames">0</b>
+
   </div>
 
   <video
@@ -441,6 +559,25 @@ video{
 const $ = id =>
   document.getElementById(id);
 
+
+/*
+ * Hard safety limit for mobile.
+ * Prevents scans from growing forever.
+ */
+const MAX_POINTS = 60000;
+
+
+/*
+ * Process camera approximately 8 times/second
+ * instead of once per render frame.
+ */
+const SCAN_INTERVAL = 125;
+
+
+const MEMORY_KEY =
+  "hyperstream_room_memories_v7";
+
+
 let scene;
 let camera;
 let renderer;
@@ -451,6 +588,7 @@ let stream = null;
 
 let scanning = false;
 let scanStart = 0;
+let lastScanTime = 0;
 
 let frameCount = 0;
 
@@ -468,8 +606,14 @@ let pointSize = 3;
 let fpsFrames = 0;
 let fpsStart = 0;
 
-const STORAGE_KEY =
-  "hyperstream_room_ai_v1";
+let memories = [];
+
+
+/*
+ * Prevents multiple camera initialization
+ * attempts.
+ */
+let cameraInitializing = false;
 
 
 /* =====================================================
@@ -482,9 +626,11 @@ window.addEventListener(
 
     init3D();
 
-    initCamera();
+    loadMemories();
 
-    loadRoom();
+    renderMemories();
+
+    initCamera();
 
     addMessage(
       "system",
@@ -496,7 +642,39 @@ window.addEventListener(
 
 
 /* =====================================================
-   THREE
+   TABS
+===================================================== */
+
+function openTab(
+  id,
+  button
+){
+
+  document
+    .querySelectorAll(".tabPanel")
+    .forEach(panel => {
+      panel.classList.remove("active");
+    });
+
+
+  document
+    .querySelectorAll(".tab")
+    .forEach(tab => {
+      tab.classList.remove("active");
+    });
+
+
+  $(id)
+    .classList.add("active");
+
+
+  button.classList.add("active");
+
+}
+
+
+/* =====================================================
+   THREE INITIALIZATION
 ===================================================== */
 
 function init3D(){
@@ -512,7 +690,7 @@ function init3D(){
   scene.fog =
     new THREE.FogExp2(
       0x020617,
-      .009
+      .006
     );
 
 
@@ -520,7 +698,10 @@ function init3D(){
     new THREE.PerspectiveCamera(
       50,
       box.clientWidth /
-      box.clientHeight,
+      Math.max(
+        box.clientHeight,
+        1
+      ),
       .01,
       2000
     );
@@ -537,8 +718,7 @@ function init3D(){
     new THREE.WebGLRenderer({
       canvas:$("canvas"),
       antialias:true,
-      powerPreference:
-        "high-performance"
+      powerPreference:"high-performance"
     });
 
 
@@ -550,7 +730,7 @@ function init3D(){
 
   renderer.setPixelRatio(
     Math.min(
-      devicePixelRatio || 1,
+      window.devicePixelRatio || 1,
       2
     )
   );
@@ -568,17 +748,20 @@ function init3D(){
     );
 
 
-  controls.enableDamping = true;
+  controls.enableDamping =
+    true;
 
-  controls.autoRotate = true;
+  controls.autoRotate =
+    true;
 
-  controls.autoRotateSpeed = .25;
+  controls.autoRotateSpeed =
+    .25;
 
 
   scene.add(
     new THREE.AmbientLight(
       0xffffff,
-      1.3
+      1.4
     )
   );
 
@@ -638,16 +821,14 @@ function createFloor(){
 
 
   floor.rotation.x =
-    -Math.PI/2;
+    -Math.PI / 2;
 
 
   floor.position.y =
     -2;
 
 
-  scene.add(
-    floor
-  );
+  scene.add(floor);
 
 
   const grid =
@@ -674,33 +855,60 @@ function createFloor(){
 
 async function initCamera(){
 
-  video =
-    $("videoPreview");
+  if(cameraInitializing)
+    return;
+
+
+  cameraInitializing = true;
+
+
+  const status =
+    $("cameraStatus");
 
 
   try{
 
+    if(
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ){
+
+      throw new Error(
+        "Camera API unavailable. Use HTTPS or localhost."
+      );
+
+    }
+
+
     stream =
-      await navigator.mediaDevices
-        .getUserMedia({
+      await navigator.mediaDevices.getUserMedia({
 
-          video:{
-            width:{
-              ideal:1280
-            },
-
-            height:{
-              ideal:720
-            },
-
-            facingMode:
-              "environment"
-
+        video:{
+          width:{
+            ideal:1280
           },
 
-          audio:false
+          height:{
+            ideal:720
+          },
 
-        });
+          frameRate:{
+            ideal:30,
+            max:30
+          },
+
+          facingMode:{
+            ideal:"environment"
+          }
+        },
+
+        audio:false
+
+      });
+
+
+    video =
+      $("videoPreview");
 
 
     video.srcObject =
@@ -714,12 +922,77 @@ async function initCamera(){
       "block";
 
 
+    status.textContent =
+      "Camera ready.";
+
+
   }catch(error){
+
+    console.error(
+      "Camera error:",
+      error
+    );
+
+
+    status.textContent =
+      cameraErrorMessage(
+        error
+      );
+
 
     addMessage(
       "system",
-      "Camera unavailable. You can still import an existing room."
+      cameraErrorMessage(
+        error
+      )
     );
+
+  }finally{
+
+    cameraInitializing =
+      false;
+
+  }
+
+}
+
+
+/* =====================================================
+   CAMERA ERROR
+===================================================== */
+
+function cameraErrorMessage(
+  error
+){
+
+  if(
+    !error
+  )
+    return "Camera unavailable.";
+
+
+  switch(
+    error.name
+  ){
+
+    case "NotAllowedError":
+      return "Camera permission denied. Allow camera access and reload.";
+
+    case "NotFoundError":
+      return "No camera was found.";
+
+    case "NotReadableError":
+      return "Camera is busy or unavailable.";
+
+    case "OverconstrainedError":
+      return "Camera settings were unsupported.";
+
+    case "SecurityError":
+      return "Camera blocked by browser security.";
+
+    default:
+      return error.message ||
+        "Camera unavailable.";
 
   }
 
@@ -739,7 +1012,7 @@ function animate(now){
 
 
   if(
-    now - fpsStart > 1000
+    now - fpsStart >= 1000
   ){
 
     $("fps").textContent =
@@ -755,8 +1028,13 @@ function animate(now){
 
   if(
     scanning &&
-    video.readyState >= 2
+    video &&
+    video.readyState >= 2 &&
+    now - lastScanTime >= SCAN_INTERVAL
   ){
+
+    lastScanTime =
+      now;
 
     scanFrame();
 
@@ -768,7 +1046,10 @@ function animate(now){
     $("scanTime")
       .textContent =
         Math.floor(
-          (Date.now()-scanStart)/1000
+          (
+            Date.now() -
+            scanStart
+          ) / 1000
         ) + "s";
 
   }
@@ -783,10 +1064,36 @@ function animate(now){
 
 
 /* =====================================================
-   START / STOP SCAN
+   SCAN CONTROL
 ===================================================== */
 
 function toggleScan(){
+
+  if(!video){
+
+    addMessage(
+      "system",
+      "Camera is not ready."
+    );
+
+    return;
+
+  }
+
+
+  if(
+    video.readyState < 2
+  ){
+
+    addMessage(
+      "system",
+      "Camera is still starting."
+    );
+
+    return;
+
+  }
+
 
   scanning =
     !scanning;
@@ -802,6 +1109,10 @@ function toggleScan(){
       Date.now();
 
 
+    lastScanTime =
+      0;
+
+
     button.textContent =
       "STOP ROOM SCAN";
 
@@ -812,8 +1123,9 @@ function toggleScan(){
 
     addMessage(
       "system",
-      "Scanning room. Move the camera slowly around the space."
+      "Scanning environment..."
     );
+
 
   }else{
 
@@ -827,7 +1139,7 @@ function toggleScan(){
 
     addMessage(
       "system",
-      "Scan stopped. Room data is ready to save."
+      "Scan stopped."
     );
 
   }
@@ -836,7 +1148,7 @@ function toggleScan(){
 
 
 /* =====================================================
-   CAPTURE FRAME
+   MANUAL FRAME
 ===================================================== */
 
 function captureFrame(){
@@ -861,7 +1173,7 @@ function captureFrame(){
 
   addMessage(
     "system",
-    "Spatial frame captured."
+    "Frame captured."
   );
 
 }
@@ -873,11 +1185,34 @@ function captureFrame(){
 
 function scanFrame(){
 
-  /*
-   * This is deliberately a lightweight visual
-   * reconstruction. Without a real depth sensor,
-   * browser RGB video cannot provide metric depth.
-   */
+  if(
+    pointPositions.length / 3 >=
+    MAX_POINTS
+  ){
+
+    if(scanning){
+
+      scanning = false;
+
+      $("scanBtn").textContent =
+        "START ROOM SCAN";
+
+      $("scanBtn").className =
+        "primary";
+
+    }
+
+
+    addMessage(
+      "system",
+      "Point limit reached. Save the room to preserve the scan."
+    );
+
+
+    return;
+
+  }
+
 
   const width =
     video.videoWidth ||
@@ -894,11 +1229,6 @@ function scanFrame(){
     );
 
 
-  /*
-   * Keep scan processing small enough
-   * for phones.
-   */
-
   const scale =
     Math.min(
       1,
@@ -907,14 +1237,20 @@ function scanFrame(){
 
 
   temp.width =
-    Math.floor(
-      width * scale
+    Math.max(
+      1,
+      Math.floor(
+        width * scale
+      )
     );
 
 
   temp.height =
-    Math.floor(
-      height * scale
+    Math.max(
+      1,
+      Math.floor(
+        height * scale
+      )
     );
 
 
@@ -925,6 +1261,10 @@ function scanFrame(){
         willReadFrequently:true
       }
     );
+
+
+  if(!context)
+    return;
 
 
   context.drawImage(
@@ -949,100 +1289,209 @@ function scanFrame(){
     image.data;
 
 
-  /*
-   * Sample pixels.
-   */
-
   const step = 8;
 
 
   const framePoints = [];
 
 
+  const remaining =
+    MAX_POINTS -
+    pointPositions.length / 3;
+
+
+  let added = 0;
+
+
   for(
-    let y=0;
-    y<temp.height;
+    let y=1;
+    y<temp.height-1;
     y+=step
   ){
 
     for(
-      let x=0;
-      x<temp.width;
+      let x=1;
+      x<temp.width-1;
       x+=step
     ){
+
+      if(
+        added >= remaining
+      )
+        break;
+
 
       const i =
         (y*temp.width+x)*4;
 
 
       const r =
-        data[i]/255;
+        data[i] / 255;
 
       const g =
-        data[i+1]/255;
+        data[i+1] / 255;
 
       const b =
-        data[i+2]/255;
+        data[i+2] / 255;
 
 
       const brightness =
-        .299*r+
-        .587*g+
+        .299*r +
+        .587*g +
         .114*b;
 
 
       if(
-        brightness < .03
+        brightness < .025
+      )
+        continue;
+
+
+      const left =
+        (
+          y*temp.width +
+          x-1
+        ) * 4;
+
+
+      const right =
+        (
+          y*temp.width +
+          x+1
+        ) * 4;
+
+
+      const top =
+        (
+          (y-1)*temp.width +
+          x
+        ) * 4;
+
+
+      const bottom =
+        (
+          (y+1)*temp.width +
+          x
+        ) * 4;
+
+
+      const leftLum =
+        .299*(data[left]/255) +
+        .587*(data[left+1]/255) +
+        .114*(data[left+2]/255);
+
+
+      const rightLum =
+        .299*(data[right]/255) +
+        .587*(data[right+1]/255) +
+        .114*(data[right+2]/255);
+
+
+      const topLum =
+        .299*(data[top]/255) +
+        .587*(data[top+1]/255) +
+        .114*(data[top+2]/255);
+
+
+      const bottomLum =
+        .299*(data[bottom]/255) +
+        .587*(data[bottom+1]/255) +
+        .114*(data[bottom+2]/255);
+
+
+      const edge =
+        Math.min(
+          1,
+          (
+            Math.abs(
+              leftLum -
+              rightLum
+            ) +
+            Math.abs(
+              topLum -
+              bottomLum
+            )
+          ) * 3
+        );
+
+
+      /*
+       * Contrast enhancement.
+       */
+
+      const contrast =
+        Math.max(
+          0,
+          Math.min(
+            1,
+            (
+              brightness -
+              .5
+            ) * 1.8 +
+            .5
+          )
+        );
+
+
+      /*
+       * Skip extremely flat pixels.
+       */
+
+      if(
+        contrast < .035 &&
+        edge < .06
       )
         continue;
 
 
       const nx =
-        x/temp.width-.5;
+        x /
+        temp.width -
+        .5;
+
 
       const ny =
-        .5-y/temp.height;
+        .5 -
+        y /
+        temp.height;
 
 
       /*
        * Visual depth estimate.
        *
-       * This is NOT real metric depth.
-       * It simply creates a useful 3D
-       * visualization from the video.
+       * This is intentionally described
+       * as visual depth rather than measured
+       * physical depth.
        */
 
-      const nz =
-        (
-          brightness-.5
-        ) * 2;
+      const depth =
+        .65 +
+        contrast*.9 +
+        edge*1.5;
 
 
       /*
-       * Move each frame slightly through
-       * the room so successive viewpoints
-       * accumulate.
+       * Accumulate successive frames.
        */
 
-      const frameIndex =
-        scanFrames.length;
-
-
-      const cameraOffset =
-        frameIndex * .012;
+      const frameOffset =
+        Math.min(
+          scanFrames.length,
+          250
+        ) * .012;
 
 
       const px =
-        nx*6 +
-        cameraOffset;
+        nx * 7 +
+        frameOffset;
 
 
       const py =
-        ny*4;
+        ny * 5;
 
 
       const pz =
-        nz*3;
+        depth * 2.1;
 
 
       pointPositions.push(
@@ -1052,10 +1501,31 @@ function scanFrame(){
       );
 
 
+      /*
+       * Slightly boost contrast
+       * in the rendered point colors.
+       */
+
       pointColors.push(
-        r,
-        g,
-        b
+
+        Math.min(
+          1,
+          r*.7 +
+          edge*.65
+        ),
+
+        Math.min(
+          1,
+          g*.7 +
+          edge*.65
+        ),
+
+        Math.min(
+          1,
+          b*.7 +
+          edge*.8
+        )
+
       );
 
 
@@ -1065,7 +1535,16 @@ function scanFrame(){
         pz
       ]);
 
+
+      added++;
+
     }
+
+
+    if(
+      added >= remaining
+    )
+      break;
 
   }
 
@@ -1086,7 +1565,6 @@ function scanFrame(){
 
   updatePointCloud();
 
-
   updateStats();
 
 }
@@ -1098,9 +1576,7 @@ function scanFrame(){
 
 function updatePointCloud(){
 
-  if(
-    pointCloud
-  ){
+  if(pointCloud){
 
     scene.remove(
       pointCloud
@@ -1110,6 +1586,17 @@ function updatePointCloud(){
     pointCloud.geometry.dispose();
 
     pointCloud.material.dispose();
+
+    pointCloud = null;
+
+  }
+
+
+  if(
+    pointPositions.length === 0
+  ){
+
+    return;
 
   }
 
@@ -1121,7 +1608,9 @@ function updatePointCloud(){
   geometry.setAttribute(
     "position",
     new THREE.Float32BufferAttribute(
-      pointPositions,
+      new Float32Array(
+        pointPositions
+      ),
       3
     )
   );
@@ -1130,26 +1619,34 @@ function updatePointCloud(){
   geometry.setAttribute(
     "color",
     new THREE.Float32BufferAttribute(
-      pointColors,
+      new Float32Array(
+        pointColors
+      ),
       3
     )
   );
+
+
+  geometry.computeBoundingSphere();
 
 
   const material =
     new THREE.PointsMaterial({
 
       size:
-        pointSize*.003,
+        pointSize * .004,
 
-      vertexColors:true,
+      vertexColors:
+        true,
 
-      transparent:true,
+      transparent:
+        true,
 
-      opacity:.9,
+      opacity:
+        .95,
 
-      blending:
-        THREE.AdditiveBlending
+      sizeAttenuation:
+        true
 
     });
 
@@ -1174,12 +1671,10 @@ function updatePointCloud(){
 
 function updatePointSize(){
 
-  if(
-    pointCloud
-  ){
+  if(pointCloud){
 
     pointCloud.material.size =
-      pointSize*.003;
+      pointSize * .004;
 
   }
 
@@ -1193,7 +1688,9 @@ function updatePointSize(){
 function updateStats(){
 
   const points =
-    pointPositions.length/3;
+    Math.floor(
+      pointPositions.length / 3
+    );
 
 
   $("frameCount")
@@ -1219,45 +1716,117 @@ function updateStats(){
 
 
 /* =====================================================
-   SAVE
+   MEMORY STORAGE
 ===================================================== */
 
-function saveRoom(){
+function loadMemories(){
 
-  const room =
-    createRoomData();
+  try{
 
-
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(room)
-  );
+    const saved =
+      localStorage.getItem(
+        MEMORY_KEY
+      );
 
 
-  addMessage(
-    "system",
-    "Room saved locally."
-  );
+    if(!saved){
+
+      memories = [];
+
+      return;
+
+    }
+
+
+    const parsed =
+      JSON.parse(saved);
+
+
+    memories =
+      Array.isArray(parsed)
+      ? parsed
+      : [];
+
+
+  }catch(error){
+
+    console.error(
+      "Memory load error:",
+      error
+    );
+
+
+    memories = [];
+
+  }
 
 }
 
 
 /* =====================================================
-   ROOM DATA
+   PERSIST MEMORIES
 ===================================================== */
 
-function createRoomData(){
+function persistMemories(){
 
-  return {
+  try{
 
-    format:
-      "HyperStream Room",
+    localStorage.setItem(
+      MEMORY_KEY,
+      JSON.stringify(memories)
+    );
 
-    version:
-      "1.0",
+
+    return true;
+
+  }catch(error){
+
+    console.error(
+      "Memory storage error:",
+      error
+    );
+
+
+    addMessage(
+      "system",
+      "Memory could not be saved. Browser storage may be full."
+    );
+
+
+    return false;
+
+  }
+
+}
+
+
+/* =====================================================
+   SAVE MEMORY
+===================================================== */
+
+function saveMemory(){
+
+  if(
+    pointPositions.length === 0
+  ){
+
+    addMessage(
+      "system",
+      "Scan the room before saving a memory."
+    );
+
+    return;
+
+  }
+
+
+  const memory = {
+
+    id:
+      generateId(),
 
     name:
-      $("roomName").value ||
+      $("roomName").value.trim() ||
       "My Room",
 
     created:
@@ -1266,25 +1835,315 @@ function createRoomData(){
     scan:{
 
       frames:
-        scanFrames,
+        scanFrames.map(
+          frame => ({
+            time:frame.time,
+            points:frame.points
+          })
+        ),
 
-      frameCount,
+      frameCount:
+        frameCount,
 
       points:
-        pointPositions.length/3,
+        pointPositions.length / 3,
 
       positions:
-        pointPositions,
+        Array.from(
+          pointPositions
+        ),
 
       colors:
-        pointColors
+        Array.from(
+          pointColors
+        )
 
     },
 
     objects:
-      roomObjects
+      Array.isArray(roomObjects)
+      ? roomObjects
+      : []
 
   };
+
+
+  memories.push(
+    memory
+  );
+
+
+  /*
+   * Keep local storage manageable.
+   * The newest memories are retained.
+   */
+
+  while(
+    memories.length > 20
+  ){
+
+    memories.shift();
+
+  }
+
+
+  if(
+    persistMemories()
+  ){
+
+    renderMemories();
+
+    addMessage(
+      "system",
+      `"${memory.name}" saved to Memories.`
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   MEMORY ID
+===================================================== */
+
+function generateId(){
+
+  if(
+    window.crypto &&
+    typeof window.crypto.randomUUID ===
+      "function"
+  ){
+
+    return window.crypto.randomUUID();
+
+  }
+
+
+  return (
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .slice(2)
+  );
+
+}
+
+
+/* =====================================================
+   MEMORY LIST
+===================================================== */
+
+function renderMemories(){
+
+  const list =
+    $("memoryList");
+
+
+  list.innerHTML = "";
+
+
+  if(
+    memories.length === 0
+  ){
+
+    list.innerHTML =
+      `<div class="emptyMemory">
+        No saved memories yet.
+      </div>`;
+
+    return;
+
+  }
+
+
+  [...memories]
+    .reverse()
+    .forEach(
+      memory => {
+
+        const item =
+          document.createElement(
+            "div"
+          );
+
+
+        item.className =
+          "memory";
+
+
+        const name =
+          document.createElement(
+            "div"
+          );
+
+
+        name.className =
+          "memoryName";
+
+
+        name.textContent =
+          memory.name ||
+          "Unnamed Room";
+
+
+        const meta =
+          document.createElement(
+            "div"
+          );
+
+
+        meta.className =
+          "memoryMeta";
+
+
+        const date =
+          new Date(
+            memory.created
+          );
+
+
+        const frames =
+          memory.scan?.frameCount ||
+          0;
+
+
+        const points =
+          Number(
+            memory.scan?.points ||
+            0
+          );
+
+
+        meta.textContent =
+          `${frames} frames · ` +
+          `${points.toLocaleString()} points · ` +
+          `${isNaN(date.getTime())
+            ? "Unknown date"
+            : date.toLocaleDateString()}`;
+
+
+        item.appendChild(
+          name
+        );
+
+
+        item.appendChild(
+          meta
+        );
+
+
+        item.onclick =
+          () => loadMemory(
+            memory.id
+          );
+
+
+        list.appendChild(
+          item
+        );
+
+      }
+    );
+
+}
+
+
+/* =====================================================
+   LOAD MEMORY
+===================================================== */
+
+function loadMemory(
+  id
+){
+
+  const memory =
+    memories.find(
+      item =>
+        item.id === id
+    );
+
+
+  if(!memory){
+
+    addMessage(
+      "system",
+      "Memory could not be found."
+    );
+
+    return;
+
+  }
+
+
+  const scan =
+    memory.scan || {};
+
+
+  $("roomName")
+    .value =
+      memory.name ||
+      "My Room";
+
+
+  pointPositions =
+    Array.isArray(
+      scan.positions
+    )
+    ? [...scan.positions]
+    : [];
+
+
+  pointColors =
+    Array.isArray(
+      scan.colors
+    )
+    ? [...scan.colors]
+    : [];
+
+
+  scanFrames =
+    Array.isArray(
+      scan.frames
+    )
+    ? [...scan.frames]
+    : [];
+
+
+  frameCount =
+    Number(
+      scan.frameCount ||
+      scanFrames.length ||
+      0
+    );
+
+
+  roomObjects =
+    Array.isArray(
+      memory.objects
+    )
+    ? [...memory.objects]
+    : [];
+
+
+  updatePointCloud();
+
+  updateStats();
+
+  resetView();
+
+
+  openTab(
+    "roomTab",
+    $("roomTabButton")
+  );
+
+
+  addMessage(
+    "system",
+    `Loaded memory: ${memory.name}`
+  );
 
 }
 
@@ -1303,7 +2162,9 @@ function exportRoom(){
     new Blob(
       [
         JSON.stringify(
-          room
+          room,
+          null,
+          2
         )
       ],
       {
@@ -1319,17 +2180,17 @@ function exportRoom(){
     );
 
 
-  const a =
+  const link =
     document.createElement(
       "a"
     );
 
 
-  a.href =
+  link.href =
     url;
 
 
-  a.download =
+  link.download =
     (
       $("roomName").value ||
       "hyperstream-room"
@@ -1341,11 +2202,21 @@ function exportRoom(){
     ".room.json";
 
 
-  a.click();
+  document.body.appendChild(
+    link
+  );
 
 
-  URL.revokeObjectURL(
-    url
+  link.click();
+
+
+  link.remove();
+
+
+  setTimeout(
+    () =>
+      URL.revokeObjectURL(url),
+    100
   );
 
 
@@ -1358,58 +2229,61 @@ function exportRoom(){
 
 
 /* =====================================================
-   LOAD ROOM
+   ROOM DATA
 ===================================================== */
 
-function loadRoom(){
+function createRoomData(){
 
-  try{
+  return {
 
-    const saved =
-      localStorage.getItem(
-        STORAGE_KEY
-      );
+    format:
+      "HyperStream Room",
 
+    version:
+      "7.0",
 
-    if(!saved)
-      return;
+    name:
+      $("roomName").value ||
+      "My Room",
 
+    created:
+      new Date().toISOString(),
 
-    const room =
-      JSON.parse(
-        saved
-      );
+    scan:{
 
+      frames:
+        scanFrames,
 
-    applyRoom(
-      room
-    );
+      frameCount:
+        frameCount,
 
+      points:
+        pointPositions.length / 3,
 
-    addMessage(
-      "system",
-      "Saved room restored."
-    );
+      positions:
+        pointPositions,
 
-  }catch(error){
+      colors:
+        pointColors
 
-    console.error(
-      error
-    );
+    },
 
-  }
+    objects:
+      roomObjects
+
+  };
 
 }
 
 
 /* =====================================================
-   IMPORT ROOM
+   IMPORT
 ===================================================== */
 
 function importRoom(event){
 
   const file =
-    event.target.files[0];
+    event.target.files?.[0];
 
 
   if(!file)
@@ -1436,21 +2310,47 @@ function importRoom(event){
         );
 
 
-        saveRoom();
+        /*
+         * Imported rooms become a memory
+         * only when the user explicitly
+         * chooses Save Memory.
+         */
+
+        addMessage(
+          "system",
+          "Room imported. Press SAVE MEMORY to store it."
+        );
+
+
+      }catch(error){
+
+        console.error(
+          "Import error:",
+          error
+        );
 
 
         addMessage(
           "system",
-          "Room imported successfully."
-        );
-
-      }catch(error){
-
-        alert(
           "Invalid HyperStream room file."
         );
 
       }
+
+
+      event.target.value =
+        "";
+
+    };
+
+
+  reader.onerror =
+    () => {
+
+      addMessage(
+        "system",
+        "Could not read the room file."
+      );
 
     };
 
@@ -1470,57 +2370,122 @@ function applyRoom(
   room
 ){
 
+  if(
+    !room ||
+    typeof room !== "object"
+  ){
+
+    throw new Error(
+      "Invalid room"
+    );
+
+  }
+
+
   $("roomName")
     .value =
       room.name ||
       "My Room";
 
 
+  const scan =
+    room.scan || {};
+
+
   pointPositions =
-    room.scan?.positions ||
-    [];
+    Array.isArray(
+      scan.positions
+    )
+    ? [...scan.positions]
+    : [];
 
 
   pointColors =
-    room.scan?.colors ||
-    [];
+    Array.isArray(
+      scan.colors
+    )
+    ? [...scan.colors]
+    : [];
+
+
+  /*
+   * Keep imported files from bypassing
+   * the mobile safety limit.
+   */
+
+  const maxValues =
+    MAX_POINTS * 3;
+
+
+  if(
+    pointPositions.length >
+    maxValues
+  ){
+
+    pointPositions =
+      pointPositions.slice(
+        0,
+        maxValues
+      );
+
+
+    pointColors =
+      pointColors.slice(
+        0,
+        maxValues
+      );
+
+  }
 
 
   scanFrames =
-    room.scan?.frames ||
-    [];
+    Array.isArray(
+      scan.frames
+    )
+    ? [...scan.frames]
+    : [];
 
 
   frameCount =
-    room.scan?.frameCount ||
-    scanFrames.length ||
-    0;
+    Number(
+      scan.frameCount ||
+      scanFrames.length ||
+      0
+    );
 
 
   roomObjects =
-    room.objects ||
-    [];
+    Array.isArray(
+      room.objects
+    )
+    ? [...room.objects]
+    : [];
 
 
   updatePointCloud();
 
   updateStats();
 
+  resetView();
+
 }
 
 
 /* =====================================================
-   CLEAR
+   CLEAR CURRENT ROOM
 ===================================================== */
 
-function clearRoom(){
+function clearCurrentRoom(){
 
   if(
     !confirm(
-      "Delete this room?"
+      "Clear the current room? Saved memories will remain."
     )
   )
     return;
+
+
+  stopScanning();
 
 
   pointPositions = [];
@@ -1534,13 +2499,12 @@ function clearRoom(){
   frameCount = 0;
 
 
-  if(
-    pointCloud
-  ){
+  if(pointCloud){
 
     scene.remove(
       pointCloud
     );
+
 
     pointCloud.geometry.dispose();
 
@@ -1551,23 +2515,46 @@ function clearRoom(){
   }
 
 
-  localStorage.removeItem(
-    STORAGE_KEY
-  );
-
-
   updateStats();
+
 
   addMessage(
     "system",
-    "Room cleared."
+    "Current room cleared. Memories remain safe."
   );
 
 }
 
 
 /* =====================================================
-   RESET VIEW
+   STOP SCANNING
+===================================================== */
+
+function stopScanning(){
+
+  scanning =
+    false;
+
+
+  const button =
+    $("scanBtn");
+
+
+  if(button){
+
+    button.textContent =
+      "START ROOM SCAN";
+
+    button.className =
+      "primary";
+
+  }
+
+}
+
+
+/* =====================================================
+   RESET
 ===================================================== */
 
 function resetView(){
@@ -1584,6 +2571,9 @@ function resetView(){
     0,
     0
   );
+
+
+  controls.update();
 
 }
 
@@ -1622,7 +2612,8 @@ async function askAI(){
         "http://localhost:11434/api/chat",
         {
 
-          method:"POST",
+          method:
+            "POST",
 
           headers:{
             "Content-Type":
@@ -1635,32 +2626,40 @@ async function askAI(){
               model:
                 $("model").value,
 
-              stream:false,
+              stream:
+                false,
 
               messages:[
 
                 {
-                  role:"system",
+                  role:
+                    "system",
 
                   content:
-                    `You are the AI inside a
-3D digital room.
+                    `You are the AI inside a 3D digital room.
 
-The room is named:
+Room:
 ${$("roomName").value}
 
-The room currently contains:
-${frameCount} scan frames
-${pointPositions.length/3} visual points
+Scan frames:
+${frameCount}
 
-Explain what the user can do with
-the room. Do not claim that RGB
-video provides accurate physical
-depth.`
+Visual points:
+${Math.floor(
+  pointPositions.length / 3
+)}
+
+The scanner creates a visual spatial
+reconstruction from RGB camera frames.
+It does not provide measured physical
+depth.
+
+Keep answers concise.`
                 },
 
                 {
-                  role:"user",
+                  role:
+                    "user",
 
                   content:
                     message
@@ -1674,8 +2673,15 @@ depth.`
       );
 
 
-    if(!response.ok)
-      throw new Error();
+    if(
+      !response.ok
+    ){
+
+      throw new Error(
+        `HTTP ${response.status}`
+      );
+
+    }
 
 
     const data =
@@ -1684,16 +2690,22 @@ depth.`
 
     addMessage(
       "ai",
-      data.message?.content ||
-      "No response."
+      data?.message?.content ||
+      "No response received."
     );
 
 
   }catch(error){
 
+    console.error(
+      "AI error:",
+      error
+    );
+
+
     addMessage(
       "ai",
-      "AI is offline. Start Ollama locally to enable the room AI."
+      "AI is offline. Make sure Ollama is running and reachable from this browser."
     );
 
   }
@@ -1721,8 +2733,7 @@ function addMessage(
 
 
   div.className =
-    "msg " +
-    type;
+    `msg ${type}`;
 
 
   div.textContent =
@@ -1741,7 +2752,7 @@ function addMessage(
 
 
 /* =====================================================
-   ENTER
+   ENTER KEY
 ===================================================== */
 
 $("chatInput")
@@ -1750,7 +2761,8 @@ $("chatInput")
     event => {
 
       if(
-        event.key === "Enter"
+        event.key ===
+        "Enter"
       ){
 
         event.preventDefault();
@@ -1769,26 +2781,90 @@ $("chatInput")
 
 function resize(){
 
+  if(
+    !camera ||
+    !renderer
+  )
+    return;
+
+
   const box =
     $("viewer");
 
 
+  const width =
+    Math.max(
+      box.clientWidth,
+      1
+    );
+
+
+  const height =
+    Math.max(
+      box.clientHeight,
+      1
+    );
+
+
   camera.aspect =
-    box.clientWidth /
-    box.clientHeight;
+    width / height;
 
 
   camera.updateProjectionMatrix();
 
 
   renderer.setSize(
-    box.clientWidth,
-    box.clientHeight
+    width,
+    height,
+    false
   );
 
 }
+
+
+/* =====================================================
+   PAGE CLEANUP
+===================================================== */
+
+window.addEventListener(
+  "beforeunload",
+  () => {
+
+    stopScanning();
+
+
+    if(stream){
+
+      stream
+        .getTracks()
+        .forEach(
+          track =>
+            track.stop()
+        );
+
+    }
+
+
+    if(pointCloud){
+
+      pointCloud.geometry.dispose();
+
+      pointCloud.material.dispose();
+
+    }
+
+
+    if(renderer){
+
+      renderer.dispose();
+
+    }
+
+  }
+);
 
 </script>
 
 </body>
 </html>
+```
