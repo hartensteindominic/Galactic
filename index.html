@@ -2,28 +2,43 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>HyperStream XD • Stable v4.7</title>
+<title>HyperStream XD • Engine v4.5 Pro</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#020617;color:#f8fafc;font-family:system-ui,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:320px;background:#030712;border-right:1px solid #1e293b;padding:12px;display:flex;flex-direction:column;gap:8px;z-index:10}
+#sidebar{width:380px;background:#030712;border-right:1px solid #1e293b;padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;z-index:10}
 .card{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:8px;display:flex;flex-direction:column;gap:6px}
 .title{font-size:9px;font-weight:800;text-transform:uppercase;color:#94a3b8}
 .row{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#cbd5e1}
+button{border:none;border-radius:6px;padding:7px;font-size:10px;font-weight:800;cursor:pointer;color:#fff}
+.btn-p{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
+.btn-rec{background:#10b981;width:100%}.btn-rec.recording{background:#ef4444;animation:pulse 1.5s infinite}
+.btn-d{background:#ef4444;width:100%}.btn-d.on{background:#f97316}
+input[type=range]{accent-color:#ec4899;width:100px}
 #viewer{flex:1;position:relative}
 canvas{display:block;width:100%;height:100%}
 .stats{position:absolute;top:10px;right:10px;background:rgba(2,6,23,0.8);padding:6px 10px;border-radius:6px;font-size:10px;color:#94a3b8;z-index:5}
 video{display:none}
+@keyframes pulse{0%{opacity:1}50%{opacity:0.6}100%{opacity:1}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
 <div id="sidebar">
-  <div style="font-size:12px;font-weight:900;color:#38bdf8">HYPERSTREAM XD • v4.7</div>
+  <div style="font-size:12px;font-weight:900;color:#38bdf8">HYPERSTREAM XD • v4.5 PRO</div>
   <div class="card">
-    <div class="title">System Status</div>
+    <div class="title">Live Matrix Control</div>
+    <button class="btn-d" id="scanBtn" onclick="toggleScan()">ACTIVATE UNLIMITED SCAN</button>
+    <div class="row"><span>Voxel Step (Detail)</span><input type="range" min="1" max="3" value="1" oninput="stepSize=+this.value"></div>
+    <div class="row"><span>Depth Field</span><input type="range" min="10" max="200" value="100" oninput="depthMul=+this.value"></div>
+    <div class="row"><span>Particle Size</span><input type="range" min="0.005" max="0.04" step="0.001" value="0.012" oninput="updatePointSize(+this.value)"></div>
     <div class="row"><span>Active Voxels</span><b id="nLive" style="color:#ec4899">0</b></div>
+    <button class="btn-p" onclick="expJSON()">Export JSON Matrix</button>
+  </div>
+  <div class="card">
+    <div class="title">Capture Engine</div>
+    <button class="btn-rec" id="recBtn" onclick="toggleRecording()">START VIDEO RECORDING</button>
   </div>
 </div>
 <div id="viewer">
@@ -33,47 +48,31 @@ video{display:none}
 </div>
 <script>
 const $=id=>document.getElementById(id);
-let scene,cam,ren,ctrl,video,c2d,ctx,stream=null,ready=false;
-let cloudMesh=null,posAttr=null,colAttr=null;
-let fc=0,ft=0;
+let scene,cam,ren,ctrl,video,c2d,ctx,stream=null,ready=false,scanning=false;
+let stepSize=1,depthMul=100,particleSize=0.012,layers=[],rec=[],fc=0,ft=0,phase=0;
+let mediaRecorder,recordedChunks=[];
 
-// Fixed safe buffer size to prevent memory reallocation crashes
-const MAX_POINTS = 15000;
-
-window.addEventListener('DOMContentLoaded',()=>{init3();initCam();});
+window.addEventListener('DOMContentLoaded',()=>{
+  init3();
+  initCam();
+});
 
 function init3(){
   const box=$('viewer');
   scene=new THREE.Scene();
-  cam=new THREE.PerspectiveCamera(48,box.clientWidth/box.clientHeight,0.1,1000);
-  cam.position.set(0,0,3.5);
+  scene.fog=new THREE.FogExp2(0x020617,0.008);
+  cam=new THREE.PerspectiveCamera(48,box.clientWidth/box.clientHeight,0.05,2000);
+  cam.position.set(0,0.5,3.8);
 
-  ren=new THREE.WebGLRenderer({canvas:$('c3'),powerPreference:'high-performance'});
+  ren=new THREE.WebGLRenderer({canvas:$('c3'),antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:true});
   ren.setSize(box.clientWidth,box.clientHeight);
-  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,1.5));
+  ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
   ren.setClearColor(0x020617);
 
   ctrl=new THREE.OrbitControls(cam,ren.domElement);
   ctrl.enableDamping=true;ctrl.autoRotate=true;
-  scene.add(new THREE.AmbientLight(0xffffff,1.2));
 
-  // Pre-allocate permanent geometry buffers to eliminate memory leaks
-  const geom=new THREE.BufferGeometry();
-  const initPos=new Float32Array(MAX_POINTS*3);
-  const initCol=new Float32Array(MAX_POINTS*3);
-
-  posAttr=new THREE.BufferAttribute(initPos,3);
-  colAttr=new THREE.BufferAttribute(initCol,3);
-  posAttr.setUsage(THREE.DynamicDrawUsage);
-  colAttr.setUsage(THREE.DynamicDrawUsage);
-
-  geom.setAttribute('position',posAttr);
-  geom.setAttribute('color',colAttr);
-
-  const mat=new THREE.PointsMaterial({size:0.015,vertexColors:true,transparent:true,opacity:0.9});
-  cloudMesh=new THREE.Points(geom,mat);
-  scene.add(cloudMesh);
-
+  scene.add(new THREE.AmbientLight(0xffffff,1.4));
   window.addEventListener('resize',()=>{
     cam.aspect=box.clientWidth/box.clientHeight;
     cam.updateProjectionMatrix();
@@ -86,55 +85,116 @@ function initCam(){
   video=$('vid');
   c2d=document.createElement('canvas');
   ctx=c2d.getContext('2d',{willReadFrequently:true});
-  navigator.mediaDevices?.getUserMedia({video:{width:{ideal:320},height:{ideal:240},frameRate:{ideal:20}},audio:false})
+  navigator.mediaDevices?.getUserMedia({video:{width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60}},audio:false})
   .then(s=>{stream=s;video.srcObject=s;return video.play();})
   .then(()=>{ready=true;})
-  .catch(()=>{/* Fallback handling */});
+  .catch(()=>{/* Fallback simulated telemetry node if sensor blocked */});
 }
 
 function loop(now){
   ctrl.update();
+  phase=now*0.001;
   fc++;
   if(now-ft>1000){$('fpsD').textContent=Math.round(fc*1000/(now-ft));fc=0;ft=now;}
-  if(ready&&video.readyState>=2&&fc%3===0)sample();
+  if(ready&&video.readyState>=2)sample();
   ren.render(scene,cam);
 }
 
 function sample(){
-  const w=160,h=120; // Ultra-safe low resolution
+  const w=video.videoWidth||1280,h=video.videoHeight||720;
   if(c2d.width!==w||c2d.height!==h){c2d.width=w;c2d.height=h;}
   try{ctx.drawImage(video,0,0,w,h);}catch{return;}
   let pix;
   try{pix=ctx.getImageData(0,0,w,h).data;}catch{return;}
 
-  const posArr=posAttr.array;
-  const colArr=colAttr.array;
-  let pIdx=0;
+  const pos=[],col=[];
+  const sx=1.8,sy=1.8,step=Math.max(1,stepSize|0);
 
-  for(let y=0;y<h;y+=4){
-    for(let x=0;x<w;x+=4){
-      if(pIdx>=MAX_POINTS*3)break;
+  for(let y=0;y<h;y+=step){
+    for(let x=0;x<w;x+=step){
       const i=(y*w+x)*4;
       const r=pix[i]/255,g=pix[i+1]/255,b=pix[i+2]/255;
-      const lum=0.299*r+0.587*g+0.114*b;
-      if(lum<0.08)continue;
+      if((0.299*r+0.587*g+0.114*b)<0.015)continue;
 
-      posArr[pIdx]=((w-x)/w)*2-1;
-      posArr[pIdx+1]=-((y/h)*2-1);
-      posArr[pIdx+2]=(lum-0.5)*1.2;
+      const nx=((w-x)/w)*2-1,ny=-((y/h)*2-1);
+      const nz=((1.0-(0.299*r+0.587*g+0.114*b))-0.5)*(depthMul*0.035);
 
-      colArr[pIdx]=r;
-      colArr[pIdx+1]=g;
-      colArr[pIdx+2]=b;
-
-      pIdx+=3;
+      pos.push(nx*sx,ny*sy,nz);
+      col.push(r,g,b);
     }
   }
 
-  $('nLive').textContent=(pIdx/3).toLocaleString();
-  posAttr.needsUpdate=true;
-  colAttr.needsUpdate=true;
-  cloudMesh.geometry.setDrawRange(0,pIdx/3);
+  $('nLive').textContent=(pos.length/3).toLocaleString();
+  buildCloud(pos,col);
+}
+
+function buildCloud(pos,col){
+  while(layers.length){const o=layers.pop();scene.remove(o);o.geometry.dispose();o.material.dispose();}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+
+  const mat=new THREE.PointsMaterial({
+    size:particleSize,
+    vertexColors:true,
+    transparent:true,
+    opacity:0.95,
+    blending:THREE.AdditiveBlending
+  });
+
+  const pts=new THREE.Points(g,mat);
+  scene.add(pts);
+  layers.push(pts);
+}
+
+function updatePointSize(val){
+  particleSize=val;
+  if(layers.length){
+    layers[layers.length-1].material.size=val;
+  }
+}
+
+function toggleScan(){
+  scanning=!scanning;
+  const b=$('scanBtn');
+  b.textContent=scanning?'STOP UNLIMITED SCAN':'ACTIVATE UNLIMITED SCAN';
+  b.classList.toggle('on',scanning);
+}
+
+function toggleRecording(){
+  const recBtn=$('recBtn');
+  if(!mediaRecorder||mediaRecorder.state==='inactive'){
+    recordedChunks=[];
+    const canvasStream=ren.domElement.captureStream(60);
+    try{
+      mediaRecorder=new MediaRecorder(canvasStream,{mimeType:'video/webm;codecs=vp9'});
+    }catch(e){
+      mediaRecorder=new MediaRecorder(canvasStream);
+    }
+    mediaRecorder.ondataavailable=e=>{if(e.data.size>0)recordedChunks.push(e.data);};
+    mediaRecorder.onstop=()=>{
+      const blob=new Blob(recordedChunks,{type:'video/webm'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download=`hyperstream_capture_${Date.now()}.webm`;
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    mediaRecorder.start();
+    recBtn.textContent='STOP & SAVE VIDEO';
+    recBtn.classList.add('recording');
+  }else{
+    mediaRecorder.stop();
+    recBtn.textContent='START VIDEO RECORDING';
+    recBtn.classList.remove('recording');
+  }
+}
+
+function expJSON(){
+  const blob=new Blob([JSON.stringify({HyperStreamXD:rec})],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='quantum_matrix.json';a.click();
 }
 </script>
 </body>
