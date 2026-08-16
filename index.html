@@ -2,226 +2,2055 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperStream XD • Engine v5.0</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HyperStream XD • Memory Room v5.0</title>
+
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#020617;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;height:100vh;display:flex;overflow:hidden}
-  #sidebar{width:360px;background:#030712;border-right:1px solid #1e293b;padding:14px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;z-index:10}
-  .card{background:#0f172a;border:1px solid #334155;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px}
-  .title{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8}
-  .row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#cbd5e1;gap:8px}
-  .row b{color:#e2e8f0;font-variant-numeric:tabular-nums}
-  button{border:none;border-radius:7px;padding:8px 10px;font-size:11px;font-weight:700;cursor:pointer;color:#fff;transition:opacity .15s}
-  button:hover{opacity:.9}
-  .btn-p{background:linear-gradient(135deg,#8b5cf6,#ec4899)}
-  .btn-d{background:#ef4444;width:100%}
-  .btn-d.on{background:#f97316}
-  .btn-g{background:#0f766e;width:100%}
-  input[type=range]{accent-color:#ec4899;flex:1;max-width:130px}
-  #viewer{flex:1;position:relative;background:#020617}
-  canvas{display:block;width:100%;height:100%}
-  .stats{position:absolute;top:12px;right:12px;background:rgba(2,6,23,.85);padding:8px 12px;border-radius:8px;font-size:11px;color:#94a3b8;z-index:5;backdrop-filter:blur(6px);border:1px solid #1e293b}
-  .stats b{color:#ec4899}
-  #preview{position:absolute;bottom:12px;left:12px;width:160px;height:120px;border-radius:8px;overflow:hidden;border:1px solid #334155;z-index:5;background:#000}
-  #preview video{width:100%;height:100%;object-fit:cover}
-  .badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;background:#1e293b;color:#94a3b8}
-  .badge.live{background:#065f46;color:#6ee7b7}
-  .badge.frozen{background:#7c2d12;color:#fdba74}
-  .hint{font-size:10px;color:#64748b;line-height:1.35}
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:#020617;
+  color:#f8fafc;
+  font-family:system-ui,sans-serif;
+  height:100vh;
+  display:flex;
+  overflow:hidden
+}
+
+#sidebar{
+  width:380px;
+  background:#030712;
+  border-right:1px solid #1e293b;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  overflow-y:auto;
+  z-index:10
+}
+
+.card{
+  background:#0f172a;
+  border:1px solid #334155;
+  border-radius:8px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px
+}
+
+.title{
+  font-size:9px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#94a3b8
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:10px;
+  color:#cbd5e1
+}
+
+button{
+  border:none;
+  border-radius:6px;
+  padding:7px;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+  color:#fff
+}
+
+.btn-p{
+  background:linear-gradient(135deg,#8b5cf6,#ec4899)
+}
+
+.btn-d{
+  background:#ef4444;
+  width:100%
+}
+
+.btn-d.on{
+  background:#f97316
+}
+
+.btn-s{
+  background:#1e293b;
+  width:100%
+}
+
+.btn-s:hover{
+  background:#334155
+}
+
+input[type=text],
+textarea{
+  width:100%;
+  background:#020617;
+  border:1px solid #334155;
+  border-radius:6px;
+  color:#fff;
+  padding:7px;
+  font-size:10px;
+  outline:none;
+  resize:none
+}
+
+input[type=text]:focus,
+textarea:focus{
+  border-color:#8b5cf6
+}
+
+textarea{
+  height:55px
+}
+
+input[type=range]{
+  accent-color:#ec4899;
+  width:100px
+}
+
+.memory-list{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  max-height:210px;
+  overflow-y:auto
+}
+
+.memory-item{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:6px;
+  padding:6px;
+  cursor:pointer
+}
+
+.memory-item:hover{
+  border-color:#8b5cf6
+}
+
+.memory-name{
+  font-size:10px;
+  font-weight:800
+}
+
+.memory-text{
+  font-size:9px;
+  color:#94a3b8;
+  margin-top:2px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis
+}
+
+.memory-dot{
+  display:inline-block;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  margin-right:5px;
+  background:#ec4899
+}
+
+#viewer{
+  flex:1;
+  position:relative
+}
+
+canvas{
+  display:block;
+  width:100%;
+  height:100%
+}
+
+.stats{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:rgba(2,6,23,0.85);
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:10px;
+  color:#94a3b8;
+  z-index:5
+}
+
+.room-label{
+  position:absolute;
+  left:15px;
+  top:15px;
+  font-size:11px;
+  color:#38bdf8;
+  font-weight:900;
+  letter-spacing:.5px;
+  pointer-events:none
+}
+
+#memoryInfo{
+  position:absolute;
+  bottom:15px;
+  left:15px;
+  max-width:320px;
+  background:rgba(2,6,23,.88);
+  border:1px solid #334155;
+  border-radius:8px;
+  padding:10px;
+  display:none;
+  z-index:6
+}
+
+#memoryInfo b{
+  color:#ec4899;
+  font-size:12px
+}
+
+#memoryInfo p{
+  color:#cbd5e1;
+  font-size:10px;
+  margin-top:5px
+}
+
+video{
+  display:none
+}
 </style>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
+
 <body>
+
 <div id="sidebar">
-  <div style="font-size:13px;font-weight:900;color:#38bdf8;letter-spacing:.02em">HYPERSTREAM XD • v5.0</div>
 
+  <div style="font-size:12px;font-weight:900;color:#38bdf8">
+    HYPERSTREAM XD • MEMORY ROOM v5.0
+  </div>
+
+  <!-- LIVE MATRIX -->
   <div class="card">
+
     <div class="title">Live Matrix Control</div>
-    <button class="btn-d" id="scanBtn" onclick="toggleScan()">ACTIVATE SCAN (FREEZE)</button>
+
+    <button
+      class="btn-d"
+      id="scanBtn"
+      onclick="toggleScan()">
+      ACTIVATE UNLIMITED SCAN
+    </button>
+
     <div class="row">
-      <span>Status</span>
-      <span id="statusBadge" class="badge live">LIVE</span>
+      <span>Voxel Step</span>
+      <input
+        type="range"
+        min="1"
+        max="4"
+        value="1"
+        oninput="stepSize=+this.value">
     </div>
-    <div class="row"><span>Voxel Step</span><input type="range" min="1" max="6" value="2" oninput="stepSize=+this.value;updateLabel('stepVal',this.value)"><b id="stepVal">2</b></div>
-    <div class="row"><span>Depth Field</span><input type="range" min="20" max="200" value="100" oninput="depthMul=+this.value;updateLabel('depthVal',this.value)"><b id="depthVal">100</b></div>
-    <div class="row"><span>Point Size</span><input type="range" min="1" max="12" value="4" oninput="pointSize=this.value/100;if(mat)mat.size=pointSize;updateLabel('sizeVal',this.value)"><b id="sizeVal">4</b></div>
-    <div class="row"><span>Threshold</span><input type="range" min="0" max="40" value="8" oninput="thresh=this.value/100;updateLabel('threshVal',this.value)"><b id="threshVal">8</b></div>
-    <div class="row"><span>Active Voxels</span><b id="nLive" style="color:#ec4899">0</b></div>
+
+    <div class="row">
+      <span>Depth Field</span>
+      <input
+        type="range"
+        min="10"
+        max="150"
+        value="90"
+        oninput="depthMul=+this.value">
+    </div>
+
+    <div class="row">
+      <span>Active Voxels</span>
+      <b id="nLive" style="color:#ec4899">0</b>
+    </div>
+
   </div>
 
+  <!-- MEMORY CREATOR -->
   <div class="card">
-    <div class="title">Camera & View</div>
-    <button class="btn-g" onclick="toggleAutoRotate()">Toggle Auto-Rotate</button>
-    <button class="btn-g" onclick="resetCam()">Reset Camera</button>
-    <div class="row"><span>Auto-Rotate</span><b id="rotState">ON</b></div>
+
+    <div class="title">Memory Storage</div>
+
+    <input
+      type="text"
+      id="memoryName"
+      placeholder="Memory name...">
+
+    <textarea
+      id="memoryText"
+      placeholder="What should the system remember?"></textarea>
+
+    <button
+      class="btn-p"
+      onclick="addMemory()">
+      + STORE MEMORY IN ROOM
+    </button>
+
   </div>
 
+  <!-- MEMORY LIST -->
   <div class="card">
-    <div class="title">Export</div>
-    <button class="btn-p" onclick="expJSON()">Export JSON Matrix</button>
-    <div class="hint">Exports the current (or frozen) point cloud as positions + colors.</div>
+
+    <div class="title">
+      Stored Memories
+      <span id="memoryCount" style="color:#ec4899">0</span>
+    </div>
+
+    <div id="memoryList" class="memory-list"></div>
+
   </div>
 
+  <!-- ROOM CONTROLS -->
   <div class="card">
-    <div class="title">Tips</div>
-    <div class="hint">• Lower Voxel Step = denser cloud (heavier)<br>
-    • Raise Threshold to cut noise<br>
-    • Freeze with Scan, then Export<br>
-    • Drag to orbit • Scroll to zoom</div>
+
+    <div class="title">3D Memory Room</div>
+
+    <div class="row">
+      <span>Auto Rotate</span>
+      <input
+        type="checkbox"
+        id="rotateToggle"
+        checked
+        onchange="ctrl.autoRotate=this.checked">
+    </div>
+
+    <div class="row">
+      <span>Connections</span>
+      <input
+        type="checkbox"
+        id="connectionToggle"
+        checked
+        onchange="connectionsVisible=this.checked;buildRoom()">
+    </div>
+
+    <button
+      class="btn-s"
+      onclick="arrangeMemories()">
+      AUTO ARRANGE ROOM
+    </button>
+
+    <button
+      class="btn-s"
+      onclick="clearMemories()">
+      CLEAR MEMORY ROOM
+    </button>
+
   </div>
+
+  <!-- DATA -->
+  <div class="card">
+
+    <div class="title">Memory Data</div>
+
+    <button
+      class="btn-p"
+      onclick="exportMemoryRoom()">
+      EXPORT MEMORY ROOM
+    </button>
+
+    <button
+      class="btn-s"
+      onclick="document.getElementById('importFile').click()">
+      IMPORT MEMORY ROOM
+    </button>
+
+    <input
+      type="file"
+      id="importFile"
+      accept=".json"
+      style="display:none"
+      onchange="importMemoryRoom(event)">
+
+  </div>
+
 </div>
+
 
 <div id="viewer">
-  <div class="stats">FPS <b id="fpsD">—</b> &nbsp;|&nbsp; <span id="modeLabel">Live</span></div>
-  <div id="preview"><video id="vid" autoplay playsinline muted></video></div>
+
+  <div class="room-label">
+    HYPERSTREAM MEMORY SPACE
+  </div>
+
+  <div class="stats">
+    FPS <b id="fpsD" style="color:#ec4899">—</b>
+    &nbsp;|&nbsp;
+    MEM <b id="roomD" style="color:#38bdf8">0</b>
+  </div>
+
+  <div id="memoryInfo">
+    <b id="infoName"></b>
+    <p id="infoText"></p>
+  </div>
+
+  <video
+    id="vid"
+    autoplay
+    playsinline
+    muted>
+  </video>
+
   <canvas id="c3"></canvas>
+
 </div>
 
+
 <script>
+
+/* =========================================================
+   CORE STATE
+========================================================= */
+
 const $ = id => document.getElementById(id);
-let scene, cam, ren, ctrl, video, c2d, ctx, stream = null, ready = false;
-let scanning = false;          // true = frozen
-let stepSize = 2, depthMul = 100, pointSize = 0.04, thresh = 0.08;
-let layers = [], rec = null;   // rec holds last captured data
-let fc = 0, ft = 0;
-let mat = null, pts = null;    // persistent objects
-const MAX_POINTS = 180000;     // hard safety cap
 
-function updateLabel(id, v){ $(id).textContent = v; }
+let scene;
+let cam;
+let ren;
+let ctrl;
 
-window.addEventListener('DOMContentLoaded', () => {
+let video;
+let c2d;
+let ctx;
+
+let stream = null;
+let ready = false;
+let scanning = false;
+
+let stepSize = 1;
+let depthMul = 90;
+
+let layers = [];
+let rec = [];
+
+let fc = 0;
+let ft = 0;
+let phase = 0;
+
+let memories = [];
+
+let memoryObjects = [];
+let connectionObjects = [];
+
+let connectionsVisible = true;
+
+const STORAGE_KEY = "hyperstream_memory_room_v5";
+
+
+/* =========================================================
+   START
+========================================================= */
+
+window.addEventListener("DOMContentLoaded", () => {
+
+  loadMemories();
+
   init3();
+
   initCam();
+
+  updateMemoryList();
+
 });
 
+
+/* =========================================================
+   THREE.JS INITIALIZATION
+========================================================= */
+
 function init3(){
-  const box = $('viewer');
+
+  const box = $("viewer");
+
   scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x020617, 0.012);
 
-  cam = new THREE.PerspectiveCamera(48, box.clientWidth / box.clientHeight, 0.05, 2000);
-  cam.position.set(0, 0.4, 3.6);
+  scene.fog = new THREE.FogExp2(
+    0x020617,
+    0.012
+  );
 
-  ren = new THREE.WebGLRenderer({ canvas: $('c3'), antialias: true, powerPreference: 'high-performance' });
-  ren.setSize(box.clientWidth, box.clientHeight);
-  ren.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  cam = new THREE.PerspectiveCamera(
+    48,
+    box.clientWidth / box.clientHeight,
+    0.05,
+    2000
+  );
+
+  cam.position.set(
+    0,
+    4,
+    9
+  );
+
+  ren = new THREE.WebGLRenderer({
+    canvas:$("c3"),
+    antialias:true,
+    powerPreference:"high-performance"
+  });
+
+  ren.setSize(
+    box.clientWidth,
+    box.clientHeight
+  );
+
+  ren.setPixelRatio(
+    Math.min(
+      window.devicePixelRatio || 1,
+      2
+    )
+  );
+
   ren.setClearColor(0x020617);
 
-  ctrl = new THREE.OrbitControls(cam, ren.domElement);
+  ctrl = new THREE.OrbitControls(
+    cam,
+    ren.domElement
+  );
+
   ctrl.enableDamping = true;
+
   ctrl.autoRotate = true;
-  ctrl.autoRotateSpeed = 1.2;
-  ctrl.target.set(0, 0, 0);
 
-  scene.add(new THREE.AmbientLight(0xffffff, 1.15));
+  ctrl.autoRotateSpeed = 0.35;
 
-  // Pre-create persistent geometry + material
-  const g = new THREE.BufferGeometry();
-  const pos = new Float32Array(MAX_POINTS * 3);
-  const col = new Float32Array(MAX_POINTS * 3);
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  g.setDrawRange(0, 0);
+  /* Lighting */
 
-  mat = new THREE.PointsMaterial({
-    size: pointSize,
-    vertexColors: true,
-    transparent: true,
-    opacity: 0.92,
-    sizeAttenuation: true,
-    blending: THREE.AdditiveBlending,
-    depthWrite: false
-  });
+  scene.add(
+    new THREE.AmbientLight(
+      0xffffff,
+      1.2
+    )
+  );
 
-  pts = new THREE.Points(g, mat);
-  scene.add(pts);
-  layers.push(pts);
+  const pointLight =
+    new THREE.PointLight(
+      0x8b5cf6,
+      3,
+      50
+    );
 
-  window.addEventListener('resize', () => {
-    cam.aspect = box.clientWidth / box.clientHeight;
-    cam.updateProjectionMatrix();
-    ren.setSize(box.clientWidth, box.clientHeight);
-  });
+  pointLight.position.set(
+    0,
+    4,
+    0
+  );
+
+  scene.add(pointLight);
+
+
+  /* Room */
+
+  createRoom();
+
+  /* Memory objects */
+
+  buildRoom();
+
+
+  window.addEventListener(
+    "resize",
+    () => {
+
+      cam.aspect =
+        box.clientWidth /
+        box.clientHeight;
+
+      cam.updateProjectionMatrix();
+
+      ren.setSize(
+        box.clientWidth,
+        box.clientHeight
+      );
+
+    }
+  );
 
   ren.setAnimationLoop(loop);
 }
 
-function initCam(){
-  video = $('vid');
-  c2d = document.createElement('canvas');
-  ctx = c2d.getContext('2d', { willReadFrequently: true });
 
-  navigator.mediaDevices?.getUserMedia({
-    video: { width: { ideal: 640 }, height: { ideal: 480 }, frameRate: { ideal: 30 } },
-    audio: false
-  })
-  .then(s => {
-    stream = s;
-    video.srcObject = s;
-    return video.play();
-  })
-  .then(() => { ready = true; })
-  .catch(() => {
-    console.warn('Camera blocked – running in idle mode');
-    $('statusBadge').textContent = 'NO CAM';
-    $('statusBadge').className = 'badge';
-  });
+/* =========================================================
+   3D ROOM
+========================================================= */
+
+function createRoom(){
+
+  const floorGeo =
+    new THREE.PlaneGeometry(
+      30,
+      30
+    );
+
+  const floorMat =
+    new THREE.MeshBasicMaterial({
+      color:0x07111f,
+      transparent:true,
+      opacity:.75
+    });
+
+  const floor =
+    new THREE.Mesh(
+      floorGeo,
+      floorMat
+    );
+
+  floor.rotation.x =
+    -Math.PI / 2;
+
+  floor.position.y = -2;
+
+  scene.add(floor);
+
+
+  /* Grid */
+
+  const grid =
+    new THREE.GridHelper(
+      30,
+      30,
+      0x334155,
+      0x111827
+    );
+
+  grid.position.y = -1.98;
+
+  scene.add(grid);
+
+
+  /* Central energy ring */
+
+  const ringGeo =
+    new THREE.RingGeometry(
+      1.5,
+      1.52,
+      64
+    );
+
+  const ringMat =
+    new THREE.MeshBasicMaterial({
+      color:0xec4899,
+      transparent:true,
+      opacity:.6,
+      side:THREE.DoubleSide
+    });
+
+  const ring =
+    new THREE.Mesh(
+      ringGeo,
+      ringMat
+    );
+
+  ring.rotation.x =
+    -Math.PI / 2;
+
+  ring.position.y = -1.94;
+
+  scene.add(ring);
 }
+
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+function initCam(){
+
+  video = $("vid");
+
+  c2d = document.createElement(
+    "canvas"
+  );
+
+  ctx =
+    c2d.getContext(
+      "2d",
+      {
+        willReadFrequently:true
+      }
+    );
+
+
+  navigator.mediaDevices
+    ?.getUserMedia({
+      video:{
+        width:{ideal:640},
+        height:{ideal:480},
+        frameRate:{ideal:30}
+      },
+      audio:false
+    })
+
+    .then(s => {
+
+      stream = s;
+
+      video.srcObject = s;
+
+      return video.play();
+
+    })
+
+    .then(() => {
+
+      ready = true;
+
+    })
+
+    .catch(() => {
+
+      /* Camera unavailable */
+
+    });
+}
+
+
+/* =========================================================
+   ANIMATION LOOP
+========================================================= */
 
 function loop(now){
+
   ctrl.update();
+
+  phase = now * 0.001;
+
   fc++;
-  if (now - ft > 1000) {
-    $('fpsD').textContent = Math.round(fc * 1000 / (now - ft));
-    fc = 0; ft = now;
+
+  if(now - ft > 1000){
+
+    $("fpsD").textContent =
+      Math.round(
+        fc * 1000 / (now - ft)
+      );
+
+    fc = 0;
+
+    ft = now;
+
   }
 
-  if (ready && video.readyState >= 2 && !scanning) {
+
+  if(
+    scanning &&
+    ready &&
+    video.readyState >= 2
+  ){
+
     sample();
+
   }
-  ren.render(scene, cam);
+
+
+  animateMemoryObjects();
+
+  ren.render(
+    scene,
+    cam
+  );
 }
 
+
+/* =========================================================
+   CAMERA POINT CLOUD
+========================================================= */
+
 function sample(){
-  const w = video.videoWidth || 640;
-  const h = video.videoHeight || 480;
-  if (c2d.width !== w || c2d.height !== h) {
-    c2d.width = w; c2d.height = h;
+
+  const w =
+    video.videoWidth || 640;
+
+  const h =
+    video.videoHeight || 480;
+
+  if(
+    c2d.width !== w ||
+    c2d.height !== h
+  ){
+
+    c2d.width = w;
+
+    c2d.height = h;
+
   }
 
-  try { ctx.drawImage(video, 0, 0, w, h); } catch { return; }
+
+  try{
+
+    ctx.drawImage(
+      video,
+      0,
+      0,
+      w,
+      h
+    );
+
+  }catch{
+
+    return;
+
+  }
+
+
   let pix;
-  try { pix = ctx.getImageData(0, 0, w, h).data; } catch { return; }
 
-  const posAttr = pts.geometry.attributes.position;
-  const colAttr = pts.geometry.attributes.color;
-  const pos = posAttr.array;
-  const col = colAttr.array;
+  try{
 
-  const cx = w * 0.5, cy = h * 0.5;
-  const sx = 1.55, sy = 1.55;
-  const step = Math.max(1, stepSize | 0);
-  let count = 0;
+    pix =
+      ctx.getImageData(
+        0,
+        0,
+        w,
+        h
+      ).data;
 
-  for (let y = 0; y < h && count < MAX_POINTS; y += step) {
-    for (let x = 0; x < w && count < MAX_POINTS; x += step) {
-      const i = (y * w + x) * 4;
-      const r = pix[i] / 255;
-      const g = pix[i + 1] / 255;
-      const b = pix[i + 2] / 255;
-      const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-      if (lum < thresh) continue;
+  }catch{
 
-      const nx = ((w - x) / w) * 2 - 1;
-      const ny = -((y / h) * 2 - 1);
-      const nz = (1.0 - lum - 0.5) * (depthMul * 0.035);
+    return;
 
-      const idx = count * 3;
-      pos[idx]     = nx * sx;
-      pos[idx + 1] = ny * sy;
-      pos[idx + 2] = nz;
-      col[idx]     = r;
-      col[idx + 1] = g;
-      col[
+  }
+
+
+  const pos = [];
+
+  const col = [];
+
+  const cx = w * .5;
+
+  const cy = h * .5;
+
+  const sx = 1.6;
+
+  const sy = 1.6;
+
+  const step =
+    Math.max(
+      1,
+      stepSize | 0
+    );
+
+
+  for(
+    let y=0;
+    y<h;
+    y+=step
+  ){
+
+    for(
+      let x=0;
+      x<w;
+      x+=step
+    ){
+
+      const i =
+        (y*w+x)*4;
+
+      const r =
+        pix[i]/255;
+
+      const g =
+        pix[i+1]/255;
+
+      const b =
+        pix[i+2]/255;
+
+
+      const brightness =
+        0.299*r +
+        0.587*g +
+        0.114*b;
+
+
+      if(brightness < .02)
+        continue;
+
+
+      const nx =
+        ((w-x)/w)*2-1;
+
+      const ny =
+        -((y/h)*2-1);
+
+
+      const nz =
+        (
+          (1-brightness)-.5
+        ) *
+        (depthMul*.04);
+
+
+      pos.push(
+        nx*sx,
+        ny*sy,
+        nz
+      );
+
+      col.push(
+        r,
+        g,
+        b
+      );
+
+    }
+
+  }
+
+
+  $("nLive").textContent =
+    (pos.length/3)
+      .toLocaleString();
+
+
+  buildCloud(
+    pos,
+    col
+  );
+}
+
+
+/* =========================================================
+   POINT CLOUD
+========================================================= */
+
+function buildCloud(
+  pos,
+  col
+){
+
+  while(layers.length){
+
+    const o =
+      layers.pop();
+
+    scene.remove(o);
+
+    o.geometry.dispose();
+
+    o.material.dispose();
+
+  }
+
+
+  const g =
+    new THREE.BufferGeometry();
+
+
+  g.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(
+      pos,
+      3
+    )
+  );
+
+
+  g.setAttribute(
+    "color",
+    new THREE.Float32BufferAttribute(
+      col,
+      3
+    )
+  );
+
+
+  const mat =
+    new THREE.PointsMaterial({
+
+      size:.015,
+
+      vertexColors:true,
+
+      transparent:true,
+
+      opacity:.92,
+
+      blending:
+        THREE.AdditiveBlending
+
+    });
+
+
+  const pts =
+    new THREE.Points(
+      g,
+      mat
+    );
+
+
+  scene.add(pts);
+
+  layers.push(pts);
+}
+
+
+/* =========================================================
+   MEMORY CREATION
+========================================================= */
+
+function addMemory(){
+
+  const name =
+    $("memoryName")
+      .value
+      .trim();
+
+  const text =
+    $("memoryText")
+      .value
+      .trim();
+
+
+  if(!name){
+
+    alert(
+      "Give the memory a name first."
+    );
+
+    return;
+
+  }
+
+
+  const angle =
+    memories.length *
+    0.9;
+
+
+  const radius =
+    2 +
+    Math.floor(
+      memories.length / 8
+    ) * 1.5;
+
+
+  const memory = {
+
+    id:
+      crypto.randomUUID
+      ? crypto.randomUUID()
+      : String(Date.now()),
+
+    name:name,
+
+    text:text,
+
+    created:
+      new Date().toISOString(),
+
+    x:
+      Math.cos(angle)*radius,
+
+    y:
+      (Math.random()-.5)*2,
+
+    z:
+      Math.sin(angle)*radius,
+
+    color:
+      randomMemoryColor(),
+
+    size:1
+
+  };
+
+
+  memories.push(memory);
+
+  saveMemories();
+
+  updateMemoryList();
+
+  buildRoom();
+
+
+  $("memoryName").value = "";
+
+  $("memoryText").value = "";
+
+}
+
+
+/* =========================================================
+   MEMORY COLORS
+========================================================= */
+
+function randomMemoryColor(){
+
+  const colors = [
+
+    0xec4899,
+
+    0x8b5cf6,
+
+    0x38bdf8,
+
+    0x22c55e,
+
+    0xf59e0b,
+
+    0x06b6d4
+
+  ];
+
+  return colors[
+    Math.floor(
+      Math.random()*colors.length
+    )
+  ];
+
+}
+
+
+/* =========================================================
+   BUILD 3D MEMORY ROOM
+========================================================= */
+
+function buildRoom(){
+
+  /* Remove previous memory nodes */
+
+  memoryObjects.forEach(
+    obj => {
+
+      scene.remove(obj);
+
+      if(obj.geometry)
+        obj.geometry.dispose();
+
+      if(obj.material)
+        obj.material.dispose();
+
+    }
+  );
+
+  memoryObjects = [];
+
+
+  /* Remove connections */
+
+  connectionObjects.forEach(
+    obj => {
+
+      scene.remove(obj);
+
+      if(obj.geometry)
+        obj.geometry.dispose();
+
+      if(obj.material)
+        obj.material.dispose();
+
+    }
+  );
+
+  connectionObjects = [];
+
+
+  /* Create memories */
+
+  memories.forEach(
+    memory => {
+
+      createMemoryObject(
+        memory
+      );
+
+    }
+  );
+
+
+  if(connectionsVisible){
+
+    createConnections();
+
+  }
+
+
+  $("roomD").textContent =
+    memories.length;
+
+}
+
+
+/* =========================================================
+   CREATE MEMORY NODE
+========================================================= */
+
+function createMemoryObject(
+  memory
+){
+
+  const group =
+    new THREE.Group();
+
+
+  group.position.set(
+    memory.x,
+    memory.y,
+    memory.z
+  );
+
+
+  group.userData.memoryId =
+    memory.id;
+
+
+  /* Main sphere */
+
+  const geometry =
+    new THREE.SphereGeometry(
+      .22 * memory.size,
+      24,
+      24
+    );
+
+
+  const material =
+    new THREE.MeshStandardMaterial({
+
+      color:memory.color,
+
+      emissive:memory.color,
+
+      emissiveIntensity:1.8,
+
+      roughness:.25,
+
+      metalness:.6
+
+    });
+
+
+  const sphere =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
+
+
+  group.add(sphere);
+
+
+  /* Outer energy ring */
+
+  const ringGeo =
+    new THREE.RingGeometry(
+      .32,
+      .35,
+      32
+    );
+
+
+  const ringMat =
+    new THREE.MeshBasicMaterial({
+
+      color:memory.color,
+
+      transparent:true,
+
+      opacity:.55,
+
+      side:
+        THREE.DoubleSide
+
+    });
+
+
+  const ring =
+    new THREE.Mesh(
+      ringGeo,
+      ringMat
+    );
+
+
+  ring.rotation.x =
+    Math.PI/2;
+
+
+  group.add(ring);
+
+
+  /* Small label */
+
+  const label =
+    createTextSprite(
+      memory.name,
+      memory.color
+    );
+
+
+  label.position.y =
+    .48;
+
+  label.scale.set(
+    1.4,
+    .35,
+    1
+  );
+
+
+  group.add(label);
+
+
+  scene.add(group);
+
+  memoryObjects.push(group);
+
+}
+
+
+/* =========================================================
+   TEXT SPRITE
+========================================================= */
+
+function createTextSprite(
+  text,
+  color
+){
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width = 512;
+
+  canvas.height = 128;
+
+
+  const c =
+    canvas.getContext("2d");
+
+
+  c.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  c.font =
+    "bold 38px system-ui";
+
+  c.textAlign =
+    "center";
+
+  c.textBaseline =
+    "middle";
+
+
+  c.fillStyle =
+    "#ffffff";
+
+
+  c.shadowColor =
+    "#" +
+    color.toString(16)
+      .padStart(6,"0");
+
+  c.shadowBlur = 15;
+
+
+  c.fillText(
+    text.substring(0,28),
+    256,
+    64
+  );
+
+
+  const texture =
+    new THREE.CanvasTexture(
+      canvas
+    );
+
+
+  const material =
+    new THREE.SpriteMaterial({
+      map:texture,
+      transparent:true
+    });
+
+
+  return new THREE.Sprite(
+    material
+  );
+
+}
+
+
+/* =========================================================
+   MEMORY CONNECTIONS
+========================================================= */
+
+function createConnections(){
+
+  for(
+    let i=0;
+    i<memories.length;
+    i++
+  ){
+
+    for(
+      let j=i+1;
+      j<memories.length;
+      j++
+    ){
+
+      const a =
+        memories[i];
+
+      const b =
+        memories[j];
+
+
+      /*
+       * Connect nearby memories.
+       * This produces a spatial knowledge graph.
+       */
+
+      const distance =
+        Math.sqrt(
+
+          Math.pow(
+            a.x-b.x,
+            2
+          ) +
+
+          Math.pow(
+            a.y-b.y,
+            2
+          ) +
+
+          Math.pow(
+            a.z-b.z,
+            2
+          )
+
+        );
+
+
+      if(distance > 5)
+        continue;
+
+
+      const points = [
+
+        new THREE.Vector3(
+          a.x,
+          a.y,
+          a.z
+        ),
+
+        new THREE.Vector3(
+          b.x,
+          b.y,
+          b.z
+        )
+
+      ];
+
+
+      const geometry =
+        new THREE.BufferGeometry()
+          .setFromPoints(points);
+
+
+      const material =
+        new THREE.LineBasicMaterial({
+
+          color:0x8b5cf6,
+
+          transparent:true,
+
+          opacity:
+            Math.max(
+              .08,
+              .55-distance*.08
+            )
+
+        });
+
+
+      const line =
+        new THREE.Line(
+          geometry,
+          material
+        );
+
+
+      scene.add(line);
+
+      connectionObjects.push(line);
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   MEMORY ANIMATION
+========================================================= */
+
+function animateMemoryObjects(){
+
+  memoryObjects.forEach(
+    (obj,index) => {
+
+      const memory =
+        memories[index];
+
+      if(!memory)
+        return;
+
+
+      const pulse =
+        1 +
+        Math.sin(
+          phase*2 +
+          index
+        )*.08;
+
+
+      obj.scale.set(
+        pulse,
+        pulse,
+        pulse
+      );
+
+
+      obj.children.forEach(
+        child => {
+
+          if(
+            child.isSprite
+          ){
+
+            child.lookAt(
+              cam.position
+            );
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   MEMORY LIST UI
+========================================================= */
+
+function updateMemoryList(){
+
+  const list =
+    $("memoryList");
+
+  list.innerHTML = "";
+
+
+  memories.forEach(
+    memory => {
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+      item.className =
+        "memory-item";
+
+
+      item.innerHTML = `
+
+        <div class="memory-name">
+
+          <span
+            class="memory-dot"
+            style="
+              background:#${memory.color
+                .toString(16)
+                .padStart(6,"0")}
+            ">
+          </span>
+
+          ${escapeHTML(memory.name)}
+
+        </div>
+
+        <div class="memory-text">
+
+          ${escapeHTML(
+            memory.text || "No description"
+          )}
+
+        </div>
+
+      `;
+
+
+      item.onclick =
+        () => focusMemory(
+          memory.id
+        );
+
+
+      list.appendChild(item);
+
+    }
+  );
+
+
+  $("memoryCount")
+    .textContent =
+      memories.length;
+
+  $("roomD")
+    .textContent =
+      memories.length;
+
+}
+
+
+/* =========================================================
+   FOCUS MEMORY
+========================================================= */
+
+function focusMemory(id){
+
+  const memory =
+    memories.find(
+      m => m.id === id
+    );
+
+
+  if(!memory)
+    return;
+
+
+  const target =
+    new THREE.Vector3(
+      memory.x,
+      memory.y,
+      memory.z
+    );
+
+
+  cam.position.set(
+    memory.x + 3,
+    memory.y + 2,
+    memory.z + 3
+  );
+
+
+  ctrl.target.copy(
+    target
+  );
+
+
+  $("infoName")
+    .textContent =
+      memory.name;
+
+
+  $("infoText")
+    .textContent =
+      memory.text ||
+      "No description stored.";
+
+
+  $("memoryInfo").style.display =
+    "block";
+
+}
+
+
+/* =========================================================
+   AUTO ARRANGE
+========================================================= */
+
+function arrangeMemories(){
+
+  const total =
+    memories.length;
+
+
+  if(!total)
+    return;
+
+
+  memories.forEach(
+    (memory,index) => {
+
+      const angle =
+        (index / total) *
+        Math.PI * 2;
+
+
+      const radius =
+        2.5 +
+        Math.floor(index / 12) * 1.8;
+
+
+      memory.x =
+        Math.cos(angle) *
+        radius;
+
+
+      memory.z =
+        Math.sin(angle) *
+        radius;
+
+
+      memory.y =
+        ((index % 4)-1.5)*.8;
+
+    }
+  );
+
+
+  saveMemories();
+
+  buildRoom();
+
+}
+
+
+/* =========================================================
+   PERSISTENT STORAGE
+========================================================= */
+
+function saveMemories(){
+
+  try{
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(memories)
+    );
+
+  }catch(error){
+
+    console.error(
+      "Memory save failed:",
+      error
+    );
+
+  }
+
+}
+
+
+function loadMemories(){
+
+  try{
+
+    const saved =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+
+    if(saved){
+
+      memories =
+        JSON.parse(saved);
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "Memory load failed:",
+      error
+    );
+
+    memories = [];
+
+  }
+
+}
+
+
+/* =========================================================
+   CLEAR MEMORY ROOM
+========================================================= */
+
+function clearMemories(){
+
+  if(!memories.length)
+    return;
+
+
+  if(
+    !confirm(
+      "Delete every stored memory?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  memories = [];
+
+  saveMemories();
+
+  updateMemoryList();
+
+  buildRoom();
+
+  $("memoryInfo").style.display =
+    "none";
+
+}
+
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
+function exportMemoryRoom(){
+
+  const data = {
+
+    HyperStreamXD:
+      "Memory Room v5.0",
+
+    exported:
+      new Date().toISOString(),
+
+    memories:
+      memories
+
+  };
+
+
+  const blob =
+    new Blob(
+      [
+        JSON.stringify(
+          data,
+          null,
+          2
+        )
+      ],
+      {
+        type:
+          "application/json"
+      }
+    );
+
+
+  const url =
+    URL.createObjectURL(blob);
+
+
+  const a =
+    document.createElement(
+      "a"
+    );
+
+
+  a.href = url;
+
+  a.download =
+    "hyperstream_memory_room.json";
+
+  a.click();
+
+
+  URL.revokeObjectURL(url);
+
+}
+
+
+/* =========================================================
+   IMPORT
+========================================================= */
+
+function importMemoryRoom(event){
+
+  const file =
+    event.target.files[0];
+
+
+  if(!file)
+    return;
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload =
+    e => {
+
+      try{
+
+        const data =
+          JSON.parse(
+            e.target.result
+          );
+
+
+        if(
+          !data.memories ||
+          !Array.isArray(
+            data.memories
+          )
+        ){
+
+          alert(
+            "Invalid HyperStream memory file."
+          );
+
+          return;
+
+        }
+
+
+        memories =
+          data.memories;
+
+
+        saveMemories();
+
+        updateMemoryList();
+
+        buildRoom();
+
+
+        alert(
+          "Memory room imported."
+        );
+
+      }catch(error){
+
+        alert(
+          "Could not read memory file."
+        );
+
+      }
+
+    };
+
+
+  reader.readAsText(file);
+
+}
+
+
+/* =========================================================
+   SCAN
+========================================================= */
+
+function toggleScan(){
+
+  scanning =
+    !scanning;
+
+
+  const b =
+    $("scanBtn");
+
+
+  b.textContent =
+    scanning
+      ? "STOP UNLIMITED SCAN"
+      : "ACTIVATE UNLIMITED SCAN";
+
+
+  b.classList.toggle(
+    "on",
+    scanning
+  );
+
+}
+
+
+/* =========================================================
+   OLD JSON EXPORT
+========================================================= */
+
+function expJSON(){
+
+  const blob =
+    new Blob(
+      [
+        JSON.stringify(
+          {
+            HyperStreamXD:rec
+          }
+        )
+      ],
+      {
+        type:
+          "application/json"
+      }
+    );
+
+
+  const a =
+    document.createElement(
+      "a"
+    );
+
+
+  a.href =
+    URL.createObjectURL(
+      blob
+    );
+
+
+  a.download =
+    "quantum_matrix.json";
+
+
+  a.click();
+
+}
+
+
+/* =========================================================
+   HTML SAFETY
+========================================================= */
+
+function escapeHTML(text){
+
+  return String(text)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+</script>
+
+</body>
+</html>
