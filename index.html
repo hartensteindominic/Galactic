@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>HyperStream XD • Memory Room v5.0</title>
+<title>HyperStream XD • Room AI</title>
 
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -18,7 +18,8 @@ body{
 }
 
 #sidebar{
-  width:380px;
+  width:340px;
+  min-width:340px;
   background:#030712;
   border-right:1px solid #1e293b;
   padding:12px;
@@ -29,19 +30,25 @@ body{
   z-index:10
 }
 
+.brand{
+  font-size:12px;
+  font-weight:900;
+  color:#38bdf8
+}
+
 .card{
   background:#0f172a;
   border:1px solid #334155;
   border-radius:8px;
-  padding:8px;
+  padding:9px;
   display:flex;
   flex-direction:column;
-  gap:6px
+  gap:7px
 }
 
 .title{
   font-size:9px;
-  font-weight:800;
+  font-weight:900;
   text-transform:uppercase;
   color:#94a3b8
 }
@@ -55,105 +62,97 @@ body{
 }
 
 button{
-  border:none;
+  border:0;
   border-radius:6px;
-  padding:7px;
+  padding:8px;
   font-size:10px;
-  font-weight:800;
+  font-weight:900;
   cursor:pointer;
-  color:#fff
+  color:white
 }
 
-.btn-p{
+.primary{
   background:linear-gradient(135deg,#8b5cf6,#ec4899)
 }
 
-.btn-d{
-  background:#ef4444;
-  width:100%
+.blue{
+  background:#0369a1
 }
 
-.btn-d.on{
-  background:#f97316
+.dark{
+  background:#1e293b
 }
 
-.btn-s{
-  background:#1e293b;
-  width:100%
+.red{
+  background:#dc2626
 }
 
-.btn-s:hover{
-  background:#334155
-}
-
-input[type=text],
-textarea{
+input,textarea,select{
   width:100%;
   background:#020617;
+  color:white;
   border:1px solid #334155;
   border-radius:6px;
-  color:#fff;
   padding:7px;
   font-size:10px;
-  outline:none;
-  resize:none
-}
-
-input[type=text]:focus,
-textarea:focus{
-  border-color:#8b5cf6
+  outline:none
 }
 
 textarea{
+  resize:none;
   height:55px
 }
 
 input[type=range]{
-  accent-color:#ec4899;
-  width:100px
+  width:100px;
+  accent-color:#ec4899
 }
 
-.memory-list{
-  display:flex;
-  flex-direction:column;
-  gap:4px;
-  max-height:210px;
-  overflow-y:auto
-}
-
-.memory-item{
+#chat{
+  height:145px;
+  overflow-y:auto;
   background:#020617;
   border:1px solid #1e293b;
   border-radius:6px;
   padding:6px;
-  cursor:pointer
+  display:flex;
+  flex-direction:column;
+  gap:5px
 }
 
-.memory-item:hover{
-  border-color:#8b5cf6
-}
-
-.memory-name{
+.msg{
   font-size:10px;
-  font-weight:800
+  padding:6px;
+  border-radius:6px;
+  white-space:pre-wrap
 }
 
-.memory-text{
-  font-size:9px;
+.msg.user{
+  background:#312e81;
+  align-self:flex-end
+}
+
+.msg.ai{
+  background:#172033;
+  border-left:2px solid #ec4899
+}
+
+.msg.system{
   color:#94a3b8;
-  margin-top:2px;
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis
+  border-left:2px solid #38bdf8
 }
 
-.memory-dot{
-  display:inline-block;
-  width:7px;
-  height:7px;
-  border-radius:50%;
-  margin-right:5px;
-  background:#ec4899
+.chatrow{
+  display:flex;
+  gap:5px
+}
+
+.chatrow input{
+  flex:1
+}
+
+.chatrow button{
+  width:60px
 }
 
 #viewer{
@@ -167,55 +166,65 @@ canvas{
   height:100%
 }
 
+#videoPreview{
+  position:absolute;
+  right:12px;
+  bottom:12px;
+  width:180px;
+  border:1px solid #334155;
+  border-radius:7px;
+  display:none;
+  z-index:4
+}
+
+.label{
+  position:absolute;
+  top:14px;
+  left:14px;
+  color:#38bdf8;
+  font-size:11px;
+  font-weight:900;
+  pointer-events:none
+}
+
 .stats{
   position:absolute;
   top:10px;
   right:10px;
-  background:rgba(2,6,23,0.85);
-  padding:6px 10px;
+  background:rgba(2,6,23,.88);
+  border:1px solid #1e293b;
   border-radius:6px;
+  padding:7px 10px;
   font-size:10px;
   color:#94a3b8;
   z-index:5
 }
 
-.room-label{
+#info{
   position:absolute;
-  left:15px;
-  top:15px;
-  font-size:11px;
-  color:#38bdf8;
-  font-weight:900;
-  letter-spacing:.5px;
-  pointer-events:none
-}
-
-#memoryInfo{
-  position:absolute;
-  bottom:15px;
-  left:15px;
-  max-width:320px;
-  background:rgba(2,6,23,.88);
+  left:14px;
+  bottom:14px;
+  max-width:330px;
+  background:rgba(2,6,23,.92);
   border:1px solid #334155;
   border-radius:8px;
   padding:10px;
   display:none;
-  z-index:6
+  z-index:5
 }
 
-#memoryInfo b{
-  color:#ec4899;
-  font-size:12px
+#info b{
+  color:#ec4899
 }
 
-#memoryInfo p{
-  color:#cbd5e1;
+#info p{
   font-size:10px;
-  margin-top:5px
+  color:#cbd5e1;
+  margin-top:4px
 }
 
 video{
-  display:none
+  object-fit:cover
 }
 </style>
 
@@ -227,143 +236,165 @@ video{
 
 <div id="sidebar">
 
-  <div style="font-size:12px;font-weight:900;color:#38bdf8">
-    HYPERSTREAM XD • MEMORY ROOM v5.0
+  <div class="brand">
+    HYPERSTREAM XD • ROOM AI
   </div>
 
-  <!-- LIVE MATRIX -->
-  <div class="card">
+  <!-- ROOM SCANNER -->
 
-    <div class="title">Live Matrix Control</div>
-
-    <button
-      class="btn-d"
-      id="scanBtn"
-      onclick="toggleScan()">
-      ACTIVATE UNLIMITED SCAN
-    </button>
-
-    <div class="row">
-      <span>Voxel Step</span>
-      <input
-        type="range"
-        min="1"
-        max="4"
-        value="1"
-        oninput="stepSize=+this.value">
-    </div>
-
-    <div class="row">
-      <span>Depth Field</span>
-      <input
-        type="range"
-        min="10"
-        max="150"
-        value="90"
-        oninput="depthMul=+this.value">
-    </div>
-
-    <div class="row">
-      <span>Active Voxels</span>
-      <b id="nLive" style="color:#ec4899">0</b>
-    </div>
-
-  </div>
-
-  <!-- MEMORY CREATOR -->
-  <div class="card">
-
-    <div class="title">Memory Storage</div>
-
-    <input
-      type="text"
-      id="memoryName"
-      placeholder="Memory name...">
-
-    <textarea
-      id="memoryText"
-      placeholder="What should the system remember?"></textarea>
-
-    <button
-      class="btn-p"
-      onclick="addMemory()">
-      + STORE MEMORY IN ROOM
-    </button>
-
-  </div>
-
-  <!-- MEMORY LIST -->
   <div class="card">
 
     <div class="title">
-      Stored Memories
-      <span id="memoryCount" style="color:#ec4899">0</span>
+      Spatial Room Scanner
     </div>
 
-    <div id="memoryList" class="memory-list"></div>
+    <button
+      id="scanBtn"
+      class="primary"
+      onclick="toggleScan()">
+      START ROOM SCAN
+    </button>
+
+    <button
+      class="dark"
+      onclick="captureFrame()">
+      CAPTURE FRAME
+    </button>
+
+    <div class="row">
+      <span>Frames</span>
+      <b id="frameCount">0</b>
+    </div>
+
+    <div class="row">
+      <span>Points</span>
+      <b id="pointCount">0</b>
+    </div>
+
+    <div class="row">
+      <span>Scan Time</span>
+      <b id="scanTime">0s</b>
+    </div>
+
+    <input
+      id="roomName"
+      placeholder="Room name..."
+      value="My Room">
 
   </div>
 
-  <!-- ROOM CONTROLS -->
+
+  <!-- AI -->
+
   <div class="card">
 
-    <div class="title">3D Memory Room</div>
+    <div class="title">
+      AI Room Assistant
+    </div>
+
+    <select id="model">
+      <option value="llama3.2">llama3.2</option>
+      <option value="llama3.1">llama3.1</option>
+      <option value="qwen2.5">qwen2.5</option>
+    </select>
+
+    <div id="chat"></div>
+
+    <div class="chatrow">
+
+      <input
+        id="chatInput"
+        placeholder="Ask the room AI...">
+
+      <button
+        class="primary"
+        onclick="askAI()">
+        SEND
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- ROOM -->
+
+  <div class="card">
+
+    <div class="title">
+      Saved Room
+    </div>
+
+    <button
+      class="primary"
+      onclick="saveRoom()">
+      SAVE ROOM
+    </button>
+
+    <button
+      class="blue"
+      onclick="exportRoom()">
+      EXPORT ROOM
+    </button>
+
+    <button
+      class="dark"
+      onclick="document.getElementById('import').click()">
+      IMPORT ROOM
+    </button>
+
+    <input
+      type="file"
+      id="import"
+      accept=".json,.room"
+      style="display:none"
+      onchange="importRoom(event)">
+
+  </div>
+
+
+  <!-- VIEW -->
+
+  <div class="card">
+
+    <div class="title">
+      3D View
+    </div>
 
     <div class="row">
       <span>Auto Rotate</span>
       <input
         type="checkbox"
-        id="rotateToggle"
         checked
-        onchange="ctrl.autoRotate=this.checked">
+        onchange="
+          controls.autoRotate=this.checked
+        ">
     </div>
 
     <div class="row">
-      <span>Connections</span>
+      <span>Point Size</span>
       <input
-        type="checkbox"
-        id="connectionToggle"
-        checked
-        onchange="connectionsVisible=this.checked;buildRoom()">
+        type="range"
+        min="1"
+        max="10"
+        value="3"
+        oninput="
+          pointSize=+this.value;
+          updatePointSize()
+        ">
     </div>
 
     <button
-      class="btn-s"
-      onclick="arrangeMemories()">
-      AUTO ARRANGE ROOM
+      class="dark"
+      onclick="resetView()">
+      RESET VIEW
     </button>
 
     <button
-      class="btn-s"
-      onclick="clearMemories()">
-      CLEAR MEMORY ROOM
+      class="red"
+      onclick="clearRoom()">
+      CLEAR ROOM
     </button>
-
-  </div>
-
-  <!-- DATA -->
-  <div class="card">
-
-    <div class="title">Memory Data</div>
-
-    <button
-      class="btn-p"
-      onclick="exportMemoryRoom()">
-      EXPORT MEMORY ROOM
-    </button>
-
-    <button
-      class="btn-s"
-      onclick="document.getElementById('importFile').click()">
-      IMPORT MEMORY ROOM
-    </button>
-
-    <input
-      type="file"
-      id="importFile"
-      accept=".json"
-      style="display:none"
-      onchange="importMemoryRoom(event)">
 
   </div>
 
@@ -372,240 +403,252 @@ video{
 
 <div id="viewer">
 
-  <div class="room-label">
-    HYPERSTREAM MEMORY SPACE
+  <div class="label">
+    HYPERSTREAM • DIGITAL ROOM
   </div>
 
   <div class="stats">
-    FPS <b id="fpsD" style="color:#ec4899">—</b>
+    FPS <b id="fps">—</b>
     &nbsp;|&nbsp;
-    MEM <b id="roomD" style="color:#38bdf8">0</b>
+    POINTS <b id="points">0</b>
+    &nbsp;|&nbsp;
+    FRAMES <b id="frames">0</b>
   </div>
 
-  <div id="memoryInfo">
-    <b id="infoName"></b>
+  <div id="info">
+    <b id="infoTitle"></b>
     <p id="infoText"></p>
   </div>
 
   <video
-    id="vid"
+    id="videoPreview"
     autoplay
     playsinline
     muted>
   </video>
 
-  <canvas id="c3"></canvas>
+  <canvas id="canvas"></canvas>
 
 </div>
 
 
 <script>
 
-/* =========================================================
-   CORE STATE
-========================================================= */
+/* =====================================================
+   STATE
+===================================================== */
 
-const $ = id => document.getElementById(id);
+const $ = id =>
+  document.getElementById(id);
 
 let scene;
-let cam;
-let ren;
-let ctrl;
+let camera;
+let renderer;
+let controls;
 
 let video;
-let c2d;
-let ctx;
-
 let stream = null;
-let ready = false;
+
 let scanning = false;
+let scanStart = 0;
 
-let stepSize = 1;
-let depthMul = 90;
+let frameCount = 0;
 
-let layers = [];
-let rec = [];
+let pointCloud = null;
 
-let fc = 0;
-let ft = 0;
-let phase = 0;
+let pointPositions = [];
+let pointColors = [];
 
-let memories = [];
+let scanFrames = [];
 
-let memoryObjects = [];
-let connectionObjects = [];
+let roomObjects = [];
 
-let connectionsVisible = true;
+let pointSize = 3;
 
-const STORAGE_KEY = "hyperstream_memory_room_v5";
+let fpsFrames = 0;
+let fpsStart = 0;
+
+const STORAGE_KEY =
+  "hyperstream_room_ai_v1";
 
 
-/* =========================================================
+/* =====================================================
    START
-========================================================= */
+===================================================== */
 
-window.addEventListener("DOMContentLoaded", () => {
+window.addEventListener(
+  "DOMContentLoaded",
+  () => {
 
-  loadMemories();
+    init3D();
 
-  init3();
+    initCamera();
 
-  initCam();
+    loadRoom();
 
-  updateMemoryList();
+    addMessage(
+      "system",
+      "Room AI ready."
+    );
 
-});
+  }
+);
 
 
-/* =========================================================
-   THREE.JS INITIALIZATION
-========================================================= */
+/* =====================================================
+   THREE
+===================================================== */
 
-function init3(){
+function init3D(){
 
-  const box = $("viewer");
+  const box =
+    $("viewer");
 
-  scene = new THREE.Scene();
 
-  scene.fog = new THREE.FogExp2(
-    0x020617,
-    0.012
-  );
+  scene =
+    new THREE.Scene();
 
-  cam = new THREE.PerspectiveCamera(
-    48,
-    box.clientWidth / box.clientHeight,
-    0.05,
-    2000
-  );
 
-  cam.position.set(
+  scene.fog =
+    new THREE.FogExp2(
+      0x020617,
+      .009
+    );
+
+
+  camera =
+    new THREE.PerspectiveCamera(
+      50,
+      box.clientWidth /
+      box.clientHeight,
+      .01,
+      2000
+    );
+
+
+  camera.position.set(
     0,
-    4,
-    9
+    2.5,
+    7
   );
 
-  ren = new THREE.WebGLRenderer({
-    canvas:$("c3"),
-    antialias:true,
-    powerPreference:"high-performance"
-  });
 
-  ren.setSize(
+  renderer =
+    new THREE.WebGLRenderer({
+      canvas:$("canvas"),
+      antialias:true,
+      powerPreference:
+        "high-performance"
+    });
+
+
+  renderer.setSize(
     box.clientWidth,
     box.clientHeight
   );
 
-  ren.setPixelRatio(
+
+  renderer.setPixelRatio(
     Math.min(
-      window.devicePixelRatio || 1,
+      devicePixelRatio || 1,
       2
     )
   );
 
-  ren.setClearColor(0x020617);
 
-  ctrl = new THREE.OrbitControls(
-    cam,
-    ren.domElement
+  renderer.setClearColor(
+    0x020617
   );
 
-  ctrl.enableDamping = true;
 
-  ctrl.autoRotate = true;
+  controls =
+    new THREE.OrbitControls(
+      camera,
+      renderer.domElement
+    );
 
-  ctrl.autoRotateSpeed = 0.35;
 
-  /* Lighting */
+  controls.enableDamping = true;
+
+  controls.autoRotate = true;
+
+  controls.autoRotateSpeed = .25;
+
 
   scene.add(
     new THREE.AmbientLight(
       0xffffff,
-      1.2
+      1.3
     )
   );
 
-  const pointLight =
+
+  const light =
     new THREE.PointLight(
-      0x8b5cf6,
-      3,
-      50
+      0xec4899,
+      4,
+      60
     );
 
-  pointLight.position.set(
+
+  light.position.set(
     0,
-    4,
+    5,
     0
   );
 
-  scene.add(pointLight);
+
+  scene.add(light);
 
 
-  /* Room */
-
-  createRoom();
-
-  /* Memory objects */
-
-  buildRoom();
+  createFloor();
 
 
   window.addEventListener(
     "resize",
-    () => {
-
-      cam.aspect =
-        box.clientWidth /
-        box.clientHeight;
-
-      cam.updateProjectionMatrix();
-
-      ren.setSize(
-        box.clientWidth,
-        box.clientHeight
-      );
-
-    }
+    resize
   );
 
-  ren.setAnimationLoop(loop);
+
+  renderer.setAnimationLoop(
+    animate
+  );
+
 }
 
 
-/* =========================================================
-   3D ROOM
-========================================================= */
+/* =====================================================
+   FLOOR
+===================================================== */
 
-function createRoom(){
-
-  const floorGeo =
-    new THREE.PlaneGeometry(
-      30,
-      30
-    );
-
-  const floorMat =
-    new THREE.MeshBasicMaterial({
-      color:0x07111f,
-      transparent:true,
-      opacity:.75
-    });
+function createFloor(){
 
   const floor =
     new THREE.Mesh(
-      floorGeo,
-      floorMat
+      new THREE.PlaneGeometry(
+        30,
+        30
+      ),
+      new THREE.MeshBasicMaterial({
+        color:0x07111f,
+        transparent:true,
+        opacity:.8
+      })
     );
 
+
   floor.rotation.x =
-    -Math.PI / 2;
-
-  floor.position.y = -2;
-
-  scene.add(floor);
+    -Math.PI/2;
 
 
-  /* Grid */
+  floor.position.y =
+    -2;
+
+
+  scene.add(
+    floor
+  );
+
 
   const grid =
     new THREE.GridHelper(
@@ -615,57 +658,268 @@ function createRoom(){
       0x111827
     );
 
-  grid.position.y = -1.98;
+
+  grid.position.y =
+    -1.99;
+
 
   scene.add(grid);
 
-
-  /* Central energy ring */
-
-  const ringGeo =
-    new THREE.RingGeometry(
-      1.5,
-      1.52,
-      64
-    );
-
-  const ringMat =
-    new THREE.MeshBasicMaterial({
-      color:0xec4899,
-      transparent:true,
-      opacity:.6,
-      side:THREE.DoubleSide
-    });
-
-  const ring =
-    new THREE.Mesh(
-      ringGeo,
-      ringMat
-    );
-
-  ring.rotation.x =
-    -Math.PI / 2;
-
-  ring.position.y = -1.94;
-
-  scene.add(ring);
 }
 
 
-/* =========================================================
+/* =====================================================
    CAMERA
-========================================================= */
+===================================================== */
 
-function initCam(){
+async function initCamera(){
 
-  video = $("vid");
+  video =
+    $("videoPreview");
 
-  c2d = document.createElement(
-    "canvas"
+
+  try{
+
+    stream =
+      await navigator.mediaDevices
+        .getUserMedia({
+
+          video:{
+            width:{
+              ideal:1280
+            },
+
+            height:{
+              ideal:720
+            },
+
+            facingMode:
+              "environment"
+
+          },
+
+          audio:false
+
+        });
+
+
+    video.srcObject =
+      stream;
+
+
+    await video.play();
+
+
+    video.style.display =
+      "block";
+
+
+  }catch(error){
+
+    addMessage(
+      "system",
+      "Camera unavailable. You can still import an existing room."
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   ANIMATION
+===================================================== */
+
+function animate(now){
+
+  controls.update();
+
+
+  fpsFrames++;
+
+
+  if(
+    now - fpsStart > 1000
+  ){
+
+    $("fps").textContent =
+      fpsFrames;
+
+
+    fpsFrames = 0;
+
+    fpsStart = now;
+
+  }
+
+
+  if(
+    scanning &&
+    video.readyState >= 2
+  ){
+
+    scanFrame();
+
+  }
+
+
+  if(scanning){
+
+    $("scanTime")
+      .textContent =
+        Math.floor(
+          (Date.now()-scanStart)/1000
+        ) + "s";
+
+  }
+
+
+  renderer.render(
+    scene,
+    camera
   );
 
-  ctx =
-    c2d.getContext(
+}
+
+
+/* =====================================================
+   START / STOP SCAN
+===================================================== */
+
+function toggleScan(){
+
+  scanning =
+    !scanning;
+
+
+  const button =
+    $("scanBtn");
+
+
+  if(scanning){
+
+    scanStart =
+      Date.now();
+
+
+    button.textContent =
+      "STOP ROOM SCAN";
+
+
+    button.className =
+      "red";
+
+
+    addMessage(
+      "system",
+      "Scanning room. Move the camera slowly around the space."
+    );
+
+  }else{
+
+    button.textContent =
+      "START ROOM SCAN";
+
+
+    button.className =
+      "primary";
+
+
+    addMessage(
+      "system",
+      "Scan stopped. Room data is ready to save."
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   CAPTURE FRAME
+===================================================== */
+
+function captureFrame(){
+
+  if(
+    !video ||
+    video.readyState < 2
+  ){
+
+    addMessage(
+      "system",
+      "Camera is not ready."
+    );
+
+    return;
+
+  }
+
+
+  scanFrame();
+
+
+  addMessage(
+    "system",
+    "Spatial frame captured."
+  );
+
+}
+
+
+/* =====================================================
+   SCAN FRAME
+===================================================== */
+
+function scanFrame(){
+
+  /*
+   * This is deliberately a lightweight visual
+   * reconstruction. Without a real depth sensor,
+   * browser RGB video cannot provide metric depth.
+   */
+
+  const width =
+    video.videoWidth ||
+    640;
+
+  const height =
+    video.videoHeight ||
+    480;
+
+
+  const temp =
+    document.createElement(
+      "canvas"
+    );
+
+
+  /*
+   * Keep scan processing small enough
+   * for phones.
+   */
+
+  const scale =
+    Math.min(
+      1,
+      640 / width
+    );
+
+
+  temp.width =
+    Math.floor(
+      width * scale
+    );
+
+
+  temp.height =
+    Math.floor(
+      height * scale
+    );
+
+
+  const context =
+    temp.getContext(
       "2d",
       {
         willReadFrequently:true
@@ -673,298 +927,226 @@ function initCam(){
     );
 
 
-  navigator.mediaDevices
-    ?.getUserMedia({
-      video:{
-        width:{ideal:640},
-        height:{ideal:480},
-        frameRate:{ideal:30}
-      },
-      audio:false
-    })
-
-    .then(s => {
-
-      stream = s;
-
-      video.srcObject = s;
-
-      return video.play();
-
-    })
-
-    .then(() => {
-
-      ready = true;
-
-    })
-
-    .catch(() => {
-
-      /* Camera unavailable */
-
-    });
-}
-
-
-/* =========================================================
-   ANIMATION LOOP
-========================================================= */
-
-function loop(now){
-
-  ctrl.update();
-
-  phase = now * 0.001;
-
-  fc++;
-
-  if(now - ft > 1000){
-
-    $("fpsD").textContent =
-      Math.round(
-        fc * 1000 / (now - ft)
-      );
-
-    fc = 0;
-
-    ft = now;
-
-  }
-
-
-  if(
-    scanning &&
-    ready &&
-    video.readyState >= 2
-  ){
-
-    sample();
-
-  }
-
-
-  animateMemoryObjects();
-
-  ren.render(
-    scene,
-    cam
+  context.drawImage(
+    video,
+    0,
+    0,
+    temp.width,
+    temp.height
   );
-}
 
 
-/* =========================================================
-   CAMERA POINT CLOUD
-========================================================= */
-
-function sample(){
-
-  const w =
-    video.videoWidth || 640;
-
-  const h =
-    video.videoHeight || 480;
-
-  if(
-    c2d.width !== w ||
-    c2d.height !== h
-  ){
-
-    c2d.width = w;
-
-    c2d.height = h;
-
-  }
-
-
-  try{
-
-    ctx.drawImage(
-      video,
+  const image =
+    context.getImageData(
       0,
       0,
-      w,
-      h
+      temp.width,
+      temp.height
     );
 
-  }catch{
 
-    return;
-
-  }
+  const data =
+    image.data;
 
 
-  let pix;
+  /*
+   * Sample pixels.
+   */
 
-  try{
-
-    pix =
-      ctx.getImageData(
-        0,
-        0,
-        w,
-        h
-      ).data;
-
-  }catch{
-
-    return;
-
-  }
+  const step = 8;
 
 
-  const pos = [];
-
-  const col = [];
-
-  const cx = w * .5;
-
-  const cy = h * .5;
-
-  const sx = 1.6;
-
-  const sy = 1.6;
-
-  const step =
-    Math.max(
-      1,
-      stepSize | 0
-    );
+  const framePoints = [];
 
 
   for(
     let y=0;
-    y<h;
+    y<temp.height;
     y+=step
   ){
 
     for(
       let x=0;
-      x<w;
+      x<temp.width;
       x+=step
     ){
 
       const i =
-        (y*w+x)*4;
+        (y*temp.width+x)*4;
+
 
       const r =
-        pix[i]/255;
+        data[i]/255;
 
       const g =
-        pix[i+1]/255;
+        data[i+1]/255;
 
       const b =
-        pix[i+2]/255;
+        data[i+2]/255;
 
 
       const brightness =
-        0.299*r +
-        0.587*g +
-        0.114*b;
+        .299*r+
+        .587*g+
+        .114*b;
 
 
-      if(brightness < .02)
+      if(
+        brightness < .03
+      )
         continue;
 
 
       const nx =
-        ((w-x)/w)*2-1;
+        x/temp.width-.5;
 
       const ny =
-        -((y/h)*2-1);
+        .5-y/temp.height;
 
+
+      /*
+       * Visual depth estimate.
+       *
+       * This is NOT real metric depth.
+       * It simply creates a useful 3D
+       * visualization from the video.
+       */
 
       const nz =
         (
-          (1-brightness)-.5
-        ) *
-        (depthMul*.04);
+          brightness-.5
+        ) * 2;
 
 
-      pos.push(
-        nx*sx,
-        ny*sy,
-        nz
+      /*
+       * Move each frame slightly through
+       * the room so successive viewpoints
+       * accumulate.
+       */
+
+      const frameIndex =
+        scanFrames.length;
+
+
+      const cameraOffset =
+        frameIndex * .012;
+
+
+      const px =
+        nx*6 +
+        cameraOffset;
+
+
+      const py =
+        ny*4;
+
+
+      const pz =
+        nz*3;
+
+
+      pointPositions.push(
+        px,
+        py,
+        pz
       );
 
-      col.push(
+
+      pointColors.push(
         r,
         g,
         b
       );
+
+
+      framePoints.push([
+        px,
+        py,
+        pz
+      ]);
 
     }
 
   }
 
 
-  $("nLive").textContent =
-    (pos.length/3)
-      .toLocaleString();
+  scanFrames.push({
+
+    time:
+      Date.now(),
+
+    points:
+      framePoints.length
+
+  });
 
 
-  buildCloud(
-    pos,
-    col
-  );
+  frameCount++;
+
+
+  updatePointCloud();
+
+
+  updateStats();
+
 }
 
 
-/* =========================================================
+/* =====================================================
    POINT CLOUD
-========================================================= */
+===================================================== */
 
-function buildCloud(
-  pos,
-  col
-){
+function updatePointCloud(){
 
-  while(layers.length){
+  if(
+    pointCloud
+  ){
 
-    const o =
-      layers.pop();
+    scene.remove(
+      pointCloud
+    );
 
-    scene.remove(o);
 
-    o.geometry.dispose();
+    pointCloud.geometry.dispose();
 
-    o.material.dispose();
+    pointCloud.material.dispose();
 
   }
 
 
-  const g =
+  const geometry =
     new THREE.BufferGeometry();
 
 
-  g.setAttribute(
+  geometry.setAttribute(
     "position",
     new THREE.Float32BufferAttribute(
-      pos,
+      pointPositions,
       3
     )
   );
 
 
-  g.setAttribute(
+  geometry.setAttribute(
     "color",
     new THREE.Float32BufferAttribute(
-      col,
+      pointColors,
       3
     )
   );
 
 
-  const mat =
+  const material =
     new THREE.PointsMaterial({
 
-      size:.015,
+      size:
+        pointSize*.003,
 
       vertexColors:true,
 
       transparent:true,
 
-      opacity:.92,
+      opacity:.9,
 
       blending:
         THREE.AdditiveBlending
@@ -972,875 +1154,156 @@ function buildCloud(
     });
 
 
-  const pts =
+  pointCloud =
     new THREE.Points(
-      g,
-      mat
-    );
-
-
-  scene.add(pts);
-
-  layers.push(pts);
-}
-
-
-/* =========================================================
-   MEMORY CREATION
-========================================================= */
-
-function addMemory(){
-
-  const name =
-    $("memoryName")
-      .value
-      .trim();
-
-  const text =
-    $("memoryText")
-      .value
-      .trim();
-
-
-  if(!name){
-
-    alert(
-      "Give the memory a name first."
-    );
-
-    return;
-
-  }
-
-
-  const angle =
-    memories.length *
-    0.9;
-
-
-  const radius =
-    2 +
-    Math.floor(
-      memories.length / 8
-    ) * 1.5;
-
-
-  const memory = {
-
-    id:
-      crypto.randomUUID
-      ? crypto.randomUUID()
-      : String(Date.now()),
-
-    name:name,
-
-    text:text,
-
-    created:
-      new Date().toISOString(),
-
-    x:
-      Math.cos(angle)*radius,
-
-    y:
-      (Math.random()-.5)*2,
-
-    z:
-      Math.sin(angle)*radius,
-
-    color:
-      randomMemoryColor(),
-
-    size:1
-
-  };
-
-
-  memories.push(memory);
-
-  saveMemories();
-
-  updateMemoryList();
-
-  buildRoom();
-
-
-  $("memoryName").value = "";
-
-  $("memoryText").value = "";
-
-}
-
-
-/* =========================================================
-   MEMORY COLORS
-========================================================= */
-
-function randomMemoryColor(){
-
-  const colors = [
-
-    0xec4899,
-
-    0x8b5cf6,
-
-    0x38bdf8,
-
-    0x22c55e,
-
-    0xf59e0b,
-
-    0x06b6d4
-
-  ];
-
-  return colors[
-    Math.floor(
-      Math.random()*colors.length
-    )
-  ];
-
-}
-
-
-/* =========================================================
-   BUILD 3D MEMORY ROOM
-========================================================= */
-
-function buildRoom(){
-
-  /* Remove previous memory nodes */
-
-  memoryObjects.forEach(
-    obj => {
-
-      scene.remove(obj);
-
-      if(obj.geometry)
-        obj.geometry.dispose();
-
-      if(obj.material)
-        obj.material.dispose();
-
-    }
-  );
-
-  memoryObjects = [];
-
-
-  /* Remove connections */
-
-  connectionObjects.forEach(
-    obj => {
-
-      scene.remove(obj);
-
-      if(obj.geometry)
-        obj.geometry.dispose();
-
-      if(obj.material)
-        obj.material.dispose();
-
-    }
-  );
-
-  connectionObjects = [];
-
-
-  /* Create memories */
-
-  memories.forEach(
-    memory => {
-
-      createMemoryObject(
-        memory
-      );
-
-    }
-  );
-
-
-  if(connectionsVisible){
-
-    createConnections();
-
-  }
-
-
-  $("roomD").textContent =
-    memories.length;
-
-}
-
-
-/* =========================================================
-   CREATE MEMORY NODE
-========================================================= */
-
-function createMemoryObject(
-  memory
-){
-
-  const group =
-    new THREE.Group();
-
-
-  group.position.set(
-    memory.x,
-    memory.y,
-    memory.z
-  );
-
-
-  group.userData.memoryId =
-    memory.id;
-
-
-  /* Main sphere */
-
-  const geometry =
-    new THREE.SphereGeometry(
-      .22 * memory.size,
-      24,
-      24
-    );
-
-
-  const material =
-    new THREE.MeshStandardMaterial({
-
-      color:memory.color,
-
-      emissive:memory.color,
-
-      emissiveIntensity:1.8,
-
-      roughness:.25,
-
-      metalness:.6
-
-    });
-
-
-  const sphere =
-    new THREE.Mesh(
       geometry,
       material
     );
 
 
-  group.add(sphere);
-
-
-  /* Outer energy ring */
-
-  const ringGeo =
-    new THREE.RingGeometry(
-      .32,
-      .35,
-      32
-    );
-
-
-  const ringMat =
-    new THREE.MeshBasicMaterial({
-
-      color:memory.color,
-
-      transparent:true,
-
-      opacity:.55,
-
-      side:
-        THREE.DoubleSide
-
-    });
-
-
-  const ring =
-    new THREE.Mesh(
-      ringGeo,
-      ringMat
-    );
-
-
-  ring.rotation.x =
-    Math.PI/2;
-
-
-  group.add(ring);
-
-
-  /* Small label */
-
-  const label =
-    createTextSprite(
-      memory.name,
-      memory.color
-    );
-
-
-  label.position.y =
-    .48;
-
-  label.scale.set(
-    1.4,
-    .35,
-    1
-  );
-
-
-  group.add(label);
-
-
-  scene.add(group);
-
-  memoryObjects.push(group);
-
-}
-
-
-/* =========================================================
-   TEXT SPRITE
-========================================================= */
-
-function createTextSprite(
-  text,
-  color
-){
-
-  const canvas =
-    document.createElement(
-      "canvas"
-    );
-
-  canvas.width = 512;
-
-  canvas.height = 128;
-
-
-  const c =
-    canvas.getContext("2d");
-
-
-  c.clearRect(
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
-
-
-  c.font =
-    "bold 38px system-ui";
-
-  c.textAlign =
-    "center";
-
-  c.textBaseline =
-    "middle";
-
-
-  c.fillStyle =
-    "#ffffff";
-
-
-  c.shadowColor =
-    "#" +
-    color.toString(16)
-      .padStart(6,"0");
-
-  c.shadowBlur = 15;
-
-
-  c.fillText(
-    text.substring(0,28),
-    256,
-    64
-  );
-
-
-  const texture =
-    new THREE.CanvasTexture(
-      canvas
-    );
-
-
-  const material =
-    new THREE.SpriteMaterial({
-      map:texture,
-      transparent:true
-    });
-
-
-  return new THREE.Sprite(
-    material
+  scene.add(
+    pointCloud
   );
 
 }
 
 
-/* =========================================================
-   MEMORY CONNECTIONS
-========================================================= */
-
-function createConnections(){
-
-  for(
-    let i=0;
-    i<memories.length;
-    i++
-  ){
-
-    for(
-      let j=i+1;
-      j<memories.length;
-      j++
-    ){
-
-      const a =
-        memories[i];
-
-      const b =
-        memories[j];
-
-
-      /*
-       * Connect nearby memories.
-       * This produces a spatial knowledge graph.
-       */
-
-      const distance =
-        Math.sqrt(
-
-          Math.pow(
-            a.x-b.x,
-            2
-          ) +
-
-          Math.pow(
-            a.y-b.y,
-            2
-          ) +
-
-          Math.pow(
-            a.z-b.z,
-            2
-          )
-
-        );
-
-
-      if(distance > 5)
-        continue;
-
-
-      const points = [
-
-        new THREE.Vector3(
-          a.x,
-          a.y,
-          a.z
-        ),
-
-        new THREE.Vector3(
-          b.x,
-          b.y,
-          b.z
-        )
-
-      ];
-
-
-      const geometry =
-        new THREE.BufferGeometry()
-          .setFromPoints(points);
-
-
-      const material =
-        new THREE.LineBasicMaterial({
-
-          color:0x8b5cf6,
-
-          transparent:true,
-
-          opacity:
-            Math.max(
-              .08,
-              .55-distance*.08
-            )
-
-        });
-
-
-      const line =
-        new THREE.Line(
-          geometry,
-          material
-        );
-
-
-      scene.add(line);
-
-      connectionObjects.push(line);
-
-    }
-
-  }
-
-}
-
-
-/* =========================================================
-   MEMORY ANIMATION
-========================================================= */
-
-function animateMemoryObjects(){
-
-  memoryObjects.forEach(
-    (obj,index) => {
-
-      const memory =
-        memories[index];
-
-      if(!memory)
-        return;
-
-
-      const pulse =
-        1 +
-        Math.sin(
-          phase*2 +
-          index
-        )*.08;
-
-
-      obj.scale.set(
-        pulse,
-        pulse,
-        pulse
-      );
-
-
-      obj.children.forEach(
-        child => {
-
-          if(
-            child.isSprite
-          ){
-
-            child.lookAt(
-              cam.position
-            );
-
-          }
-
-        }
-      );
-
-    }
-  );
-
-}
-
-
-/* =========================================================
-   MEMORY LIST UI
-========================================================= */
-
-function updateMemoryList(){
-
-  const list =
-    $("memoryList");
-
-  list.innerHTML = "";
-
-
-  memories.forEach(
-    memory => {
-
-      const item =
-        document.createElement(
-          "div"
-        );
-
-      item.className =
-        "memory-item";
-
-
-      item.innerHTML = `
-
-        <div class="memory-name">
-
-          <span
-            class="memory-dot"
-            style="
-              background:#${memory.color
-                .toString(16)
-                .padStart(6,"0")}
-            ">
-          </span>
-
-          ${escapeHTML(memory.name)}
-
-        </div>
-
-        <div class="memory-text">
-
-          ${escapeHTML(
-            memory.text || "No description"
-          )}
-
-        </div>
-
-      `;
-
-
-      item.onclick =
-        () => focusMemory(
-          memory.id
-        );
-
-
-      list.appendChild(item);
-
-    }
-  );
-
-
-  $("memoryCount")
-    .textContent =
-      memories.length;
-
-  $("roomD")
-    .textContent =
-      memories.length;
-
-}
-
-
-/* =========================================================
-   FOCUS MEMORY
-========================================================= */
-
-function focusMemory(id){
-
-  const memory =
-    memories.find(
-      m => m.id === id
-    );
-
-
-  if(!memory)
-    return;
-
-
-  const target =
-    new THREE.Vector3(
-      memory.x,
-      memory.y,
-      memory.z
-    );
-
-
-  cam.position.set(
-    memory.x + 3,
-    memory.y + 2,
-    memory.z + 3
-  );
-
-
-  ctrl.target.copy(
-    target
-  );
-
-
-  $("infoName")
-    .textContent =
-      memory.name;
-
-
-  $("infoText")
-    .textContent =
-      memory.text ||
-      "No description stored.";
-
-
-  $("memoryInfo").style.display =
-    "block";
-
-}
-
-
-/* =========================================================
-   AUTO ARRANGE
-========================================================= */
-
-function arrangeMemories(){
-
-  const total =
-    memories.length;
-
-
-  if(!total)
-    return;
-
-
-  memories.forEach(
-    (memory,index) => {
-
-      const angle =
-        (index / total) *
-        Math.PI * 2;
-
-
-      const radius =
-        2.5 +
-        Math.floor(index / 12) * 1.8;
-
-
-      memory.x =
-        Math.cos(angle) *
-        radius;
-
-
-      memory.z =
-        Math.sin(angle) *
-        radius;
-
-
-      memory.y =
-        ((index % 4)-1.5)*.8;
-
-    }
-  );
-
-
-  saveMemories();
-
-  buildRoom();
-
-}
-
-
-/* =========================================================
-   PERSISTENT STORAGE
-========================================================= */
-
-function saveMemories(){
-
-  try{
-
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(memories)
-    );
-
-  }catch(error){
-
-    console.error(
-      "Memory save failed:",
-      error
-    );
-
-  }
-
-}
-
-
-function loadMemories(){
-
-  try{
-
-    const saved =
-      localStorage.getItem(
-        STORAGE_KEY
-      );
-
-
-    if(saved){
-
-      memories =
-        JSON.parse(saved);
-
-    }
-
-  }catch(error){
-
-    console.error(
-      "Memory load failed:",
-      error
-    );
-
-    memories = [];
-
-  }
-
-}
-
-
-/* =========================================================
-   CLEAR MEMORY ROOM
-========================================================= */
-
-function clearMemories(){
-
-  if(!memories.length)
-    return;
-
+/* =====================================================
+   POINT SIZE
+===================================================== */
+
+function updatePointSize(){
 
   if(
-    !confirm(
-      "Delete every stored memory?"
-    )
+    pointCloud
   ){
 
-    return;
+    pointCloud.material.size =
+      pointSize*.003;
 
   }
-
-
-  memories = [];
-
-  saveMemories();
-
-  updateMemoryList();
-
-  buildRoom();
-
-  $("memoryInfo").style.display =
-    "none";
 
 }
 
 
-/* =========================================================
-   EXPORT
-========================================================= */
+/* =====================================================
+   STATS
+===================================================== */
 
-function exportMemoryRoom(){
+function updateStats(){
 
-  const data = {
+  const points =
+    pointPositions.length/3;
 
-    HyperStreamXD:
-      "Memory Room v5.0",
 
-    exported:
+  $("frameCount")
+    .textContent =
+      frameCount;
+
+
+  $("frames")
+    .textContent =
+      frameCount;
+
+
+  $("pointCount")
+    .textContent =
+      points.toLocaleString();
+
+
+  $("points")
+    .textContent =
+      points.toLocaleString();
+
+}
+
+
+/* =====================================================
+   SAVE
+===================================================== */
+
+function saveRoom(){
+
+  const room =
+    createRoomData();
+
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify(room)
+  );
+
+
+  addMessage(
+    "system",
+    "Room saved locally."
+  );
+
+}
+
+
+/* =====================================================
+   ROOM DATA
+===================================================== */
+
+function createRoomData(){
+
+  return {
+
+    format:
+      "HyperStream Room",
+
+    version:
+      "1.0",
+
+    name:
+      $("roomName").value ||
+      "My Room",
+
+    created:
       new Date().toISOString(),
 
-    memories:
-      memories
+    scan:{
+
+      frames:
+        scanFrames,
+
+      frameCount,
+
+      points:
+        pointPositions.length/3,
+
+      positions:
+        pointPositions,
+
+      colors:
+        pointColors
+
+    },
+
+    objects:
+      roomObjects
 
   };
+
+}
+
+
+/* =====================================================
+   EXPORT
+===================================================== */
+
+function exportRoom(){
+
+  const room =
+    createRoomData();
 
 
   const blob =
     new Blob(
       [
         JSON.stringify(
-          data,
-          null,
-          2
+          room
         )
       ],
       {
@@ -1851,7 +1314,9 @@ function exportMemoryRoom(){
 
 
   const url =
-    URL.createObjectURL(blob);
+    URL.createObjectURL(
+      blob
+    );
 
 
   const a =
@@ -1860,24 +1325,88 @@ function exportMemoryRoom(){
     );
 
 
-  a.href = url;
+  a.href =
+    url;
+
 
   a.download =
-    "hyperstream_memory_room.json";
+    (
+      $("roomName").value ||
+      "hyperstream-room"
+    )
+    .replace(
+      /[^a-z0-9-_]/gi,
+      "_"
+    ) +
+    ".room.json";
+
 
   a.click();
 
 
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(
+    url
+  );
+
+
+  addMessage(
+    "system",
+    "Room exported."
+  );
 
 }
 
 
-/* =========================================================
-   IMPORT
-========================================================= */
+/* =====================================================
+   LOAD ROOM
+===================================================== */
 
-function importMemoryRoom(event){
+function loadRoom(){
+
+  try{
+
+    const saved =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+
+    if(!saved)
+      return;
+
+
+    const room =
+      JSON.parse(
+        saved
+      );
+
+
+    applyRoom(
+      room
+    );
+
+
+    addMessage(
+      "system",
+      "Saved room restored."
+    );
+
+  }catch(error){
+
+    console.error(
+      error
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   IMPORT ROOM
+===================================================== */
+
+function importRoom(event){
 
   const file =
     event.target.files[0];
@@ -1896,47 +1425,29 @@ function importMemoryRoom(event){
 
       try{
 
-        const data =
+        const room =
           JSON.parse(
             e.target.result
           );
 
 
-        if(
-          !data.memories ||
-          !Array.isArray(
-            data.memories
-          )
-        ){
-
-          alert(
-            "Invalid HyperStream memory file."
-          );
-
-          return;
-
-        }
+        applyRoom(
+          room
+        );
 
 
-        memories =
-          data.memories;
+        saveRoom();
 
 
-        saveMemories();
-
-        updateMemoryList();
-
-        buildRoom();
-
-
-        alert(
-          "Memory room imported."
+        addMessage(
+          "system",
+          "Room imported successfully."
         );
 
       }catch(error){
 
         alert(
-          "Could not read memory file."
+          "Invalid HyperStream room file."
         );
 
       }
@@ -1944,109 +1455,336 @@ function importMemoryRoom(event){
     };
 
 
-  reader.readAsText(file);
-
-}
-
-
-/* =========================================================
-   SCAN
-========================================================= */
-
-function toggleScan(){
-
-  scanning =
-    !scanning;
-
-
-  const b =
-    $("scanBtn");
-
-
-  b.textContent =
-    scanning
-      ? "STOP UNLIMITED SCAN"
-      : "ACTIVATE UNLIMITED SCAN";
-
-
-  b.classList.toggle(
-    "on",
-    scanning
+  reader.readAsText(
+    file
   );
 
 }
 
 
-/* =========================================================
-   OLD JSON EXPORT
-========================================================= */
+/* =====================================================
+   APPLY ROOM
+===================================================== */
 
-function expJSON(){
+function applyRoom(
+  room
+){
 
-  const blob =
-    new Blob(
-      [
-        JSON.stringify(
-          {
-            HyperStreamXD:rec
-          }
-        )
-      ],
-      {
-        type:
-          "application/json"
-      }
-    );
+  $("roomName")
+    .value =
+      room.name ||
+      "My Room";
 
 
-  const a =
-    document.createElement(
-      "a"
-    );
+  pointPositions =
+    room.scan?.positions ||
+    [];
 
 
-  a.href =
-    URL.createObjectURL(
-      blob
-    );
+  pointColors =
+    room.scan?.colors ||
+    [];
 
 
-  a.download =
-    "quantum_matrix.json";
+  scanFrames =
+    room.scan?.frames ||
+    [];
 
 
-  a.click();
+  frameCount =
+    room.scan?.frameCount ||
+    scanFrames.length ||
+    0;
+
+
+  roomObjects =
+    room.objects ||
+    [];
+
+
+  updatePointCloud();
+
+  updateStats();
 
 }
 
 
-/* =========================================================
-   HTML SAFETY
-========================================================= */
+/* =====================================================
+   CLEAR
+===================================================== */
 
-function escapeHTML(text){
+function clearRoom(){
 
-  return String(text)
-    .replace(
-      /&/g,
-      "&amp;"
+  if(
+    !confirm(
+      "Delete this room?"
     )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
+  )
+    return;
+
+
+  pointPositions = [];
+
+  pointColors = [];
+
+  scanFrames = [];
+
+  roomObjects = [];
+
+  frameCount = 0;
+
+
+  if(
+    pointCloud
+  ){
+
+    scene.remove(
+      pointCloud
     );
+
+    pointCloud.geometry.dispose();
+
+    pointCloud.material.dispose();
+
+    pointCloud = null;
+
+  }
+
+
+  localStorage.removeItem(
+    STORAGE_KEY
+  );
+
+
+  updateStats();
+
+  addMessage(
+    "system",
+    "Room cleared."
+  );
+
+}
+
+
+/* =====================================================
+   RESET VIEW
+===================================================== */
+
+function resetView(){
+
+  camera.position.set(
+    0,
+    2.5,
+    7
+  );
+
+
+  controls.target.set(
+    0,
+    0,
+    0
+  );
+
+}
+
+
+/* =====================================================
+   AI
+===================================================== */
+
+async function askAI(){
+
+  const input =
+    $("chatInput");
+
+
+  const message =
+    input.value.trim();
+
+
+  if(!message)
+    return;
+
+
+  input.value = "";
+
+
+  addMessage(
+    "user",
+    message
+  );
+
+
+  try{
+
+    const response =
+      await fetch(
+        "http://localhost:11434/api/chat",
+        {
+
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:
+            JSON.stringify({
+
+              model:
+                $("model").value,
+
+              stream:false,
+
+              messages:[
+
+                {
+                  role:"system",
+
+                  content:
+                    `You are the AI inside a
+3D digital room.
+
+The room is named:
+${$("roomName").value}
+
+The room currently contains:
+${frameCount} scan frames
+${pointPositions.length/3} visual points
+
+Explain what the user can do with
+the room. Do not claim that RGB
+video provides accurate physical
+depth.`
+                },
+
+                {
+                  role:"user",
+
+                  content:
+                    message
+                }
+
+              ]
+
+            })
+
+        }
+      );
+
+
+    if(!response.ok)
+      throw new Error();
+
+
+    const data =
+      await response.json();
+
+
+    addMessage(
+      "ai",
+      data.message?.content ||
+      "No response."
+    );
+
+
+  }catch(error){
+
+    addMessage(
+      "ai",
+      "AI is offline. Start Ollama locally to enable the room AI."
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   CHAT
+===================================================== */
+
+function addMessage(
+  type,
+  text
+){
+
+  const box =
+    $("chat");
+
+
+  const div =
+    document.createElement(
+      "div"
+    );
+
+
+  div.className =
+    "msg " +
+    type;
+
+
+  div.textContent =
+    text;
+
+
+  box.appendChild(
+    div
+  );
+
+
+  box.scrollTop =
+    box.scrollHeight;
+
+}
+
+
+/* =====================================================
+   ENTER
+===================================================== */
+
+$("chatInput")
+  .addEventListener(
+    "keydown",
+    event => {
+
+      if(
+        event.key === "Enter"
+      ){
+
+        event.preventDefault();
+
+        askAI();
+
+      }
+
+    }
+  );
+
+
+/* =====================================================
+   RESIZE
+===================================================== */
+
+function resize(){
+
+  const box =
+    $("viewer");
+
+
+  camera.aspect =
+    box.clientWidth /
+    box.clientHeight;
+
+
+  camera.updateProjectionMatrix();
+
+
+  renderer.setSize(
+    box.clientWidth,
+    box.clientHeight
+  );
 
 }
 
