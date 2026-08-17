@@ -1,1 +1,2056 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#000"><title>HyperStream XD • 4D Quantum Holographic</title><style>*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#000;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif}#app{height:100dvh;display:flex;flex-direction:column}#stage{height:58dvh;position:relative;background:radial-gradient(circle at 50% 42%,#14283d 0,#05080d 48%,#000 100%)}canvas{width:100%;height:100%;display:block}.badge{position:absolute;z-index:5;right:12px;top:12px;padding:7px 12px;border-radius:20px;background:#0009;backdrop-filter:blur(18px);font-size:11px}.panel{height:42dvh;overflow:auto;background:#19191cf5;border-radius:24px 24px 0 0;padding:7px 10px calc(14px + env(safe-area-inset-bottom))}.handle{width:38px;height:4px;background:#666;border-radius:8px;margin:0 auto 8px}.card{background:#303034e8;border-radius:17px;padding:10px;margin-bottom:8px}.title{font-size:10px;font-weight:800;color:#999;text-transform:uppercase;margin-bottom:7px}.actions{display:flex;flex-direction:column;gap:7px}.actions button,.switch button{height:44px;border:0;border-radius:15px;font-weight:750;font-size:14px;color:#fff}.red{background:linear-gradient(135deg,#ff477c,#ff3561)}.green{background:linear-gradient(135deg,#65f39a,#30d158);color:#06120a!important}.blue{background:linear-gradient(135deg,#5ab5ff,#0a84ff)}.pink{background:linear-gradient(135deg,#d06cff,#ff4f91)}button:disabled{opacity:.35}.switch{display:grid;grid-template-columns:1fr 1fr;gap:6px}.switch button{background:#ffffff12}.switch .active{background:#ff4f864d;outline:1px solid #ff4f8680}.row{display:grid;grid-template-columns:112px 1fr 42px;align-items:center;height:36px;font-size:11px}.v{text-align:right;font-size:10px;color:#ff76a6}input[type=range]{width:100%;appearance:none;background:transparent}input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:8px;background:linear-gradient(90deg,#ffffff20,#ff4f867a)}input[type=range]::-webkit-slider-thumb{appearance:none;width:21px;height:21px;margin-top:-7px;border-radius:50%;border:2px solid white;background:#ff76a6;box-shadow:0 2px 12px #ff4f8670}.status{font-size:10px;color:#42a5ff;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}video{display:none}@media(min-width:769px){#stage{height:calc(100dvh - 360px)}.panel{height:360px}.handle{display:none}.actions{display:grid;grid-template-columns:1fr 1fr}}</style></head><body><div id="app"><section id="stage"><div class="badge">FPS <b id="fps" style="color:#ff4f86">—</b> · <span id="nodes">0</span> nodes</div><video id="vid" autoplay playsinline muted></video><canvas id="c"></canvas></section><section class="panel"><div class="handle"></div><div class="card actions"><button class="red" id="scan" onclick="scan()">Start Scanning</button><button class="green" id="rec" onclick="record()" disabled>Record</button><button class="blue" id="play" onclick="replay()" disabled>Replay</button><button class="pink" id="share" onclick="share()" disabled>Share</button></div><div class="card"><div class="title">Camera</div><div class="switch"><button id="front" class="active" onclick="camera('user')">Face Camera</button><button id="back" onclick="camera('environment')">Back Camera</button></div></div><div class="card"><div class="title">HyperStream XD · 4D Quantum Structure</div><div class="row"><span>Live 4D</span><input type="range" min="0" max="100" value="72" oninput="T=+this.value/100;tv.textContent=this.value+'%'"><b class="v" id="tv">72%</b></div><div class="row"><span>Voxel Density</span><input type="range" min="20" max="100" value="78" oninput="V=+this.value/100;vv.textContent=this.value+'%'"><b class="v" id="vv">78%</b></div><div class="row"><span>Hyper Depth Field</span><input type="range" min="10" max="100" value="48" oninput="D=+this.value/100;dv.textContent=this.value+'%'"><b class="v" id="dv">48%</b></div><div class="row"><span>Quantum Node Size</span><input type="range" min="20" max="160" value="70" oninput="N=+this.value/100;nv.textContent=this.value+'%'"><b class="v" id="nv">70%</b></div><div class="row"><span>Dimensional Strata</span><input type="range" min="1" max="12" value="6" oninput="L=+this.value;lv.textContent=this.value"><b class="v" id="lv">6</b></div><div class="row"><span>Spatial Dimensions</span><input type="range" min="10" max="100" value="68" oninput="X=+this.value/100;xv.textContent=this.value+'%'"><b class="v" id="xv">68%</b></div><div class="status" id="status">Starting Face Camera…</div></div></section></div><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script><script>const $=x=>document.getElementById(x);let scene,cam,ren,ctl,video,stream,ready=0,scanning=0,T=.72,V=.78,D=.48,N=.70,L=6,X=.68,fc=0,ft=0,work,ctx,geo,mesh,tex,pts,pa,ca,depth,rec=0,mr,chunks=[],frames=[],playing=0,pidx=0,lastPlay=0;const W=288,H=162,MAX=W*H;init();camera('user');function init(){const b=$('stage');scene=new THREE.Scene();cam=new THREE.PerspectiveCamera(48,b.clientWidth/b.clientHeight,.01,100);cam.position.set(0,0,5.6);ren=new THREE.WebGLRenderer({canvas:$('c'),antialias:true,preserveDrawingBuffer:true,powerPreference:'high-performance'});ren.setSize(b.clientWidth,b.clientHeight);ren.setPixelRatio(Math.min(devicePixelRatio||1,2));ctl=new THREE.OrbitControls(cam,ren.domElement);ctl.enableDamping=true;ctl.dampingFactor=.07;ctl.autoRotate=true;ctl.autoRotateSpeed=.08;video=$('vid');work=document.createElement('canvas');work.width=W;work.height=H;ctx=work.getContext('2d',{willReadFrequently:true});depth=new Float32Array(MAX);geo=new THREE.PlaneGeometry(5,2.8125,W-1,H-1);tex=new THREE.VideoTexture(video);tex.minFilter=THREE.LinearFilter;tex.magFilter=THREE.LinearFilter;mesh=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));scene.add(mesh);const pg=new THREE.BufferGeometry();pa=new THREE.BufferAttribute(new Float32Array(MAX*3),3);ca=new THREE.BufferAttribute(new Float32Array(MAX*3),3);pg.setAttribute('position',pa);pg.setAttribute('color',ca);pts=new THREE.Points(pg,new THREE.PointsMaterial({size:.018,vertexColors:true,transparent:true,opacity:.34,blending:THREE.AdditiveBlending,depthWrite:false,sizeAttenuation:true}));scene.add(pts);addEventListener('resize',()=>{cam.aspect=b.clientWidth/b.clientHeight;cam.updateProjectionMatrix();ren.setSize(b.clientWidth,b.clientHeight)});ren.setAnimationLoop(loop)}function camera(mode){if(stream)stream.getTracks().forEach(t=>t.stop());ready=0;$('status').textContent=mode==='user'?'Starting Face Camera…':'Starting Back Camera…';navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:mode},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:60,max:60}},audio:false}).then(s=>{stream=s;video.srcObject=s;return video.play()}).then(()=>{ready=1;$('front').classList.toggle('active',mode==='user');$('back').classList.toggle('active',mode==='environment');$('status').textContent='Camera ready'}).catch(()=>$('status').textContent='Camera permission needed')}function loop(t){ctl.update();fc++;if(t-ft>1000){$('fps').textContent=Math.round(fc*1000/(t-ft));fc=0;ft=t}if(playing)stepReplay(t);else if(scanning&&ready&&video.readyState>=2)sample(t);tex.needsUpdate=true;ren.render(scene,cam)}function sample(t){ctx.drawImage(video,0,0,W,H);let pix;try{pix=ctx.getImageData(0,0,W,H).data}catch{return}const stride=Math.max(1,Math.round(4.5-(V*2.8))),layers=Math.max(1,Math.min(12,Math.round(L))),spacing=.022+N*.045;let n=0;for(let y=0;y<H;y+=stride)for(let x=0;x<W&&n<MAX;x+=stride){const i=(y*W+x)*4,r=pix[i]/255,g=pix[i+1]/255,b=pix[i+2]/255,lum=.299*r+.587*g+.114*b,xl=Math.max(0,x-1),xr=Math.min(W-1,x+1),yu=Math.max(0,y-1),yd=Math.min(H-1,y+1),edge=Math.min(1,(Math.abs(pix[(y*W+xr)*4]-pix[(y*W+xl)*4])+Math.abs(pix[(yd*W+x)*4]-pix[(yu*W+x)*4]))/255),rad=Math.hypot(x/W-.5,(y/H-.5)*1.12),center=1-Math.min(1,rad*1.5),target=((1-lum)*.30+edge*.20*Smoothing(edge,T)+center*.05)*D-.08,di=y*W+x;depth[di]+=(target-depth[di])*(.16+.18*T);const j=n*3;pa.array[j]=(x/(W-1)-.5)*5*X+.02*Math.sin(di*.17+t*.001);pa.array[j+1]=(.5-y/(H-1))*2.8125*X+.02*Math.cos(di*.13+t*.001);pa.array[j+2]=depth[di];ca.array[j]=Math.min(1,r*1.04+.01);ca.array[j+1]=Math.min(1,g*1.04+.01);ca.array[j+2]=Math.min(1,b*1.04+.01);n++}pts.geometry.setDrawRange(0,n);pa.needsUpdate=ca.needsUpdate=true;pts.material.size=spacing;pts.material.opacity=.22+.28*T;$('nodes').textContent=n.toLocaleString();updateSurface(pix,t,layers);if(rec&&(!frames.length||t-frames[frames.length-1].t>=16))frames.push({t,n,pos:pa.array.slice(0,n*3),col:ca.array.slice(0,n*3),surface:geo.attributes.position.array.slice()})}function Smoothing(e,t){return Math.min(1,e*(.65+.35*t))}function updateSurface(pix,t,layers){const p=geo.attributes.position.array;for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=(y*W+x)*4,lum=(.299*pix[i]+.587*pix[i+1]+.114*pix[i+2])/255,xl=Math.max(0,x-1),xr=Math.min(W-1,x+1),yu=Math.max(0,y-1),yd=Math.min(H-1,y+1),edge=Math.min(1,(Math.abs(pix[(y*W+xr)*4]-pix[(y*W+xl)*4])+Math.abs(pix[(yd*W+x)*4]-pix[(yu*W+x)*4]))/510),rad=Math.hypot(x/W-.5,(y/H-.5)*1.12),center=1-Math.min(1,rad*1.5),z=((1-lum)*.30+edge*.20*Smoothing(edge,T)+center*.05)*D-.08,j=(y*W+x)*3;p[j]=(x/(W-1)-.5)*5*X;p[j+1]=(.5-y/(H-1))*2.8125*X;p[j+2]=z}geo.attributes.position.needsUpdate=true;for(let s=1;s<layers;s++){const clone=geo.clone(),m=new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:.035/(s*.7),side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false});const q=new THREE.Mesh(clone,m);q.position.z=(s-layers/2)*.012*(D*2);q.rotation.y=(s-layers/2)*.002;scene.add(q);setTimeout(()=>{scene.remove(q);clone.dispose();m.dispose()},120)}}function scan(){if(!ready)return;scanning=!scanning;$('scan').textContent=scanning?'Stop Scanning':'Start Scanning';$('scan').className=scanning?'green':'red';$('rec').disabled=!scanning;$('rec').classList.toggle('ready',scanning);ctl.autoRotate=!scanning;$('status').textContent=scanning?'Live 4D reconstruction active':'Ready'}function record(){if(rec){rec=0;if(mr?.state!=='inactive')mr.stop();$('rec').textContent='Record';return}if(!scanning)return;chunks=[];frames=[];const type=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';mr=new MediaRecorder($('c').captureStream(60),{mimeType:type,videoBitsPerSecond:18000000});mr.ondataavailable=e=>e.data.size&&chunks.push(e.data);mr.onstop=()=>{$('play').disabled=!frames.length;$('share').disabled=!chunks.length};mr.start(100);rec=1;$('rec').textContent='Stop'}function replay(){if(!frames.length)return;playing=!playing;if(playing){pidx=0;lastPlay=performance.now();$('play').textContent='Stop';ctl.autoRotate=false}else{$('play').textContent='Replay';pts.geometry.setDrawRange(0,0);ctl.autoRotate=true}}function stepReplay(t){if(t-lastPlay<16)return;lastPlay=t;const f=frames[pidx];pa.array.set(f.pos);ca.array.set(f.col);pts.geometry.setDrawRange(0,f.n);pa.needsUpdate=ca.needsUpdate=true;if(f.surface){geo.attributes.position.array.set(f.surface);geo.attributes.position.needsUpdate=true}$('nodes').textContent=f.n.toLocaleString();pidx=(pidx+1)%frames.length}function share(){if(!chunks.length)return;const blob=new Blob(chunks,{type:'video/webm'}),file=new File([blob],'hyperstream-xd-4d.webm',{type:blob.type});if(navigator.share&&navigator.canShare?.({files:[file]}))navigator.share({title:'HyperStream XD 4D Quantum Holographic',text:'Live 4D holographic video ✨',files:[file]}).catch(()=>{});else{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=file.name;a.click()}}</script></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>HyperStream XD • Memory Room v5.0</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:#020617;
+  color:#f8fafc;
+  font-family:system-ui,sans-serif;
+  height:100vh;
+  display:flex;
+  overflow:hidden
+}
+
+#sidebar{
+  width:380px;
+  background:#030712;
+  border-right:1px solid #1e293b;
+  padding:12px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  overflow-y:auto;
+  z-index:10
+}
+
+.card{
+  background:#0f172a;
+  border:1px solid #334155;
+  border-radius:8px;
+  padding:8px;
+  display:flex;
+  flex-direction:column;
+  gap:6px
+}
+
+.title{
+  font-size:9px;
+  font-weight:800;
+  text-transform:uppercase;
+  color:#94a3b8
+}
+
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:10px;
+  color:#cbd5e1
+}
+
+button{
+  border:none;
+  border-radius:6px;
+  padding:7px;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+  color:#fff
+}
+
+.btn-p{
+  background:linear-gradient(135deg,#8b5cf6,#ec4899)
+}
+
+.btn-d{
+  background:#ef4444;
+  width:100%
+}
+
+.btn-d.on{
+  background:#f97316
+}
+
+.btn-s{
+  background:#1e293b;
+  width:100%
+}
+
+.btn-s:hover{
+  background:#334155
+}
+
+input[type=text],
+textarea{
+  width:100%;
+  background:#020617;
+  border:1px solid #334155;
+  border-radius:6px;
+  color:#fff;
+  padding:7px;
+  font-size:10px;
+  outline:none;
+  resize:none
+}
+
+input[type=text]:focus,
+textarea:focus{
+  border-color:#8b5cf6
+}
+
+textarea{
+  height:55px
+}
+
+input[type=range]{
+  accent-color:#ec4899;
+  width:100px
+}
+
+.memory-list{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  max-height:210px;
+  overflow-y:auto
+}
+
+.memory-item{
+  background:#020617;
+  border:1px solid #1e293b;
+  border-radius:6px;
+  padding:6px;
+  cursor:pointer
+}
+
+.memory-item:hover{
+  border-color:#8b5cf6
+}
+
+.memory-name{
+  font-size:10px;
+  font-weight:800
+}
+
+.memory-text{
+  font-size:9px;
+  color:#94a3b8;
+  margin-top:2px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis
+}
+
+.memory-dot{
+  display:inline-block;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  margin-right:5px;
+  background:#ec4899
+}
+
+#viewer{
+  flex:1;
+  position:relative
+}
+
+canvas{
+  display:block;
+  width:100%;
+  height:100%
+}
+
+.stats{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:rgba(2,6,23,0.85);
+  padding:6px 10px;
+  border-radius:6px;
+  font-size:10px;
+  color:#94a3b8;
+  z-index:5
+}
+
+.room-label{
+  position:absolute;
+  left:15px;
+  top:15px;
+  font-size:11px;
+  color:#38bdf8;
+  font-weight:900;
+  letter-spacing:.5px;
+  pointer-events:none
+}
+
+#memoryInfo{
+  position:absolute;
+  bottom:15px;
+  left:15px;
+  max-width:320px;
+  background:rgba(2,6,23,.88);
+  border:1px solid #334155;
+  border-radius:8px;
+  padding:10px;
+  display:none;
+  z-index:6
+}
+
+#memoryInfo b{
+  color:#ec4899;
+  font-size:12px
+}
+
+#memoryInfo p{
+  color:#cbd5e1;
+  font-size:10px;
+  margin-top:5px
+}
+
+video{
+  display:none
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+
+<body>
+
+<div id="sidebar">
+
+  <div style="font-size:12px;font-weight:900;color:#38bdf8">
+    HYPERSTREAM XD • MEMORY ROOM v5.0
+  </div>
+
+  <!-- LIVE MATRIX -->
+  <div class="card">
+
+    <div class="title">Live Matrix Control</div>
+
+    <button
+      class="btn-d"
+      id="scanBtn"
+      onclick="toggleScan()">
+      ACTIVATE UNLIMITED SCAN
+    </button>
+
+    <div class="row">
+      <span>Voxel Step</span>
+      <input
+        type="range"
+        min="1"
+        max="4"
+        value="1"
+        oninput="stepSize=+this.value">
+    </div>
+
+    <div class="row">
+      <span>Depth Field</span>
+      <input
+        type="range"
+        min="10"
+        max="150"
+        value="90"
+        oninput="depthMul=+this.value">
+    </div>
+
+    <div class="row">
+      <span>Active Voxels</span>
+      <b id="nLive" style="color:#ec4899">0</b>
+    </div>
+
+  </div>
+
+  <!-- MEMORY CREATOR -->
+  <div class="card">
+
+    <div class="title">Memory Storage</div>
+
+    <input
+      type="text"
+      id="memoryName"
+      placeholder="Memory name...">
+
+    <textarea
+      id="memoryText"
+      placeholder="What should the system remember?"></textarea>
+
+    <button
+      class="btn-p"
+      onclick="addMemory()">
+      + STORE MEMORY IN ROOM
+    </button>
+
+  </div>
+
+  <!-- MEMORY LIST -->
+  <div class="card">
+
+    <div class="title">
+      Stored Memories
+      <span id="memoryCount" style="color:#ec4899">0</span>
+    </div>
+
+    <div id="memoryList" class="memory-list"></div>
+
+  </div>
+
+  <!-- ROOM CONTROLS -->
+  <div class="card">
+
+    <div class="title">3D Memory Room</div>
+
+    <div class="row">
+      <span>Auto Rotate</span>
+      <input
+        type="checkbox"
+        id="rotateToggle"
+        checked
+        onchange="ctrl.autoRotate=this.checked">
+    </div>
+
+    <div class="row">
+      <span>Connections</span>
+      <input
+        type="checkbox"
+        id="connectionToggle"
+        checked
+        onchange="connectionsVisible=this.checked;buildRoom()">
+    </div>
+
+    <button
+      class="btn-s"
+      onclick="arrangeMemories()">
+      AUTO ARRANGE ROOM
+    </button>
+
+    <button
+      class="btn-s"
+      onclick="clearMemories()">
+      CLEAR MEMORY ROOM
+    </button>
+
+  </div>
+
+  <!-- DATA -->
+  <div class="card">
+
+    <div class="title">Memory Data</div>
+
+    <button
+      class="btn-p"
+      onclick="exportMemoryRoom()">
+      EXPORT MEMORY ROOM
+    </button>
+
+    <button
+      class="btn-s"
+      onclick="document.getElementById('importFile').click()">
+      IMPORT MEMORY ROOM
+    </button>
+
+    <input
+      type="file"
+      id="importFile"
+      accept=".json"
+      style="display:none"
+      onchange="importMemoryRoom(event)">
+
+  </div>
+
+</div>
+
+
+<div id="viewer">
+
+  <div class="room-label">
+    HYPERSTREAM MEMORY SPACE
+  </div>
+
+  <div class="stats">
+    FPS <b id="fpsD" style="color:#ec4899">—</b>
+    &nbsp;|&nbsp;
+    MEM <b id="roomD" style="color:#38bdf8">0</b>
+  </div>
+
+  <div id="memoryInfo">
+    <b id="infoName"></b>
+    <p id="infoText"></p>
+  </div>
+
+  <video
+    id="vid"
+    autoplay
+    playsinline
+    muted>
+  </video>
+
+  <canvas id="c3"></canvas>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   CORE STATE
+========================================================= */
+
+const $ = id => document.getElementById(id);
+
+let scene;
+let cam;
+let ren;
+let ctrl;
+
+let video;
+let c2d;
+let ctx;
+
+let stream = null;
+let ready = false;
+let scanning = false;
+
+let stepSize = 1;
+let depthMul = 90;
+
+let layers = [];
+let rec = [];
+
+let fc = 0;
+let ft = 0;
+let phase = 0;
+
+let memories = [];
+
+let memoryObjects = [];
+let connectionObjects = [];
+
+let connectionsVisible = true;
+
+const STORAGE_KEY = "hyperstream_memory_room_v5";
+
+
+/* =========================================================
+   START
+========================================================= */
+
+window.addEventListener("DOMContentLoaded", () => {
+
+  loadMemories();
+
+  init3();
+
+  initCam();
+
+  updateMemoryList();
+
+});
+
+
+/* =========================================================
+   THREE.JS INITIALIZATION
+========================================================= */
+
+function init3(){
+
+  const box = $("viewer");
+
+  scene = new THREE.Scene();
+
+  scene.fog = new THREE.FogExp2(
+    0x020617,
+    0.012
+  );
+
+  cam = new THREE.PerspectiveCamera(
+    48,
+    box.clientWidth / box.clientHeight,
+    0.05,
+    2000
+  );
+
+  cam.position.set(
+    0,
+    4,
+    9
+  );
+
+  ren = new THREE.WebGLRenderer({
+    canvas:$("c3"),
+    antialias:true,
+    powerPreference:"high-performance"
+  });
+
+  ren.setSize(
+    box.clientWidth,
+    box.clientHeight
+  );
+
+  ren.setPixelRatio(
+    Math.min(
+      window.devicePixelRatio || 1,
+      2
+    )
+  );
+
+  ren.setClearColor(0x020617);
+
+  ctrl = new THREE.OrbitControls(
+    cam,
+    ren.domElement
+  );
+
+  ctrl.enableDamping = true;
+
+  ctrl.autoRotate = true;
+
+  ctrl.autoRotateSpeed = 0.35;
+
+  /* Lighting */
+
+  scene.add(
+    new THREE.AmbientLight(
+      0xffffff,
+      1.2
+    )
+  );
+
+  const pointLight =
+    new THREE.PointLight(
+      0x8b5cf6,
+      3,
+      50
+    );
+
+  pointLight.position.set(
+    0,
+    4,
+    0
+  );
+
+  scene.add(pointLight);
+
+
+  /* Room */
+
+  createRoom();
+
+  /* Memory objects */
+
+  buildRoom();
+
+
+  window.addEventListener(
+    "resize",
+    () => {
+
+      cam.aspect =
+        box.clientWidth /
+        box.clientHeight;
+
+      cam.updateProjectionMatrix();
+
+      ren.setSize(
+        box.clientWidth,
+        box.clientHeight
+      );
+
+    }
+  );
+
+  ren.setAnimationLoop(loop);
+}
+
+
+/* =========================================================
+   3D ROOM
+========================================================= */
+
+function createRoom(){
+
+  const floorGeo =
+    new THREE.PlaneGeometry(
+      30,
+      30
+    );
+
+  const floorMat =
+    new THREE.MeshBasicMaterial({
+      color:0x07111f,
+      transparent:true,
+      opacity:.75
+    });
+
+  const floor =
+    new THREE.Mesh(
+      floorGeo,
+      floorMat
+    );
+
+  floor.rotation.x =
+    -Math.PI / 2;
+
+  floor.position.y = -2;
+
+  scene.add(floor);
+
+
+  /* Grid */
+
+  const grid =
+    new THREE.GridHelper(
+      30,
+      30,
+      0x334155,
+      0x111827
+    );
+
+  grid.position.y = -1.98;
+
+  scene.add(grid);
+
+
+  /* Central energy ring */
+
+  const ringGeo =
+    new THREE.RingGeometry(
+      1.5,
+      1.52,
+      64
+    );
+
+  const ringMat =
+    new THREE.MeshBasicMaterial({
+      color:0xec4899,
+      transparent:true,
+      opacity:.6,
+      side:THREE.DoubleSide
+    });
+
+  const ring =
+    new THREE.Mesh(
+      ringGeo,
+      ringMat
+    );
+
+  ring.rotation.x =
+    -Math.PI / 2;
+
+  ring.position.y = -1.94;
+
+  scene.add(ring);
+}
+
+
+/* =========================================================
+   CAMERA
+========================================================= */
+
+function initCam(){
+
+  video = $("vid");
+
+  c2d = document.createElement(
+    "canvas"
+  );
+
+  ctx =
+    c2d.getContext(
+      "2d",
+      {
+        willReadFrequently:true
+      }
+    );
+
+
+  navigator.mediaDevices
+    ?.getUserMedia({
+      video:{
+        width:{ideal:640},
+        height:{ideal:480},
+        frameRate:{ideal:30}
+      },
+      audio:false
+    })
+
+    .then(s => {
+
+      stream = s;
+
+      video.srcObject = s;
+
+      return video.play();
+
+    })
+
+    .then(() => {
+
+      ready = true;
+
+    })
+
+    .catch(() => {
+
+      /* Camera unavailable */
+
+    });
+}
+
+
+/* =========================================================
+   ANIMATION LOOP
+========================================================= */
+
+function loop(now){
+
+  ctrl.update();
+
+  phase = now * 0.001;
+
+  fc++;
+
+  if(now - ft > 1000){
+
+    $("fpsD").textContent =
+      Math.round(
+        fc * 1000 / (now - ft)
+      );
+
+    fc = 0;
+
+    ft = now;
+
+  }
+
+
+  if(
+    scanning &&
+    ready &&
+    video.readyState >= 2
+  ){
+
+    sample();
+
+  }
+
+
+  animateMemoryObjects();
+
+  ren.render(
+    scene,
+    cam
+  );
+}
+
+
+/* =========================================================
+   CAMERA POINT CLOUD
+========================================================= */
+
+function sample(){
+
+  const w =
+    video.videoWidth || 640;
+
+  const h =
+    video.videoHeight || 480;
+
+  if(
+    c2d.width !== w ||
+    c2d.height !== h
+  ){
+
+    c2d.width = w;
+
+    c2d.height = h;
+
+  }
+
+
+  try{
+
+    ctx.drawImage(
+      video,
+      0,
+      0,
+      w,
+      h
+    );
+
+  }catch{
+
+    return;
+
+  }
+
+
+  let pix;
+
+  try{
+
+    pix =
+      ctx.getImageData(
+        0,
+        0,
+        w,
+        h
+      ).data;
+
+  }catch{
+
+    return;
+
+  }
+
+
+  const pos = [];
+
+  const col = [];
+
+  const cx = w * .5;
+
+  const cy = h * .5;
+
+  const sx = 1.6;
+
+  const sy = 1.6;
+
+  const step =
+    Math.max(
+      1,
+      stepSize | 0
+    );
+
+
+  for(
+    let y=0;
+    y<h;
+    y+=step
+  ){
+
+    for(
+      let x=0;
+      x<w;
+      x+=step
+    ){
+
+      const i =
+        (y*w+x)*4;
+
+      const r =
+        pix[i]/255;
+
+      const g =
+        pix[i+1]/255;
+
+      const b =
+        pix[i+2]/255;
+
+
+      const brightness =
+        0.299*r +
+        0.587*g +
+        0.114*b;
+
+
+      if(brightness < .02)
+        continue;
+
+
+      const nx =
+        ((w-x)/w)*2-1;
+
+      const ny =
+        -((y/h)*2-1);
+
+
+      const nz =
+        (
+          (1-brightness)-.5
+        ) *
+        (depthMul*.04);
+
+
+      pos.push(
+        nx*sx,
+        ny*sy,
+        nz
+      );
+
+      col.push(
+        r,
+        g,
+        b
+      );
+
+    }
+
+  }
+
+
+  $("nLive").textContent =
+    (pos.length/3)
+      .toLocaleString();
+
+
+  buildCloud(
+    pos,
+    col
+  );
+}
+
+
+/* =========================================================
+   POINT CLOUD
+========================================================= */
+
+function buildCloud(
+  pos,
+  col
+){
+
+  while(layers.length){
+
+    const o =
+      layers.pop();
+
+    scene.remove(o);
+
+    o.geometry.dispose();
+
+    o.material.dispose();
+
+  }
+
+
+  const g =
+    new THREE.BufferGeometry();
+
+
+  g.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(
+      pos,
+      3
+    )
+  );
+
+
+  g.setAttribute(
+    "color",
+    new THREE.Float32BufferAttribute(
+      col,
+      3
+    )
+  );
+
+
+  const mat =
+    new THREE.PointsMaterial({
+
+      size:.015,
+
+      vertexColors:true,
+
+      transparent:true,
+
+      opacity:.92,
+
+      blending:
+        THREE.AdditiveBlending
+
+    });
+
+
+  const pts =
+    new THREE.Points(
+      g,
+      mat
+    );
+
+
+  scene.add(pts);
+
+  layers.push(pts);
+}
+
+
+/* =========================================================
+   MEMORY CREATION
+========================================================= */
+
+function addMemory(){
+
+  const name =
+    $("memoryName")
+      .value
+      .trim();
+
+  const text =
+    $("memoryText")
+      .value
+      .trim();
+
+
+  if(!name){
+
+    alert(
+      "Give the memory a name first."
+    );
+
+    return;
+
+  }
+
+
+  const angle =
+    memories.length *
+    0.9;
+
+
+  const radius =
+    2 +
+    Math.floor(
+      memories.length / 8
+    ) * 1.5;
+
+
+  const memory = {
+
+    id:
+      crypto.randomUUID
+      ? crypto.randomUUID()
+      : String(Date.now()),
+
+    name:name,
+
+    text:text,
+
+    created:
+      new Date().toISOString(),
+
+    x:
+      Math.cos(angle)*radius,
+
+    y:
+      (Math.random()-.5)*2,
+
+    z:
+      Math.sin(angle)*radius,
+
+    color:
+      randomMemoryColor(),
+
+    size:1
+
+  };
+
+
+  memories.push(memory);
+
+  saveMemories();
+
+  updateMemoryList();
+
+  buildRoom();
+
+
+  $("memoryName").value = "";
+
+  $("memoryText").value = "";
+
+}
+
+
+/* =========================================================
+   MEMORY COLORS
+========================================================= */
+
+function randomMemoryColor(){
+
+  const colors = [
+
+    0xec4899,
+
+    0x8b5cf6,
+
+    0x38bdf8,
+
+    0x22c55e,
+
+    0xf59e0b,
+
+    0x06b6d4
+
+  ];
+
+  return colors[
+    Math.floor(
+      Math.random()*colors.length
+    )
+  ];
+
+}
+
+
+/* =========================================================
+   BUILD 3D MEMORY ROOM
+========================================================= */
+
+function buildRoom(){
+
+  /* Remove previous memory nodes */
+
+  memoryObjects.forEach(
+    obj => {
+
+      scene.remove(obj);
+
+      if(obj.geometry)
+        obj.geometry.dispose();
+
+      if(obj.material)
+        obj.material.dispose();
+
+    }
+  );
+
+  memoryObjects = [];
+
+
+  /* Remove connections */
+
+  connectionObjects.forEach(
+    obj => {
+
+      scene.remove(obj);
+
+      if(obj.geometry)
+        obj.geometry.dispose();
+
+      if(obj.material)
+        obj.material.dispose();
+
+    }
+  );
+
+  connectionObjects = [];
+
+
+  /* Create memories */
+
+  memories.forEach(
+    memory => {
+
+      createMemoryObject(
+        memory
+      );
+
+    }
+  );
+
+
+  if(connectionsVisible){
+
+    createConnections();
+
+  }
+
+
+  $("roomD").textContent =
+    memories.length;
+
+}
+
+
+/* =========================================================
+   CREATE MEMORY NODE
+========================================================= */
+
+function createMemoryObject(
+  memory
+){
+
+  const group =
+    new THREE.Group();
+
+
+  group.position.set(
+    memory.x,
+    memory.y,
+    memory.z
+  );
+
+
+  group.userData.memoryId =
+    memory.id;
+
+
+  /* Main sphere */
+
+  const geometry =
+    new THREE.SphereGeometry(
+      .22 * memory.size,
+      24,
+      24
+    );
+
+
+  const material =
+    new THREE.MeshStandardMaterial({
+
+      color:memory.color,
+
+      emissive:memory.color,
+
+      emissiveIntensity:1.8,
+
+      roughness:.25,
+
+      metalness:.6
+
+    });
+
+
+  const sphere =
+    new THREE.Mesh(
+      geometry,
+      material
+    );
+
+
+  group.add(sphere);
+
+
+  /* Outer energy ring */
+
+  const ringGeo =
+    new THREE.RingGeometry(
+      .32,
+      .35,
+      32
+    );
+
+
+  const ringMat =
+    new THREE.MeshBasicMaterial({
+
+      color:memory.color,
+
+      transparent:true,
+
+      opacity:.55,
+
+      side:
+        THREE.DoubleSide
+
+    });
+
+
+  const ring =
+    new THREE.Mesh(
+      ringGeo,
+      ringMat
+    );
+
+
+  ring.rotation.x =
+    Math.PI/2;
+
+
+  group.add(ring);
+
+
+  /* Small label */
+
+  const label =
+    createTextSprite(
+      memory.name,
+      memory.color
+    );
+
+
+  label.position.y =
+    .48;
+
+  label.scale.set(
+    1.4,
+    .35,
+    1
+  );
+
+
+  group.add(label);
+
+
+  scene.add(group);
+
+  memoryObjects.push(group);
+
+}
+
+
+/* =========================================================
+   TEXT SPRITE
+========================================================= */
+
+function createTextSprite(
+  text,
+  color
+){
+
+  const canvas =
+    document.createElement(
+      "canvas"
+    );
+
+  canvas.width = 512;
+
+  canvas.height = 128;
+
+
+  const c =
+    canvas.getContext("2d");
+
+
+  c.clearRect(
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+
+
+  c.font =
+    "bold 38px system-ui";
+
+  c.textAlign =
+    "center";
+
+  c.textBaseline =
+    "middle";
+
+
+  c.fillStyle =
+    "#ffffff";
+
+
+  c.shadowColor =
+    "#" +
+    color.toString(16)
+      .padStart(6,"0");
+
+  c.shadowBlur = 15;
+
+
+  c.fillText(
+    text.substring(0,28),
+    256,
+    64
+  );
+
+
+  const texture =
+    new THREE.CanvasTexture(
+      canvas
+    );
+
+
+  const material =
+    new THREE.SpriteMaterial({
+      map:texture,
+      transparent:true
+    });
+
+
+  return new THREE.Sprite(
+    material
+  );
+
+}
+
+
+/* =========================================================
+   MEMORY CONNECTIONS
+========================================================= */
+
+function createConnections(){
+
+  for(
+    let i=0;
+    i<memories.length;
+    i++
+  ){
+
+    for(
+      let j=i+1;
+      j<memories.length;
+      j++
+    ){
+
+      const a =
+        memories[i];
+
+      const b =
+        memories[j];
+
+
+      /*
+       * Connect nearby memories.
+       * This produces a spatial knowledge graph.
+       */
+
+      const distance =
+        Math.sqrt(
+
+          Math.pow(
+            a.x-b.x,
+            2
+          ) +
+
+          Math.pow(
+            a.y-b.y,
+            2
+          ) +
+
+          Math.pow(
+            a.z-b.z,
+            2
+          )
+
+        );
+
+
+      if(distance > 5)
+        continue;
+
+
+      const points = [
+
+        new THREE.Vector3(
+          a.x,
+          a.y,
+          a.z
+        ),
+
+        new THREE.Vector3(
+          b.x,
+          b.y,
+          b.z
+        )
+
+      ];
+
+
+      const geometry =
+        new THREE.BufferGeometry()
+          .setFromPoints(points);
+
+
+      const material =
+        new THREE.LineBasicMaterial({
+
+          color:0x8b5cf6,
+
+          transparent:true,
+
+          opacity:
+            Math.max(
+              .08,
+              .55-distance*.08
+            )
+
+        });
+
+
+      const line =
+        new THREE.Line(
+          geometry,
+          material
+        );
+
+
+      scene.add(line);
+
+      connectionObjects.push(line);
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   MEMORY ANIMATION
+========================================================= */
+
+function animateMemoryObjects(){
+
+  memoryObjects.forEach(
+    (obj,index) => {
+
+      const memory =
+        memories[index];
+
+      if(!memory)
+        return;
+
+
+      const pulse =
+        1 +
+        Math.sin(
+          phase*2 +
+          index
+        )*.08;
+
+
+      obj.scale.set(
+        pulse,
+        pulse,
+        pulse
+      );
+
+
+      obj.children.forEach(
+        child => {
+
+          if(
+            child.isSprite
+          ){
+
+            child.lookAt(
+              cam.position
+            );
+
+          }
+
+        }
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   MEMORY LIST UI
+========================================================= */
+
+function updateMemoryList(){
+
+  const list =
+    $("memoryList");
+
+  list.innerHTML = "";
+
+
+  memories.forEach(
+    memory => {
+
+      const item =
+        document.createElement(
+          "div"
+        );
+
+      item.className =
+        "memory-item";
+
+
+      item.innerHTML = `
+
+        <div class="memory-name">
+
+          <span
+            class="memory-dot"
+            style="
+              background:#${memory.color
+                .toString(16)
+                .padStart(6,"0")}
+            ">
+          </span>
+
+          ${escapeHTML(memory.name)}
+
+        </div>
+
+        <div class="memory-text">
+
+          ${escapeHTML(
+            memory.text || "No description"
+          )}
+
+        </div>
+
+      `;
+
+
+      item.onclick =
+        () => focusMemory(
+          memory.id
+        );
+
+
+      list.appendChild(item);
+
+    }
+  );
+
+
+  $("memoryCount")
+    .textContent =
+      memories.length;
+
+  $("roomD")
+    .textContent =
+      memories.length;
+
+}
+
+
+/* =========================================================
+   FOCUS MEMORY
+========================================================= */
+
+function focusMemory(id){
+
+  const memory =
+    memories.find(
+      m => m.id === id
+    );
+
+
+  if(!memory)
+    return;
+
+
+  const target =
+    new THREE.Vector3(
+      memory.x,
+      memory.y,
+      memory.z
+    );
+
+
+  cam.position.set(
+    memory.x + 3,
+    memory.y + 2,
+    memory.z + 3
+  );
+
+
+  ctrl.target.copy(
+    target
+  );
+
+
+  $("infoName")
+    .textContent =
+      memory.name;
+
+
+  $("infoText")
+    .textContent =
+      memory.text ||
+      "No description stored.";
+
+
+  $("memoryInfo").style.display =
+    "block";
+
+}
+
+
+/* =========================================================
+   AUTO ARRANGE
+========================================================= */
+
+function arrangeMemories(){
+
+  const total =
+    memories.length;
+
+
+  if(!total)
+    return;
+
+
+  memories.forEach(
+    (memory,index) => {
+
+      const angle =
+        (index / total) *
+        Math.PI * 2;
+
+
+      const radius =
+        2.5 +
+        Math.floor(index / 12) * 1.8;
+
+
+      memory.x =
+        Math.cos(angle) *
+        radius;
+
+
+      memory.z =
+        Math.sin(angle) *
+        radius;
+
+
+      memory.y =
+        ((index % 4)-1.5)*.8;
+
+    }
+  );
+
+
+  saveMemories();
+
+  buildRoom();
+
+}
+
+
+/* =========================================================
+   PERSISTENT STORAGE
+========================================================= */
+
+function saveMemories(){
+
+  try{
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(memories)
+    );
+
+  }catch(error){
+
+    console.error(
+      "Memory save failed:",
+      error
+    );
+
+  }
+
+}
+
+
+function loadMemories(){
+
+  try{
+
+    const saved =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+
+    if(saved){
+
+      memories =
+        JSON.parse(saved);
+
+    }
+
+  }catch(error){
+
+    console.error(
+      "Memory load failed:",
+      error
+    );
+
+    memories = [];
+
+  }
+
+}
+
+
+/* =========================================================
+   CLEAR MEMORY ROOM
+========================================================= */
+
+function clearMemories(){
+
+  if(!memories.length)
+    return;
+
+
+  if(
+    !confirm(
+      "Delete every stored memory?"
+    )
+  ){
+
+    return;
+
+  }
+
+
+  memories = [];
+
+  saveMemories();
+
+  updateMemoryList();
+
+  buildRoom();
+
+  $("memoryInfo").style.display =
+    "none";
+
+}
+
+
+/* =========================================================
+   EXPORT
+========================================================= */
+
+function exportMemoryRoom(){
+
+  const data = {
+
+    HyperStreamXD:
+      "Memory Room v5.0",
+
+    exported:
+      new Date().toISOString(),
+
+    memories:
+      memories
+
+  };
+
+
+  const blob =
+    new Blob(
+      [
+        JSON.stringify(
+          data,
+          null,
+          2
+        )
+      ],
+      {
+        type:
+          "application/json"
+      }
+    );
+
+
+  const url =
+    URL.createObjectURL(blob);
+
+
+  const a =
+    document.createElement(
+      "a"
+    );
+
+
+  a.href = url;
+
+  a.download =
+    "hyperstream_memory_room.json";
+
+  a.click();
+
+
+  URL.revokeObjectURL(url);
+
+}
+
+
+/* =========================================================
+   IMPORT
+========================================================= */
+
+function importMemoryRoom(event){
+
+  const file =
+    event.target.files[0];
+
+
+  if(!file)
+    return;
+
+
+  const reader =
+    new FileReader();
+
+
+  reader.onload =
+    e => {
+
+      try{
+
+        const data =
+          JSON.parse(
+            e.target.result
+          );
+
+
+        if(
+          !data.memories ||
+          !Array.isArray(
+            data.memories
+          )
+        ){
+
+          alert(
+            "Invalid HyperStream memory file."
+          );
+
+          return;
+
+        }
+
+
+        memories =
+          data.memories;
+
+
+        saveMemories();
+
+        updateMemoryList();
+
+        buildRoom();
+
+
+        alert(
+          "Memory room imported."
+        );
+
+      }catch(error){
+
+        alert(
+          "Could not read memory file."
+        );
+
+      }
+
+    };
+
+
+  reader.readAsText(file);
+
+}
+
+
+/* =========================================================
+   SCAN
+========================================================= */
+
+function toggleScan(){
+
+  scanning =
+    !scanning;
+
+
+  const b =
+    $("scanBtn");
+
+
+  b.textContent =
+    scanning
+      ? "STOP UNLIMITED SCAN"
+      : "ACTIVATE UNLIMITED SCAN";
+
+
+  b.classList.toggle(
+    "on",
+    scanning
+  );
+
+}
+
+
+/* =========================================================
+   OLD JSON EXPORT
+========================================================= */
+
+function expJSON(){
+
+  const blob =
+    new Blob(
+      [
+        JSON.stringify(
+          {
+            HyperStreamXD:rec
+          }
+        )
+      ],
+      {
+        type:
+          "application/json"
+      }
+    );
+
+
+  const a =
+    document.createElement(
+      "a"
+    );
+
+
+  a.href =
+    URL.createObjectURL(
+      blob
+    );
+
+
+  a.download =
+    "quantum_matrix.json";
+
+
+  a.click();
+
+}
+
+
+/* =========================================================
+   HTML SAFETY
+========================================================= */
+
+function escapeHTML(text){
+
+  return String(text)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+</script>
+
+</body>
+</html>
