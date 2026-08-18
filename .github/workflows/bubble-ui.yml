@@ -10,81 +10,54 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Apply friendly UI polish
+      - name: Apply friendly UI polish to every HyperStream page
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('index.html')
-          s=p.read_text()
+          files=[Path('index.html'),Path('hyperstream-simple.html')]
           css='''
-/* Bubble UI polish */
-.card{border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
-.title{font-size:10px;letter-spacing:.5px;text-transform:none;font-weight:800;color:#cbd5e1}
-button,.tab,.chip,select,.drop{border-radius:999px}
-button{padding:9px 12px;letter-spacing:.1px}
-input[type=range]{width:118px;height:18px;appearance:none;background:transparent}
-input[type=range]::-webkit-slider-runnable-track{height:9px;border-radius:999px;background:linear-gradient(90deg,#38bdf8,#8b5cf6,#ec4899);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
-input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;margin-top:-5.5px;border-radius:50%;background:#fff;border:3px solid #ec4899;box-shadow:0 3px 12px rgba(236,72,153,.45);cursor:grab}
-input[type=range]::-moz-range-track{height:9px;border-radius:999px;background:linear-gradient(90deg,#38bdf8,#8b5cf6,#ec4899)}
-input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid #ec4899;box-shadow:0 3px 12px rgba(236,72,153,.45);cursor:grab}
-.tab{font-size:10px}
-.bubble-title{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;user-select:none;padding:3px 2px}
-.bubble-title:after{content:'＋';font-size:14px;color:#ec4899;transition:transform .2s}
-.card.open .bubble-title:after{content:'−'}
-.bubble-body{overflow:hidden;max-height:0;opacity:0;transition:max-height .28s ease,opacity .2s ease}
-.card.open .bubble-body{max-height:900px;opacity:1}
-.bubble-card:not(.open){padding-bottom:7px}
-@media (max-width:700px){#sidebar{width:100%;min-width:0}.stats{top:8px;right:8px}.brand{font-size:12px}}
-'''
-          if '/* Bubble UI polish */' not in s:
+          /* Bubble UI polish */
+          .card{border-radius:18px;box-shadow:0 10px 30px rgba(0,0,0,.16)}
+          .title{font-size:10px;letter-spacing:.5px;text-transform:none;font-weight:800;color:#cbd5e1}
+          button,.tab,.chip,select,.drop{border-radius:999px}
+          button{padding:9px 12px;letter-spacing:.1px}
+          input[type=range]{width:118px;height:24px;appearance:none;background:transparent}
+          input[type=range]::-webkit-slider-runnable-track{height:9px;border-radius:999px;background:linear-gradient(90deg,#38bdf8,#8b5cf6,#ec4899);box-shadow:inset 0 0 0 1px rgba(255,255,255,.08)}
+          input[type=range]::-webkit-slider-thumb{appearance:none;width:24px;height:24px;margin-top:-7.5px;border-radius:50%;background:#fff;border:4px solid #ec4899;box-shadow:0 3px 12px rgba(236,72,153,.45);cursor:grab}
+          input[type=range]::-moz-range-track{height:9px;border-radius:999px;background:linear-gradient(90deg,#38bdf8,#8b5cf6,#ec4899)}
+          input[type=range]::-moz-range-thumb{width:20px;height:20px;border-radius:50%;background:#fff;border:4px solid #ec4899;box-shadow:0 3px 12px rgba(236,72,153,.45);cursor:grab}
+          .tab{font-size:10px}
+          .bubble-title{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;user-select:none;padding:3px 2px}
+          .bubble-title:after{content:'＋';font-size:14px;color:#ec4899}
+          .card.open .bubble-title:after{content:'−'}
+          .bubble-body{overflow:hidden;max-height:0;opacity:0;transition:max-height .28s ease,opacity .2s ease}
+          .card.open .bubble-body{max-height:1200px;opacity:1}
+          .bubble-card:not(.open){padding-bottom:7px}
+          @media(max-width:700px){#sidebar{width:100%;min-width:0}.stats{top:8px;right:8px}.brand{font-size:12px}}
+          '''
+          for p in files:
+            if not p.exists(): continue
+            s=p.read_text()
+            if '/* Bubble UI polish */' not in s:
               s=s.replace('</style>',css+'</style>',1)
-          js='''
-<script>
-(function(){
-  const simple={
-    'ACTIVATE 4D MATRIX SCAN':'Scan','STOP MATRIX SCAN':'Stop scan','Quantum Volumetric Scan':'Scan',
-    'Voxel Density':'Detail','Hyper-Depth Field':'Depth','Quantum Node Size':'Point size','Dimensional Strata':'Layers','Spatial Dispersion':'Spread',
-    'Export Matrix':'Export','Purge Environment':'Clear','Import Holographic Payload':'Load','Direct Matrix Injection':'Paste','Synthesize 4D Hologram':'Create',
-    'Advanced Quantum FX & Audio':'Advanced options','Instant Share & iOS Suite':'Share & AR','Export Holographic Media':'Export',
-    'Render Engine':'Look','Neural Bloom Intensity':'Glow','Glitch Aberration':'Glitch','Audio Reactive Pulse':'Mic pulse','Enable Mic Sync':'Mic sync',
-    'Time/Space Warp':'Warp','Temporal Timeline':'Timeline','Playback Velocity':'Speed','Auto Orbit':'Auto rotate','Quantum Pulse':'Pulse','Strata Selector':'Layers',
-    'AirDrop / Share':'Share','AR Quick Look (.usdz)':'AR','Export Standalone Hologram App':'Save app','Snapshot PNG':'Snapshot','Record 4D Spatial Video':'Record video'
-  };
-  function replaceText(root){
-    const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT); const nodes=[];
-    while(walker.nextNode()) nodes.push(walker.currentNode);
-    nodes.forEach(n=>{let t=n.nodeValue.trim(); if(simple[t]) n.nodeValue=n.nodeValue.replace(t,simple[t]);});
-  }
-  function makeBubble(card){
-    if(card.dataset.bubble==='1') return;
-    const title=card.querySelector(':scope > .title'); if(!title) return;
-    const body=document.createElement('div'); body.className='bubble-body';
-    while(title.nextSibling) body.appendChild(title.nextSibling);
-    title.classList.add('bubble-title'); card.classList.add('bubble-card'); card.appendChild(body); card.dataset.bubble='1';
-    title.setAttribute('role','button'); title.setAttribute('tabindex','0');
-    const toggle=()=>card.classList.toggle('open');
-    title.addEventListener('click',toggle); title.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle();}});
-  }
-  function init(){
-    document.querySelectorAll('#sidebar > .card').forEach(card=>{
-      const title=card.querySelector(':scope > .title');
-      if(title && /Advanced Quantum FX|Instant Share|Export Holographic Media/.test(title.textContent)) makeBubble(card);
-    });
-    replaceText(document.body);
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
-})();
-</script>
-'''
-          if 'Bubble UI behavior' not in s:
-              js=js.replace('<script>','<script>/* Bubble UI behavior */',1)
+            if 'Bubble UI behavior' not in s:
+              js='''
+          <script>/* Bubble UI behavior */
+          (function(){
+            const simple={'ACTIVATE 4D MATRIX SCAN':'Scan','STOP MATRIX SCAN':'Stop scan','Quantum Volumetric Scan':'Scan','Voxel Density':'Detail','Hyper-Depth Field':'Depth','Quantum Node Size':'Point size','Dimensional Strata':'Layers','Spatial Dispersion':'Spread','Export Matrix':'Export','Purge Environment':'Clear','Import Holographic Payload':'Load','Direct Matrix Injection':'Paste','Synthesize 4D Hologram':'Create','Advanced Quantum FX & Audio':'Advanced options','Instant Share & iOS Suite':'Share & AR','Export Holographic Media':'Export','Render Engine':'Look','Neural Bloom Intensity':'Glow','Glitch Aberration':'Glitch','Audio Reactive Pulse':'Mic pulse','Enable Mic Sync':'Mic sync','Time/Space Warp':'Warp','Temporal Timeline':'Timeline','Playback Velocity':'Speed','Auto Orbit':'Auto rotate','Quantum Pulse':'Pulse','Strata Selector':'Layers','AirDrop / Share':'Share','AR Quick Look (.usdz)':'AR','Export Standalone Hologram App':'Save app','Snapshot PNG':'Snapshot','Record 4D Spatial Video':'Record video'};
+            function text(){const w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),a=[];while(w.nextNode())a.push(w.currentNode);a.forEach(n=>{const t=n.nodeValue.trim();if(simple[t])n.nodeValue=n.nodeValue.replace(t,simple[t])});}
+            function bubble(card){if(card.dataset.bubble==='1')return;const title=card.querySelector(':scope>.title');if(!title)return;const body=document.createElement('div');body.className='bubble-body';while(title.nextSibling)body.appendChild(title.nextSibling);title.classList.add('bubble-title');card.classList.add('bubble-card');card.appendChild(body);card.dataset.bubble='1';title.setAttribute('role','button');title.setAttribute('tabindex','0');const toggle=()=>card.classList.toggle('open');title.onclick=toggle;title.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle()}}}
+            function init(){document.querySelectorAll('#sidebar>.card').forEach(c=>{const t=c.querySelector(':scope>.title');if(t&&/Advanced Quantum FX|Instant Share|Export Holographic Media/.test(t.textContent))bubble(c)});text();const scan=document.getElementById('scanBtn');if(scan)scan.textContent='✨ Scan';const cam=document.getElementById('camBtn');if(cam)cam.textContent='📷 Camera';const perf=document.getElementById('perfBtn');if(perf&&!perf.textContent.includes('ON'))perf.textContent='⚡ Fast'}
+            if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
+          })();</script>
+          '''
               s=s.replace('</body>',js+'</body>',1)
-          p.write_text(s)
+            p.write_text(s)
           PY
       - name: Commit bubble UI
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          git commit -m 'Polish HyperStream with bubble UI [bubble-ui]' || exit 0
+          git add index.html hyperstream-simple.html
+          git diff --cached --quiet || git commit -m 'Polish HyperStream bubble UI [bubble-ui]'
           git push
