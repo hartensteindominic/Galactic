@@ -1,203 +1,52 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>HyperStream XD • Ultimate 4D Quantum Holographic Environment</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#020617;color:#f8fafc;font-family:system-ui,-apple-system,sans-serif;height:100vh;display:flex;overflow:hidden}
-#sidebar{width:420px;min-width:340px;background:rgba(3,7,18,0.96);backdrop-filter:blur(20px);border-right:1px solid #1e293b;display:flex;flex-direction:column;padding:12px;gap:8px;overflow-y:auto;z-index:10}
-.brand{font-size:13px;font-weight:900;letter-spacing:1px;color:#38bdf8;line-height:1.2}
-.brand span{background:linear-gradient(90deg,#38bdf8,#ec4899,#8b5cf6,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.card{background:rgba(15,23,42,0.85);border:1px solid #334155;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:6px}
-.title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#94a3b8}
-.row{display:flex;justify-content:space-between;align-items:center;font-size:10px;gap:6px;color:#cbd5e1}
-input[type=range]{accent-color:#ec4899;width:110px;cursor:pointer}
-button{border:none;border-radius:6px;padding:8px;font-size:10px;font-weight:800;cursor:pointer;color:#fff;transition:transform 0.1s ease, filter 0.2s}
-button:active{transform:scale(0.97)}
-.btn-p{background:linear-gradient(135deg,#8b5cf6,#ec4899)}.btn-p:hover{filter:brightness(1.15)}
-.btn-d{background:#ef4444;width:100%}.btn-d.on{background:#f97316;animation:pulseGlow 1.5s infinite}
-.btn-s{background:#1e293b;color:#f1f5f9;border:1px solid #475569}
-.btn-g{background:#10b981}
-.btn-i{background:#0ea5e9}
-.tabs{display:flex;gap:4px}
-.tab{flex:1;padding:7px;background:#1e293b;border:1px solid #334155;border-radius:6px;color:#94a3b8;font-size:10px;font-weight:700;cursor:pointer}
-.tab.on{background:linear-gradient(135deg,#8b5cf6,#ec4899);color:#fff;border-color:transparent}
-#viewer{flex:1;position:relative;background:radial-gradient(circle at center,#1e1b4b 0%,#020617 90%)}
-canvas{display:block;width:100%;height:100%}
-.stats{position:absolute;top:12px;right:12px;background:rgba(2,6,23,0.85);backdrop-filter:blur(8px);padding:8px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);font-size:10px;color:#94a3b8;line-height:1.4;z-index:5}
-.stats b{color:#ec4899}
-.chips{display:flex;flex-wrap:wrap;gap:4px}
-.chip{font-size:9px;padding:3px 7px;border-radius:5px;background:#1e293b;border:1px solid #475569;cursor:pointer;user-select:none}
-.chip.on{background:#ec4899;border-color:#db2777;color:#fff}
-textarea{width:100%;height:45px;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#f8fafc;font-size:9px;padding:6px;resize:none;font-family:ui-monospace,monospace}
-.drop{border:1.5px dashed #475569;padding:12px;border-radius:8px;text-align:center;font-size:10px;cursor:pointer;color:#94a3b8;background:rgba(15,23,42,0.5)}
-.drop.over{border-color:#ec4899;background:rgba(236,72,153,0.1)}
-input[type=file]{display:none}
-#vid{display:none}
-select{background:#0f172a;color:#fff;border:1px solid #334155;border-radius:5px;font-size:10px;padding:3px 6px}
-.prog{height:5px;background:#1e293b;border-radius:3px;overflow:hidden;margin-top:3px}
-.prog>div{height:100%;background:linear-gradient(90deg,#38bdf8,#ec4899);width:0%;transition:width .1s}
-.hint{font-size:9px;color:#94a3b8;line-height:1.3}
-@keyframes pulseGlow { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-</style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Galactic x402 Licensing</title>
+  <meta name="description" content="Charge AI agents for one licensed asset use through x402 on Base.">
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#08110c;color:#f6f8ef;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{min-height:100vh;background:radial-gradient(circle at top left,rgba(183,255,40,.14),transparent 34rem),linear-gradient(180deg,#08110c 0%,#10170f 58%,#f4f2e8 58%,#f4f2e8 100%)}.shell{width:min(1100px,calc(100% - 32px));margin:0 auto;padding:20px 0 54px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-weight:950}.pill{border:1px solid rgba(183,255,40,.35);border-radius:999px;padding:8px 12px;color:#b7ff28;font-weight:900;font-size:12px}.hero{display:grid;grid-template-columns:minmax(0,1fr)360px;gap:24px;align-items:end;min-height:560px;padding:70px 0 40px}.eyebrow{color:#b7ff28;font-size:12px;font-weight:900;text-transform:uppercase}.hero h1{max-width:760px;margin:10px 0 18px;font-size:clamp(3rem,8vw,6.4rem);line-height:.92;letter-spacing:0}.lead{max-width:710px;color:#c7d0c2;font-size:1.15rem;line-height:1.55}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.actions a{border-radius:8px;padding:13px 16px;font-weight:900;text-decoration:none}.primary{background:#b7ff28;color:#11160d}.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#f6f8ef}.panel{display:grid;gap:10px}.panel div,.console,.card{border-radius:8px}.panel div{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.07);padding:16px}.panel span{display:block;color:#9ea899;font-size:12px;font-weight:800}.panel strong{display:block;margin-top:5px;font-size:1.2rem}.console{background:#fffef8;color:#121610;border:1px solid #dedbcc;padding:18px;box-shadow:0 20px 60px rgba(8,17,12,.18)}.console h2{margin:4px 0 0}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.card{border:1px solid #dedbcc;background:#fffef8;color:#121610;padding:18px}.card span{color:#2a6118;font-weight:950}.card p{color:#5a6157;line-height:1.5}.code{display:block;overflow:auto;background:#10150e;color:#d9f7c2;border-radius:8px;padding:16px;margin-top:14px;line-height:1.5}.notice{margin-top:14px;background:#fff4d8;color:#5b3d05;border-radius:8px;padding:12px}@media(max-width:860px){.hero,.grid{grid-template-columns:1fr}.hero{min-height:0;padding-top:54px}}
+  </style>
 </head>
 <body>
-<div id="sidebar">
-  <div class="brand">HYPERSTREAM XD+ ULTIMATE<br><span>ADVANCED 4D QUANTUM HOLOGRAPHIC SUITE</span></div>
-  <div class="tabs">
-    <button class="tab on" id="t-cap" onclick="mode('cap')">📡 Live 4D</button>
-    <button class="tab" id="t-load" onclick="mode('load')">📂 Load</button>
-    <button class="tab" id="t-paste" onclick="mode('paste')">📋 Paste</button>
-  </div>
-  <div class="card" id="p-cap">
-    <div class="title">Quantum Volumetric Scan</div>
-    <button class="btn-d" id="scanBtn" onclick="toggleScan()">ACTIVATE 4D MATRIX SCAN</button>
-    <div style="display:flex;gap:6px">
-      <button class="btn-s" style="flex:1" id="camBtn" onclick="switchCam()">📷 Sensor</button>
-      <button class="btn-s" style="flex:1" id="perfBtn" onclick="togglePerf()">⚡ Warp Speed</button>
-    </div>
-    <div class="row"><span>Voxel Density</span><input type="range" id="step" min="1" max="3" value="1" oninput="stepSize=+this.value;$('stepV').textContent=this.value"><span id="stepV">1</span></div>
-    <div class="row"><span>Hyper-Depth Field</span><input type="range" id="depth" min="10" max="120" value="80" oninput="depthMul=+this.value"></div>
-    <div class="row"><span>Quantum Node Size</span><input type="range" id="psize" min="0.005" max="0.06" value="0.012" step="0.001" oninput="ptSize=+this.value;updSize()"></div>
-    <div class="row"><span>Dimensional Strata</span><input type="range" id="layers" min="2" max="24" value="14" oninput="layerN=+this.value;$('layV').textContent=this.value;buildChips()"><span id="layV">14</span></div>
-    <div class="row"><span>Spatial Dispersion</span><input type="range" id="spread" min="0.2" max="4.0" value="1.6" step="0.05" oninput="layerSp=+this.value"></div>
-    <div style="font-size:9px;color:#94a3b8">Active Voxels <b id="nLive">0</b> · Temporal Frames <b id="nFrm">0</b></div>
-    <div style="display:flex;gap:6px">
-      <button class="btn-g" style="flex:1" onclick="expJSON()">Export Matrix</button>
-      <button class="btn-s" style="flex:1" onclick="copyJSON()">Copy</button>
-    </div>
-    <textarea id="jsonOut" readonly placeholder="4D quantum coordinate stream…"></textarea>
-  </div>
-  <div class="card" id="p-load" style="display:none">
-    <div class="title">Import Holographic Payload</div>
-    <div class="drop" id="drop" onclick="$('fi').click()">Drop JSON Matrix or Click to Browse
-      <input type="file" id="fi" accept=".json" onchange="fileIn(event)">
-    </div>
-    <button class="btn-s" onclick="clearAll()">Purge Environment</button>
-  </div>
-  <div class="card" id="p-paste" style="display:none">
-    <div class="title">Direct Matrix Injection</div>
-    <textarea id="jsonIn" placeholder='{"HyperStreamXD":[...]}'></textarea>
-    <button class="btn-p" onclick="pasteIn()">Synthesize 4D Hologram</button>
-  </div>
-  <div class="card">
-    <div class="title">Advanced Quantum FX & Audio</div>
-    <div class="row"><span>Render Engine</span>
-      <select id="rmode" onchange="rMode=this.value;if(frames.length)drawFrame(playIdx,metaV)">
-        <option value="points">Quantum Point Matrix</option>
-        <option value="solid">Crystalline Mesh</option>
-        <option value="wire">Spatial Wireframe</option>
-        <option value="quantumWave">Quantum Wave Grid</option>
-        <option value="plasmaVortex">Plasma Vortex Field</option>
-      </select>
-    </div>
-    <div class="row"><span>Neural Bloom Intensity</span><input type="range" id="bloomInt" min="0" max="4" value="1.5" step="0.1" oninput="if(bloomPass)bloomPass.strength=+this.value"></div>
-    <div class="row"><span>Glitch Aberration</span><input type="range" id="glitchAmt" min="0" max="1" value="0.2" step="0.05" oninput="if(glitchUniforms)glitchUniforms.amount.value=+this.value"></div>
-    <div class="row"><span>Audio Reactive Pulse</span><button class="btn-i" style="padding:4px 8px" onclick="initAudioReactivity()">🎙️ Enable Mic Sync</button></div>
-    <div class="row"><span>Time/Space Warp</span><input type="range" id="meta" min="0" max="100" value="40" oninput="metaV=this.value/100;$('metaV').textContent=metaV.toFixed(2);isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="metaV">0.40</span></div>
-    <div class="row"><span>Temporal Timeline</span><input type="range" id="scrub" min="0" max="0" value="0" oninput="playIdx=+this.value;isPlay=false;$('playBtn').textContent='▶';if(frames.length)drawFrame(playIdx,metaV)"><span id="scrubV">0/0</span></div>
-    <div class="row"><span>Playback Velocity</span><input type="range" id="fps" min="6" max="60" value="30" oninput="playFPS=+this.value"></div>
-    <div style="display:flex;gap:6px">
-      <button class="btn-s" style="flex:1" id="playBtn" onclick="togglePlay()">▶ Play Stream</button>
-      <button class="btn-s" style="flex:1" onclick="resetCam()">↺ Recenter</button>
-    </div>
-    <div class="row"><span>Auto Orbit</span><input type="checkbox" id="orbit" checked onchange="autoOrbit=this.checked"></div>
-    <div class="row"><span>Quantum Pulse</span><input type="checkbox" id="pulse" checked onchange="doPulse=this.checked"></div>
-    <div class="title" style="margin-top:4px">Strata Selector</div>
-    <div class="chips" id="chips"></div>
-  </div>
-  <div class="card">
-    <div class="title">Instant Share & iOS Suite</div>
-    <div style="display:flex;gap:6px">
-      <button class="btn-i" style="flex:1" onclick="shareNative()">📤 AirDrop / Share</button>
-      <button class="btn-p" style="background:#10b981;flex:1" onclick="exportUSZ()">🍎 AR Quick Look (.usdz)</button>
-    </div>
-    <div class="btn-p" style="background:linear-gradient(135deg,#f97316,#db2777);text-align:center;margin-top:4px" onclick="exportHTMLBundle()">🌐 Export Standalone Hologram App</div>
-  </div>
-  <div class="card">
-    <div class="title">Export Holographic Media</div>
-    <button class="btn-p" style="background:#0d9488" onclick="expPNG()">📸 Snapshot PNG</button>
-    <button class="btn-p" style="background:#2563eb" id="webmBtn" onclick="expDimensionalVideo()">🎥 Record 4D Spatial Video</button>
-    <div class="prog"><div id="progFill"></div></div>
-    <div class="hint" id="expStatus">Advanced Quantum Pipeline Online.</div>
-  </div>
-</div>
-<div id="viewer">
-  <div class="stats">
-    <span id="status">Advanced Quantum Engine Online</span><br>
-    FPS <b id="fpsD">—</b> · Hologram Voxels <b id="nodesD">0</b>
-  </div>
-  <video id="vid" autoplay playsinline muted></video>
-  <canvas id="c3"></canvas>
-</div>
-<script>
-const $ = id => document.getElementById(id);
-let scene, cam, ren, ctrl, grid, composer, bloomPass, glitchPass, glitchUniforms;
-let layers = [], prevPos = [];
-let video, c2d, ctx;
-let scanning = false, rec = [], fIdx = 0;
-let stepSize = 1, depthMul = 80, ptSize = 0.012;
-let layerN = 14, layerSp = 1.6, smooth = 0.35;
-let rMode = 'points', metaV = 0.4, playFPS = 30;
-let isPlay = false, frames = [], playIdx = 0, lastT = 0;
-let autoOrbit = true, doPulse = true, vis = [];
-let facing = 'user', stream = null, ready = false;
-let perf = false, lastVol = 0;
-const VOL_MS = 25;
-let fc = 0, ft = 0, phase = 0;
-let exporting = false;
-let audioCtx, analyser, dataArray;
-const ChromaticGlitchShader = {
-  uniforms: {'tDiffuse': { value: null },'amount': { value: 0.2 },'time': { value: 0.0 }},
-  vertexShader: `varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-  fragmentShader: `uniform sampler2D tDiffuse;uniform float amount;uniform float time;varying vec2 vUv;void main(){vec2 uv=vUv;float glitchFactor=sin(time*10.0)*0.002*amount;vec4 cr=texture2D(tDiffuse,uv+vec2(glitchFactor+amount*0.005,0.0));vec4 cg=texture2D(tDiffuse,uv);vec4 cb=texture2D(tDiffuse,uv-vec2(glitchFactor+amount*0.005,0.0));gl_FragColor=vec4(cr.r,cg.g,cb.b,cg.a);}`
-};
-window.addEventListener('DOMContentLoaded',()=>{init3();initCam('user');dropInit();buildChips();});
-function init3(){const box=$('viewer');scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x020617,0.010);cam=new THREE.PerspectiveCamera(48,box.clientWidth/box.clientHeight,0.05,2000);cam.position.set(0,0.5,3.8);ren=new THREE.WebGLRenderer({canvas:$('c3'),antialias:true,powerPreference:'high-performance',preserveDrawingBuffer:true,alpha:false});ren.setSize(box.clientWidth,box.clientHeight);ren.setPixelRatio(Math.min(window.devicePixelRatio||1,2));ren.setClearColor(0x020617);composer=new THREE.EffectComposer(ren);composer.addPass(new THREE.RenderPass(scene,cam));bloomPass=new THREE.UnrealBloomPass(new THREE.Vector2(box.clientWidth,box.clientHeight),1.5,0.4,0.80);composer.addPass(bloomPass);glitchPass=new THREE.ShaderPass(ChromaticGlitchShader);glitchUniforms=glitchPass.uniforms;composer.addPass(glitchPass);if(typeof THREE.OrbitControls==='function'){ctrl=new THREE.OrbitControls(cam,ren.domElement);ctrl.enableDamping=true;ctrl.dampingFactor=0.07;ctrl.rotateSpeed=0.6;ctrl.autoRotate=true;ctrl.autoRotateSpeed=0.4;ctrl.target.set(0,0,0);}grid=new THREE.GridHelper(60,60,0xec4899,0x0f172a);grid.position.y=-2.2;scene.add(grid);scene.add(new THREE.AmbientLight(0xffffff,1.0));const l1=new THREE.DirectionalLight(0x38bdf8,1.8);l1.position.set(4,7,5);scene.add(l1);const l2=new THREE.DirectionalLight(0xec4899,1.4);l2.position.set(-4,-2,-4);scene.add(l2);window.addEventListener('resize',()=>{if(!box||!cam||!ren||!composer)return;cam.aspect=box.clientWidth/box.clientHeight;cam.updateProjectionMatrix();ren.setSize(box.clientWidth,box.clientHeight);composer.setSize(box.clientWidth,box.clientHeight);});loop();}
-function initAudioReactivity(){navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(s=>{audioCtx=new(window.AudioContext||window.webkitAudioContext)();const source=audioCtx.createMediaStreamSource(s);analyser=audioCtx.createAnalyser();analyser.fftSize=64;source.connect(analyser);dataArray=new Uint8Array(analyser.frequencyBinCount);$('status').textContent='Microphone Quantum Sync Active';}).catch(()=>$('status').textContent='Microphone permission denied');}
-function stopStream(){if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}ready=false;}
-function initCam(face){video=$('vid');c2d=document.createElement('canvas');ctx=c2d.getContext('2d',{willReadFrequently:true});stopStream();if(!navigator.mediaDevices?.getUserMedia){$('status').textContent='Sensor API unavailable';return;}navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:face},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30}},audio:false}).then(s=>{stream=s;facing=face;video.srcObject=s;return video.play();}).then(()=>{ready=true;$('camBtn').textContent=face==='environment'?'📷 Back':'📷 Front';$('status').textContent='Quantum Sensor Online';}).catch(()=>{if(face!=='user')initCam('user');else $('status').textContent='Sensor connection error';});}
-function switchCam(){initCam(facing==='user'?'environment':'user');}
-function togglePerf(){perf=!perf;if(perf){stepSize=2;layerN=8;ptSize=0.018;$('step').value=2;$('stepV').textContent='2';$('layers').value=8;$('layV').textContent='8';$('psize').value=0.018;$('perfBtn').style.background='#10b981';$('perfBtn').textContent='⚡ Warp ON';}else{stepSize=1;layerN=14;ptSize=0.012;$('step').value=1;$('stepV').textContent='1';$('layers').value=14;$('layV').textContent='14';$('psize').value=0.012;$('perfBtn').style.background='';$('perfBtn').textContent='⚡ Warp Speed';}buildChips();updSize();}
-function resetCam(){cam.position.set(0,0.5,3.8);if(ctrl){ctrl.target.set(0,0,0);ctrl.update();}}
-function loop(now=performance.now()){requestAnimationFrame(loop);if(ctrl&&!exporting){ctrl.autoRotate=!!autoOrbit;ctrl.update();}phase=now*0.001;if(glitchUniforms)glitchUniforms.time.value=phase;fc++;if(now-ft>1000){$('fpsD').textContent=Math.round(fc*1000/(now-ft));fc=0;ft=now;}let audioMod=0;if(analyser&&dataArray){analyser.getByteFrequencyData(dataArray);audioMod=(dataArray[2]/255.0)*0.20;}const needSample=ready&&video&&video.readyState>=2&&!exporting&&!isPlay;if(needSample&&(now-lastVol>VOL_MS)){lastVol=now;sample();}if(doPulse&&layers.length&&(rMode==='points'||rMode==='plasmaVortex')&&!exporting){for(let i=0;i<layers.length;i++){const o=layers[i];if(o&&o.visible){const s=1+Math.sin(phase*3.0+i*0.2)*(0.015+audioMod);o.scale.setScalar(s);}}}if(isPlay&&frames.length&&!exporting&&(now-lastT>1000/playFPS)){drawFrame(playIdx,metaV);playIdx=(playIdx+1)%frames.length;$('scrub').value=playIdx;$('scrubV').textContent=playIdx+'/'+Math.max(0,frames.length-1);lastT=now;}if(composer&&!exporting)composer.render();else if(ren&&scene&&cam)ren.render(scene,cam);}
-function sample(){const w=video.videoWidth||640,h=video.videoHeight||480;if(c2d.width!==w||c2d.height!==h){c2d.width=w;c2d.height=h;}try{ctx.drawImage(video,0,0,w,h);}catch{return;}let pix;try{pix=ctx.getImageData(0,0,w,h).data;}catch{return;}const pos=[],col=[],cx=w*0.5,cy=h*0.5,maxR=Math.hypot(cx,cy)||1,sx=1.6*Math.min(w/Math.max(h,1),1.6),sy=1.6,maxP=perf?40000:90000,step=Math.max(1,stepSize|0),thr=0.007;for(let y=0;y<h&&pos.length/3<maxP;y+=step){for(let x=0;x<w&&pos.length/3<maxP;x+=step){const i=(y*w+x)*4,r=pix[i]/255,g=pix[i+1]/255,b=pix[i+2]/255,lum=0.299*r+0.587*g+0.114*b;if(lum<thr)continue;const nx=((w-x)/w)*2-1,ny=-((y/h)*2-1),dx=(x-cx)/maxR,dy=(y-cy)/maxR,rad=dx*dx+dy*dy;let nz=(lum-0.18)*(depthMul*0.04)-(rad*0.45);if(rMode==='quantumWave')nz+=Math.sin(nx*6+phase*4)*0.25;else if(rMode==='plasmaVortex'){let angle=Math.atan2(dy,dx)+phase*2;nz+=Math.sin(angle*4)*0.3;}pos.push(nx*sx,ny*sy,nz);const avg=(r+g+b)/3;col.push(Math.min(1,avg+(r-avg)*1.5+0.2),Math.min(1,avg+(g-avg)*1.4+0.1),Math.min(1,avg+(b-avg)*1.6+0.4));}}const n=pos.length/3;$('nLive').textContent=n.toLocaleString();$('nodesD').textContent=(n*layerN).toLocaleString();buildLayers(pos,col);if(scanning){const v=[];for(let i=0;i<pos.length;i+=3)v.push(+pos[i].toFixed(3),+pos[i+1].toFixed(3),+pos[i+2].toFixed(3));rec.push({v,c:col.map(x=>+x.toFixed(2)),meta:0.3+Math.random()*0.2,layers:layerN,spread:layerSp});fIdx++;$('nFrm').textContent=rec.length;if(fIdx%4===0)$('jsonOut').value=JSON.stringify({HyperStreamXD:rec,layers:layerN,spread:layerSp});}}
-function clearLayers(){for(const o of layers){if(!o)continue;scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m&&m.dispose());else o.material.dispose();}}layers=[];prevPos=[];}
-function buildLayers(basePos,baseCol){while(layers.length>layerN){const o=layers.pop();if(o){scene.remove(o);if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose();}prevPos.pop();}const n=basePos.length/3;if(n<5)return;const maxL=Math.max(1,layerN-1),mOff=metaV*0.4;for(let L=0;L<layerN;L++){const t=L/maxL,s=t-0.5,zOff=s*layerSp*1.8,front=1-t,pos=new Float32Array(n*3),col=new Float32Array(n*3);for(let i=0,j=0;i<n;i++,j+=3){let px=basePos[j],py=basePos[j+1]+mOff*(0.5+L*0.035),pz=basePos[j+2]+zOff;if(prevPos[L]&&prevPos[L].length===pos.length&&smooth>0.04){const p=prevPos[L],k=smooth;px=px*(1-k)+p[j]*k;py=py*(1-k)+p[j+1]*k;pz=pz*(1-k)+p[j+2]*k;}pos[j]=px;pos[j+1]=py;pos[j+2]=pz;const bcR=baseCol[j]!==undefined?baseCol[j]:0.5,bcG=baseCol[j+1]!==undefined?baseCol[j+1]:0.4,bcB=baseCol[j+2]!==undefined?baseCol[j+2]:0.9;col[j]=Math.min(1,bcR*(0.8+front*0.2));col[j+1]=Math.min(1,bcG*(0.8+L*0.02));col[j+2]=Math.min(1,bcB*(0.7+(1-front)*0.3));}prevPos[L]=pos;const size=ptSize*(1.15-L*0.028),op=Math.max(0.35,0.95-L*0.050);let o=layers[L];if(!o){const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('color',new THREE.BufferAttribute(col,3));o=new THREE.Points(g,new THREE.PointsMaterial({size,sizeAttenuation:true,vertexColors:true,transparent:true,opacity:op,depthWrite:false}));scene.add(o);layers[L]=o;}else{const oldN=o.geometry.attributes.position?o.geometry.attributes.position.count:0;if(oldN!==n){o.geometry.setAttribute('position',new THREE.BufferAttribute(pos,3));o.geometry.setAttribute('color',new THREE.BufferAttribute(col,3));}else{o.geometry.attributes.position.array.set(pos);o.geometry.attributes.color.array.set(col);o.geometry.attributes.position.needsUpdate=true;o.geometry.attributes.color.needsUpdate=true;}o.material.size=size;o.material.opacity=op;}o.visible=vis[L]!==false;}}
-function updSize(){layers.forEach((o,L)=>{if(o?.material?.size!==undefined)o.material.size=ptSize*(1.15-L*0.028);});}
-function toggleScan(){scanning=!scanning;const b=$('scanBtn');if(scanning){rec=[];fIdx=0;frames=[];isPlay=false;$('playBtn').textContent='▶';b.textContent='STOP MATRIX SCAN';b.classList.add('on');$('status').textContent='Recording 4D Quantum Matrix…';}else{b.textContent='ACTIVATE 4D MATRIX SCAN';b.classList.remove('on');$('status').textContent='Scan Complete';$('jsonOut').value=JSON.stringify({HyperStreamXD:rec,layers:layerN,spread:layerSp});if(rec.length){loadData({HyperStreamXD:rec,layers:layerN,spread:layerSp});$('expStatus').textContent=rec.length+' temporal frames locked';}}}
-function mode(m){['cap','load','paste'].forEach(x=>{$('t-'+x).classList.toggle('on',x===m);$('p-'+x).style.display=x===m?'flex':'none';});}
-function buildChips(){const c=$('chips');if(!c)return;c.innerHTML='';for(let i=0;i<layerN;i++){if(vis[i]===undefined)vis[i]=true;const d=document.createElement('div');d.className='chip'+(vis[i]?' on':'');d.textContent='Strata '+(i+1);d.onclick=()=>{vis[i]=!vis[i];if(layers[i])layers[i].visible=vis[i];d.classList.toggle('on',vis[i]);};c.appendChild(d);}}
-function toNum(a){if(!a)return[];const o=[];for(let i=0;i<a.length;i++){const n=+a[i];if(isFinite(n))o.push(n);}return o;}
-function extract(data){if(!data)return null;let raw=data.HyperStreamXD||data.HyperStream5D||data.HyperStream4D||(Array.isArray(data)?data:null);if(!raw){const k=Object.keys(data).find(x=>Array.isArray(data[x]));if(k)raw=data[k];}if(!raw)return null;return raw.map(f=>({vertices:toNum(f.v||f.vertices||[]),colors:toNum(f.c||f.colors||[]),meta:typeof f.meta==='number'?f.meta:0.5,layers:f.layers||data.layers||layerN,spread:f.spread!==undefined?f.spread:(data.spread||layerSp)})).filter(f=>f.vertices.length>0);}
-function drawFrame(idx,meta){if(!frames.length)return;const f=frames[idx%frames.length],src=f.vertices,cols=f.colors,Lc=f.layers||layerN,sp=f.spread!==undefined?f.spread:layerSp,ts=(src.length%4===0)?4:3,pos=[],col=[];for(let i=0;i<src.length;i+=ts){pos.push(src[i],src[i+1]+(f.meta||0.5)*meta*0.4,src[i+2]);const ci=(i/ts)*3;if(cols.length>=ci+3)col.push(cols[ci],cols[ci+1],cols[ci+2]);else col.push(0.5,0.4,0.9);}const prevN=layerN,prevS=layerSp;layerN=Lc;layerSp=sp;if(rMode==='points'||rMode==='quantumWave'||rMode==='plasmaVortex')buildLayers(pos,col);else{clearLayers();const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(pos),3));g.setAttribute('color',new THREE.BufferAttribute(new Float32Array(col),3));const count=pos.length/3,side=Math.floor(Math.sqrt(count));if(side>4){const idxArr=[];for(let y=0;y<side-1;y++)for(let x=0;x<side-1;x++){const i=y*side+x;if(i+side+1<count)idxArr.push(i,i+1,i+side,i+1,i+side+1,i+side);}if(idxArr.length)g.setIndex(idxArr);}g.computeVertexNormals();const mesh=new THREE.Mesh(g,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.15,metalness:0.4,wireframe:rMode==='wire',side:THREE.DoubleSide}));mesh.rotation.y=Math.PI;scene.add(mesh);layers=[mesh];}layerN=prevN;layerSp=prevS;$('nodesD').textContent=((pos.length/3)*Lc).toLocaleString();}
-function loadData(data){const seq=extract(data);if(!seq||!seq.length){$('status').textContent='Invalid Matrix Format';return;}frames=seq;playIdx=0;isPlay=true;$('playBtn').textContent='⏸';if(data.layers)layerN=data.layers;if(data.spread)layerSp=data.spread;$('layers').value=layerN;$('layV').textContent=layerN;$('spread').value=layerSp;$('scrub').max=Math.max(0,seq.length-1);$('scrub').value=0;$('scrubV').textContent='0/'+Math.max(0,seq.length-1);drawFrame(0,metaV);$('status').textContent='Hologram Loaded · '+seq.length+' frames';$('expStatus').textContent=seq.length+' temporal frames active';buildChips();}
-function clearAll(){isPlay=false;frames=[];playIdx=0;clearLayers();$('nodesD').textContent='0';$('nLive').textContent='0';$('status').textContent='Environment Purged';$('playBtn').textContent='▶';$('scrub').max=0;$('scrubV').textContent='0/0';$('expStatus').textContent='Advanced Quantum Pipeline Online.';setProg(0);}
-function togglePlay(){if(!frames.length)return;isPlay=!isPlay;$('playBtn').textContent=isPlay?'⏸':'▶';}
-function setProg(p){$('progFill').style.width=Math.min(100,Math.max(0,p))+'%';}
-function shareNative(){if(!navigator.share){alert("Web Share API requires a compatible mobile browser or Safari.");return;}const payload=rec.length?{HyperStreamXD:rec,layers:layerN,spread:layerSp}:(frames.length?{HyperStreamXD:frames,layers:layerN,spread:layerSp}:null);if(!payload){alert("Scan or load a 4D environment first!");return;}const file=new File([JSON.stringify(payload)],"quantum_hologram.json",{type:"application/json"});if(navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({title:'HyperStream XD 4D Hologram',text:'Experience this live 4D quantum holographic environment scan!',files:[file]}).catch(()=>{});}else{navigator.share({title:'HyperStream XD 4D Hologram',text:'Check out my 4D spatial hologram matrix!',url:window.location.href}).catch(()=>{});}}
-function exportUSZ(){$('expStatus').textContent='Generating Apple AR Quick Look container...';setTimeout(()=>{const blob=new Blob(["#usda 1.0\n(def Xform \"QuantumHologram\" {})"],{type:'model/vnd.pixar.usd'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='quantum_ar_quicklook_'+Date.now()+'.usdz';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);$('expStatus').textContent='USDZ file ready! Open in Safari on iOS for instant AR projection.';},400);}
-function exportHTMLBundle(){const htmlContent=document.documentElement.outerHTML;const blob=new Blob([htmlContent],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='HyperStreamXD_4D_Holograph_'+Date.now()+'.html';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);$('expStatus').textContent='Standalone app bundle exported! Send this file directly via AirDrop or text to instantly view anywhere.';}
-function expJSON(){if(!rec.length&&!frames.length)return;const payload=rec.length?{HyperStreamXD:rec,layers:layerN,spread:layerSp}:{HyperStreamXD:frames,layers:layerN,spread:layerSp};const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='quantum_matrix_'+Date.now()+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),600);}
-function copyJSON(){const t=$('jsonOut').value;if(t)navigator.clipboard.writeText(t).catch(()=>{});}
-function expPNG(){if(!layers.length)return;if(composer)composer.render();else ren.render(scene,cam);const a=document.createElement('a');a.href=$('c3').toDataURL('image/png');a.download='quantum_hologram_'+Date.now()+'.png';a.click();}
-function pickMime(){const candidates=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'];for(const m of candidates){if(MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(m))return m;}return '';}
-function expDimensionalVideo(){if(exporting)return;if(!layers.length&&!frames.length){$('expStatus').textContent='No holographic geometry found';return;}if(typeof MediaRecorder==='undefined'||!HTMLCanvasElement.prototype.captureStream){$('expStatus').textContent='Video export not supported';return;}const mime=pickMime();if(!mime){$('expStatus').textContent='No supported video codec found';return;}const btn=$('webmBtn');btn.disabled=true;exporting=true;isPlay=false;$('playBtn').textContent='▶';$('expStatus').textContent='Rendering spatial video stream…';setProg(0);const wasOrbit=autoOrbit,wasPulse=doPulse;autoOrbit=false;doPulse=false;if(ctrl){ctrl.autoRotate=false;ctrl.enabled=false;}const useFrames=frames.length>0,targetSec=useFrames?Math.max(4,Math.min(10,frames.length/10)):5,fps=30,total=Math.round(targetSec*fps);let canvasStream=null,mr=null;const chunks=[];try{canvasStream=$('c3').captureStream(fps);mr=new MediaRecorder(canvasStream,{mimeType:mime,videoBitsPerSecond:8000000});}catch(e){cleanupExport(btn,wasOrbit,wasPulse);return;}mr.ondataavailable=e=>{if(e.data&&e.data.size>0)chunks.push(e.data);};mr.onstop=()=>{const blob=new Blob(chunks,{type:mime.includes('mp4')?'video/mp4':'video/webm'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='quantum_recording_'+Date.now()+(mime.includes('mp4')?'.mp4':'.webm');a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);$('expStatus').textContent='Spatial video saved ('+(blob.size/1024|0)+' KB)';setProg(100);cleanupExport(btn,wasOrbit,wasPulse);if(useFrames)drawFrame(playIdx,metaV);};if(composer)composer.render();else ren.render(scene,cam);try{mr.start(100);}catch(e){cleanupExport(btn,wasOrbit,wasPulse);return;}const origPos=cam.position.clone(),target=ctrl?ctrl.target.clone():new THREE.Vector3(0,0,0),radius=cam.position.distanceTo(target)||3.8;let n=0;const frameInterval=1000/fps;function tick(){if(!exporting||!mr||mr.state==='inactive')return;const ang=(n/total)*Math.PI*2;cam.position.x=Math.sin(ang)*radius;cam.position.z=Math.cos(ang)*radius;cam.position.y=origPos.y+Math.sin(ang*0.5)*0.3;cam.lookAt(target);if(useFrames){const idx=Math.floor((n/total)*frames.length)%frames.length;drawFrame(idx,metaV);}else if(ready&&video&&video.readyState>=2)sample();if(composer)composer.render();else ren.render(scene,cam);const pct=Math.min(99,(n/total)*100);setProg(pct);$('expStatus').textContent='Encoding… '+Math.round(pct)+'%';n++;if(n<total)setTimeout(tick,frameInterval);else{if(composer)composer.render();else ren.render(scene,cam);setTimeout(()=>{try{if(mr&&mr.state!=='inactive')mr.stop();}catch(_){}cam.position.copy(origPos);if(ctrl){ctrl.target.copy(target);ctrl.update();}},180);}}setTimeout(tick,120);}
-function cleanupExport(btn,wasOrbit,wasPulse){exporting=false;btn.disabled=false;autoOrbit=wasOrbit;doPulse=wasPulse;if(ctrl){ctrl.autoRotate=autoOrbit;ctrl.enabled=true;}}
-function dropInit(){const d=$('drop');if(!d)return;['dragenter','dragover'].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.add('over');}));['dragleave','drop'].forEach(e=>d.addEventListener(e,ev=>{ev.preventDefault();d.classList.remove('over');}));d.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)readF(f);});}
-function readF(f){const r=new FileReader();r.onload=e=>{try{loadData(JSON.parse(e.target.result));}catch{$('status').textContent='Corrupted Matrix File';}};r.readAsText(f);}
-function fileIn(e){if(e.target.files[0])readF(e.target.files[0]);}
-function pasteIn(){try{loadData(JSON.parse($('jsonIn').value.trim()));}catch{$('status').textContent='Injection Parse Error';}}
-</script>
+  <main>
+    <section class="shell">
+      <nav class="top"><div class="brand">GALACTIC</div><div class="pill">x402 Base USDC</div></nav>
+      <section class="hero">
+        <div>
+          <div class="eyebrow">Machine-payable asset rights</div>
+          <h1>Charge AI agents for one licensed asset use.</h1>
+          <p class="lead">Galactic now contains a real Next.js x402 app: a free machine catalog, a paid one-use license endpoint, and discovery docs so agent clients know what to buy.</p>
+          <div class="actions">
+            <a class="primary" href="./api/licenses/catalog">Open catalog</a>
+            <a class="secondary" href="./api/agent/manifest">Agent manifest</a>
+            <a class="secondary" href="./hyperstream-simple.html">Legacy HyperStream</a>
+          </div>
+        </div>
+        <div class="panel">
+          <div><span>Payment receiver</span><strong>0x02f9...4cBb</strong></div>
+          <div><span>Network</span><strong>Base mainnet</strong></div>
+          <div><span>License price</span><strong>$0.01 USDC</strong></div>
+          <div><span>License model</span><strong>One machine use</strong></div>
+        </div>
+      </section>
+      <section class="console">
+        <div class="eyebrow" style="color:#2a6118">Money route</div>
+        <h2>POST /api/licenses/use</h2>
+        <code class="code">{
+  "tokenId": "1",
+  "clientId": "my-agent",
+  "useCase": "render this voxel in one generated scene"
+}</code>
+        <p class="notice">GitHub Pages can display this static preview. Live x402 settlement requires deploying the Next.js API routes from this repo on a server-capable host.</p>
+      </section>
+      <section class="grid">
+        <article class="card"><span>01</span><h2>Free catalog</h2><p>Agents inspect eligible Base VoxelFlip assets before paying.</p></article>
+        <article class="card"><span>02</span><h2>x402 payment</h2><p>The paid route returns HTTP 402 until a valid x402 payment is supplied.</p></article>
+        <article class="card"><span>03</span><h2>One-use receipt</h2><p>Every payment issues one machine-use license. Reuse requires another payment.</p></article>
+      </section>
+    </section>
+  </main>
 </body>
 </html>

@@ -1,0 +1,26 @@
+{
+  "name": "galactic-x402-licensing",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "test:safety": "node scripts/safety-check.mjs"
+  },
+  "dependencies": {
+    "@x402/core": "latest",
+    "@x402/evm": "latest",
+    "@x402/next": "latest",
+    "next": "14.2.35",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.17.2",
+    "@types/react": "18.3.23",
+    "@types/react-dom": "18.3.7",
+    "typescript": "5.9.2"
+  }
+}
