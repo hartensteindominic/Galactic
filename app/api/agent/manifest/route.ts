@@ -30,6 +30,7 @@ export async function GET(request: Request) {
       nftOwnershipTransferred: false
     },
     endpoints: {
+      paylink: `${origin}/api/paylink`,
       health: `${origin}/api/agent/health`,
       openapi: `${origin}/api/agent/openapi`,
       publicLicenseCatalog: `${origin}/api/licenses/catalog`,

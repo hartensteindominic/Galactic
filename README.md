@@ -8,9 +8,18 @@ The product is simple: agents can read a free catalog, choose an eligible Base V
 
 - `GET /api/licenses/catalog` - free machine-readable catalog
 - `POST /api/licenses/use` - x402-paid one-use license receipt
+- `GET /api/paylink` - direct Base USDC paylink for human buyers
 - `GET /api/agent/manifest` - agent discovery manifest
 - `GET /api/agent/openapi` - OpenAPI spec
 - `GET /api/agent/health` - status and configuration
+
+## View Everything
+
+- Public preview: `https://hartensteindominic.github.io/Galactic/`
+- Static paylink: `https://hartensteindominic.github.io/Galactic/paylink.json`
+- Static catalog mirror: `https://hartensteindominic.github.io/Galactic/catalog.json`
+- Static agent manifest: `https://hartensteindominic.github.io/Galactic/agent-manifest.json`
+- Static OpenAPI file: `https://hartensteindominic.github.io/Galactic/openapi.json`
 
 ## Default revenue setup
 

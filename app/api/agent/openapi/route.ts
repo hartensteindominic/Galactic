@@ -16,6 +16,12 @@ export async function GET(request: Request) {
     },
     servers: [{ url: origin }],
     paths: {
+      '/api/paylink': {
+        get: {
+          summary: 'Read direct Base USDC payment details.',
+          responses: { '200': { description: 'Paylink details.' } }
+        }
+      },
       '/api/agent/health': {
         get: {
           summary: 'Read x402 and licensing status.',

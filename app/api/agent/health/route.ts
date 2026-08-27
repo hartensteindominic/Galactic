@@ -16,6 +16,7 @@ export async function GET() {
     licensing: {
       kind: LICENSE_KIND,
       price: licensePrice(),
+      paylink: '/api/paylink',
       endpoint: '/api/licenses/use',
       catalog: '/api/licenses/catalog',
       oneUseOnly: true,
