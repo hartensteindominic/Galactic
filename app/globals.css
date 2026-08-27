@@ -100,6 +100,7 @@ main {
 .primaryAction,
 .secondaryAction,
 .console button,
+.walletBox a,
 .payButton,
 .darkButton {
   border: 0;
@@ -190,6 +191,31 @@ main {
   grid-template-columns: 360px minmax(0, 1fr);
   gap: 16px;
   margin-top: 18px;
+}
+
+.walletBox {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #cadfb1;
+  border-radius: 8px;
+  background: #f0fadf;
+  padding: 12px;
+}
+
+.walletBox span {
+  color: #2a6118;
+  font-size: 0.8rem;
+  font-weight: 950;
+}
+
+.walletBox code {
+  overflow-wrap: anywhere;
+  color: #172010;
+  font-size: 0.86rem;
+}
+
+.buttonRow.compact {
+  margin-top: 4px;
 }
 
 .controlPanel {

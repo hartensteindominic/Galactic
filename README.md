@@ -18,6 +18,8 @@ The default receiver is the reviewed Base owner wallet from the Voxel Vault flow
 
 `0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb`
 
+The app points both the direct Base USDC payment button and the x402-paid API route at this same receiver.
+
 The default VoxelFlip contract is:
 
 `0xa00758b05f96ef4409d97c3ffebb6794b2eafbde`
@@ -28,6 +30,7 @@ Set these in the hosting environment if you want to override them:
 X402_PAY_TO=0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb
 X402_FACILITATOR_URL=https://x402.org/facilitator
 X402_LICENSE_PRICE=$0.01
+X402_LICENSE_USDC_ATOMIC=10000
 BASE_RPC_URL=https://mainnet.base.org
 VOXELFLIP_CONTRACT_ADDRESS=0xa00758b05f96ef4409d97c3ffebb6794b2eafbde
 AI_LICENSE_LICENSOR_WALLET=0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb

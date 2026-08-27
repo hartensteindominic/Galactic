@@ -1,4 +1,5 @@
 import { LicenseConsole } from './license-console';
+import { baseUsdcPaymentUri, metamaskSendLink } from '../lib/config';
 import { licensePrice, x402Status } from '../lib/x402';
 
 export const dynamic = 'force-dynamic';
@@ -6,6 +7,8 @@ export const dynamic = 'force-dynamic';
 export default function Home() {
   const status = x402Status();
   const price = licensePrice();
+  const payNowUri = baseUsdcPaymentUri(status.payTo);
+  const walletLink = metamaskSendLink(status.payTo);
 
   return (
     <main>
@@ -21,12 +24,14 @@ export default function Home() {
             <h1>Charge AI agents for one licensed asset use.</h1>
             <p className="lead">
               Galactic now exposes a free machine catalog and a paid x402 endpoint.
-              Agents can discover an eligible VoxelFlip NFT, pay {price} on Base, and
+              Buyers can pay your MetaMask wallet directly, while agents can discover
+              an eligible VoxelFlip NFT, pay {price} on Base, and
               receive exactly one machine-use license receipt.
             </p>
             <div className="heroActions">
-              <a className="primaryAction" href="/api/licenses/catalog">Open free catalog</a>
-              <a className="secondaryAction" href="/api/agent/manifest">Agent manifest</a>
+              <a className="primaryAction" href={payNowUri}>Pay {price} USDC now</a>
+              <a className="secondaryAction" href={walletLink}>Open MetaMask</a>
+              <a className="secondaryAction" href="/api/licenses/catalog">Free catalog</a>
             </div>
           </div>
 
@@ -50,7 +55,7 @@ export default function Home() {
           </div>
         </section>
 
-        <LicenseConsole />
+        <LicenseConsole price={price} payTo={status.payTo} payNowUri={payNowUri} walletLink={walletLink} />
 
         <section className="explainGrid">
           <article>

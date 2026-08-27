@@ -27,11 +27,18 @@ type HealthResponse = {
   };
 };
 
+type LicenseConsoleProps = {
+  price: string;
+  payTo: string;
+  payNowUri: string;
+  walletLink: string;
+};
+
 function shortAddress(value = '') {
   return value.length > 12 ? `${value.slice(0, 6)}...${value.slice(-4)}` : value || 'not set';
 }
 
-export function LicenseConsole() {
+export function LicenseConsole({ price, payTo, payNowUri, walletLink }: LicenseConsoleProps) {
   const [catalog, setCatalog] = useState<CatalogResponse | null>(null);
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [tokenId, setTokenId] = useState('1');
@@ -112,6 +119,14 @@ export function LicenseConsole() {
 
       <div className="consoleGrid">
         <div className="controlPanel">
+          <div className="walletBox">
+            <span>Money goes straight to MetaMask</span>
+            <code>{payTo}</code>
+            <div className="buttonRow compact">
+              <a className="payButton" href={payNowUri}>Pay {price} USDC</a>
+              <a className="darkButton" href={walletLink}>Open wallet</a>
+            </div>
+          </div>
           <label>
             Token ID
             <input value={tokenId} onChange={event => setTokenId(event.target.value)} inputMode="numeric" />
