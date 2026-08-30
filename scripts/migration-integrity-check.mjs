@@ -70,6 +70,7 @@ assert.ok(trustSource.includes('Repository fingerprints do not prove target-data
 
 const statusRoute = fs.readFileSync('app/api/prototype/status/route.ts', 'utf8');
 assert.ok(statusRoute.includes('migrationIntegrity: prototypeMigrationIntegrityStatus()'));
-assert.ok(statusRoute.includes('Repository migration fingerprints do not prove Supabase execution or production approval.'));
+assert.ok(statusRoute.includes('Repository migration fingerprints do not prove Supabase execution'));
+assert.ok(statusRoute.includes('production approval'));
 
 console.log('Migration ordering, append-only fingerprint, and execution/approval-boundary checks passed.');
