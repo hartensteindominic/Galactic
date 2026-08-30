@@ -1,4 +1,5 @@
 import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
+import { buildPrototypeBillGuard } from '../../../../lib/prototype-bill-guard';
 import { getPrototypeCashflowForecast } from '../../../../lib/prototype-cashflow';
 import { resolveRequestBrand } from '../../../../lib/tenant-boundary';
 
@@ -19,8 +20,9 @@ export async function GET(request: Request) {
       tenantKey: brand.key,
       reserveCents
     });
+    const billGuard = buildPrototypeBillGuard(forecast);
 
-    return bankingJson({ ok: true, forecast });
+    return bankingJson({ ok: true, forecast, billGuard });
   } catch (error) {
     return bankingErrorResponse(error);
   }
