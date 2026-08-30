@@ -7,18 +7,28 @@ const required = [
   ['lib/prototype-operator-auth.ts', "process.env.NODE_ENV === 'production' ? '; Secure' : ''", 'operator session cookie must be Secure in production'],
   ['app/api/prototype/operator/session/route.ts', 'requireTrustedOrigin(request)', 'operator login must enforce same-origin browser requests'],
   ['app/api/prototype/operator/session/route.ts', 'requireBestEffortLoginRateLimit(request)', 'operator login must include prototype abuse throttling'],
+  ['app/api/prototype/operator/session/route.ts', 'readJsonBodyLimited', 'operator login must use bounded JSON parsing'],
   ['app/api/prototype/operations/route.ts', 'requirePrototypeOperator(request)', 'operations evidence must require operator boundary'],
   ['app/api/prototype/reconcile/route.ts', 'requirePrototypeOperator(request)', 'reconciliation must require operator boundary'],
   ['lib/prototype-readiness.ts', 'productionOperatorIdentityReady: false', 'readiness must not claim production operator identity readiness'],
+  ['lib/request-security.ts', "'REQUEST_BODY_TOO_LARGE'", 'bounded JSON reader must fail closed on oversized bodies'],
+  ['lib/request-security.ts', "'INVALID_JSON'", 'bounded JSON reader must fail closed on malformed JSON'],
   ['lib/tenant-boundary.ts', "'TENANT_HOST_MISMATCH'", 'cross-tenant host mismatch must fail closed'],
   ['lib/tenant-boundary.ts', "'TENANT_QUERY_OVERRIDE_FORBIDDEN'", 'production query tenant override must fail closed'],
-  ['lib/tenant-boundary.ts', "process.env.VERCEL_ENV !== 'production'", 'Vercel tenant switching must be limited to non-production previews'],
+  ['lib/tenant-boundary.ts', "'UNKNOWN_TENANT'", 'unknown tenant keys must fail closed'],
+  ['lib/tenant-boundary.ts', "process.env.VERCEL_ENV === 'preview'", 'tenant switching on Vercel must require explicit preview environment'],
+  ['lib/tenant-boundary.ts', 'resolveAuthenticatedServerTenant', 'authenticated server routes must explicitly resolve a known tenant'],
   ['app/api/prototype/summary/route.ts', 'resolveRequestBrand', 'summary must use host-bound tenant resolution'],
   ['app/api/prototype/transfers/route.ts', 'resolveRequestBrand', 'transfers must use host-bound tenant resolution'],
+  ['app/api/prototype/transfers/route.ts', 'readJsonBodyLimited', 'transfers must use bounded JSON parsing'],
   ['app/api/prototype/cashflow/route.ts', 'resolveRequestBrand', 'cashflow API must use host-bound tenant resolution'],
   ['app/api/prototype/operations/route.ts', 'resolveRequestBrand', 'operations API must use host-bound tenant resolution'],
   ['app/api/prototype/reconcile/route.ts', 'resolveRequestBrand', 'reconciliation API must use host-bound tenant resolution'],
+  ['app/api/prototype/reconcile/route.ts', 'readJsonBodyLimited', 'reconciliation must use bounded JSON parsing'],
   ['app/api/sandbox/plaid/connect/route.ts', 'resolveRequestBrand', 'sandbox bank linking must use host-bound tenant resolution'],
+  ['app/api/sandbox/plaid/connect/route.ts', 'readJsonBodyLimited', 'sandbox bank linking must use bounded JSON parsing'],
+  ['app/api/prototype/webhooks/sandbox/route.ts', 'resolveAuthenticatedServerTenant', 'sandbox webhook must use explicit authenticated server tenant resolution'],
+  ['app/api/prototype/webhooks/sandbox/route.ts', 'readJsonBodyLimited', 'sandbox webhook must use bounded JSON parsing'],
   ['app/prototype/page.tsx', 'resolveRequestBrand', 'prototype UI branding must use host-bound tenant resolution'],
   ['app/prototype/cashflow/page.tsx', 'resolveRequestBrand', 'cashflow UI branding must use host-bound tenant resolution'],
   ['app/prototype/transparency/page.tsx', 'resolveRequestBrand', 'transparency UI branding must use host-bound tenant resolution'],
@@ -27,6 +37,7 @@ const required = [
 
 const forbidden = [
   ['lib/prototype-readiness.ts', 'productionOperatorIdentityReady: true', 'prototype must never claim production operator identity readiness'],
+  ['lib/tenant-boundary.ts', "VERCEL_ENV !== 'production'", 'preview override must not rely on an implicit non-production check'],
   ['app/prototype/operations/operations-shell.tsx', 'PROTOTYPE_OPERATOR_ACCESS_SECRET', 'operator server secret name must not appear in client UI'],
   ['app/prototype/operations/operations-shell.tsx', 'localStorage', 'operator secret/session must not be stored in localStorage'],
   ['app/prototype/operations/operations-shell.tsx', 'sessionStorage', 'operator secret/session must not be stored in sessionStorage'],
@@ -43,4 +54,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Prototype operator-access and tenant-isolation safety checks passed.');
+console.log('Prototype operator-access, request-boundary and tenant-isolation safety checks passed.');
