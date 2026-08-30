@@ -26,6 +26,12 @@ const required = [
   ['app/api/prototype/compliance-applicability/route.ts', 'requireJsonRequest', 'compliance applicability must require JSON'],
   ['app/api/prototype/compliance-applicability/route.ts', 'requireTrustedOrigin', 'compliance applicability must enforce trusted origin'],
   ['app/api/prototype/compliance-applicability/route.ts', 'readJsonBodyLimited', 'compliance applicability must bound request bodies'],
+  ['app/api/prototype/accountability/route.ts', 'requireJsonRequest', 'accountability planning must require JSON'],
+  ['app/api/prototype/accountability/route.ts', 'requireTrustedOrigin', 'accountability planning must enforce trusted origin'],
+  ['app/api/prototype/accountability/route.ts', 'readJsonBodyLimited', 'accountability planning must bound request bodies'],
+  ['app/api/prototype/three-year-plan/route.ts', 'requireJsonRequest', 'three-year planning must require JSON'],
+  ['app/api/prototype/three-year-plan/route.ts', 'requireTrustedOrigin', 'three-year planning must enforce trusted origin'],
+  ['app/api/prototype/three-year-plan/route.ts', 'readJsonBodyLimited', 'three-year planning must bound request bodies'],
   ['app/api/prototype/operator/session/route.ts', 'requireTrustedOrigin', 'operator session mutation must enforce trusted origin'],
   ['app/api/prototype/operator/session/route.ts', 'readJsonBodyLimited', 'operator sign-in must bound request bodies'],
   ['app/api/assistant/route.ts', 'readJsonBodyLimited', 'assistant endpoint must bound request bodies']
@@ -38,6 +44,8 @@ const forbidden = [
   ['app/api/prototype/unit-economics/route.ts', 'await request.json()', 'unit economics must not bypass bounded JSON parsing'],
   ['app/api/prototype/capital-planning/route.ts', 'await request.json()', 'capital planning must not bypass bounded JSON parsing'],
   ['app/api/prototype/compliance-applicability/route.ts', 'await request.json()', 'compliance applicability must not bypass bounded JSON parsing'],
+  ['app/api/prototype/accountability/route.ts', 'await request.json()', 'accountability planning must not bypass bounded JSON parsing'],
+  ['app/api/prototype/three-year-plan/route.ts', 'await request.json()', 'three-year planning must not bypass bounded JSON parsing'],
   ['app/api/prototype/operator/session/route.ts', 'await request.json()', 'operator sign-in must not bypass bounded JSON parsing'],
   ['app/api/assistant/route.ts', 'await request.json()', 'assistant endpoint must not bypass bounded JSON parsing']
 ];
