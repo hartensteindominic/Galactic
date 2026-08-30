@@ -22,7 +22,7 @@ const required = [
   ['app/prototype/operations/operations-console.tsx', "hasReconciliationEvidence ? 'Evidence present' : 'Not exercised'", 'operations UI must not call absent reconciliation evidence healthy'],
   ['app/prototype/operations/operations-console.tsx', "? 'Environment configured' : 'Memory demo'", 'operations UI must label Supabase credentials as environment setup rather than persistent proof'],
   ['app/prototype/operations/operations-console.tsx', 'Stored rows do not mean a production provider webhook integration exists', 'operations UI must limit provider-event evidence claims'],
-  ['app/prototype/operations/operations-console.tsx', 'green CI do not by themselves prove continuous production operation or readiness', 'operations UI must limit CI/evidence claims'],
+  ['app/prototype/operations/operations-console.tsx', 'green CI do not by themselves prove migration execution/order, continuous production operation, production health, provider-statement reconciliation, or readiness', 'operations UI must limit CI/evidence claims'],
   ['scripts/prototype-operations-runtime-check.mjs', 'Prototype operations webhook replay and log-sanitization runtime checks passed.', 'operations webhook behavior must have executable runtime coverage'],
   ['package.json', 'scripts/prototype-operations-runtime-check.mjs', 'operations webhook runtime checks must run in the CI safety suite']
 ];
