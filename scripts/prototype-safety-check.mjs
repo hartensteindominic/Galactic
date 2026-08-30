@@ -18,7 +18,10 @@ const required = [
   ['supabase/migrations/004_double_entry_ledger.sql', 'Prototype GL reconciliation cannot inspect non-simulated accounts.', 'GL reconciliation must reject non-simulated accounts'],
   ['lib/prototype-operations.ts', 'doubleEntryAvailableInBuild: true', 'operations status must expose double-entry build support'],
   ['lib/prototype-operations.ts', "'/rest/v1/rpc/reconcile_fintech_gl_profile'", 'persistent reconciliation must check the double-entry ledger'],
+  ['lib/prototype-operations.ts', 'sanitizedAuditEvidenceAvailable: databaseConfigured', 'operations status must expose sanitized audit evidence readiness'],
+  ['lib/prototype-operations.ts', 'select=id,actor_type,action,entity_type,entity_id,created_at', 'audit browser query must select only sanitized fields'],
   ['app/prototype/operations/operations-console.tsx', 'Layer 2 · Double-entry GL → account balance', 'operations UI must expose detailed GL reconciliation'],
+  ['app/prototype/operations/operations-console.tsx', 'Raw metadata is deliberately not returned to this UI.', 'operations UI must disclose the audit metadata boundary'],
   ['app/prototype/prototype-network-guard.tsx', "headers.set('Idempotency-Key', crypto.randomUUID())", 'prototype transfer client must attach idempotency keys'],
   ['app/api/prototype/webhooks/sandbox/route.ts', 'This route is not a production Plaid or BaaS webhook verifier.', 'sandbox webhook route must disclose that it is not production verification'],
   ['app/prototype/operations/operations-console.tsx', 'Real banking rails remain off.', 'operations console must label real rails as off'],
@@ -44,6 +47,7 @@ const forbidden = [
   ['app/prototype/operations/operations-console.tsx', 'SUPABASE_SECRET_KEY', 'operations UI must not contain Supabase secrets'],
   ['app/prototype/operations/operations-console.tsx', 'PLAID_SECRET', 'operations UI must not contain Plaid secrets'],
   ['app/prototype/operations/operations-console.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'operations UI must not contain webhook secrets'],
+  ['app/prototype/operations/operations-console.tsx', 'event.metadata', 'operations UI must not render raw audit metadata'],
   ['app/prototype/transparency/page.tsx', 'BANKING_GATEWAY_API_KEY', 'transparency UI must never contain provider credentials'],
   ['app/prototype/transparency/page.tsx', 'PLAID_SECRET', 'transparency UI must never contain Plaid credentials'],
   ['app/prototype/transparency/page.tsx', 'SUPABASE_SECRET_KEY', 'transparency UI must never contain Supabase credentials']
@@ -59,4 +63,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('White-label prototype safety, transparency, provider-contract and operational-readiness checks passed.');
+console.log('White-label prototype safety, transparency, audit, provider-contract and operational-readiness checks passed.');
