@@ -1,4 +1,5 @@
 import { bankingStatus } from '../../lib/banking';
+import { providerSandboxDatabaseStatus } from '../../lib/banking-sandbox-database';
 import { providerSandboxStatus } from '../../lib/provider-sandbox';
 import { sandboxCertificationStatus } from '../../lib/sandbox-certification';
 import { SandboxCertificationClient } from './sandbox-certification-client';
@@ -19,6 +20,7 @@ export default function SandboxReadinessPage() {
   const banking = bankingStatus();
   const certification = sandboxCertificationStatus();
   const providerSandbox = providerSandboxStatus();
+  const database = providerSandboxDatabaseStatus();
 
   return (
     <main className="sandboxPage">
@@ -66,6 +68,16 @@ export default function SandboxReadinessPage() {
           <Status label="Production live writes remain off" ok={!providerSandbox.productionLiveWritesEnabled} detail="Provider sandbox networking is blocked whenever production live writes are enabled." />
           <Status label="Provider sandbox calls permitted" ok={providerSandbox.networkCallsEnabled} detail={providerSandbox.disclosure} />
         </article>
+
+        <article>
+          <small>DURABLE SANDBOX DATABASE</small>
+          <h2>{database.enabled ? 'Durable storage enabled' : 'Durable storage locked'}</h2>
+          <Status label="Postgres connection configured" ok={database.configured} detail="Only a safe configured/not-configured boolean is shown; the database URL is never rendered." />
+          <Status label="Dedicated database gate enabled" ok={database.enabledRequested} detail="A database URL alone cannot activate provider-sandbox persistence." />
+          <Status label="Encrypted database connection" ok={database.sslEnabled} detail="SSL is enabled by default; disabling it is intended only for isolated local development." />
+          <Status label="Production live writes remain off" ok={!database.productionLiveWritesEnabled} detail="The sandbox database factory refuses access while production live writes are enabled." />
+          <Status label="Durable store available" ok={database.enabled} detail={database.disclosure} />
+        </article>
       </section>
 
       <SandboxCertificationClient />
@@ -79,17 +91,19 @@ export default function SandboxReadinessPage() {
           <span>Sandbox deposit account</span><i>→</i>
           <span>Sandbox ACH</span><i>→</i>
           <span>Signed webhook</span><i>→</i>
-          <span>Event inbox + dedupe</span><i>→</i>
+          <span>Durable event inbox</span><i>→</i>
+          <span>Replay-safe processing</span><i>→</i>
           <span>Double-entry ledger</span><i>→</i>
-          <span>Reconciliation</span>
+          <span>Reconciliation</span><i>→</i>
+          <span>Audit evidence</span>
         </div>
         <p className="sandboxArchitectureNote">
-          A real provider adapter must implement the server-only contract in <code>lib/banking-provider-adapter.ts</code>. Provider sandbox credentials use their own isolated environment variables and dedicated enable flag. Production still requires the independent partner, compliance, disclosure, and live-write gates.
+          A real provider adapter must implement the server-only contract in <code>lib/banking-provider-adapter.ts</code>. Provider sandbox credentials and the sandbox Postgres database use independent enable gates. Production still requires the separate partner, compliance, disclosure, and live-write gates.
         </p>
       </section>
 
       <footer className="sandboxFooter">
-        This is engineering certification evidence, not legal approval, bank certification, KYC, or a live banking program. All records produced by the synthetic runner are ephemeral test data.
+        This is engineering certification evidence, not legal approval, bank certification, KYC, or a live banking program. Synthetic runner records are ephemeral; provider-sandbox certification requires the durable store and authentic provider sandbox events.
       </footer>
     </main>
   );
