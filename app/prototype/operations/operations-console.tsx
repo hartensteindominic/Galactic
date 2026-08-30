@@ -6,6 +6,7 @@ type OperationsStatus = {
   databaseConfigured: boolean;
   reconciliationMode: 'persistent' | 'memory';
   webhookInboxConfigured: boolean;
+  doubleEntryAvailableInBuild: true;
   realProviderWebhooksEnabled: false;
   liveMoneyEnabled: false;
   disclosure: string;
@@ -51,6 +52,19 @@ type ReconciliationResult = {
     delta_cents: number;
     status: 'balanced' | 'mismatch';
   }>;
+  double_entry: {
+    mismatched_accounts: number;
+    status: 'balanced' | 'attention';
+    message: string;
+    accounts: Array<{
+      account_id: string;
+      label: string;
+      recorded_balance_cents: number;
+      gl_balance_cents: number;
+      delta_cents: number;
+      status: 'balanced' | 'mismatch';
+    }>;
+  };
 };
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
@@ -131,7 +145,7 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
           <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Reconciliation</div>
             <div className={`mt-2 text-xl font-black ${latestMismatch ? 'text-amber-700' : 'text-emerald-700'}`}>{latestMismatch ? 'Attention' : 'Healthy'}</div>
-            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">Expected balances are checked against posted ledger movements.</p>
+            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">Transaction history and double-entry balances are checked independently.</p>
           </article>
           <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Webhook inbox</div>
@@ -148,25 +162,56 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
         <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Ledger reconciliation</h2>
-              <p className="m-0 mt-1 text-xs text-slate-500">Recompute each simulated account from its opening balance plus posted credits and debits.</p>
+              <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Two-layer ledger reconciliation</h2>
+              <p className="m-0 mt-1 text-xs text-slate-500">Layer 1 recomputes balances from posted transactions. Layer 2 compares the recorded balance to the append-only double-entry GL.</p>
             </div>
             <button type="button" onClick={reconcile} disabled={busy} className="rounded-2xl border-0 bg-indigo-600 px-4 py-3 text-sm font-black text-white shadow-lg disabled:opacity-50">{busy ? 'Checking…' : 'Run reconciliation'}</button>
           </div>
 
           {lastResult ? (
             <div className={`mt-5 rounded-2xl border p-4 ${lastResult.status === 'balanced' ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
-              <div className="font-black">{lastResult.status === 'balanced' ? 'All simulated accounts balance' : 'Ledger mismatch detected'}</div>
-              <div className="mt-1 text-xs text-slate-600">Balanced: {lastResult.balanced_accounts} · Mismatched: {lastResult.mismatched_accounts} · Source: {lastResult.source}</div>
-              <div className="mt-4 grid gap-2">
-                {lastResult.accounts.map((account) => (
-                  <div key={account.account_id} className="grid gap-1 rounded-xl bg-white px-3 py-3 text-xs shadow-sm sm:grid-cols-[1fr_auto_auto_auto] sm:items-center sm:gap-4">
-                    <b>{account.label}</b>
-                    <span className="text-slate-500">Recorded {dollars(account.recorded_balance_cents)}</span>
-                    <span className="text-slate-500">Expected {dollars(account.expected_balance_cents)}</span>
-                    <b className={account.status === 'balanced' ? 'text-emerald-700' : 'text-amber-700'}>{account.status === 'balanced' ? 'Balanced' : `Δ ${dollars(account.delta_cents)}`}</b>
+              <div className="font-black">{lastResult.status === 'balanced' ? 'Both reconciliation layers balance' : 'Reconciliation attention required'}</div>
+              <div className="mt-1 text-xs text-slate-600">Transaction layer balanced: {lastResult.balanced_accounts} · Mismatched: {lastResult.mismatched_accounts} · Source: {lastResult.source}</div>
+
+              <div className="mt-4 rounded-2xl bg-white/80 p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-black">Layer 1 · Transaction history → account balance</div>
+                    <div className="mt-1 text-xs text-slate-500">Opening balance plus posted credits and debits must equal the recorded account balance.</div>
                   </div>
-                ))}
+                  <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wide ${lastResult.mismatched_accounts === 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}`}>{lastResult.mismatched_accounts === 0 ? 'Balanced' : 'Attention'}</span>
+                </div>
+                <div className="mt-3 grid gap-2">
+                  {lastResult.accounts.map((account) => (
+                    <div key={account.account_id} className="grid gap-1 rounded-xl border border-slate-100 bg-white px-3 py-3 text-xs sm:grid-cols-[1fr_auto_auto_auto] sm:items-center sm:gap-4">
+                      <b>{account.label}</b>
+                      <span className="text-slate-500">Recorded {dollars(account.recorded_balance_cents)}</span>
+                      <span className="text-slate-500">Expected {dollars(account.expected_balance_cents)}</span>
+                      <b className={account.status === 'balanced' ? 'text-emerald-700' : 'text-amber-700'}>{account.status === 'balanced' ? 'Balanced' : `Δ ${dollars(account.delta_cents)}`}</b>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-white/80 p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-black">Layer 2 · Double-entry GL → account balance</div>
+                    <div className="mt-1 text-xs text-slate-500">The mapped customer GL must independently sum to the same recorded account balance.</div>
+                  </div>
+                  <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wide ${lastResult.double_entry.status === 'balanced' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'}`}>{lastResult.double_entry.status === 'balanced' ? 'Balanced' : 'Attention'}</span>
+                </div>
+                <div className="mt-2 text-xs text-slate-500">{lastResult.double_entry.message}</div>
+                <div className="mt-3 grid gap-2">
+                  {lastResult.double_entry.accounts.map((account) => (
+                    <div key={account.account_id} className="grid gap-1 rounded-xl border border-slate-100 bg-white px-3 py-3 text-xs sm:grid-cols-[1fr_auto_auto_auto] sm:items-center sm:gap-4">
+                      <b>{account.label}</b>
+                      <span className="text-slate-500">Recorded {dollars(account.recorded_balance_cents)}</span>
+                      <span className="text-slate-500">GL {dollars(account.gl_balance_cents)}</span>
+                      <b className={account.status === 'balanced' ? 'text-emerald-700' : 'text-amber-700'}>{account.status === 'balanced' ? 'Balanced' : `Δ ${dollars(account.delta_cents)}`}</b>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ) : null}
