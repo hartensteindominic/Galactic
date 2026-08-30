@@ -40,6 +40,13 @@ function requireMoneyCents(value: number, label: string) {
   }
 }
 
+function requirePositiveMoneyCents(value: number, label: string) {
+  requireMoneyCents(value, label);
+  if (value <= 0) {
+    throw new BankingError(500, 'LEDGER_INVALID_AMOUNT', `${label} must be greater than zero.`);
+  }
+}
+
 export function summarizeJournal(journal: LedgerJournal) {
   if (!journal.lines.length) {
     throw new BankingError(500, 'LEDGER_EMPTY_JOURNAL', 'A ledger journal must contain at least one line.');
@@ -92,10 +99,7 @@ export function createInboundAchPostedJournal(input: {
   amountCents: number;
   createdAt: string;
 }): LedgerJournal {
-  requireMoneyCents(input.amountCents, 'ACH amount');
-  if (input.amountCents <= 0) {
-    throw new BankingError(500, 'LEDGER_INVALID_AMOUNT', 'ACH amount must be greater than zero.');
-  }
+  requirePositiveMoneyCents(input.amountCents, 'ACH amount');
 
   const journal: LedgerJournal = {
     id: input.journalId,
@@ -128,7 +132,53 @@ export function createInboundAchPostedJournal(input: {
   return journal;
 }
 
-export function reconcilePostedAmount(input: {
+/**
+ * Reverse a previously posted inbound ACH when the provider reports a return.
+ *
+ * This is the high-level program journal only. A provider integration must also
+ * link the return to the original transfer and apply any customer-level balance,
+ * restriction, overdraft, or collections policy required by the approved program.
+ */
+export function createInboundAchReturnedJournal(input: {
+  journalId: string;
+  eventId: string;
+  amountCents: number;
+  createdAt: string;
+}): LedgerJournal {
+  requirePositiveMoneyCents(input.amountCents, 'ACH return amount');
+
+  const journal: LedgerJournal = {
+    id: input.journalId,
+    eventId: input.eventId,
+    currency: 'USD',
+    createdAt: input.createdAt,
+    lines: [
+      {
+        id: `${input.journalId}-debit`,
+        journalId: input.journalId,
+        eventId: input.eventId,
+        account: 'customer_deposit_liability',
+        debitCents: input.amountCents,
+        creditCents: 0,
+        description: 'Customer deposit liability decrease for returned inbound ACH'
+      },
+      {
+        id: `${input.journalId}-credit`,
+        journalId: input.journalId,
+        eventId: input.eventId,
+        account: 'partner_settlement_cash',
+        debitCents: 0,
+        creditCents: input.amountCents,
+        description: 'Settlement cash asset decrease for returned inbound ACH'
+      }
+    ]
+  };
+
+  assertBalancedJournal(journal);
+  return journal;
+}
+
+export function reconcileJournalAmount(input: {
   providerAmountCents: number;
   internalAmountCents: number;
   journal: LedgerJournal;
@@ -158,4 +208,13 @@ export function reconcilePostedAmount(input: {
     matched,
     discrepancyCents
   };
+}
+
+export function reconcilePostedAmount(input: {
+  providerAmountCents: number;
+  internalAmountCents: number;
+  journal: LedgerJournal;
+  eventCount: number;
+}) {
+  return reconcileJournalAmount(input);
 }
