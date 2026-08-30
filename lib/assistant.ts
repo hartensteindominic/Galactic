@@ -1,11 +1,13 @@
 import { bankingStatus } from './banking';
 import { cryptoStatus } from './crypto';
+import { getPrototypeCustomerTerms, requireApprovedLiveCustomerTerms } from './customer-terms-control';
 
 export type AssistantReply = {
   message: string;
   suggestions: string[];
   requiresHuman?: boolean;
   policyArea?: 'general' | 'security' | 'privacy' | 'credit' | 'aml-sanctions' | 'fraud-dispute' | 'identity' | 'investment' | 'insurance' | 'legal';
+  termsVersion?: string;
 };
 
 function includesAny(text: string, words: string[]) {
@@ -24,6 +26,7 @@ export function answerGalacticQuestion(input: string): AssistantReply {
   const text = input.trim().toLowerCase().slice(0, 500);
   const banking = bankingStatus();
   const crypto = cryptoStatus();
+  const terms = getPrototypeCustomerTerms();
   const demoNotice = banking.mode === 'demo'
     ? 'Galactic Trust is currently in demo banking mode, so no real deposits or money movement occur yet.'
     : banking.disclosure;
@@ -97,22 +100,22 @@ export function answerGalacticQuestion(input: string): AssistantReply {
   }
 
   if (includesAny(text, ['transfer', 'send money', 'send cash'])) {
+    if (banking.mode !== 'demo') requireApprovedLiveCustomerTerms();
     return {
-      message: banking.mode === 'demo'
-        ? 'Tap Transfer on the dashboard, enter a recipient and amount, then choose Simulate Transfer. Demo transfers never move real money.'
-        : 'Tap Transfer, enter the recipient and amount, then review the transfer before submission. Live availability, timing, limits, reversibility, and fees depend on the approved banking program and the status shown in your account.',
+      message: `Tap Transfer on the dashboard, enter a recipient and amount, then choose Simulate Transfer. ${terms.transferDisclosure}`,
       suggestions: ['Add money', 'Freeze my card', 'Is this secure?'],
-      policyArea: 'general'
+      policyArea: 'general',
+      termsVersion: terms.version
     };
   }
 
   if (includesAny(text, ['add money', 'deposit', 'fund account', 'direct deposit', 'ach'])) {
+    if (banking.mode !== 'demo') requireApprovedLiveCustomerTerms();
     return {
-      message: banking.mode === 'demo'
-        ? 'The Add Money panel previews bank transfer, debit-card funding, and direct deposit. They stay simulated until an approved regulated banking program is connected and enabled.'
-        : 'Open Add Money to see the funding methods actually enabled for your account. Availability, timing, limits, fees, and eligibility must come from the approved program terms shown in the product.',
+      message: terms.fundingDisclosure,
       suggestions: ['How do transfers work?', 'Security & privacy', 'Cards'],
-      policyArea: 'general'
+      policyArea: 'general',
+      termsVersion: terms.version
     };
   }
 
@@ -153,28 +156,32 @@ export function answerGalacticQuestion(input: string): AssistantReply {
   }
 
   if (includesAny(text, ['fdic', 'insured', 'bank insured', 'deposit insurance', 'member fdic'])) {
+    if (banking.mode !== 'demo') requireApprovedLiveCustomerTerms();
     return {
-      message: banking.mode === 'demo'
-        ? 'Galactic Trust does not present prototype balances as insured deposits. Any future deposit-insurance statement must identify the actual approved insured depository institution, accurately describe the deposit relationship, and match approved program language before it appears here.'
-        : banking.disclosure,
+      message: terms.depositInsuranceDisclosure,
       suggestions: ['How Galactic Trust works', 'Transparency', 'Contact support'],
-      policyArea: 'insurance'
+      policyArea: 'insurance',
+      termsVersion: terms.version
     };
   }
 
   if (includesAny(text, ['fee', 'fees', 'cost', 'price', 'apy', 'yield', 'interest earned'])) {
+    if (banking.mode !== 'demo') requireApprovedLiveCustomerTerms();
     return {
-      message: 'The prototype does not represent live consumer banking fees, APYs, yields, or deposit rates. Any future fee, rate, limit, eligibility term, or earnings statement must come from approved program terms and be displayed accurately at the relevant decision point.',
+      message: terms.feeRateDisclosure,
       suggestions: ['Transparency', 'Transfers', 'Product status'],
-      policyArea: 'general'
+      policyArea: 'general',
+      termsVersion: terms.version
     };
   }
 
   if (includesAny(text, ['reward', 'stars', 'cashback'])) {
+    if (banking.mode !== 'demo') requireApprovedLiveCustomerTerms();
     return {
-      message: 'The rewards section is currently part of the prototype experience. Live earning, redemption, eligibility, expiration, and merchant-offer rules must come from an approved rewards program before launch.',
+      message: terms.rewardsDisclosure,
       suggestions: ['Cards', 'Product status', 'Transparency'],
-      policyArea: 'general'
+      policyArea: 'general',
+      termsVersion: terms.version
     };
   }
 
@@ -196,9 +203,10 @@ export function answerGalacticQuestion(input: string): AssistantReply {
 
   if (includesAny(text, ['safe to spend', 'can i afford', 'can i spend'])) {
     return {
-      message: 'Safe-to-Spend is a simulation-only planning estimate based on the prototype items it knows about and the reserve you select. It can miss pending transactions, variable bills, cash withdrawals, fees, or other obligations, so it is not a guarantee, authorization to spend, or personalized financial advice.',
+      message: terms.cashflowDisclosure,
       suggestions: ['Safe-to-Spend', 'Why can this change?', 'Transparency'],
-      policyArea: 'general'
+      policyArea: 'general',
+      termsVersion: terms.version
     };
   }
 
