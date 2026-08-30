@@ -18,6 +18,8 @@ const required = [
   ['lib/prototype-trust.ts', 'productionCustomerStatusChannelConnected: false', 'Trust Center must keep production status channel disconnected'],
   ['lib/prototype-trust.ts', 'approvedIncidentMessageWorkflowConnected: false', 'Trust Center must keep incident message approval unconfigured'],
   ['lib/prototype-trust.ts', 'customerVisibleIncidentStatusTimingVerified: false', 'Trust Center must keep incident timing unverified'],
+  ['app/api/prototype/status/route.ts', 'incidentCommunication: prototypeIncidentCommunicationControlStatus()', 'prototype status API must expose incident communication posture'],
+  ['app/api/prototype/status/route.ts', 'incident-communication model is not a production status page or exercised customer-communications program', 'prototype status API must limit incident communication claims'],
   ['scripts/incident-communication-runtime-check.mjs', 'Incident communication and unknown-transaction customer-status runtime checks passed.', 'incident status wording must have executable runtime coverage'],
   ['package.json', 'scripts/incident-communication-runtime-check.mjs', 'incident status runtime coverage must run in CI']
 ];
@@ -45,4 +47,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Incident communication, status-channel, readiness, Trust, and unknown-outcome safety checks passed.');
+console.log('Incident communication, status-channel, readiness, Trust, API, and unknown-outcome safety checks passed.');
