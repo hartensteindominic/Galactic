@@ -1,7 +1,7 @@
-import { requireBankingUser } from '../../../../../lib/banking-auth';
-import { bankingErrorResponse, bankingJson } from '../../../../../lib/banking-http';
-import { requireJsonRequest, requireTrustedOrigin } from '../../../../../lib/request-security';
-import { runSandboxCertification, sandboxCertificationStatus } from '../../../../../lib/sandbox-certification';
+import { requireBankingUser } from '../../../../lib/banking-auth';
+import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
+import { requireJsonRequest, requireTrustedOrigin } from '../../../../lib/request-security';
+import { runSandboxCertification, sandboxCertificationStatus } from '../../../../lib/sandbox-certification';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
