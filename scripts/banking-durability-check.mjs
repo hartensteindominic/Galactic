@@ -4,6 +4,7 @@ const read = (path) => fs.readFileSync(path, 'utf8');
 
 const schema = read('db/migrations/001_banking_core.sql');
 const integrity = read('db/migrations/002_banking_ledger_integrity.sql');
+const claims = read('db/migrations/003_banking_event_claims.sql');
 const store = read('lib/postgres-banking-store.ts');
 const database = read('lib/banking-sandbox-database.ts');
 const migrationRunner = read('scripts/run-banking-sandbox-migrations.mjs');
@@ -12,7 +13,9 @@ const gatewayAdapter = read('lib/gateway-banking-sandbox-adapter.ts');
 const webhookRoute = read('app/api/banking/provider-sandbox/webhook/route.ts');
 const operatorAuth = read('lib/sandbox-operator-auth.ts');
 const operatorRoute = read('app/api/banking/provider-sandbox/certification/route.ts');
+const recoveryRoute = read('app/api/banking/provider-sandbox/recovery/route.ts');
 const certificationRunner = read('lib/provider-sandbox-certification-runner.ts');
+const recovery = read('lib/provider-sandbox-recovery.ts');
 const processor = read('lib/provider-sandbox-event-processor.ts');
 const ledger = read('lib/financial-ledger.ts');
 const readinessPage = read('app/sandbox-readiness/page.tsx');
@@ -28,11 +31,24 @@ const required = [
   [integrity, 'banking_ledger_journals_append_only', 'posted journals must be append-only'],
   [integrity, 'banking_ledger_lines_append_only', 'posted journal lines must be append-only'],
   [integrity, 'banking_audit_events_append_only', 'audit history must be append-only'],
+  [claims, "'processing'", 'event lifecycle must include an explicit processing state'],
+  [claims, 'processing_token text', 'processing leases must have ownership tokens'],
+  [claims, 'processing_started_at timestamptz', 'processing leases must have timestamps'],
+  [claims, 'attempt_count integer NOT NULL DEFAULT 0', 'provider events must persist attempt counts'],
+  [claims, 'next_attempt_at timestamptz', 'failed events must persist retry scheduling'],
+  [claims, 'banking_provider_events_processing_lease_check', 'database must enforce processing lease consistency'],
 
   [store, 'ON CONFLICT (provider, environment, raw_provider_event_id) DO NOTHING', 'Postgres store must atomically dedupe provider events'],
   [store, "canonical_event ->> 'resourceId'", 'Postgres store must find prior processed events by provider resource'],
   [store, 'PROVIDER_EVENT_CONFLICT', 'same provider event ID with different data must fail closed'],
   [store, 'LEDGER_EVENT_CONFLICT', 'same event with different journal must fail closed'],
+  [store, 'claimEventForProcessing', 'known events must require an atomic processing claim'],
+  [store, 'claimNextRecoverableEvent', 'recovery workers must atomically claim recoverable events'],
+  [store, 'FOR UPDATE SKIP LOCKED', 'concurrent recovery workers must skip already locked events'],
+  [store, 'attempt_count < $5', 'event claiming must enforce bounded attempts in SQL'],
+  [store, 'processing_started_at <= $4::timestamptz', 'stale processing leases must be reclaimable'],
+  [store, "status = 'processing' AND processing_token = $2", 'completion/failure must require lease ownership'],
+  [store, 'EVENT_PROCESSING_LEASE_LOST', 'lost lease ownership must fail closed'],
   [store, "await client.query('BEGIN')", 'store transaction must begin explicitly'],
   [store, "await client.query('COMMIT')", 'store transaction must commit explicitly'],
   [store, "await client.query('ROLLBACK')", 'store transaction must rollback failures'],
@@ -70,17 +86,29 @@ const required = [
   [operatorAuth, '5 * 60_000', 'operator signatures must expire'],
   [operatorRoute, 'requireSandboxOperator', 'provider certification route must require operator HMAC auth'],
   [operatorRoute, 'CERTIFICATION_PARAMETERS_NOT_ALLOWED', 'provider certification scenario must not accept custom parameters'],
+  [recoveryRoute, 'requireSandboxOperator', 'recovery endpoint must require operator HMAC auth'],
+  [recoveryRoute, 'RECOVERY_PARAMETERS_NOT_ALLOWED', 'recovery endpoint must use a fixed bounded scenario'],
 
   [certificationRunner, 'const amountCents = 2500', 'provider certification amount must remain a fixed $25 sandbox amount'],
   [certificationRunner, "sandboxScenario: 'approve'", 'provider certification KYC scenario must remain fixed'],
   [certificationRunner, 'putProviderResourceLink', 'provider resources must be durably mapped'],
   [certificationRunner, 'realMoneyMoved: false', 'provider certification must explicitly state no real money moved'],
 
+  [processor, 'PROVIDER_EVENT_MAX_ATTEMPTS = 5', 'event processing retries must have a hard maximum'],
+  [processor, 'PROVIDER_EVENT_LEASE_MS = 2 * 60_000', 'event processing leases must have a finite stale threshold'],
+  [processor, 'claimEventForProcessing', 'webhook processing must claim a lease before handling an event'],
+  [processor, 'processingToken: record.processingToken', 'event completion/failure must pass its lease token'],
+  [processor, 'retryAtForAttempt', 'processing failures must schedule bounded retry backoff'],
   [processor, 'ACH_RETURN_WITHOUT_POSTED_EVENT', 'ACH returns must require a prior posted event'],
   [processor, 'ACH_RETURN_AMOUNT_MISMATCH', 'ACH return amount must match the prior posted event'],
   [processor, 'createInboundAchReturnedJournal', 'ACH returns must post a compensating journal'],
   [processor, 'markEventFailed', 'processing failures must enter a recoverable failed state'],
   [processor, 'store.transaction', 'event processing must use durable transactions'],
+
+  [recovery, 'RECOVERY_BATCH_LIMIT = 10', 'recovery batch size must be fixed and bounded'],
+  [recovery, 'claimNextRecoverableEvent', 'recovery worker must use atomic claim selection'],
+  [recovery, 'processClaimedProviderSandboxEvent', 'recovery worker must use the same leased processing path'],
+
   [ledger, 'Customer deposit liability decrease for returned inbound ACH', 'return journal must reverse the customer liability'],
   [ledger, 'Settlement cash asset decrease for returned inbound ACH', 'return journal must reverse settlement cash'],
 
@@ -112,8 +140,10 @@ const forbidden = [
   [schema, 'TRUNCATE', 'core migration must not truncate banking data'],
   [schema, 'ON DELETE CASCADE', 'ledger data must not cascade-delete'],
   [integrity, 'DISABLE TRIGGER', 'integrity migration must not disable ledger guards'],
+  [claims, 'DISABLE TRIGGER', 'claim migration must not disable database guards'],
   [migrationRunner, 'console.log(databaseUrl', 'migration runner must never print the database URL'],
   [operatorRoute, 'requireBankingUser', 'provider sandbox certification must not rely on public demo-user auth'],
+  [recoveryRoute, 'requireBankingUser', 'provider sandbox recovery must not rely on public demo-user auth'],
   [webhookRoute, 'requireBankingUser', 'server-to-server webhook must use provider signatures, not customer auth'],
   [readinessPage, 'BANKING_SANDBOX_API_KEY', 'reviewer page must never render sandbox API-key identifiers or values'],
   [readinessPage, 'BANKING_SANDBOX_DATABASE_URL', 'reviewer page must never render sandbox database URLs'],
@@ -124,4 +154,4 @@ for (const [source, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(`Durable banking regression: ${label}`);
 }
 
-console.log('Galactic Trust durable banking SQL, Postgres, operator auth, webhook, return accounting and sandbox orchestration checks passed.');
+console.log('Galactic Trust durable banking SQL, leases, Postgres recovery, operator auth, webhook, return accounting and sandbox orchestration checks passed.');
