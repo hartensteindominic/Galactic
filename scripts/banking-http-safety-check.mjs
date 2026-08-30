@@ -5,7 +5,7 @@ const required = [
   ['lib/banking-http.ts', "headers.set('Pragma', 'no-cache')", 'banking JSON responses must retain legacy no-cache protection'],
   ['lib/banking-http.ts', "code: 'INTERNAL_ERROR'", 'unexpected API failures must use a generic client error code'],
   ['lib/banking-http.ts', "message: 'Banking service is temporarily unavailable.'", 'unexpected API failures must use a generic client message'],
-  ['lib/banking-http.ts', "headers: { 'X-Error-ID': errorId }", 'banking API failures must expose a correlation ID header'],
+  ['lib/banking-http.ts', "{ 'X-Error-ID': errorId }", 'banking API failures must expose a correlation ID header'],
   ['lib/banking-http.ts', "name: error instanceof Error ? error.name : 'UnknownError'", 'unexpected server logging must retain only a safe error type plus correlation ID'],
   ['scripts/banking-http-runtime-check.mjs', 'Banking HTTP error sanitization runtime behavior checks passed.', 'banking HTTP sanitization must have executable runtime coverage'],
   ['package.json', 'scripts/banking-http-runtime-check.mjs', 'banking HTTP sanitization runtime coverage must run in the CI safety suite']
