@@ -1,7 +1,9 @@
 import { headers } from 'next/headers';
 import { charterReadinessStatus } from '../../../lib/charter-readiness';
 import { complianceObligationRegisterStatus } from '../../../lib/compliance-obligation-register';
+import { institutionAccountabilityStatus } from '../../../lib/institution-accountability';
 import { resolveRequestBrand } from '../../../lib/tenant-boundary';
+import { threeYearBankPlanStatus } from '../../../lib/three-year-bank-plan';
 import { unitEconomicsControlStatus } from '../../../lib/unit-economics';
 import { StrategyShell } from './strategy-shell';
 
@@ -24,6 +26,8 @@ export default async function PrototypeStrategyPage({
       charter={charterReadinessStatus()}
       economicsControls={unitEconomicsControlStatus()}
       compliance={complianceObligationRegisterStatus()}
+      accountability={institutionAccountabilityStatus()}
+      threeYearBankPlan={threeYearBankPlanStatus()}
     />
   );
 }
