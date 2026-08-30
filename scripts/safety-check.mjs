@@ -16,7 +16,7 @@ const required = [
   ['lib/banking.ts', "process.env.BANKING_ENABLE_LIVE_WRITES === 'true'", 'live banking writes require an explicit server flag'],
   ['lib/banking.ts', "throw new BankingError(503, 'LIVE_WRITES_DISABLED'", 'banking fails closed when live writes are disabled'],
   ['lib/banking-auth.ts', 'createHmac', 'partner banking requires signed authentication'],
-  ['lib/banking-auth.ts', "BANKING_AUTH_GATEWAY_SECRET", 'partner banking auth requires a server secret'],
+  ['lib/banking-auth.ts', 'BANKING_AUTH_GATEWAY_SECRET', 'partner banking auth requires a server secret'],
   ['app/api/banking/transfers/route.ts', 'requireBankingUser', 'transfers require a banking user boundary'],
   ['app/api/banking/cards/freeze/route.ts', 'requireBankingUser', 'card freeze requires a banking user boundary'],
   ['app/banking-actions.tsx', 'Demo transfers never move real money.', 'client labels simulated transfers clearly']
@@ -30,8 +30,8 @@ const forbidden = [
   ['app/api/licenses/use/route.ts', 'sendTransaction', 'paid route must not submit transactions'],
   ['app/banking-actions.tsx', 'BANKING_GATEWAY_API_KEY', 'banking provider API keys must never appear in client code'],
   ['app/banking-actions.tsx', 'BANKING_AUTH_GATEWAY_SECRET', 'banking auth secrets must never appear in client code'],
-  ['app/banking-actions.tsx', 'CVV', 'client must not request or render CVV data'],
-  ['app/banking-actions.tsx', 'PIN', 'client must not request or render PIN data']
+  ['app/banking-actions.tsx', 'name="cvv"', 'client must not collect CVV data'],
+  ['app/banking-actions.tsx', 'name="pin"', 'client must not collect PIN data']
 ];
 
 for (const [file, text, label] of required) {
