@@ -11,9 +11,11 @@ type ChatMessage = {
 type Reply = {
   message: string;
   suggestions?: string[];
+  requiresHuman?: boolean;
+  policyArea?: string;
 };
 
-const starterSuggestions = ['How do transfers work?', 'How does crypto work?', 'Is my data private?'];
+const starterSuggestions = ['What can Orbit do?', 'How do transfers work?', 'Is my data private?'];
 
 function newId() {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -24,11 +26,12 @@ export function GalacticChat() {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [suggestions, setSuggestions] = useState(starterSuggestions);
+  const [humanEscalation, setHumanEscalation] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Hi! I’m Orbit 👋 Ask me about transfers, cards, crypto, security, privacy, or Galactic Trust.'
+      text: 'Hi! I’m Orbit 👋 I’m an automated support assistant for general product questions. I do not make regulated or account-specific decisions, and I’ll direct sensitive issues to a human workflow.'
     }
   ]);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -40,6 +43,7 @@ export function GalacticChat() {
     setMessages((current) => [...current, { id: newId(), role: 'user', text }]);
     setInput('');
     setSuggestions([]);
+    setHumanEscalation(false);
     setBusy(true);
 
     try {
@@ -52,6 +56,7 @@ export function GalacticChat() {
       if (!response.ok || !data?.ok) throw new Error(data?.error?.message || 'Orbit could not answer right now.');
       const reply = data.reply as Reply;
       setMessages((current) => [...current, { id: newId(), role: 'assistant', text: reply.message }]);
+      setHumanEscalation(Boolean(reply.requiresHuman));
       setSuggestions(reply.suggestions?.slice(0, 3) || starterSuggestions);
     } catch (error) {
       setMessages((current) => [...current, {
@@ -59,7 +64,8 @@ export function GalacticChat() {
         role: 'assistant',
         text: error instanceof Error ? error.message : 'Orbit could not answer right now.'
       }]);
-      setSuggestions(starterSuggestions);
+      setHumanEscalation(true);
+      setSuggestions(['Contact support', 'Security protections', 'Privacy']);
     } finally {
       setBusy(false);
       requestAnimationFrame(() => {
@@ -77,16 +83,16 @@ export function GalacticChat() {
   return (
     <div className={`galacticChat ${open ? 'open' : ''}`}>
       {open && (
-        <div className="chatPanel" ref={panelRef} role="dialog" aria-label="Galactic Trust support assistant">
+        <div className="chatPanel" ref={panelRef} role="dialog" aria-label="Galactic Trust automated support assistant">
           <div className="chatHeader">
             <div className="chatBotAvatar" aria-hidden="true">✦</div>
-            <div><strong>Orbit</strong><small><i /> Galactic Trust assistant</small></div>
+            <div><strong>Orbit</strong><small><i /> Automated support · general guidance</small></div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">×</button>
           </div>
 
           <div className="chatSafetyNote">
             <span>🔒</span>
-            <p>Never share passwords, PINs, CVVs, recovery codes, or one-time codes here.</p>
+            <p>Never share passwords, PINs, CVVs, recovery codes, one-time codes, SSNs, or identity documents here.</p>
           </div>
 
           <div className="chatMessages" aria-live="polite">
@@ -95,6 +101,13 @@ export function GalacticChat() {
             ))}
             {busy && <div className="chatBubble assistant typing" aria-label="Orbit is typing"><span /><span /><span /></div>}
           </div>
+
+          {humanEscalation ? (
+            <div className="chatSafetyNote" role="status">
+              <span>👤</span>
+              <p>This question requires an authorized human support/compliance workflow. Orbit has not made a final account or regulated decision.</p>
+            </div>
+          ) : null}
 
           {suggestions.length > 0 && (
             <div className="chatSuggestions">
@@ -106,14 +119,14 @@ export function GalacticChat() {
 
           <form className="chatComposer" onSubmit={submit}>
             <label className="srOnly" htmlFor="orbit-message">Message Orbit</label>
-            <input id="orbit-message" value={input} onChange={(event) => setInput(event.target.value)} maxLength={500} placeholder="Ask Orbit anything…" autoComplete="off" />
+            <input id="orbit-message" value={input} onChange={(event) => setInput(event.target.value)} maxLength={500} placeholder="Ask a general support question…" autoComplete="off" />
             <button type="submit" disabled={busy || !input.trim()} aria-label="Send message">➤</button>
           </form>
-          <div className="chatPrivacyLine">Support chat is not a place for sensitive account credentials.</div>
+          <div className="chatPrivacyLine">Automated support. Sensitive/account-specific decisions require protected human workflows.</div>
         </div>
       )}
 
-      <button className="chatLauncher" type="button" onClick={() => setOpen((value) => !value)} aria-label={open ? 'Close support chat' : 'Open support chat'}>
+      <button className="chatLauncher" type="button" onClick={() => setOpen((value) => !value)} aria-label={open ? 'Close support chat' : 'Open automated support chat'}>
         {open ? <span className="launcherClose">×</span> : <><span className="launcherPlanet">✦</span><span className="launcherBadge">1</span></>}
       </button>
     </div>
