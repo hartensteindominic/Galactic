@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
-import { publicBrandConfig, resolveBrand } from '../../../lib/white-label';
+import { resolveRequestBrand } from '../../../lib/tenant-boundary';
+import { publicBrandConfig } from '../../../lib/white-label';
 import { CashflowConsole } from './cashflow-console';
 
 export default async function PrototypeCashflowPage({
@@ -9,9 +10,9 @@ export default async function PrototypeCashflowPage({
 }) {
   const requestHeaders = await headers();
   const params = await searchParams;
-  const brand = resolveBrand({
+  const brand = resolveRequestBrand({
     host: requestHeaders.get('host'),
-    key: params.tenant
+    requestedKey: params.tenant
   });
 
   return <CashflowConsole tenantKey={brand.key} brandName={publicBrandConfig(brand).name} />;
