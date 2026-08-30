@@ -2,6 +2,7 @@ import { bankingStatus } from '../../lib/banking';
 import { providerSandboxDatabaseStatus } from '../../lib/banking-sandbox-database';
 import { providerSandboxStatus } from '../../lib/provider-sandbox';
 import { sandboxCertificationStatus } from '../../lib/sandbox-certification';
+import { sandboxOperatorAuthStatus } from '../../lib/sandbox-operator-auth';
 import { SandboxCertificationClient } from './sandbox-certification-client';
 
 export const runtime = 'nodejs';
@@ -21,6 +22,7 @@ export default function SandboxReadinessPage() {
   const certification = sandboxCertificationStatus();
   const providerSandbox = providerSandboxStatus();
   const database = providerSandboxDatabaseStatus();
+  const operatorAuth = sandboxOperatorAuthStatus();
 
   return (
     <main className="sandboxPage">
@@ -65,6 +67,7 @@ export default function SandboxReadinessPage() {
           <Status label="Sandbox credentials configured" ok={providerSandbox.configured} detail={providerSandbox.providerName ? `Provider: ${providerSandbox.providerName}` : 'No provider sandbox credentials are configured yet.'} />
           <Status label="Credentials isolated from production" ok={providerSandbox.credentialsIsolated} detail="Sandbox gateway, API key, and program ID must not be reused from production." />
           <Status label="Dedicated sandbox enable requested" ok={providerSandbox.enabledRequested} detail="BANKING_SANDBOX_PROVIDER_ENABLED is a sandbox-only networking switch." />
+          <Status label="Operator signing configured" ok={operatorAuth.configured} detail={operatorAuth.disclosure} />
           <Status label="Production live writes remain off" ok={!providerSandbox.productionLiveWritesEnabled} detail="Provider sandbox networking is blocked whenever production live writes are enabled." />
           <Status label="Provider sandbox calls permitted" ok={providerSandbox.networkCallsEnabled} detail={providerSandbox.disclosure} />
         </article>
@@ -86,7 +89,7 @@ export default function SandboxReadinessPage() {
         <p>APPROVED PROVIDER-SANDBOX TARGET</p>
         <h2>The next step after this page is green</h2>
         <div className="sandboxFlow">
-          <span>Authenticated user</span><i>→</i>
+          <span>Operator-signed launch</span><i>→</i>
           <span>Provider sandbox KYC</span><i>→</i>
           <span>Sandbox deposit account</span><i>→</i>
           <span>Sandbox ACH</span><i>→</i>
@@ -98,7 +101,7 @@ export default function SandboxReadinessPage() {
           <span>Audit evidence</span>
         </div>
         <p className="sandboxArchitectureNote">
-          A real provider adapter must implement the server-only contract in <code>lib/banking-provider-adapter.ts</code>. Provider sandbox credentials and the sandbox Postgres database use independent enable gates. Production still requires the separate partner, compliance, disclosure, and live-write gates.
+          Provider sandbox writes are operator-signed server-to-server actions, not public beta buttons. Provider credentials and the sandbox Postgres database use independent enable gates. Production still requires the separate partner, compliance, disclosure, and live-write gates.
         </p>
       </section>
 
