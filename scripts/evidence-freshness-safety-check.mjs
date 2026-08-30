@@ -15,6 +15,11 @@ const required = [
   ['app/api/prototype/operations/freshness/route.ts', 'Recent evidence does not prove continuous monitoring, production health, provider-statement reconciliation', 'freshness endpoint must disclose evidence-vs-health boundary'],
   ['app/api/prototype/status/route.ts', 'evidenceFreshness: prototypeEvidenceFreshnessControlStatus()', 'general prototype status must expose evidence freshness control posture'],
   ['app/api/prototype/status/route.ts', 'Evidence recency does not prove continuous monitoring or production health', 'general prototype status must limit evidence recency claims'],
+  ['app/prototype/operations/operations-console.tsx', 'Refresh evidence age', 'Operations UI must require an explicit action for evidence-age observation'],
+  ['app/prototype/operations/operations-console.tsx', 'Recency is not a health status.', 'Operations UI must explicitly separate recency from health'],
+  ['app/prototype/operations/operations-console.tsx', 'Not a health status.', 'Operations UI result must repeat the evidence-vs-health boundary'],
+  ['app/prototype/operations/operations-console.tsx', 'Recent evidence does not prove continuous monitoring, production health, or provider-statement reconciliation.', 'Operations UI must limit recent-evidence interpretation'],
+  ['app/prototype/operations/operations-console.tsx', 'Not refreshed in this browser session.', 'Operations UI must show freshness is not auto-exercised'],
   ['scripts/evidence-freshness-runtime-check.mjs', 'Prototype evidence freshness runtime behavior checks passed.', 'freshness behavior must have executable runtime coverage'],
   ['package.json', 'scripts/evidence-freshness-runtime-check.mjs', 'freshness runtime test must run in CI']
 ];
@@ -25,7 +30,9 @@ const forbidden = [
   ['lib/prototype-evidence-freshness.ts', 'providerStatementReconciliationVerified: true', 'freshness model must not self-certify provider-statement reconciliation'],
   ['app/api/prototype/operations/freshness/route.ts', "health: 'healthy'", 'freshness endpoint must not convert recency into a healthy production status'],
   ['app/api/prototype/operations/freshness/route.ts', 'productionHealthVerified: true', 'freshness endpoint must not self-certify production health'],
-  ['app/api/prototype/status/route.ts', "productionHealthVerified: true", 'general prototype status must not self-certify production health']
+  ['app/api/prototype/status/route.ts', "productionHealthVerified: true", 'general prototype status must not self-certify production health'],
+  ['app/prototype/operations/operations-console.tsx', 'System healthy', 'Operations UI must not convert evidence age into production health'],
+  ['app/prototype/operations/operations-console.tsx', 'All systems operational', 'Operations UI must not convert evidence age into production health']
 ];
 
 for (const [file, text, label] of required) {
@@ -38,4 +45,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Prototype evidence freshness, operator boundary, status API, and evidence-vs-health safety checks passed.');
+console.log('Prototype evidence freshness, operator boundary, Operations UI, status API, and evidence-vs-health safety checks passed.');
