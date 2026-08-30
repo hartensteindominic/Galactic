@@ -1,5 +1,6 @@
 import { bankingStatus } from '../../lib/banking';
 import { cryptoStatus } from '../../lib/crypto';
+import { sandboxCertificationStatus } from '../../lib/sandbox-certification';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,7 @@ function Gate({ label, value, detail }: { label: string; value: boolean; detail:
 export default function ComplianceCenter() {
   const banking = bankingStatus();
   const crypto = cryptoStatus();
+  const sandbox = sandboxCertificationStatus();
 
   return (
     <main className="compliancePage">
@@ -54,6 +56,18 @@ export default function ComplianceCenter() {
           <Gate label="Customer disclosures approved" value={crypto.disclosuresApproved} detail="Crypto risk, custody, fees, eligibility, and provider disclosures must match the live program." />
           <Gate label="Live trading explicitly enabled" value={crypto.liveTradingEnabled} detail="Provider credentials alone can never enable real orders." />
         </article>
+
+        <article className="complianceStatusCard">
+          <div className="statusHeading">
+            <div><small>ZERO-MONEY SANDBOX</small><h2>{sandbox.allowed ? 'Certification available' : 'Certification locked'}</h2></div>
+            <span className={sandbox.allowed ? 'statusSafe' : 'statusLive'}>{sandbox.allowed ? 'SAFE' : 'LOCKED'}</span>
+          </div>
+          <Gate label="Synthetic objects only" value={sandbox.syntheticOnly} detail="The certification runner creates no real customer or bank objects." />
+          <Gate label="No external banking calls" value={!sandbox.externalNetworkCallsAllowed} detail="The synthetic certification engine is prohibited from calling a provider network." />
+          <Gate label="No provider credentials" value={!sandbox.providerCredentialsAllowed} detail="No bank/BaaS API secret is read by the certification engine." />
+          <Gate label="No real money" value={!sandbox.realMoneyAllowed} detail="The ACH and ledger evidence is entirely synthetic." />
+          <a href="/sandbox-readiness" className="complianceInlineLink">Open Sandbox Readiness →</a>
+        </article>
       </section>
 
       <section className="compliancePrinciples">
@@ -88,8 +102,10 @@ export default function ComplianceCenter() {
           <b>Current product state</b>
           <span>{banking.disclosure}</span>
           <span>{crypto.disclosure}</span>
+          <span>{sandbox.disclosure}</span>
         </div>
         <div className="complianceLinks">
+          <a href="/sandbox-readiness">Sandbox Readiness</a>
           <a href="/beta-notice">Public Beta Notice</a>
           <a href="/privacy">Privacy Center</a>
           <a href="/support">Support &amp; Safety</a>
