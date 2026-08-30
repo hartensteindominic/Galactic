@@ -14,8 +14,12 @@ const webhookRoute = read('app/api/banking/provider-sandbox/webhook/route.ts');
 const operatorAuth = read('lib/sandbox-operator-auth.ts');
 const operatorRoute = read('app/api/banking/provider-sandbox/certification/route.ts');
 const recoveryRoute = read('app/api/banking/provider-sandbox/recovery/route.ts');
+const operationsRoute = read('app/api/banking/provider-sandbox/operations/route.ts');
+const reconciliationListRoute = read('app/api/banking/provider-sandbox/reconciliations/route.ts');
+const reconciliationResolveRoute = read('app/api/banking/provider-sandbox/reconciliations/resolve/route.ts');
 const certificationRunner = read('lib/provider-sandbox-certification-runner.ts');
 const recovery = read('lib/provider-sandbox-recovery.ts');
+const operations = read('lib/provider-sandbox-operations.ts');
 const processor = read('lib/provider-sandbox-event-processor.ts');
 const ledger = read('lib/financial-ledger.ts');
 const readinessPage = read('app/sandbox-readiness/page.tsx');
@@ -88,6 +92,11 @@ const required = [
   [operatorRoute, 'CERTIFICATION_PARAMETERS_NOT_ALLOWED', 'provider certification scenario must not accept custom parameters'],
   [recoveryRoute, 'requireSandboxOperator', 'recovery endpoint must require operator HMAC auth'],
   [recoveryRoute, 'RECOVERY_PARAMETERS_NOT_ALLOWED', 'recovery endpoint must use a fixed bounded scenario'],
+  [operationsRoute, 'requireSandboxOperator', 'operations snapshot must require operator HMAC auth'],
+  [operationsRoute, 'OPERATIONS_PARAMETERS_NOT_ALLOWED', 'operations snapshot must reject custom parameters'],
+  [reconciliationListRoute, 'requireSandboxOperator', 'open reconciliation listing must require operator HMAC auth'],
+  [reconciliationResolveRoute, 'requireSandboxOperator', 'reconciliation resolution must require operator HMAC auth'],
+  [reconciliationResolveRoute, 'INVALID_REQUEST_FIELDS', 'reconciliation resolution must reject extra request fields'],
 
   [certificationRunner, 'const amountCents = 2500', 'provider certification amount must remain a fixed $25 sandbox amount'],
   [certificationRunner, "sandboxScenario: 'approve'", 'provider certification KYC scenario must remain fixed'],
@@ -108,6 +117,14 @@ const required = [
   [recovery, 'RECOVERY_BATCH_LIMIT = 10', 'recovery batch size must be fixed and bounded'],
   [recovery, 'claimNextRecoverableEvent', 'recovery worker must use atomic claim selection'],
   [recovery, 'processClaimedProviderSandboxEvent', 'recovery worker must use the same leased processing path'],
+
+  [operations, "status = 'processing' AND processing_started_at <= $2::timestamptz", 'operations snapshot must expose stale processing leases'],
+  [operations, 'terminal_failed', 'operations snapshot must expose terminal failures separately'],
+  [operations, 'open_discrepancies', 'operations snapshot must expose unresolved reconciliation count'],
+  [operations, 'LIMIT 25', 'open reconciliation listing must have a hard result limit'],
+  [operations, 'resolutionNoteLength', 'reconciliation resolution audit must avoid copying the resolution note into audit metadata'],
+  [operations, 'resolveReconciliation', 'reconciliation resolution must use the dedicated persistence operation'],
+  [operations, 'appendAuditEvent', 'reconciliation resolution must append audit evidence'],
 
   [ledger, 'Customer deposit liability decrease for returned inbound ACH', 'return journal must reverse the customer liability'],
   [ledger, 'Settlement cash asset decrease for returned inbound ACH', 'return journal must reverse settlement cash'],
@@ -144,6 +161,11 @@ const forbidden = [
   [migrationRunner, 'console.log(databaseUrl', 'migration runner must never print the database URL'],
   [operatorRoute, 'requireBankingUser', 'provider sandbox certification must not rely on public demo-user auth'],
   [recoveryRoute, 'requireBankingUser', 'provider sandbox recovery must not rely on public demo-user auth'],
+  [operationsRoute, 'requireBankingUser', 'provider sandbox operations must not rely on public demo-user auth'],
+  [reconciliationListRoute, 'requireBankingUser', 'reconciliation listing must not rely on public demo-user auth'],
+  [reconciliationResolveRoute, 'requireBankingUser', 'reconciliation resolution must not rely on public demo-user auth'],
+  [reconciliationResolveRoute, 'appendJournal', 'reconciliation resolution must never change ledger journals'],
+  [operations, 'SELECT canonical_event', 'operations endpoints must not expose canonical provider event payloads'],
   [webhookRoute, 'requireBankingUser', 'server-to-server webhook must use provider signatures, not customer auth'],
   [readinessPage, 'BANKING_SANDBOX_API_KEY', 'reviewer page must never render sandbox API-key identifiers or values'],
   [readinessPage, 'BANKING_SANDBOX_DATABASE_URL', 'reviewer page must never render sandbox database URLs'],
@@ -154,4 +176,4 @@ for (const [source, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(`Durable banking regression: ${label}`);
 }
 
-console.log('Galactic Trust durable banking SQL, leases, Postgres recovery, operator auth, webhook, return accounting and sandbox orchestration checks passed.');
+console.log('Galactic Trust durable banking SQL, leases, recovery, operational visibility, reconciliation controls, operator auth, webhook and return accounting checks passed.');
