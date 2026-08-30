@@ -1,4 +1,4 @@
-import { bankingStatus } from './banking';
+import { BankingError, bankingStatus } from './banking';
 
 function sandboxConfig() {
   return {
@@ -65,4 +65,29 @@ export function providerSandboxStatus() {
       ? 'Provider sandbox networking is enabled with isolated sandbox credentials. Production live writes remain disabled.'
       : 'Provider sandbox networking remains disabled until isolated sandbox credentials are configured and the dedicated sandbox enable flag is explicitly set.'
   };
+}
+
+/**
+ * Server-only gate for future provider sandbox adapters.
+ *
+ * This is intentionally independent from BANKING_ENABLE_LIVE_WRITES. A provider
+ * sandbox integration can be exercised while production banking remains in demo
+ * mode. Do not export this object through API responses or client components.
+ */
+export function requireProviderSandboxConfig() {
+  const status = providerSandboxStatus();
+  if (!status.configured) {
+    throw new BankingError(503, 'SANDBOX_PROVIDER_NOT_CONFIGURED', 'Provider sandbox credentials are not fully configured.');
+  }
+  if (!status.credentialsIsolated) {
+    throw new BankingError(503, 'SANDBOX_PROVIDER_NOT_ISOLATED', 'Provider sandbox configuration must be isolated from production banking credentials.');
+  }
+  if (!status.enabledRequested) {
+    throw new BankingError(503, 'SANDBOX_PROVIDER_DISABLED', 'Provider sandbox networking has not been explicitly enabled.');
+  }
+  if (status.productionLiveWritesEnabled) {
+    throw new BankingError(409, 'SANDBOX_BLOCKED_BY_PRODUCTION', 'Provider sandbox networking is disabled while production live writes are enabled.');
+  }
+
+  return sandboxConfig();
 }
