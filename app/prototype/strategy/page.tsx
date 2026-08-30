@@ -4,6 +4,7 @@ import { charterReadinessStatus } from '../../../lib/charter-readiness';
 import { complianceObligationRegisterStatus } from '../../../lib/compliance-obligation-register';
 import { institutionAccountabilityStatus } from '../../../lib/institution-accountability';
 import { productLaunchGovernanceStatus } from '../../../lib/product-launch-governance';
+import { riskIssueManagementStatus } from '../../../lib/risk-issue-management';
 import { sponsorDiligencePackStatus } from '../../../lib/sponsor-diligence-pack';
 import { resolveRequestBrand } from '../../../lib/tenant-boundary';
 import { threeYearBankPlanStatus } from '../../../lib/three-year-bank-plan';
@@ -34,6 +35,7 @@ export default async function PrototypeStrategyPage({
       sponsorDiligence={sponsorDiligencePackStatus()}
       assumptionEvidence={assumptionEvidenceRegistryStatus()}
       productLaunchGovernance={productLaunchGovernanceStatus()}
+      riskIssueManagement={riskIssueManagementStatus()}
     />
   );
 }
