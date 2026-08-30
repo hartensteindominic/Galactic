@@ -3,6 +3,7 @@ import { Pool } from 'pg';
 import { BankingError } from './banking';
 import { getProviderSandboxBankingStore, providerSandboxDatabaseStatus } from './banking-sandbox-database';
 import type { BankingOperationsSnapshot, ReconciliationRecord } from './banking-persistence-contract';
+import { getGatewayBankingSandboxAdapter } from './gateway-banking-sandbox-adapter';
 import { PROVIDER_EVENT_LEASE_MS, PROVIDER_EVENT_MAX_ATTEMPTS } from './provider-sandbox-event-processor';
 
 export type OpenReconciliationSummary = {
@@ -60,6 +61,36 @@ async function withReadOnlyPool<T>(work: (pool: Pool) => Promise<T>) {
   } finally {
     await pool.end();
   }
+}
+
+async function getInternalAccountLedgerBalance(providerAccountId: string) {
+  return withReadOnlyPool(async (pool) => {
+    const result = await pool.query(
+      `SELECT
+         COALESCE(SUM(lines.credit_cents - lines.debit_cents), 0) AS internal_balance_cents,
+         COALESCE(SUM(lines.debit_cents), 0) AS liability_debits_cents,
+         COALESCE(SUM(lines.credit_cents), 0) AS liability_credits_cents,
+         COUNT(DISTINCT lines.event_id) AS event_count
+       FROM banking_ledger_lines AS lines
+       JOIN banking_ledger_journals AS journals
+         ON journals.journal_id = lines.journal_id
+       JOIN banking_provider_events AS events
+         ON events.event_id = journals.event_id
+      WHERE journals.environment = 'provider_sandbox'
+        AND events.environment = 'provider_sandbox'
+        AND events.status = 'processed'
+        AND events.canonical_event ->> 'accountId' = $1
+        AND lines.account = 'customer_deposit_liability'`,
+      [providerAccountId]
+    );
+    const row = result.rows[0] || {};
+    return {
+      internalBalanceCents: signedNumber(row.internal_balance_cents ?? 0),
+      liabilityDebitsCents: number(row.liability_debits_cents ?? 0),
+      liabilityCreditsCents: number(row.liability_credits_cents ?? 0),
+      eventCount: number(row.event_count ?? 0)
+    };
+  });
 }
 
 export async function getProviderSandboxOperationsSnapshot(): Promise<BankingOperationsSnapshot> {
@@ -130,12 +161,100 @@ export async function listOpenProviderSandboxReconciliations(): Promise<OpenReco
         provider: String(row.provider),
         resourceId: String(row.resource_id),
         createdAt: new Date(row.created_at).toISOString(),
-        providerAmountCents: number(snapshot.providerAmountCents),
-        internalAmountCents: number(snapshot.internalAmountCents),
+        providerAmountCents: signedNumber(snapshot.providerAmountCents),
+        internalAmountCents: signedNumber(snapshot.internalAmountCents),
         discrepancyCents: signedNumber(snapshot.discrepancyCents)
       };
     });
   });
+}
+
+export async function reconcileProviderSandboxAccount(input: {
+  operatorId: string;
+  accountResourceId: string;
+}) {
+  const accountResourceId = input.accountResourceId.trim();
+  if (!accountResourceId || accountResourceId.length > 240) {
+    throw new BankingError(400, 'ACCOUNT_RESOURCE_ID_INVALID', 'A valid Galactic sandbox account resource ID is required.');
+  }
+
+  requireDatabaseStatus();
+  const store = getProviderSandboxBankingStore();
+  const adapter = getGatewayBankingSandboxAdapter();
+  const link = await store.getProviderResourceLink({
+    provider: adapter.providerName,
+    environment: 'provider_sandbox',
+    galacticResourceType: 'account',
+    galacticResourceId: accountResourceId
+  });
+  if (!link) {
+    throw new BankingError(404, 'ACCOUNT_RESOURCE_MAPPING_NOT_FOUND', 'Provider mapping for this Galactic sandbox account was not found.');
+  }
+
+  const [providerBalance, internal] = await Promise.all([
+    adapter.getAccountBalance(link.providerResourceId),
+    getInternalAccountLedgerBalance(link.providerResourceId)
+  ]);
+
+  if (providerBalance.accountId !== link.providerResourceId) {
+    throw new BankingError(409, 'PROVIDER_BALANCE_ACCOUNT_MISMATCH', 'Provider balance response does not match the mapped sandbox account.');
+  }
+
+  const discrepancyCents = providerBalance.currentBalanceCents - internal.internalBalanceCents;
+  const snapshot: ReconciliationRecord['snapshot'] = {
+    providerAmountCents: providerBalance.currentBalanceCents,
+    internalAmountCents: internal.internalBalanceCents,
+    ledgerDebitsCents: internal.liabilityDebitsCents,
+    ledgerCreditsCents: internal.liabilityCreditsCents,
+    eventCount: internal.eventCount,
+    matched: discrepancyCents === 0,
+    discrepancyCents
+  };
+  const reconciliation: ReconciliationRecord = {
+    id: `account-reconciliation-${randomUUID()}`,
+    provider: adapter.providerName,
+    environment: 'provider_sandbox',
+    scope: 'account_balance',
+    resourceId: accountResourceId,
+    snapshot,
+    status: snapshot.matched ? 'matched' : 'discrepancy',
+    createdAt: new Date().toISOString(),
+    resolvedAt: null
+  };
+
+  await store.transaction(async (tx) => {
+    await tx.saveReconciliation(reconciliation);
+    await tx.appendAuditEvent({
+      id: randomUUID(),
+      actorType: 'admin',
+      actorId: input.operatorId,
+      action: 'sandbox_account_balance_reconciled',
+      resourceType: 'account',
+      resourceId: accountResourceId,
+      environment: 'provider_sandbox',
+      occurredAt: reconciliation.createdAt,
+      metadata: {
+        reconciliationId: reconciliation.id,
+        matched: snapshot.matched,
+        discrepancyCents,
+        providerAsOf: providerBalance.asOf,
+        processedEventCount: internal.eventCount
+      }
+    });
+  });
+
+  return {
+    reconciliationId: reconciliation.id,
+    accountResourceId,
+    provider: adapter.providerName,
+    providerBalanceCents: providerBalance.currentBalanceCents,
+    providerAvailableBalanceCents: providerBalance.availableBalanceCents,
+    internalLedgerBalanceCents: internal.internalBalanceCents,
+    discrepancyCents,
+    matched: snapshot.matched,
+    processedEventCount: internal.eventCount,
+    audited: true
+  };
 }
 
 export async function resolveProviderSandboxReconciliation(input: {
