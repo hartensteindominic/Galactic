@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useRef, useState } from 'react';
+import { detectSupportSensitiveData } from '../lib/support-sensitive-data';
 
 type ChatMessage = {
   id: string;
@@ -40,6 +41,19 @@ export function GalacticChat() {
   async function sendMessage(raw: string) {
     const text = raw.trim().slice(0, 500);
     if (!text || busy) return;
+
+    const sensitiveCategories = detectSupportSensitiveData(text);
+    if (sensitiveCategories.length > 0) {
+      setInput('');
+      setHumanEscalation(false);
+      setSuggestions(['What should I never share?', 'Privacy', 'Security protections']);
+      setMessages((current) => [...current, {
+        id: newId(),
+        role: 'assistant',
+        text: 'I didn’t send that message because it appears to contain sensitive financial, identity, authentication, or credential data. Remove full card/account numbers, SSNs, passwords, PINs, one-time codes, or private/API keys and ask again using masked or general details.'
+      }]);
+      return;
+    }
 
     setMessages((current) => [...current, { id: newId(), role: 'user', text }]);
     setInput('');
