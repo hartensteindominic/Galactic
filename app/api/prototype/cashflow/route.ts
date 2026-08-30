@@ -1,6 +1,6 @@
 import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
 import { getPrototypeCashflowForecast } from '../../../../lib/prototype-cashflow';
-import { resolveBrand } from '../../../../lib/white-label';
+import { resolveRequestBrand } from '../../../../lib/tenant-boundary';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -8,9 +8,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
-    const brand = resolveBrand({
+    const brand = resolveRequestBrand({
       host: request.headers.get('host'),
-      key: url.searchParams.get('tenant')
+      requestedKey: url.searchParams.get('tenant')
     });
 
     const reserve = Number(url.searchParams.get('reserve'));
