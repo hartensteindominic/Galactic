@@ -41,7 +41,11 @@ const required = [
   ['app/api/prototype/reconcile/route.ts', 'requireTrustedOrigin', 'prototype reconciliation rejects untrusted browser origins'],
   ['app/api/prototype/webhooks/sandbox/route.ts', 'verifyPrototypeWebhookSecret', 'sandbox webhook inbox requires server-side authentication'],
   ['app/api/prototype/webhooks/sandbox/route.ts', 'simulationOnly: true', 'sandbox webhook response is explicitly simulation-only'],
-  ['app/prototype/operations/operations-console.tsx', 'Real banking rails remain off.', 'operations UI labels live banking rails as disabled']
+  ['app/prototype/operations/operations-console.tsx', 'Real banking rails remain off.', 'operations UI labels live banking rails as disabled'],
+  ['supabase/migrations/003_transfer_idempotency.sql', 'Duplicate simulated transfer request safely replayed. No second debit occurred.', 'database replays duplicate prototype transfers without a second debit'],
+  ['supabase/migrations/003_transfer_idempotency.sql', 'fintech_transactions_provider_reference_unique', 'persistent prototype transfer references are unique'],
+  ['app/api/prototype/transfers/route.ts', "request.headers.get('idempotency-key')", 'prototype transfer API accepts an idempotency key'],
+  ['app/prototype/prototype-network-guard.tsx', "headers.set('Idempotency-Key', crypto.randomUUID())", 'prototype client attaches idempotency keys to transfer requests']
 ];
 
 const forbidden = [
@@ -64,7 +68,10 @@ const forbidden = [
   ['app/prototype/prototype-dashboard.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'prototype webhook secret must never appear in client code'],
   ['app/prototype/operations/operations-console.tsx', 'SUPABASE_SECRET_KEY', 'Supabase secret must never appear in operations client code'],
   ['app/prototype/operations/operations-console.tsx', 'PLAID_SECRET', 'Plaid secret must never appear in operations client code'],
-  ['app/prototype/operations/operations-console.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'webhook secret must never appear in operations client code']
+  ['app/prototype/operations/operations-console.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'webhook secret must never appear in operations client code'],
+  ['app/prototype/prototype-network-guard.tsx', 'SUPABASE_SECRET_KEY', 'network guard must never contain Supabase secrets'],
+  ['app/prototype/prototype-network-guard.tsx', 'PLAID_SECRET', 'network guard must never contain Plaid secrets'],
+  ['app/prototype/prototype-network-guard.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'network guard must never contain webhook secrets']
 ];
 
 for (const [file, text, label] of required) {
@@ -77,4 +84,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Galactic Trust banking, crypto, assistant, privacy, prototype operations and x402 safety checks passed.');
+console.log('Galactic Trust banking, crypto, assistant, privacy, prototype operations, idempotency and x402 safety checks passed.');
