@@ -1,10 +1,12 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { AccountabilityPanel, type AccountabilityWorkbenchStatus } from './accountability-panel';
 import { BusinessThesisPanel } from './business-thesis-panel';
 import { CapitalPlanningPanel } from './capital-planning-panel';
 import { ComplianceApplicabilityPanel, type ComplianceWorkbenchStatus } from './compliance-applicability-panel';
 import { StrategyConsole } from './strategy-console';
+import { ThreeYearBankPlanPanel, type ThreeYearBankPlanWorkbenchStatus } from './three-year-bank-plan-panel';
 
 type SessionState = 'checking' | 'open-memory-demo' | 'authenticated' | 'login-required' | 'configuration-locked';
 
@@ -63,13 +65,17 @@ export function StrategyShell({
   brandName,
   charter,
   economicsControls,
-  compliance
+  compliance,
+  accountability,
+  threeYearBankPlan
 }: {
   tenantKey: string;
   brandName: string;
   charter: CharterStatus;
   economicsControls: EconomicsControls;
   compliance: ComplianceWorkbenchStatus;
+  accountability: AccountabilityWorkbenchStatus;
+  threeYearBankPlan: ThreeYearBankPlanWorkbenchStatus;
 }) {
   const [state, setState] = useState<SessionState>('checking');
   const [secret, setSecret] = useState('');
@@ -148,6 +154,8 @@ export function StrategyShell({
       <BusinessThesisPanel tenantKey={tenantKey} />
       <CapitalPlanningPanel tenantKey={tenantKey} />
       <ComplianceApplicabilityPanel tenantKey={tenantKey} status={compliance} />
+      <AccountabilityPanel tenantKey={tenantKey} status={accountability} />
+      <ThreeYearBankPlanPanel tenantKey={tenantKey} status={threeYearBankPlan} />
     </>
   );
 
@@ -178,7 +186,7 @@ export function StrategyShell({
         </div>
         <h1 className="m-0 mt-5 text-3xl font-black tracking-[-0.05em]">{brandName} strategy lab</h1>
         <p className="m-0 mt-3 text-sm leading-6 text-slate-500">
-          Charter-readiness, thesis drafting, scenario economics, capital planning, and compliance-applicability review are restricted behind the same prototype operator session as operational evidence.
+          Charter readiness, thesis drafting, scenario economics, capital planning, compliance applicability, human accountability, and three-year bank planning are restricted behind the same prototype operator session as operational evidence.
         </p>
 
         {state === 'checking' ? <p className="mt-6 text-sm font-semibold text-slate-600">Checking operator session…</p> : null}
@@ -204,7 +212,7 @@ export function StrategyShell({
                 className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold normal-case tracking-normal text-slate-950 outline-none focus:border-indigo-400"
               />
             </label>
-            <button type="submit" disabled={busy} className="h-12 rounded-2xl border border-0 bg-indigo-600 px-5 text-sm font-black text-white shadow-lg disabled:opacity-50">
+            <button type="submit" disabled={busy} className="h-12 rounded-2xl border-0 bg-indigo-600 px-5 text-sm font-black text-white shadow-lg disabled:opacity-50">
               {busy ? 'Signing in…' : 'Open strategy lab'}
             </button>
           </form>
@@ -213,7 +221,7 @@ export function StrategyShell({
         {message && state === 'login-required' ? <div className="mt-4 text-sm font-semibold text-rose-700" role="status">{message}</div> : null}
 
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">
-          This prototype session is not production workforce identity or a regulatory approval workflow. Thesis/economics/capital/compliance-review outputs are not persisted and do not become validated market evidence, legal applicability determinations, approved policies, operating compliance evidence, regulator-reviewed capital plans, sponsor submissions, examination results, or charter-application materials merely because they were produced here.
+          This prototype session is not production workforce identity or a regulatory approval workflow. Thesis/economics/capital/compliance/accountability/bank-plan outputs are not persisted and do not become validated market evidence, legal applicability determinations, human appointments, authority delegations, approved policies, operating compliance evidence, board actions, regulator-reviewed capital plans, sponsor submissions, examination results, filed applications, or charter-application materials merely because they were produced here.
         </div>
 
         <a href={`/prototype?tenant=${encodeURIComponent(tenantKey)}`} className="mt-5 inline-block text-sm font-black text-indigo-700 no-underline">← Back to banking demo</a>
