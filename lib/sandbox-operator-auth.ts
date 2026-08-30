@@ -8,28 +8,47 @@ function safeHexEqual(left: string, right: string) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+function allowedOperatorIds() {
+  return new Set(
+    (process.env.BANKING_SANDBOX_OPERATOR_IDS || '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter((value) => /^[A-Za-z0-9._:@-]{1,120}$/.test(value))
+  );
+}
+
 export function sandboxOperatorAuthStatus() {
   const secret = process.env.BANKING_SANDBOX_OPERATOR_SECRET || '';
+  const allowed = allowedOperatorIds();
+  const secretConfigured = secret.length >= 32;
+  const allowlistConfigured = allowed.size > 0;
+  const configured = secretConfigured && allowlistConfigured;
+
   return {
-    configured: secret.length >= 32,
+    configured,
+    secretConfigured,
+    allowlistConfigured,
+    allowedOperatorCount: allowed.size,
     secretExposed: false,
-    disclosure: secret.length >= 32
-      ? 'Provider-sandbox operator signing is configured.'
-      : 'Provider-sandbox writes remain locked until a 32+ character operator signing secret is configured.'
+    operatorIdsExposed: false,
+    disclosure: configured
+      ? 'Provider-sandbox operator signing and the operator allowlist are configured.'
+      : 'Provider-sandbox admin actions remain locked until both a 32+ character signing secret and an explicit operator-ID allowlist are configured.'
   };
 }
 
 export function requireSandboxOperator(request: Request, rawBody: string) {
   const secret = process.env.BANKING_SANDBOX_OPERATOR_SECRET || '';
-  if (secret.length < 32) {
-    throw new BankingError(503, 'SANDBOX_OPERATOR_AUTH_NOT_CONFIGURED', 'Provider-sandbox operator authentication is not configured.');
+  const allowed = allowedOperatorIds();
+  if (secret.length < 32 || allowed.size === 0) {
+    throw new BankingError(503, 'SANDBOX_OPERATOR_AUTH_NOT_CONFIGURED', 'Provider-sandbox operator authentication and allowlist are not configured.');
   }
 
   const operatorId = request.headers.get('x-galactic-sandbox-operator')?.trim() || '';
   const timestamp = request.headers.get('x-galactic-sandbox-operator-timestamp')?.trim() || '';
   const signature = request.headers.get('x-galactic-sandbox-operator-signature')?.trim() || '';
-  if (!operatorId || !timestamp || !signature) {
-    throw new BankingError(401, 'SANDBOX_OPERATOR_AUTH_REQUIRED', 'A signed provider-sandbox operator request is required.');
+  if (!operatorId || !timestamp || !signature || !/^[A-Za-z0-9._:@-]{1,120}$/.test(operatorId)) {
+    throw new BankingError(401, 'SANDBOX_OPERATOR_AUTH_REQUIRED', 'A valid signed provider-sandbox operator request is required.');
   }
 
   const timestampNumber = Number(timestamp);
@@ -47,5 +66,9 @@ export function requireSandboxOperator(request: Request, rawBody: string) {
     throw new BankingError(401, 'SANDBOX_OPERATOR_AUTH_INVALID', 'Provider-sandbox operator signature is invalid.');
   }
 
-  return operatorId.slice(0, 120);
+  if (!allowed.has(operatorId)) {
+    throw new BankingError(403, 'SANDBOX_OPERATOR_NOT_ALLOWED', 'Provider-sandbox operator is not authorized for this environment.');
+  }
+
+  return operatorId;
 }
