@@ -13,6 +13,10 @@ const required = [
   ['lib/charter-evidence-index.ts', "'QUALIFIED_HUMAN_REVIEW_REQUIRED'", 'evidence candidates must require qualified human review'],
   ['lib/charter-evidence-index.ts', "'AUTHORITY_RECORD_DATE_REQUIRED'", 'external authority evidence must require a dated record'],
   ['lib/charter-evidence-index.ts', 'Software does not verify authenticity, legal sufficiency, regulator acceptance, approval status, or authority to operate.', 'candidate evaluation must disclose software nonverification'],
+  ['app/api/prototype/status/route.ts', 'charterEvidence: charterEvidenceIndexStatus()', 'general status API must expose safe charter-evidence posture'],
+  ['app/api/prototype/status/route.ts', 'charter evidence index contains no verified regulatory claims', 'status disclosure must limit charter-evidence claims'],
+  ['docs/CHARTER_EVIDENCE_INDEX.md', 'Do **not** commit:', 'charter evidence guide must warn against storing sensitive diligence in public repo'],
+  ['docs/CHARTER_EVIDENCE_INDEX.md', '`verifiedClaimCount: 0`', 'charter evidence guide must state current zero verified claims'],
   ['scripts/charter-evidence-runtime-check.mjs', 'Charter evidence index human-review, external-authority, and software-nonverification runtime checks passed.', 'charter evidence index must have executable runtime coverage'],
   ['package.json', 'scripts/charter-evidence-runtime-check.mjs', 'charter evidence runtime check must run in CI']
 ];
@@ -39,4 +43,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Charter evidence non-promotion, human-review, authority-record, and software-nonverification safety checks passed.');
+console.log('Charter evidence non-promotion, human-review, authority-record, public-repo privacy, status-API, and software-nonverification safety checks passed.');
