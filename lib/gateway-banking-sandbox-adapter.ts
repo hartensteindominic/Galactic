@@ -3,6 +3,7 @@ import { BankingError } from './banking';
 import type {
   BankingProviderAdapter,
   CanonicalBankingEvent,
+  ProviderAccountBalance,
   ProviderCustomer,
   ProviderDepositAccount,
   ProviderTransfer,
@@ -123,6 +124,21 @@ function normalizeAccount(rawValue: unknown): ProviderDepositAccount {
   };
 }
 
+function normalizeAccountBalance(rawValue: unknown): ProviderAccountBalance {
+  const raw = object(rawValue);
+  const asOf = new Date(text(raw.asOf, 'balance asOf'));
+  if (!Number.isFinite(asOf.getTime())) {
+    throw new BankingError(502, 'SANDBOX_GATEWAY_PAYLOAD_INVALID', 'Sandbox gateway returned an invalid balance timestamp.');
+  }
+  return {
+    accountId: text(raw.accountId, 'balance account id'),
+    environment: 'provider_sandbox',
+    currentBalanceCents: integer(raw.currentBalanceCents, 'current account balance'),
+    availableBalanceCents: integer(raw.availableBalanceCents, 'available account balance'),
+    asOf: asOf.toISOString()
+  };
+}
+
 function normalizeTransfer(rawValue: unknown): ProviderTransfer {
   const raw = object(rawValue);
   const status = text(raw.status, 'transfer status') as ProviderTransfer['status'];
@@ -197,6 +213,12 @@ export class GatewayBankingSandboxAdapter implements BankingProviderAdapter {
       body: JSON.stringify({ customerId: input.customerId, type: input.type })
     });
     return normalizeAccount(result);
+  }
+
+  async getAccountBalance(accountId: string) {
+    return normalizeAccountBalance(
+      await gatewayRequest<unknown>(`/v1/sandbox/accounts/${encodeURIComponent(accountId)}/balance`)
+    );
   }
 
   async createAchTransfer(input: {
