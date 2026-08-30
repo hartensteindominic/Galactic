@@ -15,12 +15,16 @@ import {
   type LedgerJournal
 } from './financial-ledger';
 
+export const PROVIDER_EVENT_MAX_ATTEMPTS = 5;
+export const PROVIDER_EVENT_LEASE_MS = 2 * 60_000;
+
 export type ProviderSandboxProcessingResult = {
   eventId: string;
   provider: string;
   type: CanonicalBankingEvent['type'];
   duplicate: boolean;
   processed: boolean;
+  processingState: 'processed' | 'duplicate_processed' | 'claimed_elsewhere' | 'retry_scheduled';
   ledgerJournalId: string | null;
   reconciliationId: string | null;
 };
@@ -71,7 +75,11 @@ function inboxRecord(event: CanonicalBankingEvent): EventInboxRecord {
     canonicalEvent: event,
     receivedAt: new Date().toISOString(),
     processedAt: null,
-    status: 'received'
+    status: 'received',
+    processingToken: null,
+    processingStartedAt: null,
+    attemptCount: 0,
+    nextAttemptAt: null
   };
 }
 
@@ -120,6 +128,20 @@ function reconciliationRecord(input: {
   };
 }
 
+function retryAtForAttempt(attemptCount: number) {
+  if (attemptCount >= PROVIDER_EVENT_MAX_ATTEMPTS) return null;
+  const delayMs = Math.min(30 * 60_000, 60_000 * (2 ** Math.max(0, attemptCount - 1)));
+  return new Date(Date.now() + delayMs).toISOString();
+}
+
+function claimTimes() {
+  const now = Date.now();
+  return {
+    claimedAt: new Date(now).toISOString(),
+    staleBefore: new Date(now - PROVIDER_EVENT_LEASE_MS).toISOString()
+  };
+}
+
 async function processLedgerEvent(
   tx: BankingPersistenceOperations,
   event: CanonicalBankingEvent
@@ -145,19 +167,11 @@ async function processLedgerEvent(
     });
 
     if (!priorPosted) {
-      throw new BankingError(
-        409,
-        'ACH_RETURN_WITHOUT_POSTED_EVENT',
-        'Returned ACH cannot be journaled without a prior processed posted event for the same transfer.'
-      );
+      throw new BankingError(409, 'ACH_RETURN_WITHOUT_POSTED_EVENT', 'Returned ACH cannot be journaled without a prior processed posted event for the same transfer.');
     }
 
     if (priorPosted.canonicalEvent.amountCents !== amountCents) {
-      throw new BankingError(
-        409,
-        'ACH_RETURN_AMOUNT_MISMATCH',
-        'Returned ACH amount does not match the prior posted transfer amount.'
-      );
+      throw new BankingError(409, 'ACH_RETURN_AMOUNT_MISMATCH', 'Returned ACH amount does not match the prior posted transfer amount.');
     }
 
     journal = createInboundAchReturnedJournal({
@@ -170,16 +184,8 @@ async function processLedgerEvent(
     throw new BankingError(500, 'LEDGER_EVENT_UNSUPPORTED', 'Provider event does not have a supported ledger journal rule.');
   }
 
-  const journalWrite = await tx.appendJournalIfAbsent({
-    environment: 'provider_sandbox',
-    journal
-  });
-
-  const reconciliation = reconciliationRecord({
-    event,
-    journal: journalWrite.journal,
-    amountCents
-  });
+  const journalWrite = await tx.appendJournalIfAbsent({ environment: 'provider_sandbox', journal });
+  const reconciliation = reconciliationRecord({ event, journal: journalWrite.journal, amountCents });
   await tx.saveReconciliation(reconciliation);
 
   await appendAudit(tx, event, 'provider_event_ledger_posted', {
@@ -190,18 +196,15 @@ async function processLedgerEvent(
     matched: reconciliation.snapshot.matched
   });
 
-  return {
-    journalId: journalWrite.journal.id,
-    reconciliationId: reconciliation.id
-  };
+  return { journalId: journalWrite.journal.id, reconciliationId: reconciliation.id };
 }
 
-async function processCapturedEvent(
+async function processClaimedEvent(
   tx: BankingPersistenceOperations,
   record: EventInboxRecord
 ): Promise<{ ledgerJournalId: string | null; reconciliationId: string | null }> {
-  if (record.status === 'processed') {
-    return { ledgerJournalId: null, reconciliationId: null };
+  if (record.status !== 'processing' || !record.processingToken) {
+    throw new BankingError(409, 'EVENT_PROCESSING_LEASE_REQUIRED', 'Provider event must hold a processing lease before it can be processed.');
   }
 
   const event = record.canonicalEvent;
@@ -231,15 +234,66 @@ async function processCapturedEvent(
 
   await tx.markEventProcessed({
     eventId: record.eventId,
+    processingToken: record.processingToken,
     processedAt: new Date().toISOString()
   });
 
   await appendAudit(tx, event, 'provider_event_processed', {
     ledgerJournalId,
-    reconciliationId
+    reconciliationId,
+    attemptCount: record.attemptCount
   });
 
   return { ledgerJournalId, reconciliationId };
+}
+
+async function recordProcessingFailure(store: BankingPersistenceStore, record: EventInboxRecord, error: unknown) {
+  if (!record.processingToken) return;
+  const failureCode = error instanceof BankingError ? error.code : 'PROVIDER_EVENT_PROCESSING_FAILED';
+  const nextAttemptAt = retryAtForAttempt(record.attemptCount);
+
+  try {
+    await store.transaction(async (tx) => {
+      await tx.markEventFailed({
+        eventId: record.eventId,
+        processingToken: record.processingToken as string,
+        failureCode,
+        processedAt: new Date().toISOString(),
+        nextAttemptAt
+      });
+      await appendAudit(tx, record.canonicalEvent, 'provider_event_failed', {
+        failureCode,
+        attemptCount: record.attemptCount,
+        retryScheduled: nextAttemptAt !== null,
+        nextAttemptAt
+      });
+    });
+  } catch {
+    // Preserve the original failure. A stale processing lease can be reclaimed
+    // after PROVIDER_EVENT_LEASE_MS even if failure recording also fails.
+  }
+}
+
+export async function processClaimedProviderSandboxEvent(
+  store: BankingPersistenceStore,
+  claimed: EventInboxRecord
+): Promise<ProviderSandboxProcessingResult> {
+  try {
+    const processed = await store.transaction((tx) => processClaimedEvent(tx, claimed));
+    return {
+      eventId: claimed.eventId,
+      provider: claimed.provider,
+      type: claimed.canonicalEvent.type,
+      duplicate: claimed.attemptCount > 1,
+      processed: true,
+      processingState: 'processed',
+      ledgerJournalId: processed.ledgerJournalId,
+      reconciliationId: processed.reconciliationId
+    };
+  } catch (error) {
+    await recordProcessingFailure(store, claimed, error);
+    throw error;
+  }
 }
 
 export async function captureAndProcessProviderSandboxEvent(
@@ -265,39 +319,35 @@ export async function captureAndProcessProviderSandboxEvent(
       type: captured.record.canonicalEvent.type,
       duplicate: true,
       processed: true,
+      processingState: 'duplicate_processed',
       ledgerJournalId: null,
       reconciliationId: null
     };
   }
 
-  try {
-    const processed = await store.transaction((tx) => processCapturedEvent(tx, captured.record));
+  const claimToken = randomUUID();
+  const times = claimTimes();
+  const claimed = await store.transaction((tx) => tx.claimEventForProcessing({
+    eventId: captured.record.eventId,
+    claimToken,
+    claimedAt: times.claimedAt,
+    staleBefore: times.staleBefore,
+    maxAttempts: PROVIDER_EVENT_MAX_ATTEMPTS
+  }));
+
+  if (!claimed) {
+    const current = await store.getEvent(captured.record.eventId);
     return {
       eventId: captured.record.eventId,
       provider: captured.record.provider,
       type: captured.record.canonicalEvent.type,
       duplicate: !captured.inserted,
-      processed: true,
-      ledgerJournalId: processed.ledgerJournalId,
-      reconciliationId: processed.reconciliationId
+      processed: current?.status === 'processed',
+      processingState: current?.status === 'failed' ? 'retry_scheduled' : (current?.status === 'processed' ? 'duplicate_processed' : 'claimed_elsewhere'),
+      ledgerJournalId: null,
+      reconciliationId: null
     };
-  } catch (error) {
-    const failureCode = error instanceof BankingError ? error.code : 'PROVIDER_EVENT_PROCESSING_FAILED';
-    try {
-      await store.transaction(async (tx) => {
-        await tx.markEventFailed({
-          eventId: captured.record.eventId,
-          failureCode,
-          processedAt: new Date().toISOString()
-        });
-        await appendAudit(tx, captured.record.canonicalEvent, 'provider_event_failed', {
-          failureCode
-        });
-      });
-    } catch {
-      // Preserve the original failure. The captured event remains available for
-      // recovery even if writing the failure/audit marker also fails.
-    }
-    throw error;
   }
+
+  return processClaimedProviderSandboxEvent(store, claimed);
 }
