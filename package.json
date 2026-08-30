@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test:safety": "node scripts/safety-check.mjs && node scripts/prototype-safety-check.mjs && node scripts/cashflow-safety-check.mjs && node scripts/operator-tenant-safety-check.mjs && node scripts/ai-governance-safety-check.mjs"
+    "test:safety": "node scripts/safety-check.mjs && node scripts/prototype-safety-check.mjs && node scripts/cashflow-safety-check.mjs && node scripts/operator-tenant-safety-check.mjs && node scripts/ai-governance-safety-check.mjs && node scripts/customer-governance-safety-check.mjs"
   },
   "dependencies": {
     "@x402/core": "2.24.0",
