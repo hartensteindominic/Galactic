@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import './banking-controls.css';
 import './extras.css';
+import './privacy.css';
 
 export const metadata: Metadata = {
   title: 'Galactic Trust',
