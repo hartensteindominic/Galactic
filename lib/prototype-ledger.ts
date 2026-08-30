@@ -172,6 +172,7 @@ export function prototypeLedgerStatus() {
     configured: config.configured,
     source: config.configured ? 'supabase' : 'memory',
     liveMoneyEnabled: false,
+    persistentTransferIdempotency: config.configured,
     disclosure: config.configured
       ? 'Supabase prototype ledger configured. Data remains simulated; live banking rails are disabled.'
       : 'In-memory demo ledger active. Add server-side Supabase environment variables to persist simulated data.'
@@ -245,12 +246,17 @@ export async function createPrototypeTransfer(input: {
   recipient: string;
   amountCents: number;
   memo?: string;
+  idempotencyKey: string;
 }) {
   const userId = input.userId || 'demo-nova';
   if (!input.fromAccountId.trim()) throw new BankingError(400, 'SOURCE_ACCOUNT_REQUIRED', 'Choose a source account.');
   if (!input.recipient.trim()) throw new BankingError(400, 'RECIPIENT_REQUIRED', 'Enter a mock recipient.');
   if (!Number.isInteger(input.amountCents) || input.amountCents < 1 || input.amountCents > 1000000) {
     throw new BankingError(400, 'INVALID_AMOUNT', 'Prototype transfers must be between $0.01 and $10,000.00.');
+  }
+  const idempotencyKey = input.idempotencyKey.trim();
+  if (idempotencyKey.length < 8 || idempotencyKey.length > 200) {
+    throw new BankingError(400, 'IDEMPOTENCY_REQUIRED', 'A valid idempotency key is required for simulated transfers.');
   }
 
   if (!supabaseConfig().configured) {
@@ -259,7 +265,8 @@ export async function createPrototypeTransfer(input: {
       status: 'simulated',
       amount_cents: input.amountCents,
       recipient: input.recipient.trim(),
-      message: 'Simulated transfer accepted in memory. Configure Supabase to persist demo ledger changes.'
+      idempotent_replay: false,
+      message: 'Simulated transfer accepted in memory. Configure Supabase for persistent idempotency and ledger changes.'
     };
   }
 
@@ -268,6 +275,7 @@ export async function createPrototypeTransfer(input: {
     status: 'simulated';
     amount_cents: number;
     recipient: string;
+    idempotent_replay: boolean;
     message: string;
   }>('/rest/v1/rpc/simulate_fintech_transfer', {
     method: 'POST',
@@ -277,7 +285,8 @@ export async function createPrototypeTransfer(input: {
       p_from_account_id: input.fromAccountId,
       p_recipient: input.recipient.trim(),
       p_amount_cents: input.amountCents,
-      p_memo: input.memo?.trim() || null
+      p_memo: input.memo?.trim() || null,
+      p_idempotency_key: idempotencyKey
     })
   });
 }
