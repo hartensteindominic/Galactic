@@ -20,6 +20,9 @@ const required = [
   ['app/api/prototype/unit-economics/route.ts', 'requireJsonRequest', 'unit economics must require JSON'],
   ['app/api/prototype/unit-economics/route.ts', 'requireTrustedOrigin', 'unit economics must enforce trusted origin'],
   ['app/api/prototype/unit-economics/route.ts', 'readJsonBodyLimited', 'unit economics must bound request bodies'],
+  ['app/api/prototype/capital-planning/route.ts', 'requireJsonRequest', 'capital planning must require JSON'],
+  ['app/api/prototype/capital-planning/route.ts', 'requireTrustedOrigin', 'capital planning must enforce trusted origin'],
+  ['app/api/prototype/capital-planning/route.ts', 'readJsonBodyLimited', 'capital planning must bound request bodies'],
   ['app/api/prototype/operator/session/route.ts', 'requireTrustedOrigin', 'operator session mutation must enforce trusted origin'],
   ['app/api/prototype/operator/session/route.ts', 'readJsonBodyLimited', 'operator sign-in must bound request bodies'],
   ['app/api/assistant/route.ts', 'readJsonBodyLimited', 'assistant endpoint must bound request bodies']
@@ -30,6 +33,7 @@ const forbidden = [
   ['app/api/prototype/reconcile/route.ts', 'await request.json()', 'prototype reconciliation must not bypass bounded JSON parsing'],
   ['app/api/prototype/business-thesis/route.ts', 'await request.json()', 'business thesis must not bypass bounded JSON parsing'],
   ['app/api/prototype/unit-economics/route.ts', 'await request.json()', 'unit economics must not bypass bounded JSON parsing'],
+  ['app/api/prototype/capital-planning/route.ts', 'await request.json()', 'capital planning must not bypass bounded JSON parsing'],
   ['app/api/prototype/operator/session/route.ts', 'await request.json()', 'operator sign-in must not bypass bounded JSON parsing'],
   ['app/api/assistant/route.ts', 'await request.json()', 'assistant endpoint must not bypass bounded JSON parsing']
 ];
