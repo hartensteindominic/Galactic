@@ -4,10 +4,23 @@ import { useCallback, useEffect, useState } from 'react';
 
 type OperationsStatus = {
   databaseConfigured: boolean;
+  databaseCredentialsConfigured: boolean;
   reconciliationMode: 'persistent' | 'memory';
-  webhookInboxConfigured: boolean;
+  persistentSchemaVerified: false;
+  persistentReconciliationVerified: false;
+  reconciliationExerciseVerified: false;
+  webhookSecretConfigured: boolean;
+  webhookInboxEnvironmentConfigured: boolean;
+  webhookInboxConfigured: false;
+  webhookReplayExerciseVerified: false;
   doubleEntryAvailableInBuild: true;
   sanitizedAuditEvidenceAvailable: boolean;
+  sanitizedAuditPersistenceVerified: false;
+  operatorAuditEvidenceAvailable: boolean;
+  operatorAuditPersistenceVerified: false;
+  persistentReconciliationEvidencePresent?: boolean;
+  sandboxProviderEventEvidencePresent?: boolean;
+  sanitizedAuditEvidencePresent?: boolean;
   realProviderWebhooksEnabled: false;
   liveMoneyEnabled: false;
   disclosure: string;
@@ -134,7 +147,17 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
     }
   }
 
+  const hasReconciliationEvidence = (operations?.latestReconciliations.length || 0) > 0;
   const latestMismatch = operations?.latestReconciliations.some((row) => row.status === 'mismatch') || false;
+  const reconciliationLabel = latestMismatch ? 'Attention' : hasReconciliationEvidence ? 'Evidence present' : 'Not exercised';
+  const reconciliationTone = latestMismatch ? 'text-amber-700' : hasReconciliationEvidence ? 'text-indigo-700' : 'text-slate-500';
+  const hasWebhookEvidence = (operations?.providerEvents.length || 0) > 0;
+  const webhookLabel = hasWebhookEvidence
+    ? 'Evidence present'
+    : operations?.status.webhookInboxEnvironmentConfigured
+      ? 'Environment configured'
+      : 'Not configured';
+  const webhookTone = hasWebhookEvidence ? 'text-indigo-700' : operations?.status.webhookInboxEnvironmentConfigured ? 'text-slate-700' : 'text-amber-700';
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] px-4 py-6 text-slate-950 sm:px-6 lg:px-10">
@@ -153,21 +176,27 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
 
         {message ? <div className="mt-5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm" role="status">{message}</div> : null}
 
+        {operations?.status.databaseCredentialsConfigured && !operations.status.persistentSchemaVerified ? (
+          <div className="mt-5 rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs leading-5 text-indigo-900">
+            <b>Environment configured ≠ persistent controls verified.</b> Supabase credentials are present, but migrations, schema history, reconciliation, audit persistence, and webhook replay behavior still require a real disposable/private database exercise.
+          </div>
+        ) : null}
+
         <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
-            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Ledger evidence</div>
-            <div className="mt-2 text-xl font-black">{operations?.status.databaseConfigured ? 'Persistent' : 'Memory demo'}</div>
-            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">{operations?.status.databaseConfigured ? 'Supabase stores reconciliation and audit evidence.' : 'No persistent operations evidence yet.'}</p>
+            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Ledger environment</div>
+            <div className="mt-2 text-xl font-black">{operations?.status.databaseCredentialsConfigured ? 'Environment configured' : 'Memory demo'}</div>
+            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">{operations?.status.databaseCredentialsConfigured ? 'Server-side Supabase credentials are present; persistent schema and behavior are not yet verified.' : 'No persistent operations environment is configured.'}</p>
           </article>
           <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Reconciliation</div>
-            <div className={`mt-2 text-xl font-black ${latestMismatch ? 'text-amber-700' : 'text-emerald-700'}`}>{latestMismatch ? 'Attention' : 'Healthy'}</div>
-            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">Transaction history and double-entry balances are checked independently.</p>
+            <div className={`mt-2 text-xl font-black ${reconciliationTone}`}>{reconciliationLabel}</div>
+            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">{hasReconciliationEvidence ? 'Recent stored rows are visible; this is evidence, not a production-readiness certification.' : 'No persistent reconciliation rows have been observed in this console yet.'}</p>
           </article>
           <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Webhook inbox</div>
-            <div className={`mt-2 text-xl font-black ${operations?.status.webhookInboxConfigured ? 'text-emerald-700' : 'text-amber-700'}`}>{operations?.status.webhookInboxConfigured ? 'Ready' : 'Not configured'}</div>
-            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">Idempotent sandbox events only; production provider verification is separate.</p>
+            <div className={`mt-2 text-xl font-black ${webhookTone}`}>{webhookLabel}</div>
+            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">Sandbox event persistence/replay must be exercised against the target database; production provider verification is separate.</p>
           </article>
           <article className="rounded-[22px] bg-[#0b153d] p-5 text-white shadow-xl">
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-200">Live rails</div>
@@ -187,7 +216,7 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
 
           {lastResult ? (
             <div className={`mt-5 rounded-2xl border p-4 ${lastResult.status === 'balanced' ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
-              <div className="font-black">{lastResult.status === 'balanced' ? 'Both reconciliation layers balance' : 'Reconciliation attention required'}</div>
+              <div className="font-black">{lastResult.source === 'memory' ? 'Memory demo reconciliation completed' : lastResult.status === 'balanced' ? 'This reconciliation run balanced in both layers' : 'Reconciliation attention required'}</div>
               <div className="mt-1 text-xs text-slate-600">Transaction layer balanced: {lastResult.balanced_accounts} · Mismatched: {lastResult.mismatched_accounts} · Source: {lastResult.source}</div>
 
               <div className="mt-4 rounded-2xl bg-white/80 p-4 shadow-sm">
@@ -237,8 +266,9 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
         <div className="mt-5 grid gap-5 xl:grid-cols-3">
           <section className="rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
             <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Recent reconciliation evidence</h2>
+            <p className="m-0 mt-1 text-xs text-slate-500">Stored rows are evidence of individual prototype checks, not certification that reconciliation is continuously operating.</p>
             <div className="mt-4 grid gap-2">
-              {(operations?.latestReconciliations || []).length === 0 ? <p className="text-sm text-slate-500">No persistent runs yet.</p> : null}
+              {(operations?.latestReconciliations || []).length === 0 ? <p className="text-sm text-slate-500">No persistent runs observed yet.</p> : null}
               {(operations?.latestReconciliations || []).map((row) => (
                 <div key={row.id} className="rounded-xl border border-slate-100 px-3 py-3 text-xs">
                   <div className="flex justify-between gap-3"><b className={row.status === 'balanced' ? 'text-emerald-700' : 'text-amber-700'}>{row.status}</b><span className="text-slate-400">{time(row.checked_at)}</span></div>
@@ -250,7 +280,7 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
 
           <section className="rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
             <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Sandbox provider events</h2>
-            <p className="m-0 mt-1 text-xs text-slate-500">Event IDs are deduplicated before they enter the simulated operations ledger.</p>
+            <p className="m-0 mt-1 text-xs text-slate-500">Exact event IDs are deduplicated and conflicting replays fail closed. Stored rows do not mean a production provider webhook integration exists.</p>
             <div className="mt-4 grid gap-2">
               {(operations?.providerEvents || []).length === 0 ? <p className="text-sm text-slate-500">No sandbox events recorded.</p> : null}
               {(operations?.providerEvents || []).map((event) => (
@@ -268,10 +298,10 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
                 <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Sanitized audit trail</h2>
                 <p className="m-0 mt-1 text-xs text-slate-500">Actor/action/entity/time only. Raw metadata is deliberately not returned to this UI.</p>
               </div>
-              <span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide ${operations?.status.sanitizedAuditEvidenceAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{operations?.status.sanitizedAuditEvidenceAvailable ? 'Persistent' : 'No DB'}</span>
+              <span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide ${operations?.status.sanitizedAuditEvidencePresent ? 'bg-indigo-100 text-indigo-700' : operations?.status.databaseCredentialsConfigured ? 'bg-slate-100 text-slate-600' : 'bg-slate-100 text-slate-500'}`}>{operations?.status.sanitizedAuditEvidencePresent ? 'Evidence present' : operations?.status.databaseCredentialsConfigured ? 'Env set' : 'No DB'}</span>
             </div>
             <div className="mt-4 grid gap-2">
-              {(operations?.auditEvents || []).length === 0 ? <p className="text-sm text-slate-500">No persistent audit events yet.</p> : null}
+              {(operations?.auditEvents || []).length === 0 ? <p className="text-sm text-slate-500">No persistent audit events observed yet.</p> : null}
               {(operations?.auditEvents || []).map((event) => (
                 <div key={event.id} className="rounded-xl border border-slate-100 px-3 py-3 text-xs">
                   <div className="flex justify-between gap-3"><b>{event.action}</b><span className="whitespace-nowrap text-slate-400">{time(event.created_at)}</span></div>
@@ -283,7 +313,7 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
         </div>
 
         <footer className="mt-5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs leading-5 text-slate-500">
-          <b className="text-slate-700">Control boundary:</b> this console proves simulated ledger consistency and event-handling behavior. A production banking launch still requires approved partner contracts, exact provider webhook verification, customer authentication, KYC/AML, fraud controls, compliance procedures, reconciliation against partner statements, incident response, and approved disclosures.
+          <b className="text-slate-700">Control boundary:</b> this console can display simulated reconciliation, provider-event, and audit evidence. Environment configuration, stored rows, a balanced individual run, or green CI do not by themselves prove continuous production operation or readiness. A production banking launch still requires approved partner contracts, exact provider webhook verification, customer authentication, KYC/AML, fraud controls, compliance procedures, reconciliation against partner statements, incident response, and approved disclosures.
         </footer>
       </div>
     </main>
