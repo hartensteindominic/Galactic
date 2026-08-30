@@ -38,6 +38,9 @@ const required = [
   ['app/api/prototype/sponsor-diligence/route.ts', 'requireJsonRequest', 'sponsor diligence must require JSON'],
   ['app/api/prototype/sponsor-diligence/route.ts', 'requireTrustedOrigin', 'sponsor diligence must enforce trusted origin'],
   ['app/api/prototype/sponsor-diligence/route.ts', 'readJsonBodyLimited', 'sponsor diligence must bound request bodies'],
+  ['app/api/prototype/product-launch-review/route.ts', 'requireJsonRequest', 'product launch review must require JSON'],
+  ['app/api/prototype/product-launch-review/route.ts', 'requireTrustedOrigin', 'product launch review must enforce trusted origin'],
+  ['app/api/prototype/product-launch-review/route.ts', 'readJsonBodyLimited', 'product launch review must bound request bodies'],
   ['app/api/prototype/operator/session/route.ts', 'requireTrustedOrigin', 'operator session mutation must enforce trusted origin'],
   ['app/api/prototype/operator/session/route.ts', 'readJsonBodyLimited', 'operator sign-in must bound request bodies'],
   ['app/api/assistant/route.ts', 'readJsonBodyLimited', 'assistant endpoint must bound request bodies']
@@ -54,6 +57,7 @@ const forbidden = [
   ['app/api/prototype/three-year-bank-plan/route.ts', 'await request.json()', 'three-year bank planning must not bypass bounded JSON parsing'],
   ['app/api/prototype/assumption-evidence/route.ts', 'await request.json()', 'assumption evidence must not bypass bounded JSON parsing'],
   ['app/api/prototype/sponsor-diligence/route.ts', 'await request.json()', 'sponsor diligence must not bypass bounded JSON parsing'],
+  ['app/api/prototype/product-launch-review/route.ts', 'await request.json()', 'product launch review must not bypass bounded JSON parsing'],
   ['app/api/prototype/operator/session/route.ts', 'await request.json()', 'operator sign-in must not bypass bounded JSON parsing'],
   ['app/api/assistant/route.ts', 'await request.json()', 'assistant endpoint must not bypass bounded JSON parsing']
 ];
