@@ -7,6 +7,7 @@ type OperationsStatus = {
   reconciliationMode: 'persistent' | 'memory';
   webhookInboxConfigured: boolean;
   doubleEntryAvailableInBuild: true;
+  sanitizedAuditEvidenceAvailable: boolean;
   realProviderWebhooksEnabled: false;
   liveMoneyEnabled: false;
   disclosure: string;
@@ -32,10 +33,20 @@ type ProviderEvent = {
   processed_at: string | null;
 };
 
+type AuditEvent = {
+  id: string;
+  actor_type: 'system' | 'demo_user' | 'operator' | 'provider';
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  created_at: string;
+};
+
 type OperationsResponse = {
   status: OperationsStatus;
   latestReconciliations: ReconciliationRow[];
   providerEvents: ProviderEvent[];
+  auditEvents: AuditEvent[];
 };
 
 type ReconciliationResult = {
@@ -77,6 +88,12 @@ function time(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
+}
+
+function entityReference(event: AuditEvent) {
+  if (!event.entity_id) return event.entity_type;
+  const shortId = event.entity_id.length > 16 ? `${event.entity_id.slice(0, 8)}…${event.entity_id.slice(-4)}` : event.entity_id;
+  return `${event.entity_type} · ${shortId}`;
 }
 
 export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string; brandName: string }) {
@@ -140,7 +157,7 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
           <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Ledger evidence</div>
             <div className="mt-2 text-xl font-black">{operations?.status.databaseConfigured ? 'Persistent' : 'Memory demo'}</div>
-            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">{operations?.status.databaseConfigured ? 'Supabase stores reconciliation runs.' : 'No persistent operations evidence yet.'}</p>
+            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">{operations?.status.databaseConfigured ? 'Supabase stores reconciliation and audit evidence.' : 'No persistent operations evidence yet.'}</p>
           </article>
           <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Reconciliation</div>
@@ -217,7 +234,7 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
           ) : null}
         </section>
 
-        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+        <div className="mt-5 grid gap-5 xl:grid-cols-3">
           <section className="rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
             <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Recent reconciliation evidence</h2>
             <div className="mt-4 grid gap-2">
@@ -240,6 +257,25 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
                 <div key={event.id} className="rounded-xl border border-slate-100 px-3 py-3 text-xs">
                   <div className="flex justify-between gap-3"><b>{event.event_type}</b><span className="text-slate-400">{time(event.received_at)}</span></div>
                   <div className="mt-1 truncate text-slate-500">{event.provider} · {event.provider_event_id} · {event.status}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Sanitized audit trail</h2>
+                <p className="m-0 mt-1 text-xs text-slate-500">Actor/action/entity/time only. Raw metadata is deliberately not returned to this UI.</p>
+              </div>
+              <span className={`rounded-full px-2 py-1 text-[9px] font-black uppercase tracking-wide ${operations?.status.sanitizedAuditEvidenceAvailable ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{operations?.status.sanitizedAuditEvidenceAvailable ? 'Persistent' : 'No DB'}</span>
+            </div>
+            <div className="mt-4 grid gap-2">
+              {(operations?.auditEvents || []).length === 0 ? <p className="text-sm text-slate-500">No persistent audit events yet.</p> : null}
+              {(operations?.auditEvents || []).map((event) => (
+                <div key={event.id} className="rounded-xl border border-slate-100 px-3 py-3 text-xs">
+                  <div className="flex justify-between gap-3"><b>{event.action}</b><span className="whitespace-nowrap text-slate-400">{time(event.created_at)}</span></div>
+                  <div className="mt-1 text-slate-500">{event.actor_type} · {entityReference(event)}</div>
                 </div>
               ))}
             </div>
