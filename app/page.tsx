@@ -59,7 +59,15 @@ export default function Home() {
   return (
     <main className="bankApp">
       <aside className="sidebar">
-        <div className="brandLockup"><PlanetLogo /><span>Galactic<br />Trust</span></div>
+        <div className="brandLockup">
+          <PlanetLogo />
+          <span>
+            Galactic<br />Trust
+            <small style={{ display: 'block', marginTop: 7, fontSize: 9, lineHeight: 1, letterSpacing: '0.15em', fontWeight: 800, color: '#9ee8ff' }}>
+              ONLINE BANKING
+            </small>
+          </span>
+        </div>
 
         <nav className="sideNav" aria-label="Primary navigation">
           {navItems.map(([icon, label], index) => (
@@ -88,8 +96,11 @@ export default function Home() {
       <section className="dashboard" id="dashboard">
         <header className="dashboardHeader">
           <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', marginBottom: 9, borderRadius: 999, padding: '5px 9px', background: '#eef1ff', color: '#4450c7', fontSize: 9, fontWeight: 900, letterSpacing: '0.12em' }}>
+              ONLINE BANKING · DEMO
+            </div>
             <h1>Welcome back, Nova! <span>👋</span></h1>
-            <p>Here&apos;s what&apos;s happening in your galaxy.</p>
+            <p>Your online banking dashboard for accounts, transfers, cards, bills, savings, and money insights.</p>
           </div>
           <div className="headerTools">
             <label className="searchBox">
