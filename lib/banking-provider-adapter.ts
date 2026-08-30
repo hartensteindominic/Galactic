@@ -81,6 +81,10 @@ export interface BankingProviderAdapter {
 
   createCustomer(input: { externalUserId: string }): Promise<ProviderCustomer>;
   getCustomer(customerId: string): Promise<ProviderCustomer>;
+  startKyc(input: {
+    customerId: string;
+    sandboxScenario: 'approve' | 'manual_review' | 'reject';
+  }): Promise<ProviderCustomer>;
   createDepositAccount(input: {
     customerId: string;
     type: 'checking' | 'savings';
