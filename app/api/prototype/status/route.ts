@@ -1,6 +1,7 @@
 import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
 import { plaidSandboxStatus } from '../../../../lib/plaid-sandbox';
 import { prototypeLedgerStatus } from '../../../../lib/prototype-ledger';
+import { prototypeMigrationIntegrityStatus } from '../../../../lib/prototype-migration-integrity';
 import { prototypeOperationsStatus } from '../../../../lib/prototype-operations';
 import { resolveRequestBrand } from '../../../../lib/tenant-boundary';
 import { publicBrandConfig } from '../../../../lib/white-label';
@@ -22,9 +23,10 @@ export async function GET(request: Request) {
       ledger: prototypeLedgerStatus(),
       bankLink: plaidSandboxStatus(),
       operations: prototypeOperationsStatus(),
+      migrationIntegrity: prototypeMigrationIntegrityStatus(),
       liveBankingEnabled: false,
       mode: 'prototype',
-      disclosure: 'White-label prototype only. Real deposits, payments, cards, KYC/AML, production provider webhooks, and banking rails remain disabled until an approved regulated partner program is configured.'
+      disclosure: 'White-label prototype only. Repository migration fingerprints do not prove Supabase execution or production approval. Real deposits, payments, cards, KYC/AML, production provider webhooks, and banking rails remain disabled until an approved regulated partner program is configured.'
     });
   } catch (error) {
     return bankingErrorResponse(error);
