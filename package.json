@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test:safety": "node scripts/safety-check.mjs",
     "test:sandbox": "node scripts/sandbox-certification-check.mjs",
+    "test:banking-core": "node scripts/banking-durability-check.mjs",
     "db:sandbox:migrate": "node scripts/run-banking-sandbox-migrations.mjs"
   },
   "dependencies": {
