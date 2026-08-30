@@ -8,6 +8,9 @@ const required = [
   ['lib/customer-terms-control.ts', 'getCustomerTermsForRuntime', 'runtime terms lookup must exist'],
   ['lib/assistant.ts', 'requireApprovedLiveCustomerTerms', 'Orbit changing live terms must fail closed without approved source'],
   ['lib/assistant.ts', 'termsVersion: terms.version', 'Orbit prototype changing-term answers must carry source version'],
+  ['lib/assistant.ts', 'This prototype does not operate a live human case-management channel.', 'Orbit must not imply live human support exists in prototype'],
+  ['app/galactic-chat.tsx', 'Prototype handoff marker:', 'chat UI must label human escalation as a prototype marker'],
+  ['app/galactic-chat.tsx', 'No production case-management channel is connected here', 'chat UI must disclose missing production case channel'],
   ['lib/prototype-transparency.ts', 'getPrototypeCustomerTerms', 'Transparency Center must use controlled prototype terms'],
   ['lib/prototype-transparency.ts', 'customerTermsVersion: terms.version', 'Transparency data must expose terms source version'],
   ['app/prototype/transparency/page.tsx', 'Terms source:', 'Transparency UI must show terms source'],
@@ -31,7 +34,9 @@ const forbidden = [
   ['lib/support-case-state.ts', 'automationMayCloseCase: true', 'automation must not close material support cases'],
   ['lib/prototype-readiness.ts', 'productionCustomerTermsSourceOfTruthApproved: true', 'readiness must not self-certify customer terms approval'],
   ['lib/prototype-readiness.ts', 'productionHumanSupportHandoffExercised: true', 'readiness must not self-certify human handoff exercise'],
-  ['app/api/prototype/terms/route.ts', 'liveTermsApproved: true', 'terms API must not claim live approval']
+  ['app/api/prototype/terms/route.ts', 'liveTermsApproved: true', 'terms API must not claim live approval'],
+  ['app/galactic-chat.tsx', 'Your case has been opened', 'prototype chat must not imply a real case was created'],
+  ['app/galactic-chat.tsx', 'Your complaint has been filed', 'prototype chat must not imply a real complaint was filed']
 ];
 
 for (const [file, text, label] of required) {
