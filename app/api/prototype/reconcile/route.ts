@@ -1,7 +1,7 @@
 import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
 import { runPrototypeReconciliation } from '../../../../lib/prototype-operations';
 import { requirePrototypeOperator } from '../../../../lib/prototype-operator-auth';
-import { requireJsonRequest, requireTrustedOrigin } from '../../../../lib/request-security';
+import { readJsonBodyLimited, requireJsonRequest, requireTrustedOrigin } from '../../../../lib/request-security';
 import { resolveRequestBrand } from '../../../../lib/tenant-boundary';
 
 export const runtime = 'nodejs';
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     requireJsonRequest(request);
     requirePrototypeOperator(request);
 
-    const body = await request.json() as { tenantKey?: string };
+    const body = await readJsonBodyLimited<{ tenantKey?: string }>(request, 4_096);
     const brand = resolveRequestBrand({
       host: request.headers.get('host'),
       requestedKey: body.tenantKey
