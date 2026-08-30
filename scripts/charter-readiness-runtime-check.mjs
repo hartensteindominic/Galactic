@@ -28,6 +28,7 @@ assert.equal(status.currentPhase, 'fintech-proof');
 assert.equal(status.currentOperatingPosture, 'simulation-only-fintech-prototype');
 assert.equal(status.roadmapDocumented, true);
 assert.equal(status.currentSoftwareCanSelfApproveCharter, false);
+assert.equal(status.unitEconomicsScenarioEngineImplemented, true);
 
 const evidenceRequiredFields = [
   'businessModelThesisDefined',
@@ -36,6 +37,7 @@ const evidenceRequiredFields = [
   'distributionAdvantageValidated',
   'primaryNonInterchangeRevenueModelValidated',
   'driverBasedUnitEconomicsModelBuilt',
+  'validatedUnitEconomicsModelBuilt',
   'unitEconomicsAssumptionsExternallyValidated',
   'fraudLossAssumptionsValidated',
   'customerSupportCostAssumptionsValidated',
@@ -88,7 +90,7 @@ assert.match(status.disclosure, /not a charter application/i);
 assert.match(status.disclosure, /not.*regulatory approval/i);
 assert.match(status.disclosure, /not.*deposit-insurance approval/i);
 assert.match(status.disclosure, /not.*authorization to operate/i);
-assert.match(status.disclosure, /business model/i);
-assert.match(status.disclosure, /unit economics/i);
+assert.match(status.disclosure, /scenario calculator/i);
+assert.match(status.disclosure, /validated unit-economics model/i);
 
 console.log('Future bank charter readiness goal and external-approval truth boundaries passed runtime checks.');
