@@ -22,7 +22,7 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
       setState('authenticated');
       return;
     }
-    if (data?.error?.code === 'OPERATOR_ACCESS_NOT_CONFIGURED') {
+    if (data?.error?.code === 'OPERATOR_ACCESS_NOT_CONFIGURED' || data?.error?.code === 'OPERATOR_ACCESS_SECRET_TOO_WEAK') {
       setState('configuration-locked');
       setMessage(data.error.message);
       return;
@@ -106,7 +106,7 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
         {message && state === 'login-required' ? <div className="mt-4 text-sm font-semibold text-rose-700" role="status">{message}</div> : null}
 
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">
-          This is a prototype access control, not production workforce identity, phishing-resistant MFA, SSO, or privileged-access management. Production operator access remains a separate release gate.
+          This is a prototype access control, not production workforce identity, phishing-resistant MFA, SSO, privileged-access management, or dual control. Production operator access remains a separate release gate.
         </div>
 
         <a href={`/prototype?tenant=${encodeURIComponent(tenantKey)}`} className="mt-5 inline-block text-sm font-black text-indigo-700 no-underline">← Back to banking demo</a>
