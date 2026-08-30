@@ -25,8 +25,24 @@ Current diligence shortlist and scorecard. Initial research order: Synctera, Tre
 ### `SANDBOX-CERTIFICATION.md`
 Engineering evidence and acceptance criteria for the zero-money synthetic certification loop and the later approved provider-sandbox certification. Covers signed webhook verification, duplicate-event handling, double-entry journal invariants, reconciliation, provider credential isolation, durable persistence requirements, and the limits of what sandbox evidence proves.
 
+### `SANDBOX-ENVIRONMENT-CHECKLIST.md`
+No-secret environment checklist for provider credentials, operator signing + allowlist, isolated Postgres, migrations, webhook configuration, recovery controls, and provider-vs-ledger reconciliation.
+
+### `SANDBOX-OPERATIONS-RUNBOOK.md`
+Repeatable operator procedure for certification, signed webhook evidence, replay testing, single-account and bounded all-account reconciliation, discrepancy handling, recovery, terminal-event review, ACH returns, and diligence evidence capture.
+
 ## Current launch posture
-Galactic Trust may be considered for a **public demo/beta launch** only when the exact release commit passes typecheck, general safety checks, dedicated sandbox safety checks, and production build, and the deployment visibly keeps banking and crypto in demo mode.
+Galactic Trust may be considered for a **public demo/beta launch** only when the exact release commit passes all CI gates and the deployed product visibly keeps banking and crypto in demo mode.
+
+The current engineering gates cover:
+- TypeScript correctness;
+- general product/secret safety;
+- synthetic sandbox isolation;
+- durable Postgres banking/accounting invariants;
+- provider-event leases/recovery;
+- operator allowlist/manual recovery controls;
+- account-level provider-vs-ledger reconciliation;
+- production build.
 
 This packet does not authorize:
 - accepting real customer deposits;
@@ -37,7 +53,7 @@ This packet does not authorize:
 - claiming a sponsor-bank, FDIC, Visa/Mastercard or other regulated relationship that has not actually been approved.
 
 ## Zero-money certification milestone
-The app now has a synthetic certification surface at `/sandbox-readiness` that exercises:
+The app has a synthetic certification surface at `/sandbox-readiness` that exercises:
 
 > synthetic customer -> sandbox KYC fixture -> synthetic account -> synthetic ACH -> signed webhook -> duplicate rejection -> balanced double-entry journal -> reconciliation -> reviewer-visible evidence.
 
@@ -47,11 +63,38 @@ The synthetic runner is deliberately prevented from:
 - storing real PII;
 - moving real money.
 
-## Real provider-sandbox milestone
-The next regulated engineering milestone is:
+## Durable provider-sandbox milestone
+The provider-sandbox architecture now supports the technical control path:
 
-> authenticated sandbox user -> provider sandbox customer -> provider sandbox KYC -> provider sandbox account -> provider sandbox ACH -> authentic provider-signed webhook -> durable event inbox -> idempotent event handling -> balanced ledger journal -> provider/internal reconciliation -> audit evidence.
+> operator-signed certification -> provider sandbox customer -> provider sandbox KYC -> provider sandbox account -> provider sandbox ACH -> authentic provider-signed webhook -> durable event inbox -> leased/idempotent processing -> balanced journal -> event reconciliation -> provider-vs-ledger account reconciliation -> recovery/terminal review -> audit evidence.
 
-Provider-sandbox credentials must use the dedicated `BANKING_SANDBOX_*` configuration and remain isolated from production banking credentials. Provider-sandbox networking has its own explicit enable gate and is blocked whenever production live writes are enabled.
+Provider-sandbox controls include:
+- separate `BANKING_SANDBOX_*` credentials and enable gates;
+- isolated sandbox Postgres;
+- versioned checksum-protected migrations;
+- database-level balanced-journal and append-only enforcement;
+- exact-body signed webhook validation with replay window;
+- five-attempt processing limit;
+- stale lease recovery and `SKIP LOCKED` worker concurrency;
+- operator HMAC + explicit operator-ID allowlist;
+- audited terminal-event requeue;
+- audited reconciliation resolution;
+- single-account reconciliation and a bounded 100-account sequential sweep;
+- a signed operator CLI that never prints the signing secret.
 
-Production remains blocked until the selected bank/provider, contractual, compliance, disclosure, certification and counsel-review gates are complete.
+No provider/database/operator secret values are stored in this packet or repository.
+
+## Remaining real provider-sandbox inputs
+The engineering path is prepared, but actual provider-sandbox execution still requires configuration outside Git/chat:
+- selected provider/private-gateway sandbox access;
+- isolated provider credentials;
+- isolated Postgres sandbox database;
+- webhook signing secret;
+- operator signing secret + allowlisted operator ID;
+- sandbox deployment URL;
+- Vercel/GitHub deployment secrets if the preview workflow is used.
+
+## Production remains separate
+A green synthetic test or provider sandbox does not authorize production.
+
+Production remains blocked until the selected bank/provider, contractual, legal/compliance, KYC/CIP/OFAC/AML/fraud, disclosure, security, certification, and counsel-review gates are complete, followed by the separate production activation controls.
