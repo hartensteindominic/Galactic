@@ -83,15 +83,12 @@ export type BankingOperationsSnapshot = {
 };
 
 /**
- * Database-backed operations used inside and outside a transaction.
- *
- * Implementations must preserve uniqueness, lease ownership, and append-only
- * semantics at the database layer, not only in application memory.
+ * Database-backed mutation/transaction operations. Read-only operational
+ * monitoring intentionally lives outside this interface so monitoring code does
+ * not inherit banking write capabilities.
  */
 export interface BankingPersistenceOperations {
-  /** Atomically insert one provider event if it has never been seen. */
   putEventIfAbsent(record: EventInboxRecord): Promise<{ inserted: boolean; record: EventInboxRecord }>;
-
   getEvent(eventId: string): Promise<EventInboxRecord | null>;
 
   findProcessedEventByResource(input: {
@@ -141,12 +138,6 @@ export interface BankingPersistenceOperations {
   }): Promise<void>;
 
   appendAuditEvent(event: BankingAuditEvent): Promise<void>;
-
-  getOperationsSnapshot(input: {
-    environment: DurableBankingEnvironment;
-    staleBefore: string;
-    maxAttempts: number;
-  }): Promise<BankingOperationsSnapshot>;
 }
 
 export interface BankingPersistenceStore extends BankingPersistenceOperations {
