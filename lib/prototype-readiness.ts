@@ -1,5 +1,6 @@
 import { aiGovernanceStatus } from './ai-governance';
 import { bankingStatus } from './banking';
+import { financialIntentControlStatus } from './financial-intent-state';
 import { plaidSandboxStatus } from './plaid-sandbox';
 import { prototypeLedgerStatus } from './prototype-ledger';
 import { prototypeOperationsStatus } from './prototype-operations';
@@ -9,6 +10,7 @@ import { tenantBoundaryStatus } from './tenant-boundary';
 export function prototypeReadiness() {
   const aiGovernance = aiGovernanceStatus();
   const banking = bankingStatus();
+  const financialIntentControls = financialIntentControlStatus();
   const ledger = prototypeLedgerStatus();
   const bankLink = plaidSandboxStatus();
   const operations = prototypeOperationsStatus();
@@ -47,6 +49,7 @@ export function prototypeReadiness() {
     sandboxWebhookInboxConfigured: operations.webhookInboxConfigured,
     transferIdempotencyAvailable: true,
     persistentTransferIdempotencyConfigured: ledger.persistentTransferIdempotency,
+    financialIntentControls,
     prototypeOperatorAccessRequired: operatorAccess.required,
     prototypeOperatorAccessConfigured: operatorAccess.configured,
     prototypeOperatorWeakSecretConfigured: operatorAccess.weakSecretConfigured,
@@ -85,6 +88,6 @@ export function prototypeReadiness() {
     migrationRecoveryExerciseVerified: false,
     readyForLiveBanking: false,
     nextSafeStep,
-    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. Persistent prototype setup currently requires migrations 001-005. Orbit is an automated deterministic support assistant, not a regulated decision maker; regulated AI decisioning and third-party LLM use of customer financial data remain disabled. Governance documents exist, but responsibility assignment, legal/compliance applicability review, sponsor-bank/program approval, production retention, complaint escalation, human support handoff, third-party risk operation, approved customer-term source-of-truth, and independent threat-model review remain unapproved/unverified. Provider-disappearance handling and customer-visible incident-status timing are documented but remain unverified until exercised in an approved environment. The prototype operator session, tenant host binding, body limits, and best-effort login throttle improve demo safety but are not production workforce identity or distributed abuse prevention. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
+    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. Persistent prototype setup currently requires migrations 001-005. Orbit is an automated deterministic support assistant, not a regulated decision maker; regulated AI decisioning and third-party LLM use of customer financial data remain disabled. Financial intent controls explicitly preserve submitted/pending-unknown states, treat timeout as non-terminal, block replacement while outcome is unknown, and still require provider-specific state mapping to be verified before production. Governance documents exist, but responsibility assignment, legal/compliance applicability review, sponsor-bank/program approval, production retention, complaint escalation, human support handoff, third-party risk operation, approved customer-term source-of-truth, and independent threat-model review remain unapproved/unverified. Provider-disappearance handling and customer-visible incident-status timing are documented but remain unverified until exercised in an approved environment. The prototype operator session, tenant host binding, body limits, and best-effort login throttle improve demo safety but are not production workforce identity or distributed abuse prevention. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
   } as const;
 }
