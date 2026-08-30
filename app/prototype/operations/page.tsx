@@ -1,5 +1,5 @@
 import { headers } from 'next/headers';
-import { resolveBrand } from '../../../lib/white-label';
+import { resolveRequestBrand } from '../../../lib/tenant-boundary';
 import { OperationsShell } from './operations-shell';
 
 export default async function PrototypeOperationsPage({
@@ -9,9 +9,9 @@ export default async function PrototypeOperationsPage({
 }) {
   const requestHeaders = await headers();
   const params = await searchParams;
-  const brand = resolveBrand({
+  const brand = resolveRequestBrand({
     host: requestHeaders.get('host'),
-    key: params.tenant
+    requestedKey: params.tenant
   });
 
   return <OperationsShell tenantKey={brand.key} brandName={brand.name} />;
