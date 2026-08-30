@@ -30,7 +30,8 @@ export async function POST(request: Request) {
       fromAccountId: String(body.fromAccountId || ''),
       recipient: String(body.recipient || ''),
       amountCents: Number.isFinite(amount) ? Math.round(amount * 100) : Number.NaN,
-      memo: typeof body.memo === 'string' ? body.memo : undefined
+      memo: typeof body.memo === 'string' ? body.memo : undefined,
+      idempotencyKey: request.headers.get('idempotency-key') || ''
     });
 
     return bankingJson({ ok: true, transfer });
