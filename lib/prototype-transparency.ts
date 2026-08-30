@@ -53,7 +53,18 @@ export function prototypeTransparency() {
       costLabel: '$0 demo fee',
       limitsLabel: '7 / 14 / 30-day simulation horizons',
       eligibilityLabel: 'Prototype users',
-      plainEnglish: 'Forecasts are planning estimates based on known prototype items. They are not guarantees, credit decisions, or authorization to spend.',
+      plainEnglish: 'Forecasts are planning estimates based on known prototype items. They are not guarantees, credit decisions, personalized financial advice, or authorization to spend.',
+      liveMoneyEnabled: false
+    },
+    {
+      id: 'orbit-support',
+      name: 'Orbit automated support',
+      category: 'support',
+      availability: 'prototype',
+      costLabel: '$0 demo fee',
+      limitsLabel: 'General product explanations only',
+      eligibilityLabel: 'No regulated or account-specific decisioning',
+      plainEnglish: 'Orbit is an automated deterministic support assistant. It does not approve or deny credit, determine AML/SAR or sanctions outcomes, decide fraud liability, verify identity, provide legal advice, or give personalized investment recommendations. Material or account-specific judgment requires an authorized human workflow. The prototype does not send customer financial data to a third-party LLM.',
       liveMoneyEnabled: false
     },
     {
@@ -106,7 +117,10 @@ export function prototypeTransparency() {
     stage: 'prototype',
     hiddenFees: false,
     liveMoneyEnabled: false,
+    automatedSupportDisclosed: true,
+    regulatedAiDecisioningEnabled: false,
+    thirdPartyLlmCustomerDataEnabled: false,
     items,
-    disclosure: 'Prototype transparency center. Real fees, limits, rates, insurance statements, eligibility rules, and partner disclosures must come from signed approved program terms before launch.'
+    disclosure: 'Prototype transparency center. Real fees, limits, rates, insurance statements, eligibility rules, partner disclosures, and any future material AI use must come from approved program terms and governance before launch.'
   } as const;
 }
