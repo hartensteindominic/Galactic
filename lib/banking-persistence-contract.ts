@@ -69,6 +69,13 @@ export interface BankingPersistenceOperations {
 
   getEvent(eventId: string): Promise<EventInboxRecord | null>;
 
+  findProcessedEventByResource(input: {
+    provider: string;
+    environment: DurableBankingEnvironment;
+    type: CanonicalBankingEvent['type'];
+    resourceId: string;
+  }): Promise<EventInboxRecord | null>;
+
   markEventProcessed(input: {
     eventId: string;
     processedAt: string;
@@ -125,6 +132,7 @@ export const PROVIDER_SANDBOX_DURABILITY_REQUIREMENTS = [
   'reconciliation_history',
   'audit_history',
   'transactional_processing',
+  'prior_event_validation_for_returns',
   'failed_event_recovery_path',
   'backup_and_recovery_plan'
 ] as const;
