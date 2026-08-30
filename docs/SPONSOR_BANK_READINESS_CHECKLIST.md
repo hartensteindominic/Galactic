@@ -6,12 +6,15 @@ This checklist converts Galactic's 12-month goal into evidence a regulated banki
 
 It is not a statement that every sponsor bank has identical requirements. Final diligence, compliance, capital, staffing, insurance, security, and program requirements must be confirmed with the selected partner and qualified counsel/compliance professionals.
 
+Galactic's longer-term goal may include pursuing its own bank charter. Sponsor-program readiness is therefore treated as a learning and operating-evidence stage, not as a substitute for charter approval and not as proof that a future charter application would be approved. See `FINTECH_TO_CHARTER_ROADMAP.md`.
+
 ## Status vocabulary
 
 - **Implemented** — exists in the current code/docs.
 - **Needs exercise** — control exists but has not been proven in the target environment.
 - **Needs external owner/vendor** — cannot be satisfied by code alone.
 - **Future partner-specific** — must be designed against the selected regulated provider/program.
+- **Future charter-specific** — depends on the later charter/corporate route and relevant authorities.
 
 ## 1. Financial ledger and transaction correctness
 
@@ -21,7 +24,7 @@ It is not a statement that every sponsor bank has identical requirements. Final 
 - [x] Duplicate request replay avoids a second simulated debit — **Implemented**.
 - [x] Transaction-history/account reconciliation — **Implemented**.
 - [x] GL/account reconciliation — **Implemented**.
-- [ ] Exercise migrations `001`–`004` in a disposable persistent Supabase environment — **Needs exercise**.
+- [ ] Exercise migrations `001`–`005` in a disposable persistent Supabase environment — **Needs exercise**.
 - [ ] Exercise network-level ambiguous-response retry, not only UI replay — **Needs exercise**.
 - [ ] Reconcile against actual provider statements/events — **Future partner-specific**.
 - [ ] Define accounting ownership, close process, exception tolerances, and materiality thresholds — **Needs external owner/vendor**.
@@ -83,12 +86,14 @@ These items depend on product scope, program structure, customer type, partner a
 - [x] Live writes require explicit partner mode, complete provider config, explicit write enablement, and emergency unfreeze — **Implemented**.
 - [x] Plaid Sandbox is clearly separated from production banking — **Implemented**.
 - [x] Prototype sandbox webhook inbox is clearly not represented as production provider verification — **Implemented**.
+- [x] Provider-neutral webhook contract requires authenticity/anti-replay evidence before an event can be treated as verified — **Implemented**.
 - [ ] Select sponsor bank/BaaS/provider after diligence — **Needs external owner/vendor**.
 - [ ] Implement exact provider authentication/signing requirements — **Future partner-specific**.
 - [ ] Implement exact production webhook signature verification and replay controls — **Future partner-specific**.
 - [ ] Define ACH/payment/card lifecycle state machines from provider documentation — **Future partner-specific**.
 - [ ] Provider statement/file/API reconciliation — **Future partner-specific**.
 - [ ] Provider certification/UAT and failure testing — **Future partner-specific**.
+- [ ] Document provider termination/exit obligations and customer-continuity plan — **Future partner-specific**.
 
 ## 7. Product and customer experience
 
@@ -96,6 +101,7 @@ These items depend on product scope, program structure, customer type, partner a
 - [x] Explicit simulation/live-state disclosures — **Implemented**.
 - [x] Safe-to-Spend / forward cash-flow prototype — **Implemented**.
 - [x] Competitive quality scorecard with a rule against unproven “better than” claims — **Implemented**.
+- [x] Global keyboard-focus and reduced-motion CSS fallback — **Implemented**.
 - [ ] Accessibility audit and iPhone/device testing — **Needs exercise**.
 - [ ] Customer support service levels and escalation process — **Needs external owner/vendor**.
 - [ ] Transparent fees/limits/eligibility center tied to the actual approved program — **Future partner-specific**.
@@ -140,6 +146,26 @@ Maintain a diligence folder containing current versions of:
 - Corporate ownership/governance documents requested by the partner.
 - Financial runway/budget evidence requested during diligence.
 
+## 11. Long-term charter runway
+
+These items are intentionally separate from sponsor-program approval. Completing a sponsor checklist does not complete a charter application.
+
+- [x] Fintech-to-charter roadmap documented — **Implemented**.
+- [x] Machine-readable charter-readiness status keeps external approvals false by default — **Implemented**.
+- [ ] Define a specific customer/problem/distribution/revenue thesis with evidence — **Needs external owner/vendor**.
+- [ ] Build driver-based unit economics including sponsor/provider, fraud, support, compliance, payment/card, and servicing costs — **Needs external owner/vendor**.
+- [ ] Evaluate de novo versus acquisition route — **Future charter-specific**.
+- [ ] Evaluate national versus state charter and ownership/holding-company structure — **Future charter-specific**.
+- [ ] Conduct relevant regulator pre-filing discussions — **Future charter-specific**.
+- [ ] Identify proposed bank organizers, directors, and executive management — **Future charter-specific**.
+- [ ] Build regulator-ready business plan and financial projections — **Future charter-specific**.
+- [ ] Build and evidence a regulator-reviewed capital plan; do not assume a universal dollar minimum — **Future charter-specific**.
+- [ ] Determine applicable charter, deposit-insurance, Federal Reserve, state, and other filing requirements — **Future charter-specific**.
+- [ ] File applications and satisfy conditional/pre-opening requirements — **Future charter-specific**.
+- [ ] Receive effective charter, deposit insurance, and opening authority before making bank/insured-deposit claims — **Future charter-specific**.
+
 ## Current bottom line
 
-Galactic has meaningful **software-control readiness** in the simulation layer, but it is not yet a live bank or an approved live banking program. The next phase is to prove the controls in real non-production environments and add the people, compliance, insurance, provider, security-assurance, and operational ownership that code alone cannot supply.
+Galactic has meaningful **software-control readiness** in the simulation layer, but it is not yet a live bank or an approved live banking program. The next phase is to prove the controls in real non-production environments and add the people, compliance, insurance, provider, security-assurance, operational ownership, business-model evidence, and capital planning that code alone cannot supply.
+
+The long-term charter goal changes the architecture standard today: avoid provider lock-in, preserve authoritative financial evidence, build human accountability into operating plans, and never let a software milestone masquerade as regulatory authority.
