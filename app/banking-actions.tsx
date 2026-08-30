@@ -15,6 +15,11 @@ type StatusResponse = {
   warning?: string;
 };
 
+function newIdempotencyKey() {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return `galactic-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 export function BankingActions() {
   const [status, setStatus] = useState<StatusResponse>({
     ok: true,
@@ -50,7 +55,10 @@ export function BankingActions() {
     try {
       const response = await fetch('/api/banking/transfers', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Idempotency-Key': newIdempotencyKey()
+        },
         body: JSON.stringify({
           fromAccountId: 'demo-checking-4532',
           recipient,
@@ -131,8 +139,8 @@ export function BankingActions() {
                 Amount
                 <div className="moneyInput"><span>$</span><input type="number" min="0.01" max="10000" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} placeholder="0.00" required /></div>
               </label>
-              <button className="bankingPrimary" type="submit" disabled={busy}>{busy ? 'Working…' : status.mode === 'demo' ? 'Simulate Transfer' : 'Review Transfer'}</button>
-              <p className="bankingFinePrint">{status.mode === 'demo' ? 'Demo transfers never move real money.' : 'Live transfers require an approved banking program, authenticated customer session, and enabled money movement.'}</p>
+              <button className="bankingPrimary" type="submit" disabled={busy}>{busy ? 'Working…' : status.mode === 'demo' ? 'Simulate Transfer' : 'Submit Securely'}</button>
+              <p className="bankingFinePrint">{status.mode === 'demo' ? 'Demo transfers never move real money.' : status.liveWritesEnabled ? 'Live transfers require a verified customer session and are sent through the configured banking partner gateway.' : 'Partner mode is configured, but live money movement remains disabled until the approved program is explicitly enabled.'}</p>
             </form>
           )}
 
