@@ -1,6 +1,6 @@
 import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
 import { createPrototypeTransfer } from '../../../../lib/prototype-ledger';
-import { requireJsonRequest, requireTrustedOrigin } from '../../../../lib/request-security';
+import { readJsonBodyLimited, requireJsonRequest, requireTrustedOrigin } from '../../../../lib/request-security';
 import { resolveRequestBrand } from '../../../../lib/tenant-boundary';
 
 export const runtime = 'nodejs';
@@ -11,13 +11,13 @@ export async function POST(request: Request) {
     requireTrustedOrigin(request);
     requireJsonRequest(request);
 
-    const body = await request.json() as {
+    const body = await readJsonBodyLimited<{
       tenantKey?: string;
       fromAccountId?: string;
       recipient?: string;
       amount?: number;
       memo?: string;
-    };
+    }>(request, 16_384);
 
     const brand = resolveRequestBrand({
       host: request.headers.get('host'),
