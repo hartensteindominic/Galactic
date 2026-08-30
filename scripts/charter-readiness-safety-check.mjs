@@ -1,0 +1,44 @@
+import fs from 'node:fs';
+
+const required = [
+  ['lib/charter-readiness.ts', "longTermGoal: 'future-chartered-bank'", 'long-term charter goal must be explicit'],
+  ['lib/charter-readiness.ts', "currentPhase: 'fintech-proof'", 'current charter-readiness phase must remain fintech proof'],
+  ['lib/charter-readiness.ts', "currentOperatingPosture: 'simulation-only-fintech-prototype'", 'current operating posture must remain simulation-only'],
+  ['lib/charter-readiness.ts', 'currentSoftwareCanSelfApproveCharter: false', 'software must not self-approve charter status'],
+  ['lib/charter-readiness.ts', 'charterApplicationFiled: false', 'charter filing must remain unclaimed'],
+  ['lib/charter-readiness.ts', 'depositInsuranceApproved: false', 'deposit insurance approval must remain unclaimed'],
+  ['lib/charter-readiness.ts', 'openingAuthorizationReceived: false', 'opening authority must remain unclaimed'],
+  ['lib/charter-readiness.ts', 'bankCharterEffective: false', 'effective bank charter must remain unclaimed'],
+  ['lib/charter-readiness.ts', 'fdicInsuranceEffective: false', 'effective FDIC insurance must remain unclaimed'],
+  ['lib/charter-readiness.ts', 'customerFacingBankClaimAuthorized: false', 'customer-facing bank claim authority must remain false'],
+  ['lib/charter-readiness.ts', 'No universal charter capital number is assumed', 'charter readiness must reject universal capital-number assumptions'],
+  ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'never hard-code a universal dollar amount as “the capital required to get a bank charter.”', 'charter roadmap must prohibit universal capital claims'],
+  ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'None of those states may be collapsed into “we are a bank.”', 'application milestones must not collapse into bank status'],
+  ['docs/SPONSOR_BANK_READINESS_CHECKLIST.md', 'Sponsor-program readiness is therefore treated as a learning and operating-evidence stage', 'sponsor readiness must remain distinct from charter approval'],
+  ['docs/SPONSOR_BANK_READINESS_CHECKLIST.md', 'Exercise migrations `001`–`005`', 'sponsor checklist must reference all five current migrations'],
+  ['scripts/charter-readiness-runtime-check.mjs', 'Future bank charter readiness goal and external-approval truth boundaries passed runtime checks.', 'charter readiness must have executable runtime coverage'],
+  ['package.json', 'scripts/charter-readiness-runtime-check.mjs', 'charter readiness runtime test must run in CI']
+];
+
+const forbidden = [
+  ['lib/charter-readiness.ts', 'charterApplicationFiled: true', 'repository must not claim a charter application has been filed'],
+  ['lib/charter-readiness.ts', 'depositInsuranceApproved: true', 'repository must not claim deposit insurance approval'],
+  ['lib/charter-readiness.ts', 'openingAuthorizationReceived: true', 'repository must not claim opening authorization'],
+  ['lib/charter-readiness.ts', 'bankCharterEffective: true', 'repository must not claim an effective bank charter'],
+  ['lib/charter-readiness.ts', 'fdicInsuranceEffective: true', 'repository must not claim effective FDIC insurance'],
+  ['lib/charter-readiness.ts', 'customerFacingBankClaimAuthorized: true', 'repository must not authorize customer-facing bank claims'],
+  ['docs/FINTECH_TO_CHARTER_ROADMAP.md', '$50M–$200M', 'roadmap must not hard-code an unsupported universal charter-capital range'],
+  ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'charter approved ✅', 'roadmap must not present approval as completed']
+];
+
+for (const [file, text, label] of required) {
+  const source = fs.readFileSync(file, 'utf8');
+  if (!source.includes(text)) throw new Error(`Missing ${label} in ${file}`);
+}
+
+for (const [file, text, label] of forbidden) {
+  const source = fs.readFileSync(file, 'utf8');
+  if (source.includes(text)) throw new Error(label);
+}
+
+console.log('Future charter goal, sponsor-vs-charter separation, capital-claim, and regulatory-authority safety checks passed.');
