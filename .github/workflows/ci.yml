@@ -28,5 +28,8 @@ jobs:
       - name: Safety checks
         run: npm run test:safety
 
+      - name: Sandbox certification safety
+        run: npm run test:sandbox
+
       - name: Build
         run: npm run build
