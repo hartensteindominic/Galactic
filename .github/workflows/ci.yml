@@ -31,5 +31,8 @@ jobs:
       - name: Sandbox certification safety
         run: npm run test:sandbox
 
+      - name: Durable banking core safety
+        run: npm run test:banking-core
+
       - name: Build
         run: npm run build
