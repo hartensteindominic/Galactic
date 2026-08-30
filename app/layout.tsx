@@ -3,6 +3,7 @@ import './globals.css';
 import './banking-controls.css';
 import './extras.css';
 import './privacy.css';
+import './privacy-link.css';
 
 export const metadata: Metadata = {
   title: 'Galactic Trust',
