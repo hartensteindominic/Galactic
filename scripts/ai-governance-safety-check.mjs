@@ -41,6 +41,8 @@ const required = [
   ['lib/financial-intent-state.ts', 'automaticReplacementAllowed: false', 'financial intent model must prohibit automatic replacement'],
   ['lib/financial-intent-state.ts', "'REPLACEMENT_BLOCKED_WHILE_OUTCOME_UNKNOWN'", 'financial intent model must block replacement while unknown'],
   ['lib/financial-intent-state.ts', 'productionProviderStateMappingVerified: false', 'provider state mapping must remain unverified until provider certification'],
+  ['scripts/financial-intent-runtime-check.mjs', 'Financial intent runtime behavior checks passed.', 'financial intent state transitions must have executable behavioral coverage'],
+  ['package.json', 'scripts/financial-intent-runtime-check.mjs', 'financial intent runtime coverage must run in the CI safety suite'],
   ['docs/NETWORK_RETRY_CHAOS_TEST_PLAN.md', 'Provider disappears after accepting intent', 'network chaos plan must include provider disappearance'],
   ['docs/NETWORK_RETRY_CHAOS_TEST_PLAN.md', 'pending/unknown', 'provider disappearance must preserve unknown state'],
   ['docs/EMERGENCY_MONEY_MOVEMENT_CONTROL.md', 'Time-to-first-customer-visible status', 'freeze drill must measure customer-visible status timing'],
