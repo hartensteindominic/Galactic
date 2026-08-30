@@ -5,11 +5,13 @@ const read = (path) => fs.readFileSync(path, 'utf8');
 const auth = read('lib/sandbox-operator-auth.ts');
 const store = read('lib/postgres-banking-store.ts');
 const operations = read('lib/provider-sandbox-operations.ts');
+const reconciliationSweep = read('lib/provider-sandbox-reconciliation-sweep.ts');
 const adapter = read('lib/banking-provider-adapter.ts');
 const gatewayAdapter = read('lib/gateway-banking-sandbox-adapter.ts');
 const operatorCli = read('scripts/provider-sandbox-operator.mjs');
 const requeueRoute = read('app/api/banking/provider-sandbox/events/requeue/route.ts');
 const accountReconcileRoute = read('app/api/banking/provider-sandbox/reconcile-account/route.ts');
+const reconciliationSweepRoute = read('app/api/banking/provider-sandbox/reconcile-all-accounts/route.ts');
 const reconciliationRoute = read('app/api/banking/provider-sandbox/reconciliations/resolve/route.ts');
 const environmentChecklist = read('docs/sponsor-bank/SANDBOX-ENVIRONMENT-CHECKLIST.md');
 
@@ -27,6 +29,7 @@ const required = [
   [operatorCli, "createHash('sha256').update(rawBody)", 'operator CLI must bind signatures to the exact body hash'],
   [operatorCli, "createHmac('sha256', operatorSecret)", 'operator CLI must sign requests with HMAC SHA-256'],
   [operatorCli, "redirect: 'error'", 'operator CLI must not follow redirects to a different destination'],
+  [operatorCli, "'reconcile-all-accounts'", 'operator CLI must support the bounded account reconciliation sweep'],
   [operatorCli, "'reconcile-account'", 'operator CLI must support safe account reconciliation'],
   [operatorCli, "'requeue-event'", 'operator CLI must support terminal event review/requeue'],
   [operatorCli, "'resolve-reconciliation'", 'operator CLI must support audited discrepancy resolution'],
@@ -55,10 +58,19 @@ const required = [
   [operations, 'sandbox_account_balance_reconciled', 'account reconciliation must append audit evidence'],
   [operations, 'discrepancyCents', 'account reconciliation must explicitly calculate discrepancy cents'],
 
+  [reconciliationSweep, 'ACCOUNT_RECONCILIATION_SWEEP_LIMIT = 100', 'account reconciliation sweep must have a hard account cap'],
+  [reconciliationSweep, 'LIMIT 100', 'account mapping query must enforce the sweep cap in SQL'],
+  [reconciliationSweep, 'for (const accountResourceId of accountResourceIds)', 'account reconciliation sweep must run sequentially'],
+  [reconciliationSweep, 'reconcileProviderSandboxAccount', 'sweep must use the same audited per-account reconciliation path'],
+  [reconciliationSweep, "status: 'failed'", 'one failed account must be reported without hiding the rest of the sweep'],
+  [reconciliationSweep, 'errorCode: failureCode(error)', 'sweep failures must expose bounded error codes rather than secret-rich messages'],
+
   [requeueRoute, 'requireSandboxOperator', 'terminal-event requeue endpoint must require signed operator auth'],
   [requeueRoute, 'INVALID_REQUEST_FIELDS', 'terminal-event requeue endpoint must reject extra fields'],
   [accountReconcileRoute, 'requireSandboxOperator', 'account reconciliation endpoint must require signed operator auth'],
   [accountReconcileRoute, "keys.length !== 1 || keys[0] !== 'accountResourceId'", 'account reconciliation endpoint must accept only accountResourceId'],
+  [reconciliationSweepRoute, 'requireSandboxOperator', 'account reconciliation sweep must require signed operator auth'],
+  [reconciliationSweepRoute, 'RECONCILIATION_SWEEP_PARAMETERS_NOT_ALLOWED', 'account reconciliation sweep must reject caller parameters'],
   [reconciliationRoute, 'requireSandboxOperator', 'reconciliation resolution endpoint must require signed operator auth'],
   [reconciliationRoute, 'INVALID_REQUEST_FIELDS', 'reconciliation resolution endpoint must reject extra fields'],
 
@@ -81,6 +93,9 @@ const forbidden = [
   [accountReconcileRoute, 'requireBankingUser', 'account reconciliation must not use public demo customer authentication'],
   [accountReconcileRoute, 'appendJournal', 'account reconciliation endpoint must never edit ledger journals'],
   [accountReconcileRoute, 'amountCents', 'account reconciliation endpoint must not accept a caller-supplied balance amount'],
+  [reconciliationSweepRoute, 'requireBankingUser', 'account reconciliation sweep must not use public demo customer authentication'],
+  [reconciliationSweepRoute, 'appendJournal', 'account reconciliation sweep must never edit ledger journals'],
+  [reconciliationSweepRoute, 'accountResourceId', 'account sweep endpoint must not accept a caller-selected account'],
   [reconciliationRoute, 'requireBankingUser', 'reconciliation resolution must not use public demo customer authentication'],
   [reconciliationRoute, 'appendJournal', 'reconciliation resolution must never edit ledger journals'],
   [auth, 'console.log(secret', 'operator signing secret must never be logged'],
@@ -91,4 +106,4 @@ for (const [source, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(`Operator-control regression: ${label}`);
 }
 
-console.log('Galactic Trust operator allowlist, safe CLI signing, terminal recovery, account reconciliation, and audited discrepancy controls passed.');
+console.log('Galactic Trust operator allowlist, safe CLI signing, terminal recovery, bounded account reconciliation, and audited discrepancy controls passed.');
