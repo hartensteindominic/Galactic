@@ -59,6 +59,15 @@ type ProviderEventRow = {
   processed_at: string | null;
 };
 
+type AuditEventRow = {
+  id: string;
+  actor_type: 'system' | 'demo_user' | 'operator' | 'provider';
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  created_at: string;
+};
+
 type TenantRow = { id: string };
 
 function supabaseConfig() {
@@ -103,10 +112,11 @@ export function prototypeOperationsStatus() {
     reconciliationMode: databaseConfigured ? 'persistent' : 'memory',
     webhookInboxConfigured: databaseConfigured && webhookConfigured,
     doubleEntryAvailableInBuild: true,
+    sanitizedAuditEvidenceAvailable: databaseConfigured,
     realProviderWebhooksEnabled: false,
     liveMoneyEnabled: false,
     disclosure: databaseConfigured
-      ? 'Persistent simulation reconciliation is available. Real provider webhook processing and live money remain disabled.'
+      ? 'Persistent simulation reconciliation and sanitized audit evidence are available. Real provider webhook processing and live money remain disabled.'
       : 'Memory-mode reconciliation is available for demo UX only. Configure Supabase to persist operations evidence.'
   } as const;
 }
@@ -191,7 +201,8 @@ export async function getPrototypeOperationsSnapshot(tenantKey: string) {
     return {
       status,
       latestReconciliations: [] as ReconciliationRow[],
-      providerEvents: [] as ProviderEventRow[]
+      providerEvents: [] as ProviderEventRow[],
+      auditEvents: [] as AuditEventRow[]
     };
   }
 
@@ -200,19 +211,22 @@ export async function getPrototypeOperationsSnapshot(tenantKey: string) {
   );
   const tenant = tenants[0];
   if (!tenant) {
-    return { status, latestReconciliations: [], providerEvents: [] };
+    return { status, latestReconciliations: [], providerEvents: [], auditEvents: [] };
   }
 
-  const [latestReconciliations, providerEvents] = await Promise.all([
+  const [latestReconciliations, providerEvents, auditEvents] = await Promise.all([
     supabaseRequest<ReconciliationRow[]>(
       `/rest/v1/fintech_reconciliation_runs?select=id,account_id,recorded_balance_cents,expected_balance_cents,delta_cents,status,checked_at&tenant_id=eq.${tenant.id}&order=checked_at.desc&limit=10`
     ),
     supabaseRequest<ProviderEventRow[]>(
       `/rest/v1/fintech_provider_events?select=id,provider,provider_event_id,event_type,status,received_at,processed_at&tenant_id=eq.${tenant.id}&order=received_at.desc&limit=10`
+    ),
+    supabaseRequest<AuditEventRow[]>(
+      `/rest/v1/fintech_audit_events?select=id,actor_type,action,entity_type,entity_id,created_at&tenant_id=eq.${tenant.id}&order=created_at.desc&limit=15`
     )
   ]);
 
-  return { status, latestReconciliations, providerEvents };
+  return { status, latestReconciliations, providerEvents, auditEvents };
 }
 
 export function verifyPrototypeWebhookSecret(presented: string) {
