@@ -5,6 +5,7 @@ import type {
   BankingPersistenceOperations,
   BankingPersistenceStore,
   DurableBankingEnvironment,
+  EventClaimInput,
   EventInboxRecord,
   JournalWrite,
   ProviderResourceLink,
@@ -31,6 +32,10 @@ export interface PostgresPoolLike extends PostgresExecutor {
   connect(): Promise<PostgresTransactionClient>;
 }
 
+const EVENT_COLUMNS = `event_id, provider, environment, raw_provider_event_id, canonical_event,
+  received_at, processed_at, status, failure_code, processing_token,
+  processing_started_at, attempt_count, next_attempt_at`;
+
 function rowCount(result: PostgresQueryResult) {
   return result.rowCount ?? result.rows.length;
 }
@@ -44,6 +49,18 @@ function iso(value: unknown) {
 function jsonObject<T>(value: unknown): T {
   if (typeof value === 'string') return JSON.parse(value) as T;
   return value as T;
+}
+
+function requireClaimInput(input: EventClaimInput) {
+  if (input.claimToken.trim().length < 8 || input.claimToken.length > 200) {
+    throw new BankingError(500, 'EVENT_CLAIM_TOKEN_INVALID', 'Banking event processing claim token is invalid.');
+  }
+  if (!Number.isSafeInteger(input.maxAttempts) || input.maxAttempts < 1 || input.maxAttempts > 100) {
+    throw new BankingError(500, 'EVENT_MAX_ATTEMPTS_INVALID', 'Banking event maximum attempt count is invalid.');
+  }
+  if (!Number.isFinite(Date.parse(input.claimedAt)) || !Number.isFinite(Date.parse(input.staleBefore))) {
+    throw new BankingError(500, 'EVENT_CLAIM_TIMESTAMP_INVALID', 'Banking event claim timestamps are invalid.');
+  }
 }
 
 function canonicalEventFingerprint(event: CanonicalBankingEvent) {
@@ -89,7 +106,11 @@ function mapEvent(row: SqlRow): EventInboxRecord {
     receivedAt: iso(row.received_at),
     processedAt: row.processed_at ? iso(row.processed_at) : null,
     status: String(row.status) as EventInboxRecord['status'],
-    failureCode: row.failure_code ? String(row.failure_code) : undefined
+    failureCode: row.failure_code ? String(row.failure_code) : undefined,
+    processingToken: row.processing_token ? String(row.processing_token) : null,
+    processingStartedAt: row.processing_started_at ? iso(row.processing_started_at) : null,
+    attemptCount: Number(row.attempt_count ?? 0),
+    nextAttemptAt: row.next_attempt_at ? iso(row.next_attempt_at) : null
   };
 }
 
@@ -154,8 +175,9 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
     const inserted = await this.executor.query(
       `INSERT INTO banking_provider_events (
          event_id, provider, environment, raw_provider_event_id, canonical_event,
-         received_at, processed_at, status, failure_code
-       ) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9)
+         received_at, processed_at, status, failure_code, processing_token,
+         processing_started_at, attempt_count, next_attempt_at
+       ) VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,$10,$11,$12,$13)
        ON CONFLICT (provider, environment, raw_provider_event_id) DO NOTHING
        RETURNING event_id`,
       [
@@ -167,17 +189,18 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
         record.receivedAt,
         record.processedAt,
         record.status,
-        record.failureCode ?? null
+        record.failureCode ?? null,
+        record.processingToken,
+        record.processingStartedAt,
+        record.attemptCount,
+        record.nextAttemptAt
       ]
     );
 
-    if (rowCount(inserted) > 0) {
-      return { inserted: true, record };
-    }
+    if (rowCount(inserted) > 0) return { inserted: true, record };
 
     const existingResult = await this.executor.query(
-      `SELECT event_id, provider, environment, raw_provider_event_id, canonical_event,
-              received_at, processed_at, status, failure_code
+      `SELECT ${EVENT_COLUMNS}
          FROM banking_provider_events
         WHERE provider = $1 AND environment = $2 AND raw_provider_event_id = $3`,
       [record.provider, record.environment, record.rawProviderEventId]
@@ -189,11 +212,7 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
 
     const existing = mapEvent(existingRow);
     if (canonicalEventFingerprint(existing.canonicalEvent) !== canonicalEventFingerprint(record.canonicalEvent)) {
-      throw new BankingError(
-        409,
-        'PROVIDER_EVENT_CONFLICT',
-        'The provider reused an event identifier with different canonical event data.'
-      );
+      throw new BankingError(409, 'PROVIDER_EVENT_CONFLICT', 'The provider reused an event identifier with different canonical event data.');
     }
 
     return { inserted: false, record: existing };
@@ -201,8 +220,7 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
 
   async getEvent(eventId: string) {
     const result = await this.executor.query(
-      `SELECT event_id, provider, environment, raw_provider_event_id, canonical_event,
-              received_at, processed_at, status, failure_code
+      `SELECT ${EVENT_COLUMNS}
          FROM banking_provider_events
         WHERE event_id = $1`,
       [eventId]
@@ -217,8 +235,7 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
     resourceId: string;
   }) {
     const result = await this.executor.query(
-      `SELECT event_id, provider, environment, raw_provider_event_id, canonical_event,
-              received_at, processed_at, status, failure_code
+      `SELECT ${EVENT_COLUMNS}
          FROM banking_provider_events
         WHERE provider = $1
           AND environment = $2
@@ -232,30 +249,110 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
     return result.rows[0] ? mapEvent(result.rows[0]) : null;
   }
 
-  async markEventProcessed(input: { eventId: string; processedAt: string }) {
+  async claimEventForProcessing(input: EventClaimInput & { eventId: string }) {
+    requireClaimInput(input);
     const result = await this.executor.query(
       `UPDATE banking_provider_events
-          SET status = 'processed', processed_at = $2, failure_code = NULL, updated_at = now()
-        WHERE event_id = $1 AND status IN ('received', 'failed')`,
-      [input.eventId, input.processedAt]
+          SET status = 'processing',
+              processing_token = $2,
+              processing_started_at = $3,
+              attempt_count = attempt_count + 1,
+              processed_at = NULL,
+              failure_code = NULL,
+              next_attempt_at = NULL,
+              updated_at = now()
+        WHERE event_id = $1
+          AND attempt_count < $5
+          AND (
+            status = 'received'
+            OR (status = 'failed' AND (next_attempt_at IS NULL OR next_attempt_at <= $3::timestamptz))
+            OR (status = 'processing' AND processing_started_at <= $4::timestamptz)
+          )
+        RETURNING ${EVENT_COLUMNS}`,
+      [input.eventId, input.claimToken, input.claimedAt, input.staleBefore, input.maxAttempts]
+    );
+    return result.rows[0] ? mapEvent(result.rows[0]) : null;
+  }
+
+  async claimNextRecoverableEvent(input: EventClaimInput & { environment: DurableBankingEnvironment }) {
+    requireClaimInput(input);
+    const result = await this.executor.query(
+      `WITH candidate AS (
+         SELECT event_id
+           FROM banking_provider_events
+          WHERE environment = $1
+            AND attempt_count < $5
+            AND (
+              status = 'received'
+              OR (status = 'failed' AND (next_attempt_at IS NULL OR next_attempt_at <= $3::timestamptz))
+              OR (status = 'processing' AND processing_started_at <= $4::timestamptz)
+            )
+          ORDER BY received_at, event_id
+          FOR UPDATE SKIP LOCKED
+          LIMIT 1
+       )
+       UPDATE banking_provider_events AS event
+          SET status = 'processing',
+              processing_token = $2,
+              processing_started_at = $3,
+              attempt_count = event.attempt_count + 1,
+              processed_at = NULL,
+              failure_code = NULL,
+              next_attempt_at = NULL,
+              updated_at = now()
+         FROM candidate
+        WHERE event.event_id = candidate.event_id
+        RETURNING ${EVENT_COLUMNS}`,
+      [input.environment, input.claimToken, input.claimedAt, input.staleBefore, input.maxAttempts]
+    );
+    return result.rows[0] ? mapEvent(result.rows[0]) : null;
+  }
+
+  async markEventProcessed(input: { eventId: string; processingToken: string; processedAt: string }) {
+    const result = await this.executor.query(
+      `UPDATE banking_provider_events
+          SET status = 'processed',
+              processed_at = $3,
+              failure_code = NULL,
+              processing_token = NULL,
+              processing_started_at = NULL,
+              next_attempt_at = NULL,
+              updated_at = now()
+        WHERE event_id = $1 AND status = 'processing' AND processing_token = $2`,
+      [input.eventId, input.processingToken, input.processedAt]
     );
     if (rowCount(result) > 0) return;
 
     const existing = await this.getEvent(input.eventId);
     if (existing?.status === 'processed') return;
-    throw new BankingError(500, 'EVENT_PROCESS_STATE_INVALID', 'Provider event could not be marked processed.');
+    throw new BankingError(409, 'EVENT_PROCESSING_LEASE_LOST', 'Provider event processing lease is no longer owned by this worker.');
   }
 
-  async markEventFailed(input: { eventId: string; failureCode: string; processedAt: string }) {
+  async markEventFailed(input: {
+    eventId: string;
+    processingToken: string;
+    failureCode: string;
+    processedAt: string;
+    nextAttemptAt: string | null;
+  }) {
     const code = input.failureCode.trim().slice(0, 120);
     if (!code) throw new BankingError(500, 'EVENT_FAILURE_CODE_REQUIRED', 'A failed provider event needs a failure code.');
 
-    await this.executor.query(
+    const result = await this.executor.query(
       `UPDATE banking_provider_events
-          SET status = 'failed', processed_at = $2, failure_code = $3, updated_at = now()
-        WHERE event_id = $1 AND status <> 'processed'`,
-      [input.eventId, input.processedAt, code]
+          SET status = 'failed',
+              processed_at = $4,
+              failure_code = $3,
+              processing_token = NULL,
+              processing_started_at = NULL,
+              next_attempt_at = $5,
+              updated_at = now()
+        WHERE event_id = $1 AND status = 'processing' AND processing_token = $2`,
+      [input.eventId, input.processingToken, code, input.processedAt, input.nextAttemptAt]
     );
+    if (rowCount(result) === 0) {
+      throw new BankingError(409, 'EVENT_PROCESSING_LEASE_LOST', 'Failed provider event could not be recorded because the processing lease was lost.');
+    }
   }
 
   async appendJournalIfAbsent(input: JournalWrite) {
@@ -272,15 +369,9 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
 
     if (rowCount(inserted) === 0) {
       const existing = await loadJournalByEvent(this.executor, journal.eventId);
-      if (!existing) {
-        throw new BankingError(500, 'LEDGER_DEDUPE_LOOKUP_FAILED', 'Existing ledger journal could not be loaded.');
-      }
+      if (!existing) throw new BankingError(500, 'LEDGER_DEDUPE_LOOKUP_FAILED', 'Existing ledger journal could not be loaded.');
       if (journalFingerprint(existing) !== journalFingerprint(journal)) {
-        throw new BankingError(
-          409,
-          'LEDGER_EVENT_CONFLICT',
-          'A canonical event is already linked to a different ledger journal.'
-        );
+        throw new BankingError(409, 'LEDGER_EVENT_CONFLICT', 'A canonical event is already linked to a different ledger journal.');
       }
       return { inserted: false, journal: existing };
     }
@@ -290,15 +381,7 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
         `INSERT INTO banking_ledger_lines (
            line_id, journal_id, event_id, account, debit_cents, credit_cents, description
          ) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [
-          line.id,
-          line.journalId,
-          line.eventId,
-          line.account,
-          line.debitCents,
-          line.creditCents,
-          line.description
-        ]
+        [line.id, line.journalId, line.eventId, line.account, line.debitCents, line.creditCents, line.description]
       );
     }
 
@@ -313,14 +396,7 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
        ) VALUES ($1,$2,$3,$4,$5,$6)
        ON CONFLICT (provider, environment, galactic_resource_type, galactic_resource_id) DO NOTHING
        RETURNING id`,
-      [
-        link.galacticResourceType,
-        link.galacticResourceId,
-        link.provider,
-        link.environment,
-        link.providerResourceId,
-        link.createdAt
-      ]
+      [link.galacticResourceType, link.galacticResourceId, link.provider, link.environment, link.providerResourceId, link.createdAt]
     );
     if (rowCount(inserted) > 0) return;
 
@@ -358,18 +434,7 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
          id, provider, environment, scope, resource_id, snapshot, status,
          created_at, resolved_at, resolution_note
        ) VALUES ($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,$10)`,
-      [
-        record.id,
-        record.provider,
-        record.environment,
-        record.scope,
-        record.resourceId,
-        JSON.stringify(record.snapshot),
-        record.status,
-        record.createdAt,
-        record.resolvedAt,
-        record.resolutionNote ?? null
-      ]
+      [record.id, record.provider, record.environment, record.scope, record.resourceId, JSON.stringify(record.snapshot), record.status, record.createdAt, record.resolvedAt, record.resolutionNote ?? null]
     );
   }
 
@@ -394,17 +459,7 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
          id, actor_type, actor_id, action, resource_type, resource_id,
          environment, occurred_at, metadata
        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb)`,
-      [
-        event.id,
-        event.actorType,
-        event.actorId,
-        event.action,
-        event.resourceType,
-        event.resourceId,
-        event.environment,
-        event.occurredAt,
-        JSON.stringify(event.metadata)
-      ]
+      [event.id, event.actorType, event.actorId, event.action, event.resourceType, event.resourceId, event.environment, event.occurredAt, JSON.stringify(event.metadata)]
     );
   }
 }
@@ -416,59 +471,23 @@ export class PostgresBankingStore implements BankingPersistenceStore {
     this.operations = new PostgresBankingOperations(pool);
   }
 
-  putEventIfAbsent(record: EventInboxRecord) {
-    return this.operations.putEventIfAbsent(record);
-  }
-
-  getEvent(eventId: string) {
-    return this.operations.getEvent(eventId);
-  }
-
-  findProcessedEventByResource(input: {
-    provider: string;
-    environment: DurableBankingEnvironment;
-    type: CanonicalBankingEvent['type'];
-    resourceId: string;
-  }) {
-    return this.operations.findProcessedEventByResource(input);
-  }
-
-  markEventProcessed(input: { eventId: string; processedAt: string }) {
-    return this.operations.markEventProcessed(input);
-  }
-
-  markEventFailed(input: { eventId: string; failureCode: string; processedAt: string }) {
-    return this.operations.markEventFailed(input);
-  }
+  putEventIfAbsent(record: EventInboxRecord) { return this.operations.putEventIfAbsent(record); }
+  getEvent(eventId: string) { return this.operations.getEvent(eventId); }
+  findProcessedEventByResource(input: { provider: string; environment: DurableBankingEnvironment; type: CanonicalBankingEvent['type']; resourceId: string }) { return this.operations.findProcessedEventByResource(input); }
+  claimEventForProcessing(input: EventClaimInput & { eventId: string }) { return this.operations.claimEventForProcessing(input); }
+  claimNextRecoverableEvent(input: EventClaimInput & { environment: DurableBankingEnvironment }) { return this.operations.claimNextRecoverableEvent(input); }
+  markEventProcessed(input: { eventId: string; processingToken: string; processedAt: string }) { return this.operations.markEventProcessed(input); }
+  markEventFailed(input: { eventId: string; processingToken: string; failureCode: string; processedAt: string; nextAttemptAt: string | null }) { return this.operations.markEventFailed(input); }
 
   appendJournalIfAbsent(input: JournalWrite) {
     return this.transaction((tx) => tx.appendJournalIfAbsent(input));
   }
 
-  putProviderResourceLink(link: ProviderResourceLink) {
-    return this.operations.putProviderResourceLink(link);
-  }
-
-  getProviderResourceLink(input: {
-    provider: string;
-    environment: DurableBankingEnvironment;
-    galacticResourceType: ProviderResourceLink['galacticResourceType'];
-    galacticResourceId: string;
-  }) {
-    return this.operations.getProviderResourceLink(input);
-  }
-
-  saveReconciliation(record: ReconciliationRecord) {
-    return this.operations.saveReconciliation(record);
-  }
-
-  resolveReconciliation(input: { id: string; resolvedAt: string; resolutionNote: string }) {
-    return this.operations.resolveReconciliation(input);
-  }
-
-  appendAuditEvent(event: BankingAuditEvent) {
-    return this.operations.appendAuditEvent(event);
-  }
+  putProviderResourceLink(link: ProviderResourceLink) { return this.operations.putProviderResourceLink(link); }
+  getProviderResourceLink(input: { provider: string; environment: DurableBankingEnvironment; galacticResourceType: ProviderResourceLink['galacticResourceType']; galacticResourceId: string }) { return this.operations.getProviderResourceLink(input); }
+  saveReconciliation(record: ReconciliationRecord) { return this.operations.saveReconciliation(record); }
+  resolveReconciliation(input: { id: string; resolvedAt: string; resolutionNote: string }) { return this.operations.resolveReconciliation(input); }
+  appendAuditEvent(event: BankingAuditEvent) { return this.operations.appendAuditEvent(event); }
 
   async transaction<T>(work: (tx: BankingPersistenceOperations) => Promise<T>) {
     const client = await this.pool.connect();
@@ -482,8 +501,8 @@ export class PostgresBankingStore implements BankingPersistenceStore {
       try {
         await client.query('ROLLBACK');
       } catch {
-        // Preserve the original banking failure. The connection is discarded by
-        // the underlying driver/pool if rollback cannot complete cleanly.
+        // Preserve the original banking failure. The driver/pool is responsible
+        // for discarding a connection that cannot rollback cleanly.
       }
       throw error;
     } finally {
