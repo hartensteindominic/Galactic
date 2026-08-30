@@ -13,6 +13,7 @@ type Reply = {
   suggestions?: string[];
   requiresHuman?: boolean;
   policyArea?: string;
+  termsVersion?: string;
 };
 
 const starterSuggestions = ['What can Orbit do?', 'How do transfers work?', 'Is my data private?'];
@@ -31,7 +32,7 @@ export function GalacticChat() {
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Hi! I’m Orbit 👋 I’m an automated support assistant for general product questions. I do not make regulated or account-specific decisions, and I’ll direct sensitive issues to a human workflow.'
+      text: 'Hi! I’m Orbit 👋 I’m an automated support assistant for general product questions. I do not make regulated or account-specific decisions, and I’ll mark when a protected human workflow would be required.'
     }
   ]);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -65,7 +66,7 @@ export function GalacticChat() {
         text: error instanceof Error ? error.message : 'Orbit could not answer right now.'
       }]);
       setHumanEscalation(true);
-      setSuggestions(['Contact support', 'Security protections', 'Privacy']);
+      setSuggestions(['Product status', 'Security protections', 'Privacy']);
     } finally {
       setBusy(false);
       requestAnimationFrame(() => {
@@ -105,7 +106,7 @@ export function GalacticChat() {
           {humanEscalation ? (
             <div className="chatSafetyNote" role="status">
               <span>👤</span>
-              <p>This question requires an authorized human support/compliance workflow. Orbit has not made a final account or regulated decision.</p>
+              <p>Prototype handoff marker: this needs authorized human handling in a live program. No production case-management channel is connected here, and Orbit has not acknowledged, investigated, or resolved a case.</p>
             </div>
           ) : null}
 
@@ -122,7 +123,7 @@ export function GalacticChat() {
             <input id="orbit-message" value={input} onChange={(event) => setInput(event.target.value)} maxLength={500} placeholder="Ask a general support question…" autoComplete="off" />
             <button type="submit" disabled={busy || !input.trim()} aria-label="Send message">➤</button>
           </form>
-          <div className="chatPrivacyLine">Automated support. Sensitive/account-specific decisions require protected human workflows.</div>
+          <div className="chatPrivacyLine">Automated prototype support. Required human handling is a marker only until an approved human case-management channel is connected.</div>
         </div>
       )}
 
