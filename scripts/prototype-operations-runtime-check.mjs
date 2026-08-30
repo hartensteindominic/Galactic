@@ -64,6 +64,8 @@ vm.runInNewContext(transpiled, {
 }, { filename: 'prototype-operations.runtime.cjs' });
 
 const {
+  prototypeOperationsStatus,
+  getPrototypeOperationsSnapshot,
   verifyPrototypeWebhookSecret,
   recordPrototypeProviderEvent
 } = moduleShim.exports;
@@ -83,9 +85,85 @@ function tenantResponse() {
   return jsonResponse([{ id: 'tenant-001' }]);
 }
 
+// Credentials and a webhook secret configure an environment; they do not self-verify persistent behavior.
+let operationsStatus = prototypeOperationsStatus();
+assert.equal(operationsStatus.databaseConfigured, true);
+assert.equal(operationsStatus.databaseCredentialsConfigured, true);
+assert.equal(operationsStatus.persistentSchemaVerified, false);
+assert.equal(operationsStatus.persistentReconciliationVerified, false);
+assert.equal(operationsStatus.reconciliationExerciseVerified, false);
+assert.equal(operationsStatus.webhookSecretConfigured, true);
+assert.equal(operationsStatus.webhookInboxEnvironmentConfigured, true);
+assert.equal(operationsStatus.webhookInboxConfigured, false);
+assert.equal(operationsStatus.webhookReplayExerciseVerified, false);
+assert.equal(operationsStatus.sanitizedAuditPersistenceVerified, false);
+assert.equal(operationsStatus.operatorAuditPersistenceVerified, false);
+assert.equal(operationsStatus.realProviderWebhooksEnabled, false);
+assert.equal(operationsStatus.liveMoneyEnabled, false);
+assert.match(operationsStatus.disclosure, /remain unverified/i);
+
 assert.equal(verifyPrototypeWebhookSecret('prototype-webhook-secret-0123456789'), true);
 assert.equal(verifyPrototypeWebhookSecret('prototype-webhook-secret-0123456788'), false);
 assert.equal(verifyPrototypeWebhookSecret(''), false);
+
+// Configured operations mode must reject an unknown tenant rather than showing empty/healthy-looking evidence.
+fetchHandler = async (url) => {
+  assert.match(String(url), /fintech_tenants/);
+  return jsonResponse([]);
+};
+await assert.rejects(
+  () => getPrototypeOperationsSnapshot('missing-tenant'),
+  (error) => error instanceof BankingError && error.status === 404 && error.code === 'UNKNOWN_TENANT'
+);
+
+// Stored rows may be labeled as evidence present, but the global exercise/verification fields stay false.
+let snapshotCall = 0;
+fetchHandler = async (url) => {
+  snapshotCall += 1;
+  const value = String(url);
+  if (snapshotCall === 1) return tenantResponse();
+  if (value.includes('fintech_reconciliation_runs')) {
+    return jsonResponse([{
+      id: 'recon-1',
+      account_id: 'account-1',
+      recorded_balance_cents: 100,
+      expected_balance_cents: 100,
+      delta_cents: 0,
+      status: 'balanced',
+      checked_at: '2026-08-30T12:00:00.000Z'
+    }]);
+  }
+  if (value.includes('fintech_provider_events')) {
+    return jsonResponse([{
+      id: 'event-1',
+      provider: 'prototype_sandbox',
+      provider_event_id: 'evt-evidence',
+      event_type: 'sandbox.sync',
+      status: 'received',
+      received_at: '2026-08-30T12:00:00.000Z',
+      processed_at: null
+    }]);
+  }
+  if (value.includes('fintech_audit_events')) {
+    return jsonResponse([{
+      id: 'audit-1',
+      actor_type: 'operator',
+      action: 'operator.reconciliation_requested',
+      entity_type: 'profile',
+      entity_id: 'demo-nova',
+      created_at: '2026-08-30T12:00:00.000Z'
+    }]);
+  }
+  throw new Error(`Unexpected operations snapshot fetch: ${value}`);
+};
+const operationsSnapshot = await getPrototypeOperationsSnapshot('galactic-trust');
+assert.equal(operationsSnapshot.status.persistentReconciliationEvidencePresent, true);
+assert.equal(operationsSnapshot.status.sandboxProviderEventEvidencePresent, true);
+assert.equal(operationsSnapshot.status.sanitizedAuditEvidencePresent, true);
+assert.equal(operationsSnapshot.status.persistentReconciliationVerified, false);
+assert.equal(operationsSnapshot.status.webhookInboxConfigured, false);
+assert.equal(operationsSnapshot.status.webhookReplayExerciseVerified, false);
+assert.equal(operationsSnapshot.status.operatorAuditPersistenceVerified, false);
 
 let calls = [];
 fetchHandler = async (url, init = {}) => {
