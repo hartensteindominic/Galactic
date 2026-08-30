@@ -25,6 +25,10 @@ const required = [
   ['app/api/banking/cards/freeze/route.ts', 'requireBankingUser', 'card freeze requires a banking user boundary'],
   ['app/api/banking/cards/freeze/route.ts', 'requireTrustedOrigin', 'card freeze rejects untrusted browser origins'],
   ['app/banking-actions.tsx', 'Demo transfers never move real money.', 'client labels simulated transfers clearly'],
+  ['app/page.tsx', 'ONLINE BANKING EXPERIENCE · DEMO', 'main dashboard must identify the product as an online banking experience and demo'],
+  ['app/page.tsx', 'Your online banking dashboard for accounts, transfers, cards, bills, savings, and money insights.', 'main dashboard must explain online banking in plain English'],
+  ['app/page.tsx', 'Real banking and crypto remain off until approved providers are configured.', 'main dashboard must preserve the live-money approval boundary'],
+  ['app/page.tsx', 'Demo balances and trades are simulated.', 'main dashboard must visibly preserve simulation disclosure'],
   ['lib/crypto.ts', "process.env.CRYPTO_MODE === 'partner' ? 'partner' : 'demo'", 'crypto defaults to demo unless partner is explicit'],
   ['lib/crypto.ts', "process.env.CRYPTO_ENABLE_LIVE_TRADING === 'true'", 'live crypto trading requires an explicit server flag'],
   ['lib/crypto.ts', "throw new BankingError(503, 'CRYPTO_LIVE_TRADING_DISABLED'", 'crypto fails closed when live trading is disabled'],
@@ -62,6 +66,10 @@ const forbidden = [
   ['app/banking-actions.tsx', 'BANKING_EMERGENCY_FREEZE', 'banking emergency controls must never appear in client code'],
   ['app/banking-actions.tsx', 'name="cvv"', 'client must not collect CVV data'],
   ['app/banking-actions.tsx', 'name="pin"', 'client must not collect PIN data'],
+  ['app/page.tsx', 'Member FDIC', 'main demo must not claim FDIC membership without an approved program'],
+  ['app/page.tsx', 'FDIC insured', 'main demo must not claim deposit insurance without approved program language'],
+  ['app/page.tsx', 'fully compliant', 'main demo must not self-certify legal compliance'],
+  ['app/page.tsx', 'guaranteed secure', 'main demo must not make absolute security guarantees'],
   ['app/crypto-trading.tsx', 'CRYPTO_GATEWAY_API_KEY', 'crypto provider API keys must never appear in client code'],
   ['app/crypto-trading.tsx', 'CRYPTO_PROGRAM_ID', 'crypto provider program identifiers must remain server-side'],
   ['app/galactic-chat.tsx', 'BANKING_GATEWAY_API_KEY', 'chat must never contain banking provider credentials'],
@@ -88,4 +96,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Galactic Trust banking, emergency-freeze, crypto, assistant, privacy, prototype operations, idempotency and x402 safety checks passed.');
+console.log('Galactic Trust banking, emergency-freeze, crypto, assistant, privacy, prototype operations, idempotency, positioning and x402 safety checks passed.');
