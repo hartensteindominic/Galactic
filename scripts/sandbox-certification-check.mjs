@@ -6,6 +6,8 @@ const page = fs.readFileSync('app/sandbox-readiness/page.tsx', 'utf8');
 const client = fs.readFileSync('app/sandbox-readiness/sandbox-certification-client.tsx', 'utf8');
 const adapter = fs.readFileSync('lib/banking-provider-adapter.ts', 'utf8');
 const ledger = fs.readFileSync('lib/financial-ledger.ts', 'utf8');
+const providerSandbox = fs.readFileSync('lib/provider-sandbox.ts', 'utf8');
+const persistence = fs.readFileSync('lib/banking-persistence-contract.ts', 'utf8');
 
 const required = [
   [certification, "banking.mode === 'demo' && !banking.liveWritesEnabled", 'certification must require demo mode with live writes disabled'],
@@ -33,12 +35,31 @@ const required = [
   [route, 'requireJsonRequest', 'certification POST must require JSON'],
   [route, 'requireTrustedOrigin', 'certification POST must reject untrusted browser origins'],
   [route, 'requireBankingUser', 'certification POST must enforce the banking user boundary'],
+
   [adapter, 'BankingProviderAdapter', 'provider-neutral adapter boundary must exist'],
   [adapter, 'signedWebhooks', 'provider adapter capabilities must include signed webhooks'],
   [adapter, 'idempotency', 'provider adapter capabilities must include idempotency'],
   [adapter, 'reconciliationData', 'provider adapter capabilities must include reconciliation data'],
+
+  [providerSandbox, 'BANKING_SANDBOX_PROVIDER_ENABLED', 'provider sandbox must use a dedicated sandbox-only enable gate'],
+  [providerSandbox, 'sandbox.gatewayBaseUrl !== production.gatewayBaseUrl', 'sandbox gateway must be compared against production'],
+  [providerSandbox, 'sandbox.apiKey !== production.apiKey', 'sandbox API key must be compared against production'],
+  [providerSandbox, 'sandbox.programId !== production.programId', 'sandbox program ID must be compared against production'],
+  [providerSandbox, 'credentialsIsolated = configured', 'sandbox isolation may only be true for a configured sandbox'],
+  [providerSandbox, "throw new BankingError(503, 'SANDBOX_PROVIDER_NOT_ISOLATED'", 'future provider network calls must fail closed if sandbox credentials overlap production'],
+  [providerSandbox, "throw new BankingError(409, 'SANDBOX_BLOCKED_BY_PRODUCTION'", 'provider sandbox networking must be blocked when production live writes are enabled'],
+
+  [persistence, 'putEventIfAbsent', 'durable store must require atomic provider-event dedupe'],
+  [persistence, 'appendJournalIfAbsent', 'durable store must require append-once ledger journals'],
+  [persistence, 'saveReconciliation', 'durable store must persist reconciliation evidence'],
+  [persistence, 'appendAuditEvent', 'durable store must persist banking audit events'],
+  [persistence, 'transactional_processing', 'durability requirements must include transactional processing'],
+  [persistence, 'backup_and_recovery_plan', 'durability requirements must include backup/recovery planning'],
+
   [page, 'Prove the banking loop before connecting a bank.', 'review page must explain the pre-provider certification purpose'],
   [page, 'Hard isolation from production', 'review page must state production isolation'],
+  [page, 'Credentials isolated from production', 'review page must expose sandbox credential-isolation status'],
+  [page, 'Production live writes remain off', 'review page must expose production/live isolation status'],
   [client, 'No real money moved', 'review UI must display zero-money evidence'],
   [client, 'Duplicate webhook rejected', 'review UI must display dedupe evidence'],
   [client, 'Reconciliation matched', 'review UI must display reconciliation evidence']
@@ -52,8 +73,12 @@ const forbidden = [
   [certification, 'PRIVATE_KEY', 'synthetic certification must never read private keys'],
   [ledger, 'fetch(', 'shared ledger domain must not call external networks'],
   [ledger, 'process.env', 'shared ledger domain must not read environment secrets'],
+  [persistence, 'new Map(', 'durable persistence contract must not provide an in-memory production implementation'],
+  [persistence, 'new Set(', 'durable persistence contract must not provide an in-memory production implementation'],
   [client, 'BANKING_GATEWAY_API_KEY', 'client certification UI must never expose banking credentials'],
-  [client, 'BANKING_AUTH_GATEWAY_SECRET', 'client certification UI must never expose banking auth secrets']
+  [client, 'BANKING_AUTH_GATEWAY_SECRET', 'client certification UI must never expose banking auth secrets'],
+  [client, 'BANKING_SANDBOX_API_KEY', 'client certification UI must never expose provider sandbox credentials'],
+  [page, 'BANKING_SANDBOX_API_KEY', 'server-rendered status page must never print provider sandbox API-key names/values to users']
 ];
 
 for (const [source, text, label] of required) {
@@ -64,4 +89,4 @@ for (const [source, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(`Sandbox certification safety regression: ${label}`);
 }
 
-console.log('Galactic Trust zero-money sandbox, ledger and reconciliation safety checks passed.');
+console.log('Galactic Trust zero-money sandbox, provider isolation, ledger, reconciliation and durability safety checks passed.');
