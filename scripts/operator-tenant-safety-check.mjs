@@ -22,6 +22,8 @@ const required = [
   ['lib/tenant-boundary.ts', "'UNKNOWN_TENANT'", 'unknown tenant keys must fail closed'],
   ['lib/tenant-boundary.ts', "process.env.VERCEL_ENV === 'preview'", 'tenant switching on Vercel must require explicit preview environment'],
   ['lib/tenant-boundary.ts', 'resolveAuthenticatedServerTenant', 'authenticated server routes must explicitly resolve a known tenant'],
+  ['scripts/tenant-boundary-runtime-check.mjs', 'Tenant boundary runtime behavior checks passed.', 'tenant routing rules must have executable behavioral coverage'],
+  ['package.json', 'scripts/tenant-boundary-runtime-check.mjs', 'tenant boundary runtime coverage must run in the CI safety suite'],
   ['app/api/prototype/summary/route.ts', 'resolveRequestBrand', 'summary must use host-bound tenant resolution'],
   ['app/api/prototype/transfers/route.ts', 'resolveRequestBrand', 'transfers must use host-bound tenant resolution'],
   ['app/api/prototype/transfers/route.ts', 'readJsonBodyLimited', 'transfers must use bounded JSON parsing'],
@@ -35,6 +37,7 @@ const required = [
   ['app/api/prototype/webhooks/sandbox/route.ts', 'readJsonBodyLimited', 'sandbox webhook must use bounded JSON parsing'],
   ['app/prototype/page.tsx', 'resolveRequestBrand', 'prototype UI branding must use host-bound tenant resolution'],
   ['app/prototype/cashflow/page.tsx', 'resolveRequestBrand', 'cashflow UI branding must use host-bound tenant resolution'],
+  ['app/prototype/bill-guard/page.tsx', 'resolveRequestBrand', 'Bill Guard UI branding must use host-bound tenant resolution'],
   ['app/prototype/transparency/page.tsx', 'resolveRequestBrand', 'transparency UI branding must use host-bound tenant resolution'],
   ['app/prototype/operations/page.tsx', 'resolveRequestBrand', 'operations UI branding must use host-bound tenant resolution']
 ];
