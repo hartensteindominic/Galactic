@@ -1,4 +1,5 @@
 import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
+import { charterReadinessStatus } from '../../../../lib/charter-readiness';
 import { plaidSandboxStatus } from '../../../../lib/plaid-sandbox';
 import { prototypeEvidenceFreshnessControlStatus } from '../../../../lib/prototype-evidence-freshness';
 import { prototypeIncidentCommunicationControlStatus } from '../../../../lib/prototype-incident-status';
@@ -23,6 +24,7 @@ export async function GET(request: Request) {
     return bankingJson({
       ok: true,
       brand: publicBrandConfig(brand),
+      charterReadiness: charterReadinessStatus(),
       ledger: prototypeLedgerStatus(),
       bankLink: plaidSandboxStatus(),
       operations: prototypeOperationsStatus(),
@@ -32,7 +34,7 @@ export async function GET(request: Request) {
       incidentCommunication: prototypeIncidentCommunicationControlStatus(),
       liveBankingEnabled: false,
       mode: 'prototype',
-      disclosure: 'White-label prototype only. Repository migration fingerprints and read-only schema capability observation do not prove Supabase migration execution/order, data correctness, recovery, or production approval. Evidence recency does not prove continuous monitoring or production health, and the incident-communication model is not a production status page or exercised customer-communications program. Real deposits, payments, cards, KYC/AML, production provider webhooks, and banking rails remain disabled until an approved regulated partner program is configured.'
+      disclosure: 'White-label prototype only. The future-chartered-bank field is a long-term strategic goal, not a charter application, charter approval, deposit-insurance approval, capital approval, opening authorization, or permission to market Galactic Trust as a bank. The customer/problem/distribution/revenue thesis and bank-level unit economics also remain unvalidated. Repository migration fingerprints and read-only schema capability observation do not prove Supabase migration execution/order, data correctness, recovery, or production approval. Evidence recency does not prove continuous monitoring or production health, and the incident-communication model is not a production status page or exercised customer-communications program. Real deposits, payments, cards, KYC/AML, production provider webhooks, and banking rails remain disabled until an approved regulated program is configured.'
     });
   } catch (error) {
     return bankingErrorResponse(error);
