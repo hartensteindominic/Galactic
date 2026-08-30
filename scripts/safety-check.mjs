@@ -54,6 +54,9 @@ const required = [
   ['app/page.tsx', 'Financial technology demo — not a chartered bank', 'dashboard carries a prominent pre-launch disclosure'],
   ['app/page.tsx', 'DEMO CARD', 'demo cards are explicitly labeled'],
   ['app/page.tsx', 'Compliance Center', 'dashboard links to compliance status'],
+  ['app/page.tsx', 'mobileTrustLinks', 'dashboard keeps beta trust navigation available on mobile'],
+  ['app/mobile-trust.css', '@media (max-width: 860px)', 'mobile trust navigation has a responsive breakpoint'],
+  ['app/mobile-trust.css', 'grid-template-columns: repeat(2, minmax(0, 1fr));', 'narrow phones receive a two-column trust-navigation layout'],
 
   ['app/api/assistant/route.ts', 'RATE_LIMITED', 'assistant endpoint has a rate limit'],
   ['lib/assistant.ts', 'Never share passwords, PINs, CVVs, recovery codes, or one-time codes in chat.', 'assistant warns against sharing authentication secrets'],
