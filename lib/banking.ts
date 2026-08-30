@@ -23,7 +23,7 @@ export type BankingCard = {
   id: string;
   name: string;
   last4: string;
-  network: 'visa' | 'mastercard';
+  network: 'preview' | 'visa' | 'mastercard';
   frozen: boolean;
 };
 
@@ -80,8 +80,8 @@ const DEMO_SUMMARY: BankingSummary = {
     { id: 'demo-tx-5', name: 'Payroll Direct Deposit', category: 'Income', amount: 2850, date: 'May 15', status: 'posted' }
   ],
   cards: [
-    { id: 'demo-card-4532', name: 'Nebula Blue', last4: '4532', network: 'visa', frozen: false },
-    { id: 'demo-card-8756', name: 'Cosmic Pink', last4: '8756', network: 'mastercard', frozen: false }
+    { id: 'demo-card-4532', name: 'Nebula Blue', last4: '4532', network: 'preview', frozen: false },
+    { id: 'demo-card-8756', name: 'Cosmic Pink', last4: '8756', network: 'preview', frozen: false }
   ]
 };
 
