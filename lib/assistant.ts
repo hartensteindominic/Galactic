@@ -4,10 +4,20 @@ import { cryptoStatus } from './crypto';
 export type AssistantReply = {
   message: string;
   suggestions: string[];
+  requiresHuman?: boolean;
+  policyArea?: 'general' | 'security' | 'privacy' | 'credit' | 'aml-sanctions' | 'fraud-dispute' | 'identity' | 'investment' | 'insurance' | 'legal';
 };
 
 function includesAny(text: string, words: string[]) {
   return words.some((word) => text.includes(word));
+}
+
+function humanReply(
+  message: string,
+  policyArea: Exclude<AssistantReply['policyArea'], undefined>,
+  suggestions: string[] = ['Contact support', 'Security & privacy', 'Product status']
+): AssistantReply {
+  return { message, suggestions, requiresHuman: true, policyArea };
 }
 
 export function answerGalacticQuestion(input: string): AssistantReply {
@@ -20,15 +30,69 @@ export function answerGalacticQuestion(input: string): AssistantReply {
 
   if (!text) {
     return {
-      message: 'Ask me about transfers, cards, crypto, security, privacy, rewards, or how Galactic Trust works.',
-      suggestions: ['How do transfers work?', 'Is my data private?', 'How does crypto work?']
+      message: 'Ask me about transfers, cards, crypto, security, privacy, product status, or how Galactic Trust works.',
+      suggestions: ['How do transfers work?', 'Is my data private?', 'What can Orbit do?'],
+      policyArea: 'general'
     };
+  }
+
+  if (includesAny(text, ['are you ai', 'are you human', 'chatbot', 'what can orbit do', 'what are you'])) {
+    return {
+      message: 'I’m Orbit, an automated support assistant. I can explain product status and general features, but I do not make account, credit, fraud, identity, compliance, legal, or investment decisions. Questions that require regulated or account-specific judgment must go to an authorized human support or compliance workflow.',
+      suggestions: ['Product status', 'Contact support', 'Security & privacy'],
+      policyArea: 'general'
+    };
+  }
+
+  if (includesAny(text, ['loan', 'borrow', 'credit score', 'credit decision', 'approved for credit', 'credit limit', 'underwriting', 'apr', 'interest rate for loan', 'denied credit', 'why was i denied'])) {
+    return humanReply(
+      banking.mode === 'demo'
+        ? 'Galactic Trust does not offer or decide live credit in this prototype. Orbit cannot approve, deny, price, underwrite, or explain an account-specific credit decision. Any future credit product would require an approved program, applicable fair-lending and consumer-credit controls, and accurate legally required notices.'
+        : 'Orbit cannot approve, deny, price, underwrite, or explain an account-specific credit decision. Use the authorized human support channel for any credit decision or adverse-action question.',
+      'credit',
+      ['Contact support', 'Product status', 'Fees & limits']
+    );
+  }
+
+  if (includesAny(text, ['sar', 'suspicious activity report', 'aml', 'money laundering', 'ofac', 'sanctions', 'sanctioned', 'watchlist', 'terrorist list', 'will you report me'])) {
+    return humanReply(
+      'Orbit cannot determine or disclose whether a suspicious-activity report exists, whether one may be filed, or the result of internal AML/sanctions monitoring. Do not send identity documents or sensitive financial information in chat. Account-specific compliance questions must be handled through an authorized human compliance/support workflow.',
+      'aml-sanctions',
+      ['Contact support', 'Privacy', 'What should I never share?']
+    );
+  }
+
+  if (includesAny(text, ['fraud', 'unauthorized', 'chargeback', 'dispute', 'merchant dispute', 'stolen money', 'transaction i do not recognize', 'transaction i don’t recognize', 'scammed'])) {
+    return humanReply(
+      banking.mode === 'demo'
+        ? 'The prototype cannot open a real fraud claim, dispute, chargeback, or reimbursement case. If this were a live account issue, it would require an authenticated human support and dispute workflow. Never send passwords, PINs, CVVs, recovery codes, or one-time codes in chat.'
+        : 'For suspected fraud or an unauthorized transaction, use the authenticated support/dispute channel immediately. Orbit can provide general guidance but cannot decide liability, reimbursement, chargeback eligibility, or close a fraud investigation.',
+      'fraud-dispute',
+      ['Freeze my card', 'Contact support', 'Security protections']
+    );
+  }
+
+  if (includesAny(text, ['verify my identity', 'identity verification', 'kyc', 'kyb', 'upload id', 'passport', 'driver license', 'social security', 'ssn'])) {
+    return humanReply(
+      'Do not send identity documents, Social Security numbers, tax IDs, or other sensitive verification data in this chat. Orbit does not perform KYC/KYB or identity adjudication. Any future live verification must use an approved protected workflow and authorized provider/human review where required.',
+      'identity',
+      ['Contact support', 'Privacy', 'Security protections']
+    );
+  }
+
+  if (includesAny(text, ['is this legal', 'legal advice', 'what law', 'am i legally', 'sue', 'lawyer', 'regulator', 'regulatory'])) {
+    return humanReply(
+      'Orbit can describe Galactic Trust’s current product status, but it does not provide legal advice or make regulatory determinations. Customer-facing legal, regulatory, licensing, and disclosure questions must be answered from approved program materials or escalated to qualified human counsel/compliance personnel.',
+      'legal',
+      ['Product status', 'Contact support', 'Transparency']
+    );
   }
 
   if (includesAny(text, ['hello', 'hi ', 'hey', 'good morning', 'good evening'])) {
     return {
-      message: `Hi! I’m Orbit, the Galactic Trust support assistant. ${demoNotice}`,
-      suggestions: ['Transfer money', 'Crypto', 'Security & privacy']
+      message: `Hi! I’m Orbit, the Galactic Trust automated support assistant. ${demoNotice}`,
+      suggestions: ['Transfer money', 'Product status', 'Security & privacy'],
+      policyArea: 'general'
     };
   }
 
@@ -36,17 +100,19 @@ export function answerGalacticQuestion(input: string): AssistantReply {
     return {
       message: banking.mode === 'demo'
         ? 'Tap Transfer on the dashboard, enter a recipient and amount, then choose Simulate Transfer. Demo transfers never move real money.'
-        : 'Tap Transfer, enter the recipient and amount, then review the transfer before submission. Live availability and limits depend on your approved banking program and account eligibility.',
-      suggestions: ['Add money', 'Freeze my card', 'Is this secure?']
+        : 'Tap Transfer, enter the recipient and amount, then review the transfer before submission. Live availability, timing, limits, reversibility, and fees depend on the approved banking program and the status shown in your account.',
+      suggestions: ['Add money', 'Freeze my card', 'Is this secure?'],
+      policyArea: 'general'
     };
   }
 
   if (includesAny(text, ['add money', 'deposit', 'fund account', 'direct deposit', 'ach'])) {
     return {
       message: banking.mode === 'demo'
-        ? 'The Add Money panel previews bank transfer, debit-card funding, and direct deposit. They stay simulated until a regulated banking partner is connected.'
-        : 'Open Add Money to see the funding methods enabled for your account. Availability is controlled by the banking partner and your eligibility.',
-      suggestions: ['How do transfers work?', 'Security & privacy', 'Cards']
+        ? 'The Add Money panel previews bank transfer, debit-card funding, and direct deposit. They stay simulated until an approved regulated banking program is connected and enabled.'
+        : 'Open Add Money to see the funding methods actually enabled for your account. Availability, timing, limits, fees, and eligibility must come from the approved program terms shown in the product.',
+      suggestions: ['How do transfers work?', 'Security & privacy', 'Cards'],
+      policyArea: 'general'
     };
   }
 
@@ -54,8 +120,9 @@ export function answerGalacticQuestion(input: string): AssistantReply {
     return {
       message: banking.mode === 'demo'
         ? 'Use Freeze Card on the dashboard to simulate locking the Nebula Blue card. No real card is affected in demo mode.'
-        : 'Use Freeze Card immediately if your card is lost or stolen. For suspected fraud, also contact the support channel shown in your account.',
-      suggestions: ['View card', 'Security protections', 'Contact support']
+        : 'Use the authenticated Freeze Card control immediately if your card is lost or stolen. For suspected fraud, also use the verified support channel shown inside your account.',
+      suggestions: ['View card', 'Security protections', 'Contact support'],
+      policyArea: 'security'
     };
   }
 
@@ -63,71 +130,89 @@ export function answerGalacticQuestion(input: string): AssistantReply {
     return {
       message: crypto.mode === 'demo'
         ? 'The Crypto panel lets you simulate buying and selling BTC, ETH, and USDC using clearly labeled demo prices. No real crypto is purchased or sold until an approved provider is connected and live trading is explicitly enabled.'
-        : `${crypto.disclosure} Crypto can lose value, and Galactic Trust does not provide personalized investment advice in chat.`,
-      suggestions: ['Buy crypto', 'Sell crypto', 'Crypto risks']
+        : `${crypto.disclosure} Crypto can lose value. Orbit does not provide personalized investment recommendations or promises of return.`,
+      suggestions: ['How crypto works', 'Crypto risks', 'Security'],
+      policyArea: 'investment'
     };
   }
 
-  if (includesAny(text, ['safe', 'secure', 'security', 'protect', 'fraud', '2fa', 'two factor'])) {
+  if (includesAny(text, ['safe', 'secure', 'security', 'protect', '2fa', 'two factor'])) {
     return {
-      message: 'Galactic Trust uses server-only secrets, signed live-banking sessions, same-origin request checks, masked card details, explicit live-write switches, idempotency protection for money movement, and restrictive browser security headers. Never share passwords, PINs, CVVs, recovery codes, or one-time codes in chat.',
-      suggestions: ['Privacy', 'Freeze my card', 'What should I never share?']
+      message: 'The current prototype includes server-only secrets, signed sessions for protected banking paths, same-origin checks, restrictive browser security headers, transfer idempotency controls, bounded request bodies, tenant-host isolation, and fail-closed live-write controls. These controls reduce risk but are not a guarantee that any system is perfectly secure. Never share passwords, PINs, CVVs, recovery codes, or one-time codes in chat.',
+      suggestions: ['Privacy', 'Freeze my card', 'What should I never share?'],
+      policyArea: 'security'
     };
   }
 
   if (includesAny(text, ['privacy', 'data', 'tracking', 'chat history', 'store my'])) {
     return {
-      message: 'Orbit is designed for support questions and does not need your password, PIN, CVV, recovery code, or full account number. This chat feature does not intentionally persist messages in the app database. Avoid entering sensitive financial or authentication information here.',
-      suggestions: ['Security protections', 'What should I never share?', 'Close chat']
+      message: 'Orbit is designed for general support and does not need passwords, PINs, CVVs, recovery codes, one-time codes, full account/card numbers, Social Security numbers, or identity documents. The current app does not intentionally persist Orbit messages in its prototype database. Future live use of customer data or third-party AI services must follow approved privacy, security, retention, vendor-management, and disclosure requirements.',
+      suggestions: ['Security protections', 'What should I never share?', 'Contact support'],
+      policyArea: 'privacy'
     };
   }
 
-  if (includesAny(text, ['fdic', 'insured', 'bank insured', 'deposit insurance'])) {
+  if (includesAny(text, ['fdic', 'insured', 'bank insured', 'deposit insurance', 'member fdic'])) {
     return {
       message: banking.mode === 'demo'
-        ? 'Galactic Trust is not presenting the demo balances as insured deposits. Any future deposit-insurance language must identify the actual approved partner bank and match the real program terms.'
+        ? 'Galactic Trust does not present prototype balances as insured deposits. Any future deposit-insurance statement must identify the actual approved insured depository institution, accurately describe the deposit relationship, and match approved program language before it appears here.'
         : banking.disclosure,
-      suggestions: ['How Galactic Trust works', 'Privacy', 'Security']
+      suggestions: ['How Galactic Trust works', 'Transparency', 'Contact support'],
+      policyArea: 'insurance'
     };
   }
 
-  if (includesAny(text, ['fee', 'fees', 'cost', 'price'])) {
+  if (includesAny(text, ['fee', 'fees', 'cost', 'price', 'apy', 'yield', 'interest earned'])) {
     return {
-      message: 'The dashboard does not currently represent live consumer banking fees. Any future transfer, account, crypto, or membership fee must be shown clearly before the user confirms a transaction or enrolls.',
-      suggestions: ['Crypto', 'Transfers', 'Rewards']
+      message: 'The prototype does not represent live consumer banking fees, APYs, yields, or deposit rates. Any future fee, rate, limit, eligibility term, or earnings statement must come from approved program terms and be displayed accurately at the relevant decision point.',
+      suggestions: ['Transparency', 'Transfers', 'Product status'],
+      policyArea: 'general'
     };
   }
 
   if (includesAny(text, ['reward', 'stars', 'cashback'])) {
     return {
-      message: 'The rewards section is currently part of the product experience. Live reward earning, redemption rules, and merchant offers must come from the approved rewards program before launch.',
-      suggestions: ['Cards', 'Crypto', 'Security']
+      message: 'The rewards section is currently part of the prototype experience. Live earning, redemption, eligibility, expiration, and merchant-offer rules must come from an approved rewards program before launch.',
+      suggestions: ['Cards', 'Product status', 'Transparency'],
+      policyArea: 'general'
     };
   }
 
   if (includesAny(text, ['balance', 'account number', 'routing number', 'cvv', 'pin', 'password', 'one time code', 'otp'])) {
     return {
-      message: 'For your security, I won’t ask for or reveal passwords, PINs, CVVs, recovery codes, one-time codes, or full account/card numbers in chat. Use the protected account screens for sensitive account details.',
-      suggestions: ['Security protections', 'Privacy', 'Freeze my card']
+      message: 'For your security, Orbit will not ask for or reveal passwords, PINs, CVVs, recovery codes, one-time codes, full account/card numbers, Social Security numbers, or identity documents in chat. Use protected account and verification screens for sensitive details.',
+      suggestions: ['Security protections', 'Privacy', 'Contact support'],
+      policyArea: 'security'
     };
   }
 
-  if (includesAny(text, ['investment advice', 'what should i buy', 'should i buy', 'will bitcoin', 'guaranteed profit'])) {
+  if (includesAny(text, ['investment advice', 'what should i buy', 'should i buy', 'will bitcoin', 'guaranteed profit', 'best investment', 'buy or sell'])) {
+    return humanReply(
+      'Orbit can explain product mechanics and general risk disclosures, but it cannot promise returns or provide personalized recommendations to buy, sell, or hold an investment or crypto asset. Use an appropriately qualified human professional when personalized advice is needed.',
+      'investment',
+      ['How crypto works', 'Crypto risks', 'Contact support']
+    );
+  }
+
+  if (includesAny(text, ['safe to spend', 'can i afford', 'can i spend'])) {
     return {
-      message: 'I can explain how the Galactic crypto feature works, but I can’t promise returns or give personalized investment recommendations. Crypto prices can move sharply and losses are possible.',
-      suggestions: ['How crypto works', 'Crypto risks', 'Security']
+      message: 'Safe-to-Spend is a simulation-only planning estimate based on the prototype items it knows about and the reserve you select. It can miss pending transactions, variable bills, cash withdrawals, fees, or other obligations, so it is not a guarantee, authorization to spend, or personalized financial advice.',
+      suggestions: ['Safe-to-Spend', 'Why can this change?', 'Transparency'],
+      policyArea: 'general'
     };
   }
 
-  if (includesAny(text, ['human', 'agent', 'support', 'help center', 'contact'])) {
-    return {
-      message: 'For account-specific issues, fraud reports, identity verification, or disputes, use the Help Center or the verified support contact shown inside your authenticated account. Never trust support requests asking for your PIN, CVV, password, or one-time code.',
-      suggestions: ['Security protections', 'Freeze my card', 'Privacy']
-    };
+  if (includesAny(text, ['human', 'agent', 'support', 'help center', 'contact', 'complaint'])) {
+    return humanReply(
+      'For account-specific issues, complaints, fraud reports, identity verification, disputes, compliance questions, or anything requiring regulated judgment, use the verified human support channel shown inside the authenticated product. Never trust support requests asking for your PIN, CVV, password, recovery code, or one-time code.',
+      'general',
+      ['Security protections', 'Freeze my card', 'Privacy']
+    );
   }
 
   return {
-    message: `I can help with Galactic Trust transfers, cards, crypto, rewards, security, privacy, and product status. ${demoNotice}`,
-    suggestions: ['How do transfers work?', 'How does crypto work?', 'Is my data private?']
+    message: `I can explain Galactic Trust product status, transfers, cards, crypto, rewards, security, privacy, and prototype features. I do not make regulated or account-specific decisions. ${demoNotice}`,
+    suggestions: ['How do transfers work?', 'What can Orbit do?', 'Is my data private?'],
+    policyArea: 'general'
   };
 }
