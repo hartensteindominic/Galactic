@@ -2,22 +2,29 @@
 
 Status: prototype / simulation only  
 Reference tenant: Galactic Trust  
-Goal: prove the software, customer experience, and partner-ready architecture before spending capital on a regulated live banking program.
+Goal: prove the software, customer experience, operational controls, and partner-ready architecture before a regulated live banking program is approved.
 
 ## 1. Product thesis
 
-Build one reusable financial-experience platform that can be branded for niche communities, vertical SaaS companies, membership businesses, creator platforms, employers, and other organizations that want a modern money dashboard without building the entire application layer themselves.
+Build one reusable financial-experience platform that can be branded for vertical SaaS companies, creator/freelancer platforms, membership businesses, workforce products, commerce products, and other organizations that want a modern money experience without rebuilding the application and operations layer from scratch.
 
-Galactic Trust is the reference implementation and first tenant. The platform is not represented as a bank. During the prototype phase all balances, routing numbers, cards, transfers, linked institutions, and transactions are synthetic or sandbox data.
+Galactic Trust is the reference tenant. The platform is **not represented as a bank** in the prototype phase. All balances, routing values, accounts, transfers, linked institutions, cash-flow schedules, savings goals, provider events, and card experiences are synthetic or sandbox data unless a future regulated program is explicitly approved and integrated.
 
-## 2. Problem
+## 2. Product principles
 
-Companies that want embedded or branded financial features face two very different engineering problems:
+The platform should win on:
 
-1. Product experience: onboarding, account dashboard, balances, transactions, transfer UX, cards, support, insights, notifications, and mobile responsiveness.
-2. Regulated infrastructure: sponsor-bank approval, BaaS/provider integration, KYC/KYB, AML controls, sanctions screening, fraud, disputes, payment rails, card-program rules, disclosures, reconciliation, and operational oversight.
+- customer clarity instead of hidden state;
+- reconciliation and accounting integrity instead of optimistic balances;
+- retry safety instead of duplicate financial effects;
+- tenant isolation instead of query-string trust;
+- operational visibility instead of black-box provider calls;
+- fail-closed live controls instead of accidental enablement;
+- fast white-label launch without weakening security boundaries;
+- transparent fees, limits, eligibility, and product availability;
+- mobile reliability under dropped, repeated, or ambiguous requests.
 
-Teams often have to spend significant time and money before they can even demonstrate the final customer experience. This prototype separates those layers so a prospective client or investor can test the product first while live money stays fail-closed.
+A polished interface is valuable, but it is not the product by itself. The product includes the ledger, reconciliation, provider boundary, audit evidence, operator controls, incident controls, recovery procedures, and customer-facing trust model underneath it.
 
 ## 3. Target customer
 
@@ -28,212 +35,307 @@ Initial B2B customer profile:
 - membership or affinity brands;
 - small-business software platforms;
 - benefits or workforce platforms;
-- niche consumer communities that want a branded financial hub.
+- commerce/property/community products that want a branded financial hub.
 
-The customer buys a branded software experience. A future live financial program is available only when the customer, platform, regulated provider, and sponsor bank approve the program and required compliance controls.
+The customer buys a branded software experience. Future live financial services can be offered only when the platform, customer, regulated provider, sponsor bank, and required compliance/security parties approve the exact program.
 
-## 4. Prototype scope
+## 4. Current prototype experience
 
-### Frontend
+### Customer-facing routes
 
-- Next.js application.
-- Tailwind CSS white-label prototype route at `/prototype`.
-- Responsive desktop/mobile banking-style dashboard.
-- Tenant-specific name, logo text, accent colors, support address, domains, and disclosures.
-- Balance, accounts, recent activity, spending preview, quick actions, and sandbox-link state.
-- Clear simulation labels throughout the prototype.
+- `/prototype` — white-label banking-style dashboard with synthetic accounts, activity, transfers, cards and sandbox-link UX.
+- `/prototype/cashflow` — Safe-to-Spend planning with 7/14/30-day forecasts, known bills/income, savings plans, customer reserve, confidence labels, and explicit uncertainty disclosure.
+- `/prototype/transparency` — plain-English product status, fees, limits, eligibility, and whether a capability is prototype, sandbox, partner-required, or unavailable.
+- `/prototype/operations` — operator-facing reconciliation, provider-event, audit and control evidence.
 
-### Ledger
+The customer UI has a compact prototype dock so cash-flow intelligence, transparency, and operations evidence are discoverable without typed URLs.
 
-Supabase/PostgreSQL stores synthetic prototype data:
+### White-label configuration
 
-- tenants;
-- user profiles;
-- simulated accounts;
-- synthetic routing values and account last-four values;
-- balances in integer cents;
-- transaction log;
-- sanitized linked-account metadata.
+A tenant controls:
 
-The migration is `supabase/migrations/001_white_label_prototype.sql`.
-
-Prototype transfer mutations use a PostgreSQL function so the balance update and transaction insert occur in one database operation. The function rejects any account that is not marked `simulated=true`.
-
-### Sandbox account linking
-
-The server adapter supports Plaid Sandbox when sandbox credentials are configured.
-
-For the fastest demo flow it uses Plaid's Sandbox-only public-token endpoint, exchanges the token server-side, reads synthetic account/transaction data, returns sanitized results, and does not return or persist the Plaid access token. If Plaid Sandbox is not configured, the UI uses a local synthetic bank fallback.
-
-Production account linking must use the production-supported Plaid Link flow and an approved data-retention/security design; the Sandbox bypass is not a production integration.
-
-### Existing banking adapter
-
-The existing application keeps the regulated-provider abstraction:
-
-`Branded UI -> Galactic banking API -> private provider gateway -> approved BaaS / sponsor-bank program`
-
-Live banking writes remain disabled unless the existing partner configuration and explicit live-write switch are enabled after program approval.
-
-## 5. White-label model
-
-Tenant resolution can be driven by a domain or tenant key. A tenant controls:
-
-- public product name;
-- legal entity name;
-- logo initials / future logo asset;
-- primary and secondary accent colors;
-- customer-support address;
+- product name and short name;
+- legal name;
+- support address;
+- logo initials;
+- primary/secondary accent colors;
 - permitted domains;
-- prototype disclosure;
+- product disclosure;
 - future approved banking disclosure.
 
-Environment-based tenant configuration is sufficient for the prototype. A commercial version should move tenant administration to a protected operator console with audit history and role-based permissions.
+Prototype tenant configuration can come from server-side `WHITE_LABEL_TENANTS_JSON`. Configuration fails closed on malformed JSON, invalid canonical tenant keys/domains, duplicate tenant keys, duplicate domains, or the same hostname being assigned to multiple tenants.
 
-## 6. Security model
+Recognized production hostnames are bound to their configured tenant. Query/body tenant switching is rejected on recognized or unrecognized production hosts when it would override routing. Tenant switching is allowed for local development and only when Vercel explicitly identifies an environment as `preview`.
 
-Prototype principles:
+## 5. Persistent prototype data model
 
-- no real deposits;
-- no real account numbers in seed data;
-- no real ACH/wire/card issuance from the prototype route;
-- no browser access to Supabase secret/service credentials;
-- no Plaid secret or access token returned to the browser;
-- no Plaid access-token persistence in the prototype;
-- same-origin checks on mutation endpoints;
-- JSON-only mutation endpoints;
-- integer-cents ledger values;
-- tenant scoping on profiles, accounts, transactions, and linked metadata;
-- RLS enabled and direct `anon` / `authenticated` table grants revoked for the server-only prototype design;
-- live provider code remains separately fail-closed.
+The persistent prototype uses Supabase/PostgreSQL with **five ordered migrations**:
 
-Before a real-money launch, replace the demo identity with a production authentication system, design end-user RLS policies where appropriate, complete threat modeling, logging/audit design, secrets management, reconciliation, incident response, privacy review, vendor diligence, and partner-required security testing.
+1. `001_white_label_prototype.sql`
+   - tenants, profiles, simulated accounts, synthetic transactions and linked-account metadata;
+   - seed data for the Galactic Trust demo user;
+   - simulation-only transfer boundary.
+2. `002_operations_reconciliation.sql`
+   - opening balance anchors;
+   - reconciliation evidence;
+   - provider-event deduplication and payload digests;
+   - audit events and linked-account sync state.
+3. `003_transfer_idempotency.sql`
+   - persistent provider-reference/idempotency uniqueness;
+   - duplicate transfer replay without a second debit;
+   - changed intent with reused key rejected.
+4. `004_double_entry_ledger.sql`
+   - tenant-scoped GL accounts;
+   - immutable journals/lines;
+   - deferred zero-sum journal enforcement;
+   - atomic simulated transfer journaling;
+   - account-vs-GL reconciliation.
+5. `005_cashflow_intelligence.sql`
+   - synthetic cash-flow items for income, bills, and planned savings;
+   - synthetic savings goals;
+   - deterministic Galactic Trust planning data;
+   - service-role-only persistence with RLS enabled.
 
-## 7. Partner-ready architecture
+All five migrations are required for the current persistent prototype. Migration setup instructions and readiness checks are CI-guarded so the documented migration count cannot silently fall behind the schema.
 
-Prototype:
+## 6. Transaction integrity
 
-`White-label Next.js UI`
+### Atomic simulated transfers
+
+Persistent simulated transfers run through PostgreSQL so the customer balance update, transaction record, audit evidence, and double-entry journal occur in one database transaction. Non-simulated accounts are rejected by the prototype functions.
+
+### Idempotency
+
+The transfer API requires an idempotency key. The persistent database prevents a successful replay from creating a second economic effect.
+
+The prototype client also hardens intent handling:
+
+- identical concurrent transfer intents share one in-flight request;
+- ambiguous network errors, HTTP 408/429, and server 5xx responses temporarily retain the same intent/key for retry;
+- retry state is short-lived and remains in memory rather than browser persistent storage;
+- changing the recipient/amount while reusing a committed key is rejected by the persistent ledger.
+
+The network-chaos test plan still requires manual exercise on a deployed persistent preview, especially on iPhone/Safari under throttled or interrupted networking.
+
+## 7. Accounting and reconciliation
+
+The platform intentionally maintains two independent reconciliation views:
+
+1. **Transaction-history reconciliation** — opening balance + posted credits − posted debits must equal the account balance.
+2. **Double-entry reconciliation** — the mapped customer GL balance must equal the account balance and each journal must sum to zero.
+
+The operations console renders both layers separately so an operator can identify whether a mismatch is in customer transaction history, account state, or the GL representation.
+
+Immutable accounting history is corrected through forward/reversing entries rather than destructive journal edits.
+
+## 8. Cash-flow intelligence
+
+Safe-to-Spend is a planning layer, not a promise that spending a number is risk-free.
+
+The engine considers:
+
+- current synthetic balance;
+- scheduled/estimated prototype income;
+- scheduled/estimated prototype bills;
+- planned savings;
+- a customer-selected reserve;
+- 7, 14 and 30-day horizons.
+
+The headline conservative spendable estimate uses the lowest relevant spendable amount after preserving the reserve. The UI explains that pending card activity, variable bills, cash withdrawals, fees, and unknown obligations can change the result.
+
+A future Bill Guard / obligations experience may build on this data, but live bill payment or autopay must not be implied until an approved provider program exists.
+
+## 9. Prototype operator access
+
+Persistent operations evidence is protected by a prototype operator session boundary.
+
+- Server-side `PROTOTYPE_OPERATOR_ACCESS_SECRET` is required once persistent Supabase operations are configured.
+- A configured secret shorter than 32 characters is rejected and persistent operations remain locked.
+- Successful sign-in creates a signed 8-hour `HttpOnly`, `SameSite=Strict` cookie; production cookies also use `Secure`.
+- The submitted secret is cleared from client state before the network result returns.
+- The client does not read or write the signed session cookie.
+- Explicit sign-out destroys the session cookie.
+- Operator login has a small best-effort in-process throttle for prototype abuse resistance.
+
+This is **not production workforce identity**. A live program still requires a selected workforce identity architecture such as phishing-resistant MFA/passkeys, SSO where appropriate, least privilege, RBAC, privileged-access controls, break-glass governance, and dual control for high-risk actions.
+
+The in-process login throttle is also **not distributed production rate limiting**; production needs shared edge/WAF/rate/abuse enforcement appropriate to the selected infrastructure.
+
+## 10. Request and tenant boundaries
+
+Prototype browser mutations require trusted-origin checks where applicable, JSON content types, and bounded JSON parsing.
+
+Current body caps are intentionally small for operator login, reconciliation, and sandbox linking; moderate for transfers; and larger but still bounded for authenticated sandbox webhook payloads.
+
+Tenant-scoped UI and API routes use host-bound tenant resolution. Unknown tenants fail closed. Authenticated server-to-server sandbox webhook tests must name an explicit known tenant after webhook authentication rather than trusting browser routing state.
+
+These controls reduce prototype cross-tenant and abuse risk but do not replace production penetration testing, distributed abuse controls, provider certification, or formal tenant-isolation verification.
+
+## 11. Sandbox account linking and provider boundary
+
+The server adapter supports Plaid Sandbox when sandbox credentials are configured. For the fast demo flow it uses Sandbox-only synthetic institution data and does not return or persist the Plaid access token.
+
+If Plaid Sandbox is not configured, the UI uses a local synthetic fallback.
+
+This is intentionally separate from future money movement. Production account linking and ACH/card/payment state machines must use the exact provider-supported production integration, credential retention design, webhook verification, idempotency semantics, and certification requirements.
+
+A provider-neutral banking contract exists for customers, accounts, cards, payment instructions, webhook verification/parsing, and provider reconciliation. Its default adapter is disabled and fails closed.
+
+## 12. Operations and resilience
+
+Current prototype controls include:
+
+- provider-event deduplication;
+- payload hashing;
+- sanitized audit evidence;
+- two reconciliation layers;
+- privacy-safe API error correlation IDs;
+- fail-closed application money-movement freeze in the partner shell;
+- disaster-recovery plan;
+- migration/immutable-ledger recovery plan;
+- network retry/ambiguous-response test plan;
+- sponsor-bank/program readiness checklist.
+
+The emergency application flag is not represented as a verified production kill switch. A live program needs a provider/partner-approved pause mechanism, controlled unfreeze procedure, measured drill evidence, and alert/escalation ownership.
+
+## 13. Prototype security boundary
+
+The prototype is designed around the following permanent constraints:
+
+- no real deposits or customer funds in the prototype ledger;
+- no live ACH/wires/card issuance from prototype routes;
+- no production KYC/AML claims;
+- no browser access to Supabase service credentials;
+- no Plaid secret/access token exposed to the browser;
+- no production provider-webhook claim from the generic sandbox inbox;
+- no live banking writes merely because provider interfaces compile;
+- no unsupported FDIC, rate, fee, insurance, or sponsor-bank claim;
+- no real customer financial credentials in seed data;
+- no secrets in source, issues, logs, or chat;
+- no claim that prototype operator access equals production MFA/SSO;
+- no claim that in-memory throttling equals production abuse protection;
+- `readyForLiveBanking` remains false.
+
+## 14. Future approved live architecture
+
+Target shape:
+
+`White-label customer UI`
 `        |`
 `        v`
-`Tenant-aware API layer`
-`        |--------------------|`
-`        v                    v`
-`Supabase demo ledger     Plaid Sandbox`
-`(synthetic only)         (test data only)`
-
-Future approved live program:
-
-`White-label UI`
+`Authenticated tenant-aware orchestration`
+`        |`
+`        +--> Internal ledger / accounting / reconciliation`
+`        |`
+`        +--> Operations, fraud, restrictions, support, audit`
 `        |`
 `        v`
-`Tenant-aware API / orchestration`
+`Provider-specific certified adapter`
 `        |`
 `        v`
-`Private partner gateway`
-`        |`
-`        v`
-`BaaS / embedded-banking platform + sponsor bank + KYC/AML/fraud/payment/card services`
+`Approved BaaS / sponsor bank / payments / card / KYC-AML-fraud services`
 
-Potential infrastructure vendors to evaluate include Unit and Treasury Prime. Vendor selection is a commercial, compliance, legal, technical, and sponsor-bank decision; the prototype does not commit to either provider.
+A BaaS or sponsor-bank relationship does not remove the platform's legal, compliance, security, reconciliation, support, fraud, privacy, or operating responsibilities.
 
-## 8. Core user flows
+## 15. Core demo flow
 
-### A. Investor/customer demo
+1. Open `/prototype` on the selected preview tenant.
+2. Review synthetic accounts/activity and explicit simulation status.
+3. Open Safe-to-Spend and inspect the 7/14/30-day assumptions.
+4. Open Fees & Limits and verify product availability is described honestly.
+5. Submit one simulated transfer.
+6. Replay the same transfer intent and verify no second persistent economic effect.
+7. Optional: connect Plaid Sandbox synthetic data.
+8. Sign into Operations using the privately configured prototype operator secret.
+9. Run transaction-history and GL reconciliation.
+10. Review sanitized audit/provider-event evidence.
+11. Check `/api/prototype/readiness` for remaining gates.
 
-1. Open `/prototype`.
-2. See the selected tenant's branded dashboard.
-3. Review synthetic balances and transaction history.
-4. Simulate a transfer.
-5. Connect a sandbox bank.
-6. See synthetic linked-account metadata.
-7. Review the partner-ready architecture and simulation disclosures.
+## 16. Future live customer onboarding
 
-### B. Add a white-label customer
+A future live tenant should require, at minimum:
 
-Prototype workflow:
+1. commercial qualification and use-case review;
+2. prohibited-business and program-risk review;
+3. legal/compliance responsibility matrix;
+4. sponsor-bank/provider diligence and approval;
+5. approved KYC/KYB, AML, sanctions, fraud, privacy and disclosures;
+6. production workforce identity/access controls;
+7. provider sandbox/certification implementation;
+8. production webhook verification and event recovery;
+9. provider-statement reconciliation;
+10. disputes/returns/support escalation flows;
+11. security testing, monitoring and incident response;
+12. disaster-recovery and kill-switch drills;
+13. limited invited production cohort with conservative limits;
+14. explicit authorization to enable production writes.
 
-1. Add a tenant configuration to `WHITE_LABEL_TENANTS_JSON`.
-2. Add the customer's demo domain.
-3. Apply customer name, legal name, support address, colors, logo text, and prototype disclosures.
-4. Add a tenant/profile seed in Supabase if persistent demo data is required.
-5. Deploy a customer-specific preview.
+## 17. Business model hypothesis
 
-Commercial workflow should replace environment JSON with an audited operator console.
-
-### C. Future live customer onboarding
-
-1. Commercial qualification.
-2. Use-case and prohibited-business review.
-3. Sponsor-bank / provider program review and diligence.
-4. Approved KYC/KYB, AML, sanctions, fraud, privacy, disclosures, support, disputes, and operations design.
-5. Provider sandbox / certification testing.
-6. Reconciliation and ledger controls.
-7. Limited production pilot.
-8. Explicit live-write enablement only after approval.
-
-## 9. Business model hypothesis
-
-B2B platform revenue can be tested with:
+B2B software revenue can be tested with:
 
 - implementation / branding fee;
 - monthly platform subscription;
-- per-active-user or per-account software fee;
-- premium support / analytics modules;
+- per-active-user/account software fee;
+- premium support / analytics / operations modules;
 - contracted revenue share from eligible partner products where legally and contractually permitted.
 
-Do not model interchange, deposit economics, lending, crypto, or other regulated-product revenue as guaranteed. Economics depend on the selected partner program, customer behavior, network/provider fees, fraud and losses, compliance cost, support cost, and contract terms.
+Do not model interchange, deposit economics, lending, credit, crypto, or other regulated-product revenue as guaranteed. Economics depend on approved program terms, provider/network fees, customer behavior, fraud/losses, compliance/support costs and contract structure.
 
-## 10. Pre-seed pitch
+## 18. Pre-seed framing
 
 Fundraising target hypothesis: $100k–$500k pre-seed.
 
-Use of funds:
+Use of funds can include:
 
-- legal/entity and fintech regulatory counsel;
-- compliance program design and vendor minimums;
-- BaaS/provider onboarding and implementation;
-- sponsor-bank diligence requirements;
-- security/privacy work;
-- reconciliation, fraud, support, and operations tooling;
-- customer pilots and go-to-market.
+- fintech/banking counsel;
+- experienced compliance ownership;
+- provider/sponsor-bank diligence and onboarding;
+- security/privacy assurance;
+- cyber/E&O coverage;
+- production identity/access and abuse controls;
+- reconciliation/fraud/support operations;
+- additional technical/operational capacity;
+- design-partner pilots.
 
-Pitch message:
+Pitch framing:
 
-> We already built the customer-facing software and a working sandbox ledger. The round is not to discover whether we can build the app; it is to convert a proven prototype into an approved regulated program and secure initial white-label customers.
+> The customer experience, simulation ledger, accounting controls, retry safety, reconciliation, operator evidence, and white-label architecture already exist. The financing is to convert a disciplined prototype into an approved regulated program and repeatable white-label business—not to discover whether the software can be built.
 
-## 11. Investor proof points to collect next
+## 19. Persistent prototype setup
 
-- 3–5 prospective white-label design partners.
-- Recorded demo of tenant branding in under five minutes.
-- Working Supabase persistent demo.
-- Working Plaid Sandbox connection.
-- First customer-specific preview domain.
-- Written letters of intent or pilot interest.
-- BaaS/provider discovery calls and indicative onboarding requirements.
-- Bottom-up unit economics based on real provider quotes, not guessed interchange or deposit spreads.
-- Security/compliance readiness checklist.
+1. Create a disposable/private Supabase prototype project.
+2. Run all migrations in order:
+   - `001_white_label_prototype.sql`
+   - `002_operations_reconciliation.sql`
+   - `003_transfer_idempotency.sql`
+   - `004_double_entry_ledger.sql`
+   - `005_cashflow_intelligence.sql`
+3. Configure `SUPABASE_URL` and a server-only Supabase secret/service key privately.
+4. Configure a high-entropy `PROTOTYPE_OPERATOR_ACCESS_SECRET` of at least 32 characters privately.
+5. Optional: configure `PROTOTYPE_WEBHOOK_SECRET` for sandbox webhook testing.
+6. Optional: configure Plaid Sandbox credentials privately.
+7. Configure white-label tenant overrides/domains privately if needed.
+8. Deploy an actual PR preview.
+9. Exercise customer routes, operator login/sign-out, host-bound tenant rejection, body limits, transfers, retries, both reconciliation layers, cash-flow persistence and webhook deduplication.
+10. Check `/api/prototype/readiness` and retain evidence.
 
-## 12. Prototype setup
+Never paste API secrets, bank credentials, private keys, operator secrets, webhook secrets, production financial credentials, full bank/card numbers, PINs, CVVs, or OTPs into chat, source code, logs, or public issues.
 
-1. Create a Supabase project.
-2. Run `supabase/migrations/001_white_label_prototype.sql` in the SQL editor.
-3. Set `SUPABASE_URL` and a server-only Supabase secret key in Vercel.
-4. Optional: configure `PLAID_ENV=sandbox`, `PLAID_CLIENT_ID`, and `PLAID_SECRET` privately in Vercel.
-5. Add tenant overrides with `WHITE_LABEL_TENANTS_JSON` if needed.
-6. Deploy the feature branch and open `/prototype`.
-7. Confirm that the page visibly says simulation only and that real banking remains disabled.
+## 20. Release gate
 
-Never paste API secrets, bank credentials, private keys, or production financial credentials into chat, source code, or a public GitHub repository.
+Do not merge the prototype PR solely because CI passes. Keep it draft until:
 
-## 13. External implementation references
+- an actual Vercel PR preview exists;
+- migrations 001-005 run successfully in disposable Supabase;
+- persistent Safe-to-Spend data loads;
+- operator access/fail-closed behavior is manually verified;
+- tenant isolation/body-limit rejection is manually verified;
+- retry/ambiguous-response/concurrency tests show one economic effect per intended transfer;
+- transaction-history and GL reconciliation pass;
+- sandbox webhook deduplication is exercised;
+- database restore/bad-migration recovery is exercised;
+- emergency-freeze drill is measured;
+- iPhone throttled-network and accessibility/device testing is completed.
 
-- Supabase RLS: https://supabase.com/docs/guides/database/postgres/row-level-security
-- Supabase API security: https://supabase.com/docs/guides/api/securing-your-api
-- Plaid Sandbox: https://plaid.com/docs/sandbox/
-- Plaid Link: https://plaid.com/docs/link/
-- Stripe testing/sandboxes: https://docs.stripe.com/testing
-- Unit: https://www.unit.co/
-- Treasury Prime: https://www.treasuryprime.com/
-- Y Combinator applications: https://www.ycombinator.com/apply
-- Techstars accelerators: https://www.techstars.com/accelerators
+Only a future approved regulated program can authorize real financial-service functionality.
