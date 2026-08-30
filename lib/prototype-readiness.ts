@@ -3,6 +3,7 @@ import { plaidSandboxStatus } from './plaid-sandbox';
 import { prototypeLedgerStatus } from './prototype-ledger';
 import { prototypeOperationsStatus } from './prototype-operations';
 import { prototypeOperatorAccessStatus } from './prototype-operator-auth';
+import { tenantBoundaryStatus } from './tenant-boundary';
 
 export function prototypeReadiness() {
   const banking = bankingStatus();
@@ -10,6 +11,7 @@ export function prototypeReadiness() {
   const bankLink = plaidSandboxStatus();
   const operations = prototypeOperationsStatus();
   const operatorAccess = prototypeOperatorAccessStatus();
+  const tenantBoundary = tenantBoundaryStatus();
 
   const persistentDemoConfigured = ledger.configured;
   const externalSandboxConfigured = bankLink.configured;
@@ -46,6 +48,13 @@ export function prototypeReadiness() {
     prototypeOperatorWeakSecretConfigured: operatorAccess.weakSecretConfigured,
     prototypeOperatorAccessFailsClosedForPersistentEvidence: operatorAccess.failClosedIfPersistentWithoutSecret,
     productionOperatorIdentityReady: false,
+    productionHostTenantBindingEnabled: tenantBoundary.productionHostBinding,
+    crossTenantHostOverrideRejected: tenantBoundary.crossTenantHostOverrideRejected,
+    unknownTenantRejected: tenantBoundary.unknownTenantRejected,
+    authenticatedServerRoutesRequireExplicitTenant: tenantBoundary.authenticatedServerRoutesRequireExplicitTenant,
+    boundedPrototypeMutationBodies: true,
+    prototypeOperatorLoginBestEffortThrottle: true,
+    productionDistributedRateLimitReady: false,
     productionProviderWebhooksEnabled: false,
     liveBankingEnabled: false,
     partnerShellConfigured: banking.partnerConfigured,
@@ -59,6 +68,6 @@ export function prototypeReadiness() {
     migrationRecoveryExerciseVerified: false,
     readyForLiveBanking: false,
     nextSafeStep,
-    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. The prototype operator session protects persistent demo evidence but is not production workforce identity. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
+    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. The prototype operator session, tenant host binding, body limits, and best-effort login throttle improve demo safety but are not production workforce identity or distributed abuse prevention. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
   } as const;
 }
