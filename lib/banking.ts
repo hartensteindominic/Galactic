@@ -97,7 +97,9 @@ function partnerConfig() {
     providerName: process.env.BANKING_PROVIDER_NAME || '',
     partnerBankName: process.env.BANKING_PARTNER_BANK_NAME || '',
     disclosure: process.env.BANKING_PARTNER_DISCLOSURE || '',
-    liveWritesEnabled: process.env.BANKING_ENABLE_LIVE_WRITES === 'true'
+    complianceApproved: process.env.BANKING_COMPLIANCE_APPROVED === 'true',
+    disclosuresApproved: process.env.BANKING_DISCLOSURES_APPROVED === 'true',
+    liveWritesRequested: process.env.BANKING_ENABLE_LIVE_WRITES === 'true'
   };
 }
 
@@ -109,18 +111,37 @@ export function bankingStatus() {
     config.apiKey &&
     config.programId &&
     config.providerName &&
-    config.partnerBankName
+    config.partnerBankName &&
+    config.disclosure
   );
+  const activationBlockedReasons: string[] = [];
+
+  if (currentMode !== 'partner') activationBlockedReasons.push('demo_mode');
+  if (!partnerConfigured) activationBlockedReasons.push('partner_not_configured');
+  if (!config.complianceApproved) activationBlockedReasons.push('compliance_not_approved');
+  if (!config.disclosuresApproved) activationBlockedReasons.push('disclosures_not_approved');
+  if (!config.liveWritesRequested) activationBlockedReasons.push('live_writes_not_requested');
+
+  const liveWritesEnabled = currentMode === 'partner'
+    && partnerConfigured
+    && config.complianceApproved
+    && config.disclosuresApproved
+    && config.liveWritesRequested;
 
   return {
     mode: currentMode,
     providerName: config.providerName || null,
     partnerBankName: config.partnerBankName || null,
     partnerConfigured,
-    liveWritesEnabled: currentMode === 'partner' && partnerConfigured && config.liveWritesEnabled,
+    complianceApproved: config.complianceApproved,
+    disclosuresApproved: config.disclosuresApproved,
+    liveWritesRequested: config.liveWritesRequested,
+    liveWritesEnabled,
+    activationBlockedReasons,
+    legalRole: 'fintech_program_interface' as const,
     disclosure: currentMode === 'demo'
-      ? 'Demo mode. No real deposits are held and no real money is moved.'
-      : (config.disclosure || `Banking services are provided through ${config.partnerBankName || 'the configured regulated banking partner'}.`)
+      ? 'Demo mode. Galactic Trust is a financial-technology interface, not a bank. No real deposits are held and no real money is moved.'
+      : (config.disclosure || 'Partner banking mode is configured, but customer-facing banking disclosures have not been approved.')
   };
 }
 
@@ -133,11 +154,19 @@ function requirePartnerConfig(requireWrites = false) {
   }
 
   if (!status.partnerConfigured) {
-    throw new BankingError(503, 'PARTNER_NOT_CONFIGURED', 'A regulated banking partner gateway has not been configured yet.');
+    throw new BankingError(503, 'PARTNER_NOT_CONFIGURED', 'A regulated banking partner gateway and approved disclosure have not been fully configured yet.');
   }
 
-  if (requireWrites && !config.liveWritesEnabled) {
-    throw new BankingError(503, 'LIVE_WRITES_DISABLED', 'Live money movement is disabled until the banking program is approved and explicitly enabled.');
+  if (requireWrites && !status.complianceApproved) {
+    throw new BankingError(503, 'COMPLIANCE_NOT_APPROVED', 'Live money movement is disabled until the banking program has documented compliance approval.');
+  }
+
+  if (requireWrites && !status.disclosuresApproved) {
+    throw new BankingError(503, 'DISCLOSURES_NOT_APPROVED', 'Live money movement is disabled until customer-facing banking disclosures are approved.');
+  }
+
+  if (requireWrites && !status.liveWritesEnabled) {
+    throw new BankingError(503, 'LIVE_WRITES_DISABLED', 'Live money movement is disabled until the approved banking program is explicitly enabled.');
   }
 
   return config;
