@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-async function handler(request: NextRequest) {
+async function handler(request: NextRequest): Promise<NextResponse> {
   const body = await request.json().catch(() => ({}));
   const tokenId = String(body?.tokenId || '').trim();
 
