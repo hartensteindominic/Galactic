@@ -5,6 +5,7 @@ import './extras.css';
 import './privacy.css';
 import './privacy-link.css';
 import './compliance.css';
+import './mobile-trust.css';
 
 export const metadata: Metadata = {
   title: 'Galactic Trust',
