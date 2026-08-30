@@ -3,61 +3,133 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Galactic x402 Licensing</title>
-  <meta name="description" content="Charge AI agents for one licensed asset use through x402 on Base.">
-  <style>
-    *{box-sizing:border-box}body{margin:0;background:#08110c;color:#f6f8ef;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{min-height:100vh;background:radial-gradient(circle at top left,rgba(183,255,40,.14),transparent 34rem),linear-gradient(180deg,#08110c 0%,#10170f 58%,#f4f2e8 58%,#f4f2e8 100%)}.shell{width:min(1100px,calc(100% - 32px));margin:0 auto;padding:20px 0 54px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{font-weight:950}.pill{border:1px solid rgba(183,255,40,.35);border-radius:999px;padding:8px 12px;color:#b7ff28;font-weight:900;font-size:12px}.hero{display:grid;grid-template-columns:minmax(0,1fr)360px;gap:24px;align-items:end;min-height:560px;padding:70px 0 40px}.eyebrow{color:#b7ff28;font-size:12px;font-weight:900;text-transform:uppercase}.hero h1{max-width:760px;margin:10px 0 18px;font-size:clamp(3rem,8vw,6.4rem);line-height:.92;letter-spacing:0}.lead{max-width:710px;color:#c7d0c2;font-size:1.15rem;line-height:1.55}.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}.actions a,.links a{border-radius:8px;padding:13px 16px;font-weight:900;text-decoration:none}.primary{background:#b7ff28;color:#11160d}.secondary{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:#f6f8ef}.panel{display:grid;gap:10px}.panel div,.console,.card{border-radius:8px}.panel div{border:1px solid rgba(255,255,255,.13);background:rgba(255,255,255,.07);padding:16px}.panel span{display:block;color:#9ea899;font-size:12px;font-weight:800}.panel strong{display:block;margin-top:5px;font-size:1.2rem}.console{background:#fffef8;color:#121610;border:1px solid #dedbcc;padding:18px;box-shadow:0 20px 60px rgba(8,17,12,.18)}.console h2{margin:4px 0 0}.links{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}.links a{display:block;background:#ecf3df;color:#172010;border:1px solid #d7dec9}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.card{border:1px solid #dedbcc;background:#fffef8;color:#121610;padding:18px}.card span{color:#2a6118;font-weight:950}.card p{color:#5a6157;line-height:1.5}.code{display:block;overflow:auto;background:#10150e;color:#d9f7c2;border-radius:8px;padding:16px;margin-top:14px;line-height:1.5}.notice{margin-top:14px;background:#fff4d8;color:#5b3d05;border-radius:8px;padding:12px}@media(max-width:860px){.hero,.grid,.links{grid-template-columns:1fr}.hero{min-height:0;padding-top:54px}}
-  </style>
+  <title>Galactic Trust</title>
+  <meta name="description" content="Galactic Trust digital banking dashboard.">
+  <link rel="stylesheet" href="./app/globals.css">
 </head>
 <body>
-  <main>
-    <section class="shell">
-      <nav class="top"><div class="brand">GALACTIC</div><div class="pill">x402 Base USDC</div></nav>
-      <section class="hero">
+  <main class="bankApp">
+    <aside class="sidebar">
+      <div class="brandLockup">
+        <span class="planetLogo" aria-hidden="true"><span class="planetBody"></span><span class="planetRing"></span><span class="planetStar">★</span></span>
+        <span>Galactic<br>Trust</span>
+      </div>
+      <nav class="sideNav" aria-label="Primary navigation">
+        <a class="active" href="#dashboard"><span class="navIcon">⌂</span><span>Dashboard</span></a>
+        <a href="#accounts"><span class="navIcon">▣</span><span>Accounts</span></a>
+        <a href="#transfer"><span class="navIcon">⇄</span><span>Transfer</span></a>
+        <a href="#add-money"><span class="navIcon">✣</span><span>Add Money</span></a>
+        <a href="#cards"><span class="navIcon">▤</span><span>Cards</span></a>
+        <a href="#pay-bills"><span class="navIcon">▧</span><span>Pay Bills</span></a>
+        <a href="#investments"><span class="navIcon">▥</span><span>Investments</span></a>
+        <a href="#goals"><span class="navIcon">◇</span><span>Goals</span></a>
+        <a href="#rewards"><span class="navIcon">✿</span><span>Rewards</span></a>
+      </nav>
+      <div class="sidebarSpacer"></div>
+      <div class="sideUtilities">
+        <a href="#settings"><span class="navIcon">⚙</span><span>Settings</span></a>
+        <a href="#help"><span class="navIcon">?</span><span>Help Center</span></a>
+        <div class="sideRule"></div>
+        <a href="#logout"><span class="navIcon">↪</span><span>Log Out</span></a>
+      </div>
+      <div class="astronaut" aria-hidden="true">🧑‍🚀</div>
+      <section class="rewardsCard">
+        <strong>Galactic rewards<br>are waiting! ✨</strong>
+        <p>You have <b>2,450</b> stars</p>
+        <button type="button">Explore Rewards</button>
+      </section>
+    </aside>
+
+    <section class="dashboard" id="dashboard">
+      <header class="dashboardHeader">
         <div>
-          <div class="eyebrow">Machine-payable asset rights</div>
-          <h1>Charge AI agents for one licensed asset use.</h1>
-          <p class="lead">Galactic now contains a real Next.js x402 app plus direct Base USDC pay buttons pointed at your MetaMask wallet: a free machine catalog, a paid one-use license endpoint, and discovery docs so agent clients know what to buy.</p>
-          <div class="actions">
-            <a class="primary" href="ethereum:0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913@8453/transfer?address=0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb&amp;uint256=10000">Pay $0.01 USDC now</a>
-            <a class="secondary" href="https://metamask.app.link/send/0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb@8453">Open MetaMask</a>
-            <a class="secondary" href="./paylink.json">Paylink JSON</a>
-            <a class="secondary" href="./catalog.json">Catalog JSON</a>
-            <a class="secondary" href="./hyperstream-simple.html">Legacy HyperStream</a>
+          <h1>Welcome back, Nova! <span>👋</span></h1>
+          <p>Here's what's happening in your galaxy.</p>
+        </div>
+        <div class="headerTools">
+          <label class="searchBox"><span class="srOnly">Search</span><input placeholder="Search anything..."><span>⌕</span></label>
+          <button class="iconButton notification" type="button" aria-label="Notifications">♧<i>3</i></button>
+          <button class="profileButton" type="button"><span class="avatar">◈</span><b>Nova Star</b><span>⌄</span></button>
+        </div>
+      </header>
+
+      <div class="contentGrid">
+        <section class="mainColumn">
+          <article class="balanceHero">
+            <div class="balanceCopy">
+              <div class="balanceLabel">Total Balance <span>◉</span></div>
+              <div class="balanceAmount">$24,350.72</div>
+              <div class="balanceGrowth">↑ <b>12.4%</b> <span>vs last month</span></div>
+            </div>
+            <div class="heroStars">✦</div>
+            <div class="heroPlanet big"><span></span></div>
+            <div class="heroPlanet small"><span></span></div>
+            <div class="heroHorizon"></div>
+          </article>
+
+          <div class="quickActions" id="transfer">
+            <button type="button"><span class="quickIcon send">➤</span><span><b>Transfer</b><small>Send money</small></span></button>
+            <button type="button" id="add-money"><span class="quickIcon add">＋</span><span><b>Add Money</b><small>Deposit funds</small></span></button>
+            <button type="button"><span class="quickIcon freeze">❄</span><span><b>Freeze Card</b><small>Temporarily lock</small></span></button>
+            <button type="button"><span class="quickIcon card">▣</span><span><b>View Card</b><small>See card details</small></span></button>
           </div>
-        </div>
-        <div class="panel">
-          <div><span>Payment receiver</span><strong>0x02f9...4cBb</strong></div>
-          <div><span>Network</span><strong>Base mainnet</strong></div>
-          <div><span>License price</span><strong>$0.01 USDC</strong></div>
-          <div><span>License model</span><strong>One machine use</strong></div>
-        </div>
-      </section>
-      <section class="console">
-        <div class="eyebrow" style="color:#2a6118">Money route</div>
-        <h2>POST /api/licenses/use</h2>
-        <code class="code">{
-  "tokenId": "1",
-  "clientId": "my-agent",
-  "useCase": "render this voxel in one generated scene"
-}</code>
-        <p class="notice">GitHub Pages can display this static preview. Live x402 settlement requires deploying the Next.js API routes from this repo on a server-capable host.</p>
-      </section>
-      <section class="console" style="margin-top:16px">
-        <div class="eyebrow" style="color:#2a6118">See everything</div>
-        <h2>Static discovery files</h2>
-        <div class="links">
-          <a href="./paylink.json">Paylink</a>
-          <a href="./catalog.json">Catalog</a>
-          <a href="./agent-manifest.json">Agent manifest</a>
-          <a href="./openapi.json">OpenAPI</a>
-        </div>
-      </section>
-      <section class="grid">
-        <article class="card"><span>01</span><h2>Free catalog</h2><p>Agents inspect eligible Base VoxelFlip assets before paying.</p></article>
-        <article class="card"><span>02</span><h2>x402 payment</h2><p>The paid route returns HTTP 402 until a valid x402 payment is supplied.</p></article>
-        <article class="card"><span>03</span><h2>One-use receipt</h2><p>Every payment issues one machine-use license. Reuse requires another payment.</p></article>
-      </section>
+
+          <div class="accountGrid" id="accounts">
+            <article class="accountCard">
+              <div class="accountTitle"><span class="accountIcon blue">▤</span><span>Checking Account<strong>$15,230.45</strong><small>•••• 4532</small></span><button type="button">›</button></div>
+              <svg class="sparkline blue" viewBox="0 0 222 40" aria-label="Checking account balance trend"><path d="M2 34 C18 27, 24 39, 40 31 S62 32, 78 24 S98 30, 114 20 S134 14, 148 26 S165 9, 181 12 S199 6, 216 0" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+            </article>
+            <article class="accountCard">
+              <div class="accountTitle"><span class="accountIcon teal">▣</span><span>Savings Account<strong>$9,120.27</strong><small>•••• 8756</small></span><button type="button">›</button></div>
+              <svg class="sparkline teal" viewBox="0 0 222 40" aria-label="Savings account balance trend"><path d="M2 35 C16 32, 26 39, 42 33 S64 36, 78 30 S96 33, 111 22 S126 27, 142 18 S157 23, 171 12 S188 5, 201 17 S212 10, 220 4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"></path></svg>
+            </article>
+          </div>
+
+          <section class="activityCard">
+            <div class="sectionHeading"><h2>Recent Activity</h2><a href="#activity">View All</a></div>
+            <div class="activityList" id="activity">
+              <div class="activityRow"><span class="merchantIcon dark">a</span><span class="activityMeta"><b>Amazon.com</b><small>Shopping</small></span><span class="activityAmount"><b>−$89.32</b><small>Today</small></span></div>
+              <div class="activityRow"><span class="merchantIcon green">●</span><span class="activityMeta"><b>Spotify Premium</b><small>Entertainment</small></span><span class="activityAmount"><b>−$11.99</b><small>May 18</small></span></div>
+              <div class="activityRow"><span class="merchantIcon purple">↓</span><span class="activityMeta"><b>Transfer from Alex</b><small>Incoming Transfer</small></span><span class="activityAmount positive"><b>+$200.00</b><small>May 18</small></span></div>
+              <div class="activityRow"><span class="merchantIcon sage">☕</span><span class="activityMeta"><b>Star Coffee</b><small>Food &amp; Drinks</small></span><span class="activityAmount"><b>−$6.45</b><small>May 17</small></span></div>
+              <div class="activityRow"><span class="merchantIcon blue">▰</span><span class="activityMeta"><b>Payroll Direct Deposit</b><small>Income</small></span><span class="activityAmount positive"><b>+$2,850.00</b><small>May 15</small></span></div>
+            </div>
+          </section>
+        </section>
+
+        <aside class="rightColumn">
+          <section class="cardsPanel" id="cards">
+            <div class="sectionHeading"><h2>My Cards</h2><a href="#cards">View All</a></div>
+            <article class="bankCard blue">
+              <div class="cardTopline"><span>★ GALACTIC TRUST</span><span class="contactless">)))</span></div>
+              <div class="cardPlanet" aria-hidden="true"><span></span></div>
+              <div class="cardName">Nebula Blue</div><div class="cardNumber">•••• 4532</div>
+              <div class="cardFooter"><span>DEBIT CARD</span><strong>VISA</strong></div>
+            </article>
+            <article class="bankCard pink">
+              <div class="cardTopline"><span>★ GALACTIC TRUST</span><span class="contactless">)))</span></div>
+              <div class="cardName">Cosmic Pink</div><div class="cardNumber">•••• 8756</div>
+              <div class="cardFooter"><span>DEBIT CARD</span><span class="mastercard"><i></i><i></i></span></div>
+            </article>
+          </section>
+
+          <section class="insightsPanel" id="insights">
+            <div class="sectionHeading"><h2>Spending Insights</h2><button type="button">This Month⌄</button></div>
+            <div class="insightsTotal"><strong>$1,586.34</strong><span>Total Spent <i>↓ 8.7% vs last month</i></span></div>
+            <div class="insightsBody">
+              <div class="legend">
+                <div><span class="dot purple"></span>Shopping <b>$623.10&nbsp;&nbsp; 39%</b></div>
+                <div><span class="dot green"></span>Food &amp; Drinks <b>$312.45&nbsp;&nbsp; 20%</b></div>
+                <div><span class="dot teal"></span>Transport <b>$210.75&nbsp;&nbsp; 13%</b></div>
+                <div><span class="dot coral"></span>Entertainment <b>$198.50&nbsp;&nbsp; 12%</b></div>
+                <div><span class="dot blue"></span>Bills &amp; Utilities <b>$241.54&nbsp;&nbsp; 16%</b></div>
+              </div>
+              <div class="donut" aria-label="Spending breakdown chart"><span>•ᴗ•</span></div>
+            </div>
+            <button class="breakdownButton" type="button"><span>▥</span> See Full Breakdown <b>›</b></button>
+          </section>
+        </aside>
+      </div>
     </section>
   </main>
 </body>
