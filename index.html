@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Galactic Trust</title>
-  <meta name="description" content="Galactic Trust digital banking dashboard.">
+  <meta name="description" content="Galactic Trust digital banking dashboard demo.">
   <link rel="stylesheet" href="./app/globals.css">
+  <link rel="stylesheet" href="./app/banking-controls.css">
 </head>
 <body>
   <main class="bankApp">
@@ -53,6 +54,12 @@
         </div>
       </header>
 
+      <div class="bankingModeBanner demo" role="status">
+        <span class="bankingModeDot"></span>
+        <b>Demo Banking</b>
+        <span>Static preview only. These balances, cards, rewards and transactions are simulated; no real deposits are held and no real money moves.</span>
+      </div>
+
       <div class="contentGrid">
         <section class="mainColumn">
           <article class="balanceHero">
@@ -68,10 +75,10 @@
           </article>
 
           <div class="quickActions" id="transfer">
-            <button type="button"><span class="quickIcon send">➤</span><span><b>Transfer</b><small>Send money</small></span></button>
-            <button type="button" id="add-money"><span class="quickIcon add">＋</span><span><b>Add Money</b><small>Deposit funds</small></span></button>
-            <button type="button"><span class="quickIcon freeze">❄</span><span><b>Freeze Card</b><small>Temporarily lock</small></span></button>
-            <button type="button"><span class="quickIcon card">▣</span><span><b>View Card</b><small>See card details</small></span></button>
+            <button type="button"><span class="quickIcon send">➤</span><span><b>Transfer</b><small>Demo preview</small></span></button>
+            <button type="button" id="add-money"><span class="quickIcon add">＋</span><span><b>Add Money</b><small>Demo preview</small></span></button>
+            <button type="button"><span class="quickIcon freeze">❄</span><span><b>Freeze Card</b><small>Demo preview</small></span></button>
+            <button type="button"><span class="quickIcon card">▣</span><span><b>View Card</b><small>Masked demo details</small></span></button>
           </div>
 
           <div class="accountGrid" id="accounts">
