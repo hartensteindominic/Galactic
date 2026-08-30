@@ -18,7 +18,7 @@ const required = [
   ['lib/charter-readiness.ts', 'fdicInsuranceEffective: false', 'effective FDIC insurance must remain unclaimed'],
   ['lib/charter-readiness.ts', 'customerFacingBankClaimAuthorized: false', 'customer-facing bank claim authority must remain false'],
   ['lib/charter-readiness.ts', 'No universal charter capital number is assumed', 'charter readiness must reject universal capital-number assumptions'],
-  ['lib/prototype-readiness.ts', 'charterReadiness: charterReadiness', 'prototype readiness must expose charter control posture'],
+  ['lib/prototype-readiness.ts', 'charterReadiness,', 'prototype readiness must expose charter control posture'],
   ['lib/prototype-readiness.ts', 'businessModelThesisValidatedForCharterPath: false', 'prototype readiness must keep business-model validation false'],
   ['lib/prototype-readiness.ts', 'readyToFileCharterApplication: false', 'prototype readiness must not claim filing readiness'],
   ['lib/prototype-readiness.ts', 'readyToOpenCharteredBank: false', 'prototype readiness must not claim opening readiness'],
