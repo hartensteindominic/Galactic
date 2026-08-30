@@ -1,6 +1,6 @@
 {
   "name": "galactic-trust",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -18,9 +18,11 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "22.17.2",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.5",
+    "tailwindcss": "^4.1.0",
     "typescript": "5.9.2"
   }
 }
