@@ -20,7 +20,11 @@ const required = [
   ['lib/prototype-operations.ts', "'/rest/v1/rpc/reconcile_fintech_gl_profile'", 'persistent reconciliation must check the double-entry ledger'],
   ['app/prototype/prototype-network-guard.tsx', "headers.set('Idempotency-Key', crypto.randomUUID())", 'prototype transfer client must attach idempotency keys'],
   ['app/api/prototype/webhooks/sandbox/route.ts', 'This route is not a production Plaid or BaaS webhook verifier.', 'sandbox webhook route must disclose that it is not production verification'],
-  ['app/prototype/operations/operations-console.tsx', 'Real banking rails remain off.', 'operations console must label real rails as off']
+  ['app/prototype/operations/operations-console.tsx', 'Real banking rails remain off.', 'operations console must label real rails as off'],
+  ['lib/prototype-transparency.ts', 'liveMoneyEnabled: false', 'transparency model must keep every prototype product live-money disabled'],
+  ['lib/prototype-transparency.ts', 'Prototype transparency center.', 'transparency model must disclose that live program terms are not yet approved'],
+  ['app/prototype/transparency/page.tsx', 'SIMULATION ONLY', 'transparency UI must display simulation-only status'],
+  ['app/prototype/transparency/page.tsx', 'no pretending a partner-dependent feature is already live', 'transparency UI must reject premature live-feature claims']
 ];
 
 const forbidden = [
@@ -34,7 +38,10 @@ const forbidden = [
   ['app/prototype/prototype-network-guard.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'network guard must not contain webhook secrets'],
   ['app/prototype/operations/operations-console.tsx', 'SUPABASE_SECRET_KEY', 'operations UI must not contain Supabase secrets'],
   ['app/prototype/operations/operations-console.tsx', 'PLAID_SECRET', 'operations UI must not contain Plaid secrets'],
-  ['app/prototype/operations/operations-console.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'operations UI must not contain webhook secrets']
+  ['app/prototype/operations/operations-console.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'operations UI must not contain webhook secrets'],
+  ['app/prototype/transparency/page.tsx', 'BANKING_GATEWAY_API_KEY', 'transparency UI must never contain provider credentials'],
+  ['app/prototype/transparency/page.tsx', 'PLAID_SECRET', 'transparency UI must never contain Plaid credentials'],
+  ['app/prototype/transparency/page.tsx', 'SUPABASE_SECRET_KEY', 'transparency UI must never contain Supabase credentials']
 ];
 
 for (const [file, text, label] of required) {
@@ -47,4 +54,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('White-label prototype safety and operational-readiness checks passed.');
+console.log('White-label prototype safety, transparency and operational-readiness checks passed.');
