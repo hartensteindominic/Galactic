@@ -136,6 +136,7 @@ export function charterReadinessStatus() {
     distributionAdvantageValidated: false,
     primaryNonInterchangeRevenueModelValidated: false,
     unitEconomicsScenarioEngineImplemented: true,
+    driverBasedUnitEconomicsModelBuilt: false,
     validatedUnitEconomicsModelBuilt: false,
     unitEconomicsAssumptionsExternallyValidated: false,
     fraudLossAssumptionsValidated: false,
@@ -175,6 +176,6 @@ export function charterReadinessStatus() {
     customerFacingBankClaimAuthorized: false,
     milestones,
     disclosure:
-      'This is a long-term charter-readiness roadmap, not a charter application, legal conclusion, regulatory approval, deposit-insurance approval, capital approval, or authorization to operate or market Galactic Trust as a bank. A scenario calculator is implemented, but the business model, unit-economics assumptions, applicable charter route, regulators, applications, capital, governance, staffing, and opening conditions must be determined and evidenced with real operating data, accountable human owners, qualified legal/compliance advisers, and the relevant authorities.'
+      'This is a long-term charter-readiness roadmap, not a charter application, legal conclusion, regulatory approval, deposit-insurance approval, capital approval, or authorization to operate or market Galactic Trust as a bank. A scenario calculator is implemented, but no validated unit-economics model exists yet; the business model, assumptions, applicable charter route, regulators, applications, capital, governance, staffing, and opening conditions must be determined and evidenced with real operating data, accountable human owners, qualified legal/compliance advisers, and the relevant authorities.'
   } as const;
 }
