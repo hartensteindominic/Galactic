@@ -1,7 +1,7 @@
 import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
 import { createPrototypeTransfer } from '../../../../lib/prototype-ledger';
 import { requireJsonRequest, requireTrustedOrigin } from '../../../../lib/request-security';
-import { resolveBrand } from '../../../../lib/white-label';
+import { resolveRequestBrand } from '../../../../lib/tenant-boundary';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,9 +19,9 @@ export async function POST(request: Request) {
       memo?: string;
     };
 
-    const brand = resolveBrand({
+    const brand = resolveRequestBrand({
       host: request.headers.get('host'),
-      key: body.tenantKey
+      requestedKey: body.tenantKey
     });
 
     const amount = Number(body.amount);
