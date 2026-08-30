@@ -32,6 +32,9 @@ const required = [
   ['app/api/prototype/three-year-bank-plan/route.ts', 'requireJsonRequest', 'three-year bank planning must require JSON'],
   ['app/api/prototype/three-year-bank-plan/route.ts', 'requireTrustedOrigin', 'three-year bank planning must enforce trusted origin'],
   ['app/api/prototype/three-year-bank-plan/route.ts', 'readJsonBodyLimited', 'three-year bank planning must bound request bodies'],
+  ['app/api/prototype/sponsor-diligence/route.ts', 'requireJsonRequest', 'sponsor diligence must require JSON'],
+  ['app/api/prototype/sponsor-diligence/route.ts', 'requireTrustedOrigin', 'sponsor diligence must enforce trusted origin'],
+  ['app/api/prototype/sponsor-diligence/route.ts', 'readJsonBodyLimited', 'sponsor diligence must bound request bodies'],
   ['app/api/prototype/operator/session/route.ts', 'requireTrustedOrigin', 'operator session mutation must enforce trusted origin'],
   ['app/api/prototype/operator/session/route.ts', 'readJsonBodyLimited', 'operator sign-in must bound request bodies'],
   ['app/api/assistant/route.ts', 'readJsonBodyLimited', 'assistant endpoint must bound request bodies']
@@ -46,6 +49,7 @@ const forbidden = [
   ['app/api/prototype/compliance-applicability/route.ts', 'await request.json()', 'compliance applicability must not bypass bounded JSON parsing'],
   ['app/api/prototype/accountability/route.ts', 'await request.json()', 'accountability planning must not bypass bounded JSON parsing'],
   ['app/api/prototype/three-year-bank-plan/route.ts', 'await request.json()', 'three-year bank planning must not bypass bounded JSON parsing'],
+  ['app/api/prototype/sponsor-diligence/route.ts', 'await request.json()', 'sponsor diligence must not bypass bounded JSON parsing'],
   ['app/api/prototype/operator/session/route.ts', 'await request.json()', 'operator sign-in must not bypass bounded JSON parsing'],
   ['app/api/assistant/route.ts', 'await request.json()', 'assistant endpoint must not bypass bounded JSON parsing']
 ];
