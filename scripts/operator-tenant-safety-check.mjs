@@ -8,8 +8,18 @@ const required = [
   ['app/api/prototype/operator/session/route.ts', 'requireTrustedOrigin(request)', 'operator login must enforce same-origin browser requests'],
   ['app/api/prototype/operator/session/route.ts', 'requireBestEffortLoginRateLimit(request)', 'operator login must include prototype abuse throttling'],
   ['app/api/prototype/operator/session/route.ts', 'readJsonBodyLimited', 'operator login must use bounded JSON parsing'],
+  ['app/api/prototype/operator/session/route.ts', 'resolveSessionBrand(request)', 'operator session activity must resolve the host-bound tenant'],
+  ['app/api/prototype/operator/session/route.ts', "action: 'operator.session_started'", 'successful operator sign-in must emit sanitized persistent audit evidence when configured'],
+  ['app/api/prototype/operator/session/route.ts', "action: 'operator.session_ended'", 'valid operator sign-out must emit sanitized persistent audit evidence when configured'],
+  ['app/api/prototype/operator/session/route.ts', 'Always allow the browser to clear a stale/invalid prototype session cookie.', 'operator logout must remain available for stale sessions'],
+  ['app/prototype/operations/operations-shell.tsx', 'session?tenant=${encodeURIComponent(tenantKey)}', 'operator session requests must carry tenant context for host-bound resolution'],
   ['app/api/prototype/operations/route.ts', 'requirePrototypeOperator(request)', 'operations evidence must require operator boundary'],
   ['app/api/prototype/reconcile/route.ts', 'requirePrototypeOperator(request)', 'reconciliation must require operator boundary'],
+  ['app/api/prototype/reconcile/route.ts', "action: 'operator.reconciliation_requested'", 'authenticated reconciliation must emit operator audit evidence'],
+  ['lib/prototype-operations.ts', 'recordPrototypeOperatorAuditEvent', 'operations core must expose a narrow operator audit writer'],
+  ['lib/prototype-operations.ts', "actor_type: 'operator'", 'operator audit evidence must identify the actor type without storing credentials'],
+  ['lib/prototype-operations.ts', 'operatorAuditEvidenceAvailable: databaseConfigured', 'operations posture must expose operator-audit persistence availability'],
+  ['lib/prototype-operations.ts', "simulation_only: true", 'operator audit metadata must retain simulation-only context'],
   ['lib/prototype-readiness.ts', 'productionOperatorIdentityReady: false', 'readiness must not claim production operator identity readiness'],
   ['lib/request-security.ts', "'REQUEST_BODY_TOO_LARGE'", 'bounded JSON reader must fail closed on oversized bodies'],
   ['lib/request-security.ts', "'INVALID_JSON'", 'bounded JSON reader must fail closed on malformed JSON'],
@@ -45,6 +55,8 @@ const required = [
 const forbidden = [
   ['lib/prototype-readiness.ts', 'productionOperatorIdentityReady: true', 'prototype must never claim production operator identity readiness'],
   ['lib/tenant-boundary.ts', "VERCEL_ENV !== 'production'", 'preview override must not rely on an implicit non-production check'],
+  ['lib/prototype-operations.ts', 'accessSecret', 'operator audit persistence must never accept or store the submitted operator access secret'],
+  ['lib/prototype-operations.ts', 'safeClientIp', 'operator audit persistence must not collect client IP addresses'],
   ['app/prototype/operations/operations-shell.tsx', 'PROTOTYPE_OPERATOR_ACCESS_SECRET', 'operator server secret name must not appear in client UI'],
   ['app/prototype/operations/operations-shell.tsx', 'localStorage', 'operator secret/session must not be stored in localStorage'],
   ['app/prototype/operations/operations-shell.tsx', 'sessionStorage', 'operator secret/session must not be stored in sessionStorage'],
@@ -61,4 +73,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Prototype operator-access, request-boundary, tenant-isolation and tenant-configuration safety checks passed.');
+console.log('Prototype operator-access, sanitized operator-audit, request-boundary, tenant-isolation and tenant-configuration safety checks passed.');
