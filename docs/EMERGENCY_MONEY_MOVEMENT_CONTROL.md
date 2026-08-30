@@ -37,7 +37,9 @@ When the emergency freeze is activated:
 - Reconciliation and read-only investigation remain available where safe.
 - Protective actions such as freezing cards remain available when supported by the regulated provider.
 - Provider callbacks/webhooks continue to be accepted and recorded when doing so is necessary to understand already-in-flight activity.
+- Already-submitted provider instructions remain explicitly pending/unknown until authoritative provider/reconciliation evidence establishes a terminal state.
 - Operators can see who activated the freeze, why, when, and the incident/ticket reference.
+- Customers receive an accurate status appropriate to the incident; the system must not imply a transfer failed, succeeded, or was reversed unless that state is authoritative.
 - Unfreezing requires a documented decision and evidence that the triggering risk has been contained.
 
 ## Trigger examples
@@ -48,6 +50,7 @@ Activate the freeze when any of the following could materially affect customer f
 - Idempotency failure.
 - Material GL/account/provider reconciliation mismatch.
 - Provider reports that money-movement APIs are degraded or unsafe.
+- Provider becomes unavailable while instructions are in-flight and their authoritative status cannot be established.
 - Suspected compromise of banking credentials or signing material.
 - Fraud spike outside approved thresholds.
 - Webhook verification failure that makes state transitions unreliable.
@@ -57,14 +60,33 @@ Activate the freeze when any of the following could materially affect customer f
 ## Freeze runbook
 
 1. Declare the incident and assign an incident commander.
-2. Activate the fastest approved program-level money-movement freeze.
-3. Confirm a known test instruction is rejected. Do not use real customer funds for the test unless the approved incident procedure specifically requires it.
-4. Confirm protective controls that should remain available still work.
-5. Record activation time and observed effective time.
-6. Capture provider status, reconciliation state, error IDs, recent deploy/config changes, and affected tenants.
-7. Preserve logs and evidence; do not mutate historical journal entries.
-8. Reconcile account state, GL state, and provider state before unfreezing.
-9. Document root cause, customer impact, remediation, and required follow-up controls.
+2. Record the incident-decision timestamp.
+3. Activate the fastest approved program-level money-movement freeze.
+4. Record the freeze-command timestamp.
+5. Confirm a known test instruction is rejected. Do not use real customer funds for the test unless the approved incident procedure specifically requires it.
+6. Record the first timestamp at which the control is demonstrably effective.
+7. Confirm protective controls that should remain available still work.
+8. Publish or activate the approved customer-visible service status/message when customer impact or uncertainty warrants it.
+9. Record the first timestamp at which an affected customer can see accurate incident/service status.
+10. Capture provider status, reconciliation state, error IDs, recent deploy/config changes, affected tenants, and all in-flight/unknown instructions.
+11. Preserve logs and evidence; do not mutate historical journal entries.
+12. Reconcile account state, GL state, and provider state before unfreezing.
+13. Document root cause, customer impact, remediation, and required follow-up controls.
+
+## Customer communication rule
+
+Stopping unsafe money movement and communicating accurate status are separate controls. A drill must measure both.
+
+Customer-facing incident language must:
+
+- state what is known without inventing a terminal transaction status;
+- distinguish "temporarily unavailable" from "failed";
+- identify whether already-submitted instructions may still be processing or awaiting confirmation;
+- avoid unsupported reimbursement, insurance, timing, or reversibility promises;
+- provide a human support path when account-specific action is needed;
+- be updated when authoritative information changes.
+
+The production program must define who is authorized to approve incident messaging and how legal/compliance/provider review is handled for material incidents.
 
 ## Unfreeze runbook
 
@@ -72,6 +94,7 @@ Unfreeze only after all required owners agree that:
 
 - Root cause is understood or sufficiently contained.
 - Reconciliation is within approved tolerances.
+- Every material in-flight/unknown instruction has an approved handling plan.
 - Duplicate or replay risk is controlled.
 - Provider health is acceptable.
 - Required security credentials have been rotated if compromise was suspected.
@@ -84,25 +107,32 @@ For a live program, high-risk unfreeze should require dual control rather than a
 
 Run a measured incident drill that records:
 
-- Time from incident decision to freeze activation.
-- Time until a transfer attempt is demonstrably blocked.
+- **Time-to-freeze command:** incident decision -> freeze activation command.
+- **Time-to-effective freeze:** incident decision -> transfer attempt demonstrably blocked.
+- **Time-to-first-customer-visible status:** incident decision -> accurate affected-customer/service status visible through the approved channel.
+- Time to enumerate all in-flight/unknown instructions.
 - Whether protective card controls remain available.
 - Whether in-flight provider events continue to reconcile correctly.
 - Whether operators can identify all impacted tenants/accounts.
 - Time to produce a reconciled incident snapshot.
+- Time until customer-facing status is updated after authoritative transaction/provider state changes.
 
-The readiness endpoint must continue to report `emergencyFreezeResponseTimeVerified: false` until this drill is actually completed in an approved environment.
+The readiness endpoint must continue to report `emergencyFreezeResponseTimeVerified: false` until the freeze drill is actually completed in an approved environment. A future separate readiness field should remain false until the customer-visible-status timing is also exercised and evidenced.
 
 ## Evidence to retain
 
 - Drill date and participants.
 - Exact software version/commit.
 - Provider/environment used.
+- Incident-decision timestamp.
+- Freeze command and effective timestamps.
+- First customer-visible-status timestamp and approved message artifact.
 - Freeze activation audit event.
 - Test request/result evidence.
+- In-flight/unknown instruction inventory.
 - Reconciliation results before and after the incident.
 - Incident report and corrective actions.
 
 ## Production release gate
 
-Do not claim a bank-grade or sponsor-bank-ready kill switch based only on the current environment flag. Live launch requires a partner-approved, measured emergency control with documented ownership, dual-control expectations, monitoring, alerting, and exercised recovery.
+Do not claim a bank-grade or sponsor-bank-ready kill switch based only on the current environment flag. Live launch requires a partner-approved, measured emergency control with documented ownership, dual-control expectations, monitoring, alerting, exercised recovery, and an exercised customer-communication path.
