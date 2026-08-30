@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { assumptionEvidenceRegistryStatus } from '../../../lib/assumption-evidence-registry';
 import { charterReadinessStatus } from '../../../lib/charter-readiness';
 import { complianceObligationRegisterStatus } from '../../../lib/compliance-obligation-register';
+import { controlAssuranceMapStatus } from '../../../lib/control-assurance-map';
 import { institutionAccountabilityStatus } from '../../../lib/institution-accountability';
 import { productLaunchGovernanceStatus } from '../../../lib/product-launch-governance';
 import { riskIssueManagementStatus } from '../../../lib/risk-issue-management';
@@ -36,6 +37,7 @@ export default async function PrototypeStrategyPage({
       assumptionEvidence={assumptionEvidenceRegistryStatus()}
       productLaunchGovernance={productLaunchGovernanceStatus()}
       riskIssueManagement={riskIssueManagementStatus()}
+      controlAssurance={controlAssuranceMapStatus()}
     />
   );
 }
