@@ -84,8 +84,10 @@ async function supabaseRequest<T>(path: string, init?: RequestInit): Promise<T> 
   });
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    console.error('Prototype Supabase request failed', response.status, detail.slice(0, 300));
+    console.error('Prototype Supabase request failed', {
+      status: response.status,
+      responseBodyLogged: false
+    });
     throw new BankingError(502, 'PROTOTYPE_DATABASE_ERROR', 'The prototype ledger is temporarily unavailable.');
   }
 
@@ -170,12 +172,17 @@ export function prototypeLedgerStatus() {
   const config = supabaseConfig();
   return {
     configured: config.configured,
+    databaseCredentialsConfigured: config.configured,
     source: config.configured ? 'supabase' : 'memory',
     liveMoneyEnabled: false,
-    persistentTransferIdempotency: config.configured,
+    persistentSchemaVerified: false,
+    targetMigrationHistoryVerified: false,
+    persistentTransferIdempotencyAvailableInMigration: true,
+    persistentTransferIdempotency: false,
+    persistentRuntimeExerciseVerified: false,
     disclosure: config.configured
-      ? 'Supabase prototype ledger configured. Data remains simulated; live banking rails are disabled.'
-      : 'In-memory demo ledger active. Add server-side Supabase environment variables to persist simulated data.'
+      ? 'Supabase credentials are configured for the simulation prototype, but schema execution, migration history, persistent transfer idempotency, and reconciliation behavior remain unverified until exercised against the target database.'
+      : 'In-memory demo ledger active. Add server-side Supabase environment variables, then run and verify migrations 001-005 before treating persistent prototype controls as exercised.'
   } as const;
 }
 
@@ -187,13 +194,17 @@ export async function getPrototypeSnapshot(tenantKey: string, userId = 'demo-nov
     `/rest/v1/fintech_tenants?select=id,tenant_key,name&tenant_key=eq.${tenantFilter}&limit=1`
   );
   const tenant = tenants[0];
-  if (!tenant) return demoSnapshot(tenantKey, userId);
+  if (!tenant) {
+    throw new BankingError(404, 'UNKNOWN_TENANT', 'Unknown prototype tenant in the configured persistent ledger.');
+  }
 
   const profiles = await supabaseRequest<SupabaseProfile[]>(
     `/rest/v1/fintech_profiles?select=id,external_user_id,display_name&tenant_id=eq.${tenant.id}&external_user_id=eq.${encodeURIComponent(userId)}&limit=1`
   );
   const profile = profiles[0];
-  if (!profile) return demoSnapshot(tenantKey, userId);
+  if (!profile) {
+    throw new BankingError(404, 'UNKNOWN_PROTOTYPE_USER', 'Unknown prototype user in the configured persistent ledger.');
+  }
 
   const [accountRows, transactionRows] = await Promise.all([
     supabaseRequest<SupabaseAccount[]>(
@@ -204,7 +215,15 @@ export async function getPrototypeSnapshot(tenantKey: string, userId = 'demo-nov
     )
   ]);
 
-  const accounts = accountRows.filter((row) => row.simulated).map<PrototypeAccount>((row) => ({
+  if (accountRows.some((row) => !row.simulated)) {
+    throw new BankingError(
+      409,
+      'NON_SIMULATED_ACCOUNT_REJECTED',
+      'The simulation prototype cannot expose non-simulated accounts through the prototype ledger.'
+    );
+  }
+
+  const accounts = accountRows.map<PrototypeAccount>((row) => ({
     id: row.id,
     label: row.label,
     accountType: row.account_type,
@@ -214,6 +233,15 @@ export async function getPrototypeSnapshot(tenantKey: string, userId = 'demo-nov
     currency: row.currency,
     simulated: true
   }));
+
+  const accountIds = new Set(accounts.map((account) => account.id));
+  if (transactionRows.some((row) => !accountIds.has(row.account_id))) {
+    throw new BankingError(
+      409,
+      'TRANSACTION_ACCOUNT_BOUNDARY_REJECTED',
+      'The simulation prototype found a transaction outside the returned simulated account boundary.'
+    );
+  }
 
   const transactions = transactionRows.map<PrototypeTransaction>((row) => ({
     id: row.id,
@@ -304,13 +332,17 @@ export async function recordSandboxLinkedAccounts(input: {
     `/rest/v1/fintech_tenants?select=id&tenant_key=eq.${encodeURIComponent(input.tenantKey)}&limit=1`
   );
   const tenant = tenants[0];
-  if (!tenant) return { persisted: false };
+  if (!tenant) {
+    throw new BankingError(404, 'UNKNOWN_TENANT', 'Unknown prototype tenant in the configured persistent ledger.');
+  }
 
   const profiles = await supabaseRequest<SupabaseProfile[]>(
     `/rest/v1/fintech_profiles?select=id&tenant_id=eq.${tenant.id}&external_user_id=eq.${encodeURIComponent(userId)}&limit=1`
   );
   const profile = profiles[0];
-  if (!profile) return { persisted: false };
+  if (!profile) {
+    throw new BankingError(404, 'UNKNOWN_PROTOTYPE_USER', 'Unknown prototype user in the configured persistent ledger.');
+  }
 
   await supabaseRequest<unknown>('/rest/v1/fintech_linked_accounts?on_conflict=tenant_id,profile_id,provider,provider_account_id', {
     method: 'POST',
