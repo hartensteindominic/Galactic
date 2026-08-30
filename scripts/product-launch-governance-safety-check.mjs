@@ -23,9 +23,17 @@ const required = [
   ['app/api/prototype/product-launch-review/route.ts', 'readJsonBodyLimited<ProductLaunchReviewRequest>(request, 131_072)', 'launch review endpoint must bound request bodies'],
   ['app/api/prototype/product-launch-review/route.ts', 'persisted: false', 'launch review endpoint must remain non-persistent'],
   ['app/api/prototype/product-launch-review/route.ts', 'productionWritesChanged: false', 'launch review endpoint must never mutate production writes'],
+  ['app/api/prototype/status/route.ts', 'productLaunchGovernance: productLaunchGovernanceStatus()', 'status API must expose product launch governance posture'],
+  ['app/api/prototype/status/route.ts', 'contains seventeen mandatory live-launch gates, all blocked and unverified', 'status disclosure must keep all launch gates blocked'],
+  ['app/prototype/strategy/page.tsx', 'productLaunchGovernance={productLaunchGovernanceStatus()}', 'Strategy page must pass product launch governance into protected workspace'],
+  ['app/prototype/strategy/strategy-shell.tsx', '<ProductLaunchGovernancePanel status={productLaunchGovernance} />', 'Strategy shell must render launch governance inside protected workspace'],
+  ['app/prototype/strategy/product-launch-governance-panel.tsx', 'Launch status: BLOCKED.', 'Strategy UI must visibly show blocked launch status'],
+  ['app/prototype/strategy/product-launch-governance-panel.tsx', 'Automatic launch = No', 'Strategy UI must visibly show automatic launch disabled'],
+  ['app/prototype/strategy/product-launch-governance-panel.tsx', 'not-applicable-proposed', 'Strategy UI must preserve proposed-not-applicable human-review boundary'],
   ['docs/PRODUCT_LAUNCH_AND_CHANGE_GOVERNANCE.md', 'engineering complete ≠ evidence authenticated ≠ legal applicability approved', 'launch docs must preserve approval stages'],
   ['docs/PRODUCT_LAUNCH_AND_CHANGE_GOVERNANCE.md', 'AI/software may not:', 'launch docs must bound AI/software authority'],
-  ['scripts/product-launch-governance-runtime-check.mjs', 'Product launch governance 17-gate coverage, proposed-not-applicable, no-auto-launch, no-live-writes, and non-approval runtime checks passed.', 'launch governance must have executable runtime coverage']
+  ['scripts/product-launch-governance-runtime-check.mjs', 'Product launch governance 17-gate coverage, proposed-not-applicable, no-auto-launch, no-live-writes, and non-approval runtime checks passed.', 'launch governance must have executable runtime coverage'],
+  ['package.json', 'scripts/product-launch-governance-runtime-check.mjs', 'launch governance runtime checks must run in CI']
 ];
 
 const forbidden = [
@@ -41,7 +49,8 @@ const forbidden = [
   ['lib/product-launch-governance.ts', 'liveFinancialActivityApproved: true', 'live financial activity must not self-approve'],
   ['app/api/prototype/product-launch-review/route.ts', 'await request.json()', 'launch review endpoint must not bypass bounded JSON parsing'],
   ['app/api/prototype/product-launch-review/route.ts', 'persisted: true', 'launch review endpoint must not claim persistence'],
-  ['app/api/prototype/product-launch-review/route.ts', 'productionWritesChanged: true', 'launch review endpoint must never enable production writes']
+  ['app/api/prototype/product-launch-review/route.ts', 'productionWritesChanged: true', 'launch review endpoint must never enable production writes'],
+  ['app/prototype/strategy/product-launch-governance-panel.tsx', 'Launch status: APPROVED', 'Strategy UI must not claim approval']
 ];
 
 for (const [file, text, label] of required) {
@@ -53,4 +62,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Product launch governance blocked-by-default, human-review, request, no-auto-launch, no-live-write, and non-approval safety checks passed.');
+console.log('Product launch governance blocked-by-default, human-review, status/Strategy UI, request, no-auto-launch, no-live-write, and non-approval safety checks passed.');
