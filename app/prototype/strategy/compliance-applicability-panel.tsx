@@ -16,7 +16,7 @@ type ComplianceObligation = {
   id: string;
   domain: string;
   label: string;
-  sourceIds: string[];
+  sourceIds: readonly string[];
   candidateScope: 'future-bank-candidate';
   applicabilityStatus: 'unassessed';
   humanApplicabilityDecisionRequired: true;
@@ -29,7 +29,7 @@ type ComplianceObligation = {
   galacticObligationDetermined: false;
 };
 
-type ComplianceStatus = {
+export type ComplianceWorkbenchStatus = {
   sourceRegistryReviewedAt: string;
   officialSourceCount: number;
   obligationCount: number;
@@ -45,8 +45,8 @@ type ComplianceStatus = {
   productionOfacProgramOperating: false;
   softwareCanSelfCertifyCompliance: false;
   examinationReady: false;
-  sources: ComplianceSource[];
-  obligations: ComplianceObligation[];
+  sources: readonly ComplianceSource[];
+  obligations: readonly ComplianceObligation[];
   disclosure: string;
 };
 
@@ -87,7 +87,7 @@ function pill(value: boolean, yes = 'Yes', no = 'No') {
   return value ? yes : no;
 }
 
-export function ComplianceApplicabilityPanel({ tenantKey, status }: { tenantKey: string; status: ComplianceStatus }) {
+export function ComplianceApplicabilityPanel({ tenantKey, status }: { tenantKey: string; status: ComplianceWorkbenchStatus }) {
   const [obligationId, setObligationId] = useState('');
   const [proposedDecision, setProposedDecision] = useState('');
   const [entityRole, setEntityRole] = useState('');
