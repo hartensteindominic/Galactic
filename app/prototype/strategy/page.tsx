@@ -2,6 +2,7 @@ import { headers } from 'next/headers';
 import { charterReadinessStatus } from '../../../lib/charter-readiness';
 import { complianceObligationRegisterStatus } from '../../../lib/compliance-obligation-register';
 import { institutionAccountabilityStatus } from '../../../lib/institution-accountability';
+import { sponsorDiligencePackStatus } from '../../../lib/sponsor-diligence-pack';
 import { resolveRequestBrand } from '../../../lib/tenant-boundary';
 import { threeYearBankPlanStatus } from '../../../lib/three-year-bank-plan';
 import { unitEconomicsControlStatus } from '../../../lib/unit-economics';
@@ -28,6 +29,7 @@ export default async function PrototypeStrategyPage({
       compliance={complianceObligationRegisterStatus()}
       accountability={institutionAccountabilityStatus()}
       threeYearBankPlan={threeYearBankPlanStatus()}
+      sponsorDiligence={sponsorDiligencePackStatus()}
     />
   );
 }
