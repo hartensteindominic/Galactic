@@ -32,8 +32,7 @@ export function bankingErrorResponse(error: unknown) {
 
   console.error('Unexpected banking API error', {
     errorId,
-    name: error instanceof Error ? error.name : 'UnknownError',
-    message: error instanceof Error ? error.message : 'Unknown error type'
+    name: error instanceof Error ? error.name : 'UnknownError'
   });
 
   return bankingJson({
