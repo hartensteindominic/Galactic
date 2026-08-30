@@ -1,3 +1,4 @@
+import { BankingError } from '../../../../../lib/banking';
 import { bankingErrorResponse, bankingJson } from '../../../../../lib/banking-http';
 import {
   clearOperatorSessionCookie,
@@ -24,11 +25,7 @@ function requireBestEffortLoginRateLimit(request: Request) {
     return;
   }
   if (current.count >= MAX_ATTEMPTS) {
-    throw Object.assign(new Error('Too many operator login attempts.'), {
-      name: 'BankingError',
-      status: 429,
-      code: 'OPERATOR_LOGIN_RATE_LIMITED'
-    });
+    throw new BankingError(429, 'OPERATOR_LOGIN_RATE_LIMITED', 'Too many operator login attempts. Try again shortly.');
   }
   current.count += 1;
 }
