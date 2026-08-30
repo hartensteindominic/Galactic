@@ -6,6 +6,7 @@ import { AssumptionEvidencePanel, type AssumptionEvidenceWorkbenchStatus } from 
 import { BusinessThesisPanel } from './business-thesis-panel';
 import { CapitalPlanningPanel } from './capital-planning-panel';
 import { ComplianceApplicabilityPanel, type ComplianceWorkbenchStatus } from './compliance-applicability-panel';
+import { ProductLaunchGovernancePanel, type ProductLaunchGovernanceWorkbenchStatus } from './product-launch-governance-panel';
 import { SponsorDiligencePanel, type SponsorDiligenceWorkbenchStatus } from './sponsor-diligence-panel';
 import { StrategyConsole } from './strategy-console';
 import { ThreeYearBankPlanPanel, type ThreeYearBankPlanWorkbenchStatus } from './three-year-bank-plan-panel';
@@ -71,7 +72,8 @@ export function StrategyShell({
   accountability,
   threeYearBankPlan,
   sponsorDiligence,
-  assumptionEvidence
+  assumptionEvidence,
+  productLaunchGovernance
 }: {
   tenantKey: string;
   brandName: string;
@@ -82,6 +84,7 @@ export function StrategyShell({
   threeYearBankPlan: ThreeYearBankPlanWorkbenchStatus;
   sponsorDiligence: SponsorDiligenceWorkbenchStatus;
   assumptionEvidence: AssumptionEvidenceWorkbenchStatus;
+  productLaunchGovernance: ProductLaunchGovernanceWorkbenchStatus;
 }) {
   const [state, setState] = useState<SessionState>('checking');
   const [secret, setSecret] = useState('');
@@ -164,6 +167,7 @@ export function StrategyShell({
       <ThreeYearBankPlanPanel tenantKey={tenantKey} status={threeYearBankPlan} />
       <AssumptionEvidencePanel tenantKey={tenantKey} status={assumptionEvidence} />
       <SponsorDiligencePanel tenantKey={tenantKey} status={sponsorDiligence} />
+      <ProductLaunchGovernancePanel status={productLaunchGovernance} />
     </>
   );
 
@@ -194,7 +198,7 @@ export function StrategyShell({
         </div>
         <h1 className="m-0 mt-5 text-3xl font-black tracking-[-0.05em]">{brandName} strategy lab</h1>
         <p className="m-0 mt-3 text-sm leading-6 text-slate-500">
-          Charter readiness, thesis drafting, scenario economics, capital planning, compliance applicability, human accountability, three-year bank planning, assumption evidence, and sponsor diligence are restricted behind the same prototype operator session as operational evidence.
+          Charter readiness, thesis drafting, scenario economics, capital planning, compliance applicability, human accountability, three-year bank planning, assumption evidence, sponsor diligence, and fail-closed product-launch governance are restricted behind the same prototype operator session as operational evidence.
         </p>
 
         {state === 'checking' ? <p className="mt-6 text-sm font-semibold text-slate-600">Checking operator session…</p> : null}
@@ -229,7 +233,7 @@ export function StrategyShell({
         {message && state === 'login-required' ? <div className="mt-4 text-sm font-semibold text-rose-700" role="status">{message}</div> : null}
 
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">
-          This prototype session is not production workforce identity or a regulatory approval workflow. Thesis/economics/capital/compliance/accountability/bank-plan/assumption-evidence/diligence outputs are not persisted and do not become validated market evidence, authenticated assumption evidence, approved methodologies, legal applicability determinations, human appointments, authority delegations, approved policies, operating compliance evidence, board actions, authenticated diligence evidence, human attestations, sponsor submissions, sponsor acceptance, regulator-reviewed capital plans, examination results, filed applications, or charter-application materials merely because they were produced here.
+          This prototype session is not production workforce identity or a regulatory approval workflow. Thesis/economics/capital/compliance/accountability/bank-plan/assumption-evidence/diligence/launch-governance outputs are not persisted and do not become validated market evidence, authenticated assumption evidence, approved methodologies, legal applicability determinations, human appointments, authority delegations, approved policies, operating compliance evidence, board actions, authenticated diligence evidence, human attestations, sponsor submissions, sponsor acceptance, regulator-reviewed capital plans, examination results, release approvals, live-write enablement, filed applications, or charter-application materials merely because they were produced here.
         </div>
 
         <a href={`/prototype?tenant=${encodeURIComponent(tenantKey)}`} className="mt-5 inline-block text-sm font-black text-indigo-700 no-underline">← Back to banking demo</a>
