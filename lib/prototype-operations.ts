@@ -128,19 +128,29 @@ async function tenantRow(tenantKey: string) {
 export function prototypeOperationsStatus() {
   const databaseConfigured = supabaseConfig().configured;
   const webhookConfigured = Boolean(process.env.PROTOTYPE_WEBHOOK_SECRET?.trim());
+  const webhookEnvironmentConfigured = databaseConfigured && webhookConfigured;
 
   return {
     databaseConfigured,
+    databaseCredentialsConfigured: databaseConfigured,
     reconciliationMode: databaseConfigured ? 'persistent' : 'memory',
-    webhookInboxConfigured: databaseConfigured && webhookConfigured,
+    persistentSchemaVerified: false,
+    persistentReconciliationVerified: false,
+    reconciliationExerciseVerified: false,
+    webhookSecretConfigured: webhookConfigured,
+    webhookInboxEnvironmentConfigured: webhookEnvironmentConfigured,
+    webhookInboxConfigured: false,
+    webhookReplayExerciseVerified: false,
     doubleEntryAvailableInBuild: true,
     sanitizedAuditEvidenceAvailable: databaseConfigured,
+    sanitizedAuditPersistenceVerified: false,
     operatorAuditEvidenceAvailable: databaseConfigured,
+    operatorAuditPersistenceVerified: false,
     realProviderWebhooksEnabled: false,
     liveMoneyEnabled: false,
     disclosure: databaseConfigured
-      ? 'Persistent simulation reconciliation and sanitized audit evidence are available. Real provider webhook processing and live money remain disabled.'
-      : 'Memory-mode reconciliation is available for demo UX only. Configure Supabase to persist operations evidence.'
+      ? 'Supabase credentials are configured for the simulation operations environment, but persistent schema, reconciliation, audit persistence, webhook persistence, and replay behavior remain unverified until exercised against the target database. Real provider webhooks and live money remain disabled.'
+      : 'Memory-mode reconciliation is available for demo UX only. Configure a private/disposable Supabase environment, run migrations 001-005, and exercise persistent controls before treating operations evidence as verified.'
   } as const;
 }
 
@@ -271,13 +281,7 @@ export async function getPrototypeOperationsSnapshot(tenantKey: string) {
     };
   }
 
-  const tenant = await tenantRow(tenantKey).catch((error) => {
-    if (error instanceof BankingError && error.status === 404) return null;
-    throw error;
-  });
-  if (!tenant) {
-    return { status, latestReconciliations: [], providerEvents: [], auditEvents: [] };
-  }
+  const tenant = await tenantRow(tenantKey);
 
   const [latestReconciliations, providerEvents, auditEvents] = await Promise.all([
     supabaseRequest<ReconciliationRow[]>(
@@ -291,7 +295,17 @@ export async function getPrototypeOperationsSnapshot(tenantKey: string) {
     )
   ]);
 
-  return { status, latestReconciliations, providerEvents, auditEvents };
+  return {
+    status: {
+      ...status,
+      persistentReconciliationEvidencePresent: latestReconciliations.length > 0,
+      sandboxProviderEventEvidencePresent: providerEvents.length > 0,
+      sanitizedAuditEvidencePresent: auditEvents.length > 0
+    },
+    latestReconciliations,
+    providerEvents,
+    auditEvents
+  };
 }
 
 export function verifyPrototypeWebhookSecret(presented: string) {
