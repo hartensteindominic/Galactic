@@ -47,6 +47,12 @@ export default async function PrototypePage({
           Trust & security
         </a>
         <a
+          href={`/prototype/strategy?tenant=${tenant}`}
+          className="rounded-xl bg-fuchsia-50 px-3 py-2 text-[11px] font-black text-fuchsia-800 no-underline sm:text-xs"
+        >
+          Strategy Lab
+        </a>
+        <a
           href={`/prototype/operations?tenant=${tenant}`}
           className="rounded-xl bg-[#0b153d] px-3 py-2 text-[11px] font-black text-white no-underline sm:text-xs"
         >
