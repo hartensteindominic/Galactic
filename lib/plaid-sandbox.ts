@@ -31,14 +31,19 @@ function config() {
 
 export function plaidSandboxStatus() {
   const current = config();
-  const configured = Boolean(current.clientId && current.secret && current.environment === 'sandbox');
+  const credentialsConfigured = Boolean(current.clientId && current.secret && current.environment === 'sandbox');
   return {
-    configured,
+    configured: credentialsConfigured,
+    credentialsConfigured,
     environment: current.environment,
+    sandboxConnectionExerciseVerified: false,
+    sandboxPersistenceExerciseVerified: false,
+    productionProviderApproved: false,
+    productionWebhookVerificationEnabled: false,
     liveBankLinkingEnabled: false,
-    disclosure: configured
-      ? 'Plaid Sandbox configured. Linked institutions and transactions are test data only.'
-      : 'Plaid Sandbox credentials are not configured. The prototype uses a local mock-bank fallback.'
+    disclosure: credentialsConfigured
+      ? 'Plaid Sandbox credentials are configured. That does not prove the sandbox connection, persistence path, provider semantics, or production integration has been exercised or approved. Linked institutions and transactions remain test data only.'
+      : 'Plaid Sandbox credentials are not configured. The prototype uses a local synthetic mock-bank fallback.'
   } as const;
 }
 
@@ -60,11 +65,15 @@ async function plaidPost<T>(path: string, body: Record<string, unknown>): Promis
   });
 
   if (!response.ok) {
-    const payload = await response.json().catch(() => null) as { error_message?: string } | null;
+    console.error('Plaid Sandbox request failed', {
+      path,
+      status: response.status,
+      responseBodyLogged: false
+    });
     throw new BankingError(
       502,
       'PLAID_SANDBOX_ERROR',
-      payload?.error_message || 'Plaid Sandbox could not complete the mock account link.'
+      'Plaid Sandbox could not complete the synthetic account-link request.'
     );
   }
 
@@ -85,13 +94,13 @@ function localFallback() {
       { id: 'mock-plaid-tx-3', accountId: 'mock-plaid-checking', name: 'Sandbox Transit', amountCents: -275, date: '2026-08-27', pending: false, category: 'Travel' }
     ],
     persisted: false,
-    disclosure: 'Local synthetic fallback. Configure Plaid Sandbox server credentials to exercise the real sandbox API.'
+    disclosure: 'Local synthetic fallback. Configure Plaid Sandbox server credentials to exercise the sandbox API; configuration alone does not verify that exercise.'
   };
 }
 
 export async function connectOneClickSandboxBank(input: { tenantKey: string; userId?: string }) {
   const status = plaidSandboxStatus();
-  if (!status.configured) return localFallback();
+  if (!status.credentialsConfigured) return localFallback();
 
   const current = config();
   const publicTokenResponse = await plaidPost<{ public_token: string }>('/sandbox/public_token/create', {
@@ -154,6 +163,6 @@ export async function connectOneClickSandboxBank(input: { tenantKey: string; use
     accounts,
     transactions,
     persisted: persistence.persisted,
-    disclosure: 'Plaid Sandbox only. The access token is used server-side for this request and is not returned to the browser or persisted by this prototype.'
+    disclosure: 'Plaid Sandbox only. The access token is used server-side for this request and is not returned to the browser or persisted by this prototype. A successful sandbox response is test evidence, not production provider approval.'
   };
 }
