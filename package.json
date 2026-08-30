@@ -11,7 +11,8 @@
     "test:sandbox": "node scripts/sandbox-certification-check.mjs",
     "test:banking-core": "node scripts/banking-durability-check.mjs",
     "test:banking-ops": "node scripts/banking-operator-controls-check.mjs",
-    "db:sandbox:migrate": "node scripts/run-banking-sandbox-migrations.mjs"
+    "db:sandbox:migrate": "node scripts/run-banking-sandbox-migrations.mjs",
+    "sandbox:operator": "node scripts/provider-sandbox-operator.mjs"
   },
   "dependencies": {
     "@x402/core": "2.24.0",
