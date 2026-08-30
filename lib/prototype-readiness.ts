@@ -69,10 +69,12 @@ export function prototypeReadiness() {
     emergencyFreezeFailsClosedByDefault: true,
     protectiveWritesAvailableDuringFreeze: banking.protectiveWritesAvailable,
     emergencyFreezeResponseTimeVerified: false,
+    customerVisibleIncidentStatusTimeVerified: false,
+    providerDisappearanceDuringTransferDrillVerified: false,
     disasterRecoveryExerciseVerified: false,
     migrationRecoveryExerciseVerified: false,
     readyForLiveBanking: false,
     nextSafeStep,
-    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. Persistent prototype setup currently requires migrations 001-005. Orbit is an automated deterministic support assistant, not a regulated decision maker; regulated AI decisioning and third-party LLM use of customer financial data remain disabled. The prototype operator session, tenant host binding, body limits, and best-effort login throttle improve demo safety but are not production workforce identity or distributed abuse prevention. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
+    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. Persistent prototype setup currently requires migrations 001-005. Orbit is an automated deterministic support assistant, not a regulated decision maker; regulated AI decisioning and third-party LLM use of customer financial data remain disabled. Provider-disappearance handling and customer-visible incident-status timing are documented but remain unverified until exercised in an approved environment. The prototype operator session, tenant host binding, body limits, and best-effort login throttle improve demo safety but are not production workforce identity or distributed abuse prevention. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
   } as const;
 }
