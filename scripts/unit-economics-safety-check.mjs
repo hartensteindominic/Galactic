@@ -21,6 +21,11 @@ const required = [
   ['app/api/prototype/unit-economics/route.ts', 'readJsonBodyLimited<UnitEconomicsRequest>(request, 16_384)', 'unit economics route must bound request body'],
   ['app/api/prototype/unit-economics/route.ts', 'resolveRequestBrand', 'unit economics route must remain tenant-bound'],
   ['app/api/prototype/unit-economics/route.ts', 'persisted: false', 'unit economics scenario must not be persisted by the endpoint'],
+  ['app/api/prototype/status/route.ts', 'unitEconomics: unitEconomicsControlStatus()', 'general status API must expose economics control posture'],
+  ['app/api/prototype/status/route.ts', 'unit-economics engine is scenario-only, contains no industry-default assumptions', 'status disclosure must limit economics claims'],
+  ['app/prototype/strategy/strategy-console.tsx', 'No market defaults', 'Strategy Lab must visibly state no market defaults'],
+  ['app/prototype/strategy/strategy-console.tsx', 'every numeric field is required before calculation', 'Strategy Lab must not silently fill numeric assumptions'],
+  ['app/prototype/strategy/strategy-console.tsx', 'Nothing was persisted or validated as a market forecast.', 'Strategy Lab must distinguish calculation from forecast validation'],
   ['scripts/unit-economics-runtime-check.mjs', 'Scenario-based fintech unit economics calculation, payback, invalid-input, overflow, and approval-boundary runtime checks passed.', 'unit economics must have executable runtime coverage'],
   ['package.json', 'scripts/unit-economics-runtime-check.mjs', 'unit economics runtime test must run in CI']
 ];
@@ -32,7 +37,8 @@ const forbidden = [
   ['lib/unit-economics.ts', 'approvedForSponsorDiligence: true', 'unit economics must not self-approve sponsor use'],
   ['lib/unit-economics.ts', 'approvedForCharterApplication: true', 'unit economics must not self-approve charter use'],
   ['app/api/prototype/unit-economics/route.ts', 'await request.json()', 'unit economics route must not bypass bounded JSON reader'],
-  ['app/api/prototype/unit-economics/route.ts', 'persisted: true', 'unit economics route must not claim scenario persistence']
+  ['app/api/prototype/unit-economics/route.ts', 'persisted: true', 'unit economics route must not claim scenario persistence'],
+  ['app/prototype/strategy/strategy-console.tsx', 'defaultValue=', 'Strategy Lab must not hide benchmark assumptions in defaultValue fields']
 ];
 
 for (const [file, text, label] of required) {
@@ -45,4 +51,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Unit economics assumption, operator/request boundary, non-persistence, and fundraising/sponsor/charter approval safety checks passed.');
+console.log('Unit economics assumption, operator/request boundary, strategy/status truth, non-persistence, and fundraising/sponsor/charter approval safety checks passed.');
