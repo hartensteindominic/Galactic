@@ -1,8 +1,8 @@
 import { BankingError } from '../../../../../lib/banking';
 import { bankingErrorResponse, bankingJson } from '../../../../../lib/banking-http';
 import { prototypeOperationsStatus, recordPrototypeProviderEvent, verifyPrototypeWebhookSecret } from '../../../../../lib/prototype-operations';
-import { requireJsonRequest } from '../../../../../lib/request-security';
-import { resolveBrand } from '../../../../../lib/white-label';
+import { readJsonBodyLimited, requireJsonRequest } from '../../../../../lib/request-security';
+import { resolveAuthenticatedServerTenant } from '../../../../../lib/tenant-boundary';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,17 +24,14 @@ export async function POST(request: Request) {
       throw new BankingError(401, 'INVALID_WEBHOOK_AUTH', 'Sandbox webhook authentication failed.');
     }
 
-    const body = await request.json() as {
+    const body = await readJsonBodyLimited<{
       tenantKey?: string;
       eventId?: string;
       eventType?: string;
       payload?: unknown;
-    };
+    }>(request, 131_072);
 
-    const brand = resolveBrand({
-      host: request.headers.get('host'),
-      key: body.tenantKey
-    });
+    const brand = resolveAuthenticatedServerTenant(body.tenantKey);
 
     const event = await recordPrototypeProviderEvent({
       tenantKey: brand.key,
@@ -47,7 +44,7 @@ export async function POST(request: Request) {
       ok: true,
       event,
       simulationOnly: true,
-      disclosure: 'Prototype sandbox webhook recorded. This route is not a production Plaid or BaaS webhook verifier.'
+      disclosure: 'Prototype sandbox webhook recorded for an explicitly authenticated tenant. This route is not a production Plaid or BaaS webhook verifier.'
     });
   } catch (error) {
     return bankingErrorResponse(error);
