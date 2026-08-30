@@ -1,4 +1,6 @@
 import { BankingActions } from './banking-actions';
+import { CryptoTrading } from './crypto-trading';
+import { GalacticChat } from './galactic-chat';
 
 const navItems = [
   ['⌂', 'Dashboard'],
@@ -8,6 +10,7 @@ const navItems = [
   ['▤', 'Cards'],
   ['▧', 'Pay Bills'],
   ['▥', 'Investments'],
+  ['◈', 'Crypto'],
   ['◇', 'Goals'],
   ['✿', 'Rewards'],
 ];
@@ -69,7 +72,8 @@ export default function Home() {
 
         <div className="sidebarSpacer" />
         <div className="sideUtilities">
-          <a href="#settings"><span className="navIcon">⚙</span><span>Settings</span></a>
+          <a href="#security"><span className="navIcon">⚙</span><span>Settings</span></a>
+          <a href="#security"><span className="navIcon">◉</span><span>Security &amp; Privacy</span></a>
           <a href="#help"><span className="navIcon">?</span><span>Help Center</span></a>
           <div className="sideRule" />
           <a href="#logout"><span className="navIcon">↪</span><span>Log Out</span></a>
@@ -83,7 +87,7 @@ export default function Home() {
         </section>
       </aside>
 
-      <section className="dashboard">
+      <section className="dashboard" id="dashboard">
         <header className="dashboardHeader">
           <div>
             <h1>Welcome back, Nova! <span>👋</span></h1>
@@ -129,7 +133,7 @@ export default function Home() {
 
             <section className="activityCard">
               <div className="sectionHeading"><h2>Recent Activity</h2><a href="#activity">View All</a></div>
-              <div className="activityList">
+              <div className="activityList" id="activity">
                 {activity.map((item) => (
                   <div className="activityRow" key={item.name}>
                     <span className={`merchantIcon ${item.tone}`}>{item.icon}</span>
@@ -163,9 +167,27 @@ export default function Home() {
               </div>
               <button className="breakdownButton" type="button"><span>▥</span> See Full Breakdown <b>›</b></button>
             </section>
+
+            <CryptoTrading />
+
+            <section className="securityPanel" id="security">
+              <div className="sectionHeading">
+                <div><h2>Security &amp; Privacy</h2><small>Protection built in</small></div>
+                <span className="shieldBadge">✓</span>
+              </div>
+              <div className="securityList">
+                <div><span className="securityIcon">⌁</span><span><b>Protected sessions</b><small>Signed live-banking authentication and short-lived requests.</small></span></div>
+                <div><span className="securityIcon">▣</span><span><b>Masked card data</b><small>Full card number, CVV and PIN are never shown in this dashboard.</small></span></div>
+                <div><span className="securityIcon">◎</span><span><b>Privacy-minded chat</b><small>Orbit never asks for passwords, PINs, CVVs or one-time codes.</small></span></div>
+                <div><span className="securityIcon">◈</span><span><b>Live-money guard</b><small>Real banking and crypto remain off until approved providers are configured.</small></span></div>
+              </div>
+              <p className="securityFootnote">Demo balances and trades are simulated. Real product disclosures must match the approved partner programs before launch.</p>
+            </section>
           </aside>
         </div>
       </section>
+
+      <GalacticChat />
     </main>
   );
 }
