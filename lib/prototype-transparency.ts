@@ -1,3 +1,5 @@
+import { getPrototypeCustomerTerms } from './customer-terms-control';
+
 export type ProductTransparencyItem = {
   id: string;
   name: string;
@@ -11,13 +13,14 @@ export type ProductTransparencyItem = {
 };
 
 export function prototypeTransparency() {
+  const terms = getPrototypeCustomerTerms();
   const items: ProductTransparencyItem[] = [
     {
       id: 'prototype-account',
       name: 'Prototype account',
       category: 'account',
       availability: 'prototype',
-      costLabel: '$0 demo fee',
+      costLabel: terms.accountFeeLabel,
       limitsLabel: 'Synthetic balances only',
       eligibilityLabel: 'Demo user only',
       plainEnglish: 'This is a simulated account experience. It does not hold deposits, earn interest, provide insurance, or create a real bank account.',
@@ -28,10 +31,10 @@ export function prototypeTransparency() {
       name: 'Simulated transfer',
       category: 'money-movement',
       availability: 'prototype',
-      costLabel: '$0 demo fee',
+      costLabel: terms.accountFeeLabel,
       limitsLabel: '$0.01–$10,000 per simulation',
       eligibilityLabel: 'Simulated accounts only',
-      plainEnglish: 'Transfers update only the prototype ledger. Idempotency prevents a retry from creating a second persistent demo debit.',
+      plainEnglish: `${terms.transferDisclosure} Idempotency prevents a retry from creating a second persistent demo debit.`,
       liveMoneyEnabled: false
     },
     {
@@ -39,7 +42,7 @@ export function prototypeTransparency() {
       name: 'Sandbox bank linking',
       category: 'money-movement',
       availability: 'sandbox',
-      costLabel: '$0 prototype charge',
+      costLabel: terms.sandboxLinkFeeLabel,
       limitsLabel: 'Synthetic institution data only',
       eligibilityLabel: 'Plaid Sandbox when configured, local mock otherwise',
       plainEnglish: 'Account linking exists for testing UX. No production bank credentials or real account access are enabled.',
@@ -50,10 +53,10 @@ export function prototypeTransparency() {
       name: 'Cash-flow intelligence',
       category: 'support',
       availability: 'prototype',
-      costLabel: '$0 demo fee',
+      costLabel: terms.accountFeeLabel,
       limitsLabel: '7 / 14 / 30-day simulation horizons',
       eligibilityLabel: 'Prototype users',
-      plainEnglish: 'Forecasts are planning estimates based on known prototype items. They are not guarantees, credit decisions, personalized financial advice, or authorization to spend.',
+      plainEnglish: terms.cashflowDisclosure,
       liveMoneyEnabled: false
     },
     {
@@ -61,7 +64,7 @@ export function prototypeTransparency() {
       name: 'Orbit automated support',
       category: 'support',
       availability: 'prototype',
-      costLabel: '$0 demo fee',
+      costLabel: terms.accountFeeLabel,
       limitsLabel: 'General product explanations only',
       eligibilityLabel: 'No regulated or account-specific decisioning',
       plainEnglish: 'Orbit is an automated deterministic support assistant. It does not approve or deny credit, determine AML/SAR or sanctions outcomes, decide fraud liability, verify identity, provide legal advice, or give personalized investment recommendations. Material or account-specific judgment requires an authorized human workflow. The prototype does not send customer financial data to a third-party LLM.',
@@ -75,7 +78,7 @@ export function prototypeTransparency() {
       costLabel: 'Not priced',
       limitsLabel: 'No live savings transfers',
       eligibilityLabel: 'Requires approved deposit-account program',
-      plainEnglish: 'Goals and planned savings can be simulated. Real interest, APY, deposit insurance, and automated savings transfers require approved partner terms.',
+      plainEnglish: `Goals and planned savings can be simulated. ${terms.depositInsuranceDisclosure}`,
       liveMoneyEnabled: false
     },
     {
@@ -115,12 +118,15 @@ export function prototypeTransparency() {
 
   return {
     stage: 'prototype',
+    customerTermsVersion: terms.version,
+    customerTermsStatus: terms.status,
+    liveCustomerTermsApproved: terms.liveTermsApproved,
     hiddenFees: false,
     liveMoneyEnabled: false,
     automatedSupportDisclosed: true,
     regulatedAiDecisioningEnabled: false,
     thirdPartyLlmCustomerDataEnabled: false,
     items,
-    disclosure: 'Prototype transparency center. Real fees, limits, rates, insurance statements, eligibility rules, partner disclosures, and any future material AI use must come from approved program terms and governance before launch.'
+    disclosure: `Prototype transparency center. ${terms.changingTermsDisclosure}`
   } as const;
 }
