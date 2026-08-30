@@ -18,7 +18,7 @@ export function prototypeReadiness() {
 
   let nextSafeStep = 'Exercise the white-label demo and operations console with synthetic data.';
   if (!persistentDemoConfigured) {
-    nextSafeStep = 'Configure a Supabase prototype project privately and run migrations 001-004 so simulated ledger, reconciliation, idempotency, and double-entry evidence persist.';
+    nextSafeStep = 'Configure a Supabase prototype project privately and run migrations 001-005 in order so simulated ledger, reconciliation, idempotency, double-entry, cash-flow items, and savings goals persist.';
   } else if (!operatorAccess.configured) {
     nextSafeStep = operatorAccess.weakSecretConfigured
       ? `Replace the weak prototype operator access secret with a high-entropy server-only value at least ${operatorAccess.minimumSecretLength} characters long.`
@@ -28,7 +28,7 @@ export function prototypeReadiness() {
   } else if (!externalSandboxConfigured) {
     nextSafeStep = 'Optionally configure Plaid Sandbox privately and validate synthetic account-link behavior.';
   } else {
-    nextSafeStep = 'Run repeated simulated transfers, replay a duplicate request, reconcile transaction history and double-entry balances, and capture evidence for partner/investor diligence.';
+    nextSafeStep = 'Run repeated simulated transfers, replay a duplicate request, reconcile transaction history and double-entry balances, validate persistent Safe-to-Spend data, and capture evidence for partner/investor diligence.';
   }
 
   return {
@@ -40,6 +40,8 @@ export function prototypeReadiness() {
     reconciliationAvailable: true,
     persistentReconciliationConfigured: operations.databaseConfigured,
     doubleEntryAccountingAvailable: operations.doubleEntryAvailableInBuild,
+    cashflowPersistenceMigrationAvailable: true,
+    requiredPrototypeMigrationCount: 5,
     sandboxWebhookInboxConfigured: operations.webhookInboxConfigured,
     transferIdempotencyAvailable: true,
     persistentTransferIdempotencyConfigured: ledger.persistentTransferIdempotency,
@@ -68,6 +70,6 @@ export function prototypeReadiness() {
     migrationRecoveryExerciseVerified: false,
     readyForLiveBanking: false,
     nextSafeStep,
-    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. The prototype operator session, tenant host binding, body limits, and best-effort login throttle improve demo safety but are not production workforce identity or distributed abuse prevention. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
+    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. Persistent prototype setup currently requires migrations 001-005. The prototype operator session, tenant host binding, body limits, and best-effort login throttle improve demo safety but are not production workforce identity or distributed abuse prevention. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
   } as const;
 }
