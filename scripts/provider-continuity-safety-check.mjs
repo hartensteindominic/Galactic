@@ -17,6 +17,11 @@ const required = [
   ['lib/provider-continuity.ts', 'providerDataPortabilityVerified: false', 'provider data portability must remain unverified'],
   ['lib/provider-continuity.ts', 'alternateProviderProgramApproved: false', 'alternate provider must remain unapproved'],
   ['lib/provider-continuity.ts', 'providerExitExerciseVerified: false', 'provider exit exercise must remain unverified'],
+  ['app/api/prototype/status/route.ts', 'providerContinuity: providerContinuityControlStatus()', 'general status API must expose provider-continuity posture'],
+  ['app/api/prototype/status/route.ts', 'provider-continuity model blocks automatic provider switching, automatic financial-instruction rerouting, and automatic customer-funds migration', 'status disclosure must limit continuity claims'],
+  ['docs/PROVIDER_EXIT_CONTINUITY_PLAN.md', 'never authorizes Galactic to automatically switch providers', 'runbook must prohibit automatic provider switching'],
+  ['docs/PROVIDER_EXIT_CONTINUITY_PLAN.md', 'No software-only state transition can authorize customer funds migration.', 'runbook must prohibit software-only customer-funds migration'],
+  ['docs/PROVIDER_EXIT_CONTINUITY_PLAN.md', 'Provider failure does not make a submitted transaction fail.', 'runbook must preserve pending/unknown transaction truth'],
   ['scripts/provider-continuity-runtime-check.mjs', 'Provider continuity outage, termination, migration-evidence, no-reroute, and no-automatic-funds-migration runtime checks passed.', 'provider continuity must have executable runtime coverage'],
   ['package.json', 'scripts/provider-continuity-runtime-check.mjs', 'provider continuity runtime coverage must run in CI']
 ];
@@ -41,4 +46,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Provider continuity no-auto-switch, no-reroute, no-auto-funds-migration, governance/evidence, and exercise-boundary safety checks passed.');
+console.log('Provider continuity no-auto-switch, no-reroute, no-auto-funds-migration, status/runbook, governance/evidence, and exercise-boundary safety checks passed.');
