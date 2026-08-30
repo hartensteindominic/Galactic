@@ -26,7 +26,7 @@ const required = [
   ['app/prototype/strategy/strategy-shell.tsx', '<CapitalPlanningPanel tenantKey={tenantKey} />', 'capital workbench must remain inside protected Strategy Lab workspace'],
   ['app/api/prototype/status/route.ts', 'capitalPlanning: capitalPlanningControlStatus()', 'general status API must expose safe capital-planning posture'],
   ['app/api/prototype/status/route.ts', 'capital-planning workbench contains no default charter-capital amount', 'status disclosure must limit capital-planning claims'],
-  ['scripts/capital-planning-runtime-check.mjs', 'Assumption-driven capital planning, gap/runway arithmetic, invalid-input/overflow, and regulatory-capital boundary runtime checks passed.', 'capital planning must have executable runtime coverage'],
+  ['scripts/capital-planning-runtime-check.mjs', 'Assumption-driven capital planning, gap/runway arithmetic, bounded-maximum, invalid-input, and regulatory-capital boundary runtime checks passed.', 'capital planning must have executable runtime coverage'],
   ['package.json', 'scripts/capital-planning-runtime-check.mjs', 'capital planning runtime coverage must run in CI']
 ];
 
