@@ -31,8 +31,17 @@ const required = [
   ['app/api/assistant/route.ts', 'RATE_LIMITED', 'assistant endpoint has a rate limit'],
   ['lib/assistant.ts', 'Never share passwords, PINs, CVVs, recovery codes, or one-time codes in chat.', 'assistant warns against sharing authentication secrets'],
   ['next.config.mjs', "frame-ancestors 'none'", 'content security policy blocks framing'],
-  ['next.config.mjs', "Permissions-Policy", 'browser permissions are restricted'],
-  ['next.config.mjs', "X-Content-Type-Options", 'MIME sniffing protection is enabled']
+  ['next.config.mjs', 'Permissions-Policy', 'browser permissions are restricted'],
+  ['next.config.mjs', 'X-Content-Type-Options', 'MIME sniffing protection is enabled'],
+  ['lib/prototype-ledger.ts', 'liveMoneyEnabled: false', 'prototype ledger permanently reports live money disabled'],
+  ['supabase/migrations/001_white_label_prototype.sql', 'Prototype transfer function cannot touch non-simulated accounts.', 'prototype transfers reject non-simulated accounts'],
+  ['supabase/migrations/002_operations_reconciliation.sql', 'Prototype reconciliation cannot inspect non-simulated accounts.', 'prototype reconciliation rejects non-simulated accounts'],
+  ['lib/prototype-operations.ts', 'realProviderWebhooksEnabled: false', 'prototype operations do not claim production provider webhooks'],
+  ['lib/prototype-operations.ts', 'liveMoneyEnabled: false', 'prototype operations keep live money disabled'],
+  ['app/api/prototype/reconcile/route.ts', 'requireTrustedOrigin', 'prototype reconciliation rejects untrusted browser origins'],
+  ['app/api/prototype/webhooks/sandbox/route.ts', 'verifyPrototypeWebhookSecret', 'sandbox webhook inbox requires server-side authentication'],
+  ['app/api/prototype/webhooks/sandbox/route.ts', 'simulationOnly: true', 'sandbox webhook response is explicitly simulation-only'],
+  ['app/prototype/operations/operations-console.tsx', 'Real banking rails remain off.', 'operations UI labels live banking rails as disabled']
 ];
 
 const forbidden = [
@@ -48,7 +57,14 @@ const forbidden = [
   ['app/crypto-trading.tsx', 'CRYPTO_GATEWAY_API_KEY', 'crypto provider API keys must never appear in client code'],
   ['app/crypto-trading.tsx', 'CRYPTO_PROGRAM_ID', 'crypto provider program identifiers must remain server-side'],
   ['app/galactic-chat.tsx', 'BANKING_GATEWAY_API_KEY', 'chat must never contain banking provider credentials'],
-  ['app/galactic-chat.tsx', 'CRYPTO_GATEWAY_API_KEY', 'chat must never contain crypto provider credentials']
+  ['app/galactic-chat.tsx', 'CRYPTO_GATEWAY_API_KEY', 'chat must never contain crypto provider credentials'],
+  ['app/prototype/prototype-dashboard.tsx', 'SUPABASE_SECRET_KEY', 'Supabase secret must never appear in prototype client code'],
+  ['app/prototype/prototype-dashboard.tsx', 'SUPABASE_SERVICE_ROLE_KEY', 'Supabase service role key must never appear in prototype client code'],
+  ['app/prototype/prototype-dashboard.tsx', 'PLAID_SECRET', 'Plaid secret must never appear in prototype client code'],
+  ['app/prototype/prototype-dashboard.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'prototype webhook secret must never appear in client code'],
+  ['app/prototype/operations/operations-console.tsx', 'SUPABASE_SECRET_KEY', 'Supabase secret must never appear in operations client code'],
+  ['app/prototype/operations/operations-console.tsx', 'PLAID_SECRET', 'Plaid secret must never appear in operations client code'],
+  ['app/prototype/operations/operations-console.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'webhook secret must never appear in operations client code']
 ];
 
 for (const [file, text, label] of required) {
@@ -61,4 +77,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Galactic Trust banking, crypto, assistant, privacy and x402 safety checks passed.');
+console.log('Galactic Trust banking, crypto, assistant, privacy, prototype operations and x402 safety checks passed.');
