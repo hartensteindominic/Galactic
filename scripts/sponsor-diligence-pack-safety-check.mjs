@@ -22,9 +22,17 @@ const required = [
   ['app/api/prototype/sponsor-diligence/route.ts', 'readJsonBodyLimited<SponsorDiligenceRequest>(request, 32_768)', 'sponsor diligence endpoint must bound request bodies'],
   ['app/api/prototype/sponsor-diligence/route.ts', 'persisted: false', 'sponsor diligence endpoint must remain non-persistent'],
   ['app/api/prototype/sponsor-diligence/route.ts', 'submitted: false', 'sponsor diligence endpoint must never claim submission'],
+  ['app/api/prototype/status/route.ts', 'sponsorDiligence: sponsorDiligencePackStatus()', 'status API must expose sponsor diligence posture'],
+  ['app/api/prototype/status/route.ts', 'no selected sponsor bank or BaaS provider', 'status API must disclose no sponsor selection'],
+  ['app/prototype/strategy/page.tsx', 'sponsorDiligence={sponsorDiligencePackStatus()}', 'Strategy page must pass sponsor diligence posture into protected workspace'],
+  ['app/prototype/strategy/strategy-shell.tsx', '<SponsorDiligencePanel tenantKey={tenantKey} status={sponsorDiligence} />', 'Strategy shell must render sponsor diligence inside protected workspace'],
+  ['app/prototype/strategy/sponsor-diligence-panel.tsx', 'No selected sponsor/program:', 'diligence UI must expose missing sponsor/program'],
+  ['app/prototype/strategy/sponsor-diligence-panel.tsx', 'Structurally complete only · not submitted', 'diligence UI must never present structural completeness as submission'],
+  ['app/prototype/strategy/sponsor-diligence-panel.tsx', 'Software may attest', 'diligence UI must expose software-attestation boundary'],
   ['docs/SPONSOR_DILIGENCE_RESPONSE_PACK.md', 'drafted response ≠ authenticated evidence ≠ human attestation ≠ sponsor review ≠ sponsor acceptance ≠ contract approval ≠ program approval', 'diligence docs must preserve evidence and approval stages'],
   ['docs/SPONSOR_DILIGENCE_RESPONSE_PACK.md', 'AI and software must not:', 'diligence docs must bound AI/software authority'],
-  ['scripts/sponsor-diligence-pack-runtime-check.mjs', 'Sponsor diligence evidence, human-attestation, no-auto-submit, no-impersonation, and non-approval runtime checks passed.', 'sponsor diligence must have executable runtime coverage']
+  ['scripts/sponsor-diligence-pack-runtime-check.mjs', 'Sponsor diligence evidence, human-attestation, no-auto-submit, no-impersonation, and non-approval runtime checks passed.', 'sponsor diligence must have executable runtime coverage'],
+  ['package.json', 'scripts/sponsor-diligence-pack-runtime-check.mjs', 'sponsor diligence runtime coverage must run in CI']
 ];
 
 const forbidden = [
@@ -40,7 +48,8 @@ const forbidden = [
   ['lib/sponsor-diligence-pack.ts', 'readyForLiveProgram: true', 'pack must not self-promote to live readiness'],
   ['app/api/prototype/sponsor-diligence/route.ts', 'await request.json()', 'sponsor diligence endpoint must not bypass bounded JSON parsing'],
   ['app/api/prototype/sponsor-diligence/route.ts', 'persisted: true', 'sponsor diligence endpoint must not claim persistence'],
-  ['app/api/prototype/sponsor-diligence/route.ts', 'submitted: true', 'sponsor diligence endpoint must not claim submission']
+  ['app/api/prototype/sponsor-diligence/route.ts', 'submitted: true', 'sponsor diligence endpoint must not claim submission'],
+  ['app/prototype/strategy/sponsor-diligence-panel.tsx', 'defaultValue=', 'diligence UI must not hide default program facts or sponsor choices']
 ];
 
 for (const [file, text, label] of required) {
@@ -52,4 +61,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Sponsor diligence source/evidence, human-attestation, operator/request, no-auto-submit, no-impersonation, and non-approval safety checks passed.');
+console.log('Sponsor diligence source/evidence, human-attestation, status/Strategy UI, operator/request, no-auto-submit, no-impersonation, and non-approval safety checks passed.');
