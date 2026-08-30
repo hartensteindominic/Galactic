@@ -24,6 +24,10 @@ const required = [
   ['app/api/prototype/sponsor-diligence/route.ts', 'submitted: false', 'sponsor diligence endpoint must never claim submission'],
   ['app/api/prototype/status/route.ts', 'sponsorDiligence: sponsorDiligencePackStatus()', 'status API must expose sponsor diligence posture'],
   ['app/api/prototype/status/route.ts', 'no selected sponsor bank or BaaS provider', 'status API must disclose no sponsor selection'],
+  ['lib/prototype-readiness.ts', 'sponsorDiligencePackAvailable: sponsorDiligence.packAvailable', 'readiness must expose sponsor diligence pack'],
+  ['lib/prototype-readiness.ts', 'productionSponsorBankProgramApprovalComplete: sponsorDiligence.sponsorProgramApprovalComplete', 'readiness sponsor approval must come from explicit false diligence status'],
+  ['lib/prototype-readiness.ts', 'sponsorDiligenceAutomaticSubmissionEnabled: sponsorDiligence.automaticSubmissionEnabled', 'readiness must expose disabled automatic submission'],
+  ['lib/prototype-readiness.ts', 'software cannot impersonate the applicant or sponsor', 'readiness disclosure must preserve anti-impersonation boundary'],
   ['lib/prototype-trust.ts', "id: 'sponsor-diligence-pack'", 'Trust Center must expose sponsor diligence evidence pack'],
   ['lib/prototype-trust.ts', 'No sponsor bank or BaaS provider is selected by this pack.', 'Trust Center must disclose no sponsor/provider selection'],
   ['lib/prototype-trust.ts', 'sponsorDiligenceReadyForLiveProgram: sponsorDiligence.readyForLiveProgram', 'Trust Center must expose diligence live-program readiness as false'],
@@ -64,4 +68,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Sponsor diligence source/evidence, human-attestation, Trust/status/Strategy UI, operator/request, no-auto-submit, no-impersonation, and non-approval safety checks passed.');
+console.log('Sponsor diligence source/evidence, human-attestation, readiness/Trust/status/Strategy UI, operator/request, no-auto-submit, no-impersonation, and non-approval safety checks passed.');
