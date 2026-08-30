@@ -39,16 +39,17 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const accessSecret = secret;
+    setSecret('');
     setBusy(true);
     setMessage('');
     try {
       const response = await fetch('/api/prototype/operator/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessSecret: secret })
+        body: JSON.stringify({ accessSecret })
       });
       const data = await response.json();
-      setSecret('');
       if (!response.ok || !data?.ok) throw new Error(data?.error?.message || 'Operator sign-in failed.');
       setState('authenticated');
     } catch (error) {
@@ -59,7 +60,34 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
     }
   }
 
-  if (state === 'authenticated' || state === 'open-memory-demo') {
+  async function signOut() {
+    setBusy(true);
+    try {
+      await fetch('/api/prototype/operator/session', { method: 'DELETE' });
+    } finally {
+      setMessage('Operator session closed.');
+      setState('login-required');
+      setBusy(false);
+    }
+  }
+
+  if (state === 'authenticated') {
+    return (
+      <div className="relative">
+        <button
+          type="button"
+          onClick={signOut}
+          disabled={busy}
+          className="fixed right-4 top-4 z-[60] rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-lg disabled:opacity-50"
+        >
+          Sign out
+        </button>
+        <OperationsConsole tenantKey={tenantKey} brandName={brandName} />
+      </div>
+    );
+  }
+
+  if (state === 'open-memory-demo') {
     return <OperationsConsole tenantKey={tenantKey} brandName={brandName} />;
   }
 
@@ -90,7 +118,8 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
               Prototype operator access secret
               <input
                 type="password"
-                autoComplete="current-password"
+                autoComplete="off"
+                spellCheck={false}
                 value={secret}
                 onChange={(event) => setSecret(event.target.value)}
                 required
