@@ -16,7 +16,10 @@ const required = [
   ['app/api/prototype/accountability/route.ts', 'requireJsonRequest(request)', 'accountability endpoint must require JSON'],
   ['app/api/prototype/accountability/route.ts', 'readJsonBodyLimited<AccountabilityRequest>(request, 24_576)', 'accountability endpoint must bound request bodies'],
   ['app/api/prototype/accountability/route.ts', 'persisted: false', 'accountability endpoint must remain non-persistent'],
-  ['scripts/institution-accountability-runtime-check.mjs', 'Institution accountability unassigned-human-owner, no-AI-owner, evidence, and non-promotion runtime checks passed.', 'accountability must have executable runtime coverage']
+  ['app/api/prototype/status/route.ts', 'institutionAccountability: institutionAccountabilityStatus()', 'status API must expose institution accountability posture'],
+  ['app/api/prototype/status/route.ts', 'AI, Orbit, ChatGPT, autonomous agents, code, and software services cannot act as the bank board', 'status disclosure must reject AI/software regulated accountability'],
+  ['scripts/institution-accountability-runtime-check.mjs', 'Institution accountability unassigned-human-owner, no-AI-owner, evidence, and non-promotion runtime checks passed.', 'accountability must have executable runtime coverage'],
+  ['package.json', 'scripts/institution-accountability-runtime-check.mjs', 'accountability runtime coverage must run in CI']
 ];
 
 const forbidden = [
@@ -38,4 +41,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Institution accountability human-owner, no-AI-owner, operator/request, non-persistence, and non-promotion safety checks passed.');
+console.log('Institution accountability human-owner, no-AI-owner, status, operator/request, non-persistence, and non-promotion safety checks passed.');
