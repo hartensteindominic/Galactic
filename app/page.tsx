@@ -37,7 +37,7 @@ function Sparkline({ variant }: { variant: 'blue' | 'teal' }) {
     ? 'M2 34 C18 27, 24 39, 40 31 S62 32, 78 24 S98 30, 114 20 S134 14, 148 26 S165 9, 181 12 S199 6, 216 0'
     : 'M2 35 C16 32, 26 39, 42 33 S64 36, 78 30 S96 33, 111 22 S126 27, 142 18 S157 23, 171 12 S188 5, 201 17 S212 10, 220 4';
   return (
-    <svg className={`sparkline ${variant}`} viewBox="0 0 222 40" role="img" aria-label="Account balance trend">
+    <svg className={`sparkline ${variant}`} viewBox="0 0 222 40" role="img" aria-label="Demo account balance trend">
       <path d={path} fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
     </svg>
   );
@@ -50,7 +50,7 @@ function BankCard({ pink = false }: { pink?: boolean }) {
       <div className="cardPlanet" aria-hidden="true"><span /></div>
       <div className="cardName">{pink ? 'Cosmic Pink' : 'Nebula Blue'}</div>
       <div className="cardNumber">•••• {pink ? '8756' : '4532'}</div>
-      <div className="cardFooter"><span>DEBIT CARD</span>{pink ? <span className="mastercard"><i /><i /></span> : <strong>VISA</strong>}</div>
+      <div className="cardFooter"><span>DEMO CARD</span><strong>PREVIEW</strong></div>
     </article>
   );
 }
@@ -72,6 +72,7 @@ export default function Home() {
         <div className="sidebarSpacer" />
         <div className="sideUtilities">
           <a href="#security"><span className="navIcon">⚙</span><span>Settings</span></a>
+          <a href="/compliance"><span className="navIcon">✓</span><span>Compliance Center</span></a>
           <a href="#help"><span className="navIcon">?</span><span>Help Center</span></a>
           <div className="sideRule" />
           <a href="#logout"><span className="navIcon">↪</span><span>Log Out</span></a>
@@ -102,13 +103,20 @@ export default function Home() {
           </div>
         </header>
 
+        <a className="complianceRibbon" href="/compliance">
+          <span>PRE-LAUNCH</span>
+          <b>Financial technology demo — not a chartered bank</b>
+          <small>Demo balances, cards, transfers, and crypto are simulated. Real financial activity stays locked behind approved partner + compliance gates.</small>
+          <i>Compliance Center →</i>
+        </a>
+
         <div className="contentGrid">
           <section className="mainColumn">
             <article className="balanceHero">
               <div className="balanceCopy">
-                <div className="balanceLabel">Total Balance <span>◉</span></div>
+                <div className="balanceLabel">Demo Balance <span>◉</span></div>
                 <div className="balanceAmount">$24,350.72</div>
-                <div className="balanceGrowth">↑ <b>12.4%</b> <span>vs last month</span></div>
+                <div className="balanceGrowth">↑ <b>12.4%</b> <span>sample trend</span></div>
               </div>
               <div className="heroStars">✦</div>
               <div className="heroPlanet big"><span /></div>
@@ -120,17 +128,17 @@ export default function Home() {
 
             <div className="accountGrid" id="accounts">
               <article className="accountCard">
-                <div className="accountTitle"><span className="accountIcon blue">▤</span><span>Checking Account<strong>$15,230.45</strong><small>•••• 4532</small></span><button type="button">›</button></div>
+                <div className="accountTitle"><span className="accountIcon blue">▤</span><span>Demo Checking<strong>$15,230.45</strong><small>•••• 4532</small></span><button type="button">›</button></div>
                 <Sparkline variant="blue" />
               </article>
               <article className="accountCard">
-                <div className="accountTitle"><span className="accountIcon teal">▣</span><span>Savings Account<strong>$9,120.27</strong><small>•••• 8756</small></span><button type="button">›</button></div>
+                <div className="accountTitle"><span className="accountIcon teal">▣</span><span>Demo Savings<strong>$9,120.27</strong><small>•••• 8756</small></span><button type="button">›</button></div>
                 <Sparkline variant="teal" />
               </article>
             </div>
 
             <section className="activityCard">
-              <div className="sectionHeading"><h2>Recent Activity</h2><a href="#activity">View All</a></div>
+              <div className="sectionHeading"><h2>Sample Activity</h2><a href="#activity">View All</a></div>
               <div className="activityList" id="activity">
                 {activity.map((item) => (
                   <div className="activityRow" key={item.name}>
@@ -145,14 +153,14 @@ export default function Home() {
 
           <aside className="rightColumn">
             <section className="cardsPanel" id="cards">
-              <div className="sectionHeading"><h2>My Cards</h2><a href="#cards">View All</a></div>
+              <div className="sectionHeading"><h2>Card Previews</h2><a href="/compliance">Program Status</a></div>
               <BankCard />
               <BankCard pink />
             </section>
 
             <section className="insightsPanel" id="insights">
               <div className="sectionHeading"><h2>Spending Insights</h2><button type="button">This Month⌄</button></div>
-              <div className="insightsTotal"><strong>$1,586.34</strong><span>Total Spent <i>↓ 8.7% vs last month</i></span></div>
+              <div className="insightsTotal"><strong>$1,586.34</strong><span>Sample Spent <i>↓ 8.7% vs last month</i></span></div>
               <div className="insightsBody">
                 <div className="legend">
                   <div><span className="dot purple" />Shopping <b>$623.10&nbsp;&nbsp; 39%</b></div>
@@ -161,7 +169,7 @@ export default function Home() {
                   <div><span className="dot coral" />Entertainment <b>$198.50&nbsp;&nbsp; 12%</b></div>
                   <div><span className="dot blue" />Bills &amp; Utilities <b>$241.54&nbsp;&nbsp; 16%</b></div>
                 </div>
-                <div className="donut" aria-label="Spending breakdown chart"><span>•ᴗ•</span></div>
+                <div className="donut" aria-label="Sample spending breakdown chart"><span>•ᴗ•</span></div>
               </div>
               <button className="breakdownButton" type="button"><span>▥</span> See Full Breakdown <b>›</b></button>
             </section>
@@ -177,10 +185,11 @@ export default function Home() {
                 <div><span className="securityIcon">⌁</span><span><b>Protected sessions</b><small>Signed live-banking authentication and short-lived requests.</small></span></div>
                 <div><span className="securityIcon">▣</span><span><b>Masked card data</b><small>Full card number, CVV and PIN are never shown in this dashboard.</small></span></div>
                 <div><span className="securityIcon">◎</span><span><b>Privacy-minded chat</b><small>Orbit never asks for passwords, PINs, CVVs or one-time codes.</small></span></div>
-                <div><span className="securityIcon">◈</span><span><b>Live-money guard</b><small>Real banking and crypto remain off until approved providers are configured.</small></span></div>
+                <div><span className="securityIcon">◈</span><span><b>Live-money guard</b><small>Real banking and crypto remain off until approved providers, compliance review, and disclosures are configured.</small></span></div>
               </div>
               <a className="privacyCenterLink" href="/privacy">Open Privacy Center <span>›</span></a>
-              <p className="securityFootnote">Demo balances and trades are simulated. Real product disclosures must match the approved partner programs before launch.</p>
+              <a className="privacyCenterLink" href="/compliance">Open Compliance Center <span>›</span></a>
+              <p className="securityFootnote">Demo balances, account activity, cards and trades are simulated. Production disclosures must match the approved partner programs before launch.</p>
             </section>
           </aside>
         </div>
