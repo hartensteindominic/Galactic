@@ -144,15 +144,16 @@ function requirePartnerConfig(requireWrites = false) {
 }
 
 async function partnerRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const config = requirePartnerConfig(Boolean(init && init.method && init.method !== 'GET'));
+  const method = (init?.method || 'GET').toUpperCase();
+  const config = requirePartnerConfig(method !== 'GET' && method !== 'HEAD');
+  const headers = new Headers(init?.headers);
+  headers.set('Authorization', `Bearer ${config.apiKey}`);
+  headers.set('Content-Type', 'application/json');
+  headers.set('X-Galactic-Program-Id', config.programId);
+
   const response = await fetch(`${config.gatewayBaseUrl}${path}`, {
     ...init,
-    headers: {
-      'Authorization': `Bearer ${config.apiKey}`,
-      'Content-Type': 'application/json',
-      'X-Galactic-Program-Id': config.programId,
-      ...(init?.headers || {})
-    },
+    headers,
     cache: 'no-store'
   });
 
@@ -174,7 +175,12 @@ export async function createTransfer(input: {
   recipient: string;
   amount: number;
   memo?: string;
+  idempotencyKey?: string;
 }) {
+  if (!input.fromAccountId.trim()) {
+    throw new BankingError(400, 'SOURCE_ACCOUNT_REQUIRED', 'A source account is required.');
+  }
+
   if (!Number.isFinite(input.amount) || input.amount <= 0 || input.amount > 10000) {
     throw new BankingError(400, 'INVALID_AMOUNT', 'Transfer amount must be greater than $0 and no more than $10,000.');
   }
@@ -193,9 +199,20 @@ export async function createTransfer(input: {
     };
   }
 
+  if (!input.idempotencyKey) {
+    throw new BankingError(400, 'IDEMPOTENCY_REQUIRED', 'A unique idempotency key is required for live transfers.');
+  }
+
   return partnerRequest('/v1/transfers', {
     method: 'POST',
-    body: JSON.stringify(input)
+    headers: { 'Idempotency-Key': input.idempotencyKey },
+    body: JSON.stringify({
+      userId: input.userId,
+      fromAccountId: input.fromAccountId,
+      recipient: input.recipient.trim(),
+      amount: Number(input.amount.toFixed(2)),
+      memo: input.memo
+    })
   });
 }
 
