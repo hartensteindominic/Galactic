@@ -1,3 +1,5 @@
+import { BankingActions } from './banking-actions';
+
 const navItems = [
   ['⌂', 'Dashboard'],
   ['▣', 'Accounts'],
@@ -112,12 +114,7 @@ export default function Home() {
               <div className="heroHorizon" />
             </article>
 
-            <div className="quickActions" id="transfer">
-              <button type="button"><span className="quickIcon send">➤</span><span><b>Transfer</b><small>Send money</small></span></button>
-              <button type="button"><span className="quickIcon add">＋</span><span><b>Add Money</b><small>Deposit funds</small></span></button>
-              <button type="button"><span className="quickIcon freeze">❄</span><span><b>Freeze Card</b><small>Temporarily lock</small></span></button>
-              <button type="button"><span className="quickIcon card">▣</span><span><b>View Card</b><small>See card details</small></span></button>
-            </div>
+            <BankingActions />
 
             <div className="accountGrid" id="accounts">
               <article className="accountCard">
