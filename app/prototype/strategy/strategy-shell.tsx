@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
+import { BusinessThesisPanel } from './business-thesis-panel';
 import { StrategyConsole } from './strategy-console';
 
 type SessionState = 'checking' | 'open-memory-demo' | 'authenticated' | 'login-required' | 'configuration-locked';
@@ -132,13 +133,16 @@ export function StrategyShell({
     }
   }
 
-  const console = (
-    <StrategyConsole
-      tenantKey={tenantKey}
-      brandName={brandName}
-      charter={charter}
-      economicsControls={economicsControls}
-    />
+  const workspace = (
+    <>
+      <StrategyConsole
+        tenantKey={tenantKey}
+        brandName={brandName}
+        charter={charter}
+        economicsControls={economicsControls}
+      />
+      <BusinessThesisPanel tenantKey={tenantKey} />
+    </>
   );
 
   if (state === 'authenticated') {
@@ -152,12 +156,12 @@ export function StrategyShell({
         >
           Sign out
         </button>
-        {console}
+        {workspace}
       </div>
     );
   }
 
-  if (state === 'open-memory-demo') return console;
+  if (state === 'open-memory-demo') return workspace;
 
   return (
     <main className="min-h-screen bg-[#f5f7fb] px-4 py-8 text-slate-950 sm:px-6">
@@ -168,7 +172,7 @@ export function StrategyShell({
         </div>
         <h1 className="m-0 mt-5 text-3xl font-black tracking-[-0.05em]">{brandName} strategy lab</h1>
         <p className="m-0 mt-3 text-sm leading-6 text-slate-500">
-          Charter-readiness and scenario economics are restricted behind the same prototype operator session as operational evidence.
+          Charter-readiness, thesis drafting, and scenario economics are restricted behind the same prototype operator session as operational evidence.
         </p>
 
         {state === 'checking' ? <p className="mt-6 text-sm font-semibold text-slate-600">Checking operator session…</p> : null}
@@ -203,7 +207,7 @@ export function StrategyShell({
         {message && state === 'login-required' ? <div className="mt-4 text-sm font-semibold text-rose-700" role="status">{message}</div> : null}
 
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">
-          This prototype session is not production workforce identity or a regulatory approval workflow. Scenario outputs are not persisted and do not become approved forecasts, sponsor submissions, or charter-application materials merely because they were calculated here.
+          This prototype session is not production workforce identity or a regulatory approval workflow. Thesis/economics outputs are not persisted and do not become validated market evidence, approved forecasts, sponsor submissions, or charter-application materials merely because they were produced here.
         </div>
 
         <a href={`/prototype?tenant=${encodeURIComponent(tenantKey)}`} className="mt-5 inline-block text-sm font-black text-indigo-700 no-underline">← Back to banking demo</a>
