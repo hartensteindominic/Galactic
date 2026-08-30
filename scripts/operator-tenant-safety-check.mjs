@@ -20,6 +20,8 @@ const required = [
   ['lib/prototype-operations.ts', "actor_type: 'operator'", 'operator audit evidence must identify the actor type without storing credentials'],
   ['lib/prototype-operations.ts', 'operatorAuditEvidenceAvailable: databaseConfigured', 'operations posture must expose operator-audit persistence availability'],
   ['lib/prototype-operations.ts', "simulation_only: true", 'operator audit metadata must retain simulation-only context'],
+  ['scripts/operator-audit-runtime-check.mjs', 'Operator audit runtime behavior checks passed.', 'operator audit writer must have executable persistence/data-minimization coverage'],
+  ['package.json', 'scripts/operator-audit-runtime-check.mjs', 'operator audit runtime coverage must run in the CI safety suite'],
   ['lib/prototype-readiness.ts', 'productionOperatorIdentityReady: false', 'readiness must not claim production operator identity readiness'],
   ['lib/request-security.ts', "'REQUEST_BODY_TOO_LARGE'", 'bounded JSON reader must fail closed on oversized bodies'],
   ['lib/request-security.ts', "'INVALID_JSON'", 'bounded JSON reader must fail closed on malformed JSON'],
