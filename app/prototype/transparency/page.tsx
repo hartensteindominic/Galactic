@@ -55,6 +55,7 @@ export default async function PrototypeTransparencyPage({
           <div className="mb-4 flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black tracking-[0.14em]">SIMULATION ONLY</span>
             <span className="rounded-full bg-emerald-300/15 px-3 py-1 text-xs font-bold text-emerald-100">No hidden live-bank claims</span>
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-slate-100">Terms source: {transparency.customerTermsVersion}</span>
           </div>
           <h1 className="max-w-3xl text-3xl font-black tracking-tight sm:text-5xl">Know the fee, limit, eligibility, and real status before you tap.</h1>
           <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-200 sm:text-base">
@@ -95,11 +96,32 @@ export default async function PrototypeTransparencyPage({
           ))}
         </section>
 
-        <section className="mt-6 rounded-[1.6rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
-          <p className="font-black">Why this matters</p>
-          <p className="mt-1">
-            {transparency.disclosure} Every future live fee, rate, limit, insurance statement, eligibility rule, and partner disclosure must come from approved program terms before it appears as a customer promise.
-          </p>
+        <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_1.4fr]">
+          <article className="rounded-[1.6rem] border border-slate-200 bg-white p-5 shadow-sm">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-400">Terms control</p>
+            <h2 className="mt-1 text-xl font-black">Versioned prototype wording</h2>
+            <dl className="mt-4 grid gap-3 text-sm">
+              <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-3">
+                <dt className="font-bold text-slate-500">Source version</dt>
+                <dd className="font-black">{transparency.customerTermsVersion}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-3">
+                <dt className="font-bold text-slate-500">Source status</dt>
+                <dd className="font-black">{transparency.customerTermsStatus}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4 rounded-2xl bg-slate-50 p-3">
+                <dt className="font-bold text-slate-500">Approved for live use</dt>
+                <dd className="font-black">{transparency.liveCustomerTermsApproved ? 'Yes' : 'No'}</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article className="rounded-[1.6rem] border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-950">
+            <p className="font-black">Why this matters</p>
+            <p className="mt-1">
+              {transparency.disclosure} A future live product must use a separately approved, versioned source before any fee, rate, limit, insurance statement, eligibility rule, partner disclosure, timing promise, or other changing customer term appears as a customer promise.
+            </p>
+          </article>
         </section>
       </div>
     </main>
