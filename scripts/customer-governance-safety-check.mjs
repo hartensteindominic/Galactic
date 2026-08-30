@@ -47,7 +47,7 @@ const required = [
   ['lib/prototype-trust.ts', 'approvedLiveCustomerTerms: false', 'Trust Center must explicitly report live terms unapproved'],
   ['lib/prototype-trust.ts', 'sponsorBankProgramApprovalComplete: false', 'Trust Center must explicitly report sponsor-bank approval incomplete'],
   ['lib/prototype-trust.ts', 'legalComplianceApplicabilityReviewComplete: false', 'Trust Center must explicitly report legal/compliance applicability review incomplete'],
-  ['lib/prototype-trust.ts', 'What this', 'Trust Center source must describe limitations rather than only controls'],
+  ['lib/prototype-trust.ts', 'limitation:', 'Trust Center controls must carry an explicit limitation'],
   ['app/prototype/trust/page.tsx', 'SIMULATION ONLY', 'Trust Center UI must visibly disclose simulation-only status'],
   ['app/prototype/trust/page.tsx', 'What this does not prove', 'Trust Center UI must show limitations for implemented controls'],
   ['app/prototype/trust/page.tsx', 'Production DLP', 'Trust Center UI must show production DLP gap'],
