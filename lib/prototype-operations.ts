@@ -69,6 +69,12 @@ type AuditEventRow = {
 };
 
 type TenantRow = { id: string };
+type ProviderReplayRow = {
+  provider_event_id: string;
+  event_type: string;
+  payload_digest: string;
+  status: 'received' | 'processed' | 'ignored' | 'failed';
+};
 
 export type PrototypeOperatorAuditAction =
   | 'operator.session_started'
@@ -99,8 +105,10 @@ async function supabaseRequest<T>(path: string, init?: RequestInit): Promise<T> 
   });
 
   if (!response.ok) {
-    const detail = await response.text().catch(() => '');
-    console.error('Prototype operations database request failed', response.status, detail.slice(0, 300));
+    console.error('Prototype operations database request failed', {
+      status: response.status,
+      responseBodyLogged: false
+    });
     throw new BankingError(502, 'PROTOTYPE_OPERATIONS_ERROR', 'Prototype operations are temporarily unavailable.');
   }
 
@@ -304,17 +312,21 @@ export async function recordPrototypeProviderEvent(input: {
   if (!supabaseConfig().configured) {
     throw new BankingError(503, 'PERSISTENT_LEDGER_REQUIRED', 'Configure the prototype Supabase ledger before using the webhook inbox.');
   }
-  if (!input.providerEventId.trim() || input.providerEventId.length > 180) {
+
+  const providerEventId = input.providerEventId.trim();
+  const eventType = input.eventType.trim();
+  if (!providerEventId || providerEventId.length > 180) {
     throw new BankingError(400, 'INVALID_EVENT_ID', 'A valid sandbox event ID is required.');
   }
-  if (!input.eventType.trim() || input.eventType.length > 120) {
+  if (!eventType || eventType.length > 120) {
     throw new BankingError(400, 'INVALID_EVENT_TYPE', 'A valid sandbox event type is required.');
   }
 
   const tenant = await tenantRow(input.tenantKey);
 
   const serialized = JSON.stringify(input.payload ?? null);
-  if (serialized.length > 100000) {
+  const payloadBytes = Buffer.byteLength(serialized, 'utf8');
+  if (payloadBytes > 100000) {
     throw new BankingError(413, 'EVENT_TOO_LARGE', 'Sandbox webhook payload is too large.');
   }
   const payloadDigest = createHash('sha256').update(serialized).digest('hex');
@@ -327,8 +339,8 @@ export async function recordPrototypeProviderEvent(input: {
       body: JSON.stringify({
         tenant_id: tenant.id,
         provider: 'prototype_sandbox',
-        provider_event_id: input.providerEventId.trim(),
-        event_type: input.eventType.trim(),
+        provider_event_id: providerEventId,
+        event_type: eventType,
         status: 'received',
         payload_digest: payloadDigest,
         metadata: { simulation_only: true }
@@ -337,10 +349,29 @@ export async function recordPrototypeProviderEvent(input: {
   );
 
   if (rows.length === 0) {
+    const existing = await supabaseRequest<ProviderReplayRow[]>(
+      `/rest/v1/fintech_provider_events?select=provider_event_id,event_type,payload_digest,status&tenant_id=eq.${tenant.id}&provider=eq.prototype_sandbox&provider_event_id=eq.${encodeURIComponent(providerEventId)}&limit=1`
+    );
+    const replay = existing[0];
+    if (!replay) {
+      throw new BankingError(
+        409,
+        'WEBHOOK_REPLAY_STATE_UNKNOWN',
+        'Sandbox webhook replay could not be matched to authoritative stored event evidence.'
+      );
+    }
+    if (replay.event_type !== eventType || replay.payload_digest !== payloadDigest) {
+      throw new BankingError(
+        409,
+        'WEBHOOK_REPLAY_CONFLICT',
+        'Sandbox webhook event ID was reused with different event content.'
+      );
+    }
+
     return {
       duplicate: true,
-      providerEventId: input.providerEventId.trim(),
-      message: 'Duplicate sandbox event ignored. No real provider action was taken.'
+      providerEventId,
+      message: 'Exact duplicate sandbox event ignored. No real provider action was taken.'
     };
   }
 
