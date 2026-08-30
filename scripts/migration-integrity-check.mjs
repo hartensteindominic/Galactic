@@ -47,4 +47,29 @@ for (let index = 0; index < manifest.migrations.length; index += 1) {
   );
 }
 
+const integritySource = fs.readFileSync('lib/prototype-migration-integrity.ts', 'utf8');
+assert.ok(integritySource.includes('repositoryManifestAvailable: true'));
+assert.ok(integritySource.includes('appendOnlyFingerprintEnforcedInCi: true'));
+assert.ok(integritySource.includes('targetDatabaseHistoryVerificationImplemented: false'));
+assert.ok(integritySource.includes('externalExecutionVerified: false'));
+assert.ok(integritySource.includes('restoreExerciseVerified: false'));
+assert.ok(integritySource.includes('productionApprovalVerified: false'));
+
+const readinessSource = fs.readFileSync('lib/prototype-readiness.ts', 'utf8');
+assert.ok(readinessSource.includes('repositoryMigrationManifestAvailable: migrationIntegrity.repositoryManifestAvailable'));
+assert.ok(readinessSource.includes('repositoryMigrationFingerprintsEnforced: migrationIntegrity.appendOnlyFingerprintEnforcedInCi'));
+assert.ok(readinessSource.includes('targetDatabaseMigrationHistoryVerified: false'));
+assert.ok(readinessSource.includes('prototypeMigrationsExternalExecutionVerified: false'));
+assert.ok(readinessSource.includes('migrationRecoveryExerciseVerified: false'));
+
+const trustSource = fs.readFileSync('lib/prototype-trust.ts', 'utf8');
+assert.ok(trustSource.includes("id: 'migration-integrity'"));
+assert.ok(trustSource.includes('targetDatabaseMigrationHistoryVerified: false'));
+assert.ok(trustSource.includes('prototypeMigrationsExternalExecutionVerified: false'));
+assert.ok(trustSource.includes('Repository fingerprints do not prove target-database migration history'));
+
+const statusRoute = fs.readFileSync('app/api/prototype/status/route.ts', 'utf8');
+assert.ok(statusRoute.includes('migrationIntegrity: prototypeMigrationIntegrityStatus()'));
+assert.ok(statusRoute.includes('Repository migration fingerprints do not prove Supabase execution or production approval.'));
+
 console.log('Migration ordering, append-only fingerprint, and execution/approval-boundary checks passed.');
