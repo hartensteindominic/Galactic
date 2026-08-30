@@ -71,6 +71,8 @@ The following are disabled in the prototype and must remain fail-closed unless a
 6. **Money movement**
    - originate, release, retry with a new intent, cancel, reverse, or unfreeze real money movement solely because an AI system requested it.
 
+This does **not** mean automation can never assist a regulated workflow. Approved screening, anomaly detection, case summarization, prioritization, and decision-support tools may be appropriate in a future program when legal requirements, confidentiality, validation, governance, auditability, and human/authorized review requirements are satisfied. Assistance is different from ungoverned autonomous authority.
+
 ## 4. Human escalation requirements
 
 Orbit must escalate rather than claim resolution when the customer raises or appears to raise:
@@ -115,6 +117,10 @@ Do not send to a third-party AI/LLM unless all applicable privacy/security/vendo
 ### Secrets and authentication material
 
 Passwords, API secrets, private keys, PINs, CVVs, recovery codes, OTPs, and equivalent credentials must never be placed in AI prompts, support chat, source, public issues, or logs.
+
+### SAR information
+
+A SAR and information that would reveal the existence of a SAR are subject to strict confidentiality restrictions. Customer-facing automation must never tell a person involved in a transaction that a SAR has or has not been filed, is being considered, or exists. Any future internal tool that touches SAR information must be specifically approved for that purpose and designed around applicable confidentiality/access controls.
 
 ## 6. AI/vendor inventory
 
@@ -186,6 +192,22 @@ Reference: https://www.consumerfinance.gov/compliance/circulars/circular-2022-03
 The CFPB's 2023 chatbot issue spotlight warns that deficient chatbots can provide inaccurate information, fail to recognize disputes/rights, create privacy/security risks, and block timely human assistance. Galactic therefore treats human escalation as a control, not an optional convenience.
 
 Reference: https://www.consumerfinance.gov/data-research/research-reports/chatbots-in-consumer-finance/chatbots-in-consumer-finance/
+
+### SAR confidentiality
+
+FinCEN guidance and rules emphasize that SARs and information revealing their existence are confidential, subject to limited authorized disclosure rules. Galactic therefore treats SAR existence/nonexistence as prohibited customer-facing chatbot content.
+
+References:
+- https://www.fincen.gov/resources/advisories/fincen-advisory-fin-2010-a014
+- https://www.fincen.gov/disclosure-prohibited
+
+### Sanctions compliance
+
+OFAC's Framework for Compliance Commitments describes a risk-based sanctions compliance approach built around management commitment, risk assessment, internal controls, testing/auditing, and training. OFAC also recognizes automated/commercial screening tools as potentially appropriate depending on risk and business context. Galactic should therefore design sanctions automation as a governed control within a tailored program—not as proof that a chatbot or black-box model can independently make final compliance judgments.
+
+References:
+- https://ofac.treasury.gov/recent-actions/20190502_33
+- https://ofac.treasury.gov/faqs/560
 
 ### Model risk guidance — current 2026 status
 
