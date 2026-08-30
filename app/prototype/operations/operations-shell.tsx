@@ -10,9 +10,10 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
   const [secret, setSecret] = useState('');
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
+  const sessionUrl = `/api/prototype/operator/session?tenant=${encodeURIComponent(tenantKey)}`;
 
   async function checkSession() {
-    const response = await fetch('/api/prototype/operator/session', { cache: 'no-store' });
+    const response = await fetch(sessionUrl, { cache: 'no-store' });
     const data = await response.json();
     if (response.ok && data?.mode === 'open-memory-demo') {
       setState('open-memory-demo');
@@ -35,7 +36,7 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
       setState('login-required');
       setMessage('Operator session could not be verified.');
     });
-  }, []);
+  }, [sessionUrl]);
 
   async function signIn(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -44,7 +45,7 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
     setBusy(true);
     setMessage('');
     try {
-      const response = await fetch('/api/prototype/operator/session', {
+      const response = await fetch(sessionUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ accessSecret })
@@ -63,7 +64,7 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
   async function signOut() {
     setBusy(true);
     try {
-      await fetch('/api/prototype/operator/session', { method: 'DELETE' });
+      await fetch(sessionUrl, { method: 'DELETE' });
     } finally {
       setMessage('Operator session closed.');
       setState('login-required');
@@ -135,7 +136,7 @@ export function OperationsShell({ tenantKey, brandName }: { tenantKey: string; b
         {message && state === 'login-required' ? <div className="mt-4 text-sm font-semibold text-rose-700" role="status">{message}</div> : null}
 
         <div className="mt-6 rounded-2xl bg-slate-50 p-4 text-xs leading-5 text-slate-500">
-          This is a prototype access control, not production workforce identity, phishing-resistant MFA, SSO, privileged-access management, or dual control. Production operator access remains a separate release gate.
+          This is a prototype access control, not production workforce identity, phishing-resistant MFA, SSO, privileged-access management, or dual control. Production operator access remains a separate release gate. Persistent sign-in/sign-out audit evidence is sanitized and never stores the submitted operator secret.
         </div>
 
         <a href={`/prototype?tenant=${encodeURIComponent(tenantKey)}`} className="mt-5 inline-block text-sm font-black text-indigo-700 no-underline">← Back to banking demo</a>
