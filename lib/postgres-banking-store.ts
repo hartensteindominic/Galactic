@@ -210,6 +210,28 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
     return result.rows[0] ? mapEvent(result.rows[0]) : null;
   }
 
+  async findProcessedEventByResource(input: {
+    provider: string;
+    environment: DurableBankingEnvironment;
+    type: CanonicalBankingEvent['type'];
+    resourceId: string;
+  }) {
+    const result = await this.executor.query(
+      `SELECT event_id, provider, environment, raw_provider_event_id, canonical_event,
+              received_at, processed_at, status, failure_code
+         FROM banking_provider_events
+        WHERE provider = $1
+          AND environment = $2
+          AND status = 'processed'
+          AND canonical_event ->> 'type' = $3
+          AND canonical_event ->> 'resourceId' = $4
+        ORDER BY processed_at DESC
+        LIMIT 1`,
+      [input.provider, input.environment, input.type, input.resourceId]
+    );
+    return result.rows[0] ? mapEvent(result.rows[0]) : null;
+  }
+
   async markEventProcessed(input: { eventId: string; processedAt: string }) {
     const result = await this.executor.query(
       `UPDATE banking_provider_events
@@ -400,6 +422,15 @@ export class PostgresBankingStore implements BankingPersistenceStore {
 
   getEvent(eventId: string) {
     return this.operations.getEvent(eventId);
+  }
+
+  findProcessedEventByResource(input: {
+    provider: string;
+    environment: DurableBankingEnvironment;
+    type: CanonicalBankingEvent['type'];
+    resourceId: string;
+  }) {
+    return this.operations.findProcessedEventByResource(input);
   }
 
   markEventProcessed(input: { eventId: string; processedAt: string }) {
