@@ -1,5 +1,6 @@
 import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
 import { businessModelThesisControlStatus } from '../../../../lib/business-model-thesis';
+import { capitalPlanningControlStatus } from '../../../../lib/capital-planning';
 import { charterEvidenceIndexStatus } from '../../../../lib/charter-evidence-index';
 import { charterReadinessStatus } from '../../../../lib/charter-readiness';
 import { plaidSandboxStatus } from '../../../../lib/plaid-sandbox';
@@ -31,6 +32,7 @@ export async function GET(request: Request) {
       charterEvidence: charterEvidenceIndexStatus(),
       businessThesis: businessModelThesisControlStatus(),
       unitEconomics: unitEconomicsControlStatus(),
+      capitalPlanning: capitalPlanningControlStatus(),
       ledger: prototypeLedgerStatus(),
       bankLink: plaidSandboxStatus(),
       operations: prototypeOperationsStatus(),
@@ -40,7 +42,7 @@ export async function GET(request: Request) {
       incidentCommunication: prototypeIncidentCommunicationControlStatus(),
       liveBankingEnabled: false,
       mode: 'prototype',
-      disclosure: 'White-label prototype only. The future-chartered-bank field is a long-term strategic goal, not a charter application, charter approval, deposit-insurance approval, capital approval, opening authorization, or permission to market Galactic Trust as a bank. The charter evidence index contains no verified regulatory claims and software cannot authenticate authority records or promote regulatory status. The business-thesis workbench can create only a structurally complete draft; it ships with no default niche or revenue model and does not validate customer demand, distribution, revenue, sponsor acceptance, or charter feasibility. The unit-economics engine is scenario-only, contains no industry-default assumptions, and is not an approved forecast, sponsor submission, or charter financial plan. The customer/problem/distribution/revenue thesis and bank-level economics remain unvalidated. Repository migration fingerprints and read-only schema capability observation do not prove Supabase migration execution/order, data correctness, recovery, or production approval. Evidence recency does not prove continuous monitoring or production health, and the incident-communication model is not a production status page or exercised customer-communications program. Real deposits, payments, cards, KYC/AML, production provider webhooks, and banking rails remain disabled until an approved regulated program is configured.'
+      disclosure: 'White-label prototype only. The future-chartered-bank field is a long-term strategic goal, not a charter application, charter approval, deposit-insurance approval, capital approval, opening authorization, or permission to market Galactic Trust as a bank. The charter evidence index contains no verified regulatory claims and software cannot authenticate authority records or promote regulatory status. The business-thesis workbench can create only a structurally complete draft; it ships with no default niche or revenue model and does not validate customer demand, distribution, revenue, sponsor acceptance, or charter feasibility. The unit-economics engine is scenario-only, contains no industry-default assumptions, and is not an approved forecast, sponsor submission, or charter financial plan. The capital-planning workbench contains no default charter-capital amount: its target is an operator-entered planning assumption, not a regulatory capital requirement or software determination of capital adequacy, source-of-funds authenticity, or charter readiness. The customer/problem/distribution/revenue thesis, bank-level economics, and capital plan remain unvalidated. Repository migration fingerprints and read-only schema capability observation do not prove Supabase migration execution/order, data correctness, recovery, or production approval. Evidence recency does not prove continuous monitoring or production health, and the incident-communication model is not a production status page or exercised customer-communications program. Real deposits, payments, cards, KYC/AML, production provider webhooks, and banking rails remain disabled until an approved regulated program is configured.'
     });
   } catch (error) {
     return bankingErrorResponse(error);
