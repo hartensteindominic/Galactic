@@ -8,7 +8,7 @@ function normalizedHost(value: string | null | undefined) {
 function isPreviewOverrideHost(host: string) {
   if (!host) return false;
   if (host === 'localhost' || host === '127.0.0.1' || host === '::1') return true;
-  return process.env.VERCEL_ENV !== 'production' && host.endsWith('.vercel.app');
+  return process.env.VERCEL_ENV === 'preview' && host.endsWith('.vercel.app');
 }
 
 function brandForDomain(host: string): WhiteLabelBrand | null {
@@ -24,13 +24,23 @@ function brandForKey(key: string | null | undefined): WhiteLabelBrand | null {
   return configuredBrands().find((brand) => brand.key.toLowerCase() === normalized) || null;
 }
 
+function requireKnownRequestedBrand(key: string | null | undefined) {
+  const requested = key?.trim() || '';
+  if (!requested) return null;
+  const brand = brandForKey(requested);
+  if (!brand) {
+    throw new BankingError(404, 'UNKNOWN_TENANT', 'The requested tenant is not configured.');
+  }
+  return brand;
+}
+
 export function resolveRequestBrand(input: {
   host?: string | null;
   requestedKey?: string | null;
 }): WhiteLabelBrand {
   const host = normalizedHost(input.host);
   const hostBrand = brandForDomain(host);
-  const requestedBrand = brandForKey(input.requestedKey);
+  const requestedBrand = requireKnownRequestedBrand(input.requestedKey);
 
   if (hostBrand) {
     if (requestedBrand && requestedBrand.key !== hostBrand.key) {
@@ -58,10 +68,20 @@ export function resolveRequestBrand(input: {
   return resolveBrand({ host });
 }
 
+export function resolveAuthenticatedServerTenant(requestedKey: string | null | undefined): WhiteLabelBrand {
+  if (!requestedKey?.trim()) {
+    throw new BankingError(400, 'TENANT_REQUIRED', 'An explicit tenant is required for this authenticated server-to-server route.');
+  }
+  return requireKnownRequestedBrand(requestedKey) as WhiteLabelBrand;
+}
+
 export function tenantBoundaryStatus() {
   return {
     productionHostBinding: true,
     previewTenantOverrideAllowed: true,
-    crossTenantHostOverrideRejected: true
+    previewOverrideRequiresExplicitVercelPreviewEnvironment: true,
+    crossTenantHostOverrideRejected: true,
+    unknownTenantRejected: true,
+    authenticatedServerRoutesRequireExplicitTenant: true
   } as const;
 }
