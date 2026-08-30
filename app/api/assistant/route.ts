@@ -4,6 +4,7 @@ import { bankingErrorResponse } from '../../../lib/banking-http';
 import { getPrototypeCustomerTerms } from '../../../lib/customer-terms-control';
 import { readJsonBodyLimited, requireJsonRequest, requireTrustedOrigin, safeClientIp } from '../../../lib/request-security';
 import { supportCaseControlStatus } from '../../../lib/support-case-state';
+import { detectSupportSensitiveData, supportSensitiveDataControlStatus } from '../../../lib/support-sensitive-data';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,9 +53,28 @@ export async function POST(request: Request) {
       }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
     }
 
+    const sensitiveCategories = detectSupportSensitiveData(message);
+    if (sensitiveCategories.length > 0) {
+      return NextResponse.json({
+        ok: false,
+        error: {
+          code: 'SENSITIVE_DATA_REJECTED',
+          message: 'Remove sensitive financial, identity, authentication, or credential data and ask again using masked or general details.',
+          detectedCategories: sensitiveCategories
+        }
+      }, {
+        status: 400,
+        headers: {
+          'Cache-Control': 'no-store',
+          'X-Robots-Tag': 'noindex, nofollow'
+        }
+      });
+    }
+
     const reply = answerGalacticQuestion(message);
     const prototypeTerms = getPrototypeCustomerTerms();
     const supportCases = supportCaseControlStatus();
+    const sensitiveDataControls = supportSensitiveDataControlStatus();
 
     return NextResponse.json({
       ok: true,
@@ -67,6 +87,8 @@ export async function POST(request: Request) {
         productionHumanCaseManagementConnected: supportCases.approvedProductionCaseSystemConnected,
         automationMayResolveSupportCase: supportCases.automationMayResolveCase,
         automationMayCloseSupportCase: supportCases.automationMayCloseCase,
+        sensitiveDataPatternDetectionEnabled: sensitiveDataControls.clientPreflightDetectionAvailable,
+        sensitiveDataDetectionIsProductionDlp: false,
         prototypeTermsVersion: prototypeTerms.version,
         liveCustomerTermsApproved: prototypeTerms.liveTermsApproved
       }
