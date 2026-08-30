@@ -24,6 +24,9 @@ const required = [
   ['app/api/prototype/sponsor-diligence/route.ts', 'submitted: false', 'sponsor diligence endpoint must never claim submission'],
   ['app/api/prototype/status/route.ts', 'sponsorDiligence: sponsorDiligencePackStatus()', 'status API must expose sponsor diligence posture'],
   ['app/api/prototype/status/route.ts', 'no selected sponsor bank or BaaS provider', 'status API must disclose no sponsor selection'],
+  ['lib/prototype-trust.ts', "id: 'sponsor-diligence-pack'", 'Trust Center must expose sponsor diligence evidence pack'],
+  ['lib/prototype-trust.ts', 'No sponsor bank or BaaS provider is selected by this pack.', 'Trust Center must disclose no sponsor/provider selection'],
+  ['lib/prototype-trust.ts', 'sponsorDiligenceReadyForLiveProgram: sponsorDiligence.readyForLiveProgram', 'Trust Center must expose diligence live-program readiness as false'],
   ['app/prototype/strategy/page.tsx', 'sponsorDiligence={sponsorDiligencePackStatus()}', 'Strategy page must pass sponsor diligence posture into protected workspace'],
   ['app/prototype/strategy/strategy-shell.tsx', '<SponsorDiligencePanel tenantKey={tenantKey} status={sponsorDiligence} />', 'Strategy shell must render sponsor diligence inside protected workspace'],
   ['app/prototype/strategy/sponsor-diligence-panel.tsx', 'No selected sponsor/program:', 'diligence UI must expose missing sponsor/program'],
@@ -61,4 +64,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Sponsor diligence source/evidence, human-attestation, status/Strategy UI, operator/request, no-auto-submit, no-impersonation, and non-approval safety checks passed.');
+console.log('Sponsor diligence source/evidence, human-attestation, Trust/status/Strategy UI, operator/request, no-auto-submit, no-impersonation, and non-approval safety checks passed.');
