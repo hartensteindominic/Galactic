@@ -120,6 +120,16 @@ export interface BankingPersistenceOperations {
     nextAttemptAt: string | null;
   }): Promise<void>;
 
+  /**
+   * Explicitly reset a terminal failed event after operator review. Automatic
+   * recovery cannot call this path; it is reserved for an audited admin action.
+   */
+  requeueTerminalEvent(input: {
+    eventId: string;
+    environment: DurableBankingEnvironment;
+    maxAttempts: number;
+  }): Promise<EventInboxRecord | null>;
+
   appendJournalIfAbsent(input: JournalWrite): Promise<{ inserted: boolean; journal: LedgerJournal }>;
 
   putProviderResourceLink(link: ProviderResourceLink): Promise<void>;
@@ -150,6 +160,8 @@ export const PROVIDER_SANDBOX_DURABILITY_REQUIREMENTS = [
   'skip_locked_concurrent_recovery',
   'stale_claim_recovery',
   'bounded_retry_attempts',
+  'manual_terminal_failure_review',
+  'audited_terminal_requeue',
   'operational_queue_visibility',
   'open_reconciliation_visibility',
   'append_only_balanced_journal',
