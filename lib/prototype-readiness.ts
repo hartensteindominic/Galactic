@@ -38,9 +38,16 @@ export function prototypeReadiness() {
     productionProviderWebhooksEnabled: false,
     liveBankingEnabled: false,
     partnerShellConfigured: banking.partnerConfigured,
+    partnerLiveWritesConfigured: banking.liveWritesConfigured,
     partnerLiveWritesEnabled: banking.liveWritesEnabled,
+    emergencyMoneyMovementFreezeActive: banking.emergencyFreezeActive,
+    emergencyFreezeFailsClosedByDefault: true,
+    protectiveWritesAvailableDuringFreeze: banking.protectiveWritesAvailable,
+    emergencyFreezeResponseTimeVerified: false,
+    disasterRecoveryExerciseVerified: false,
+    migrationRecoveryExerciseVerified: false,
     readyForLiveBanking: false,
     nextSafeStep,
-    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. Live banking requires an approved regulated program, exact provider integrations, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, and approved disclosures.'
+    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. Live banking requires an approved regulated program, exact provider integrations, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
   } as const;
 }
