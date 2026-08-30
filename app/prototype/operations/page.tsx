@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { resolveBrand } from '../../../lib/white-label';
-import { OperationsConsole } from './operations-console';
+import { OperationsShell } from './operations-shell';
 
 export default async function PrototypeOperationsPage({
   searchParams
@@ -14,5 +14,5 @@ export default async function PrototypeOperationsPage({
     key: params.tenant
   });
 
-  return <OperationsConsole tenantKey={brand.key} brandName={brand.name} />;
+  return <OperationsShell tenantKey={brand.key} brandName={brand.name} />;
 }
