@@ -32,14 +32,14 @@ export function providerSandboxStatus() {
     sandbox.webhookSecret
   );
 
-  const gatewayIsolated = !production.gatewayBaseUrl || sandbox.gatewayBaseUrl !== production.gatewayBaseUrl;
-  const apiKeyIsolated = !production.apiKey || sandbox.apiKey !== production.apiKey;
-  const programIsolated = !production.programId || sandbox.programId !== production.programId;
-  const credentialsIsolated = gatewayIsolated && apiKeyIsolated && programIsolated;
+  const gatewayIsolated = Boolean(sandbox.gatewayBaseUrl) && (!production.gatewayBaseUrl || sandbox.gatewayBaseUrl !== production.gatewayBaseUrl);
+  const apiKeyIsolated = Boolean(sandbox.apiKey) && (!production.apiKey || sandbox.apiKey !== production.apiKey);
+  const programIsolated = Boolean(sandbox.programId) && (!production.programId || sandbox.programId !== production.programId);
+  const credentialsIsolated = configured && gatewayIsolated && apiKeyIsolated && programIsolated;
 
   const blockedReasons: string[] = [];
   if (!configured) blockedReasons.push('sandbox_not_configured');
-  if (!credentialsIsolated) blockedReasons.push('sandbox_not_isolated_from_production');
+  if (configured && !credentialsIsolated) blockedReasons.push('sandbox_not_isolated_from_production');
   if (!sandbox.enabledRequested) blockedReasons.push('sandbox_network_not_enabled');
   if (banking.liveWritesEnabled) blockedReasons.push('production_live_writes_enabled');
 
