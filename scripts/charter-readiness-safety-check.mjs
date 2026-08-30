@@ -9,7 +9,9 @@ const required = [
   ['lib/charter-readiness.ts', 'targetCustomerSegmentValidated: false', 'target customer must remain unvalidated'],
   ['lib/charter-readiness.ts', 'distributionAdvantageValidated: false', 'distribution advantage must remain unvalidated'],
   ['lib/charter-readiness.ts', 'primaryNonInterchangeRevenueModelValidated: false', 'non-interchange revenue must remain unvalidated'],
-  ['lib/charter-readiness.ts', 'driverBasedUnitEconomicsModelBuilt: false', 'unit-economics model must remain unclaimed until built'],
+  ['lib/charter-readiness.ts', 'unitEconomicsScenarioEngineImplemented: true', 'scenario engine implementation must be represented separately'],
+  ['lib/charter-readiness.ts', 'validatedUnitEconomicsModelBuilt: false', 'validated unit-economics model must remain false without evidence'],
+  ['lib/charter-readiness.ts', 'unitEconomicsAssumptionsExternallyValidated: false', 'unit-economics assumptions must remain externally unvalidated'],
   ['lib/charter-readiness.ts', 'providerExitContinuityPlanApproved: false', 'provider exit plan must remain unapproved'],
   ['lib/charter-readiness.ts', 'charterApplicationFiled: false', 'charter filing must remain unclaimed'],
   ['lib/charter-readiness.ts', 'depositInsuranceApproved: false', 'deposit insurance approval must remain unclaimed'],
@@ -27,6 +29,11 @@ const required = [
   ['lib/prototype-trust.ts', 'No charter route, business-model proof, regulator-ready bank plan, capital approval', 'Trust Center must limit charter-roadmap claims'],
   ['app/api/prototype/status/route.ts', 'charterReadiness: charterReadinessStatus()', 'general prototype status must expose charter control posture'],
   ['app/api/prototype/status/route.ts', 'future-chartered-bank field is a long-term strategic goal', 'status disclosure must state charter field is only a goal'],
+  ['app/prototype/strategy/strategy-console.tsx', 'Future chartered bank', 'Strategy Lab may state future charter goal'],
+  ['app/prototype/strategy/strategy-console.tsx', 'Bank authority', 'Strategy Lab must visibly distinguish bank authority'],
+  ['app/prototype/strategy/strategy-console.tsx', 'Not granted', 'Strategy Lab must state bank authority is not granted'],
+  ['app/prototype/strategy/strategy-console.tsx', 'No market defaults', 'Strategy Lab must state economics have no market defaults'],
+  ['app/prototype/strategy/strategy-console.tsx', 'not approved for fundraising, sponsor diligence, or a charter application', 'Strategy Lab must limit economics result use'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'never hard-code a universal dollar amount as “the capital required to get a bank charter.”', 'charter roadmap must prohibit universal capital claims'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'A generic “better neobank UX” is not treated as a sufficient charter thesis.', 'charter roadmap must require a differentiated business thesis'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'None of those states may be collapsed into “we are a bank.”', 'application milestones must not collapse into bank status'],
@@ -38,7 +45,8 @@ const required = [
 
 const forbidden = [
   ['lib/charter-readiness.ts', 'businessModelThesisDefined: true', 'repository must not self-certify the business model thesis'],
-  ['lib/charter-readiness.ts', 'driverBasedUnitEconomicsModelBuilt: true', 'repository must not self-certify unit economics'],
+  ['lib/charter-readiness.ts', 'validatedUnitEconomicsModelBuilt: true', 'repository must not self-certify a validated economics model'],
+  ['lib/charter-readiness.ts', 'unitEconomicsAssumptionsExternallyValidated: true', 'repository must not self-certify economics assumptions'],
   ['lib/charter-readiness.ts', 'providerExitContinuityPlanApproved: true', 'repository must not self-approve provider exit continuity'],
   ['lib/charter-readiness.ts', 'charterApplicationFiled: true', 'repository must not claim a charter application has been filed'],
   ['lib/charter-readiness.ts', 'depositInsuranceApproved: true', 'repository must not claim deposit insurance approval'],
@@ -50,6 +58,7 @@ const forbidden = [
   ['lib/prototype-readiness.ts', 'readyToOpenCharteredBank: true', 'readiness must not self-certify bank opening readiness'],
   ['lib/prototype-trust.ts', 'bankCharterEffective: true', 'Trust Center must not claim an effective charter'],
   ['app/api/prototype/status/route.ts', 'bankCharterEffective: true', 'status API must not claim an effective charter'],
+  ['app/prototype/strategy/strategy-console.tsx', 'Member FDIC', 'Strategy Lab must not claim FDIC membership'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', '$50M–$200M', 'roadmap must not hard-code an unsupported universal charter-capital range'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'charter approved ✅', 'roadmap must not present approval as completed']
 ];
@@ -64,4 +73,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Future charter goal, business-model proof, cross-surface truth, sponsor-vs-charter separation, capital-claim, and regulatory-authority safety checks passed.');
+console.log('Future charter goal, economics-engine-vs-validation truth, cross-surface truth, sponsor-vs-charter separation, capital-claim, and regulatory-authority safety checks passed.');
