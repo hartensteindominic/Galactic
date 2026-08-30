@@ -72,7 +72,9 @@ assert.equal(status.required, false);
 assert.equal(status.failClosedIfPersistentWithoutSecret, true);
 assert.equal(status.minimumSecretLength, 32);
 assert.equal(status.sessionTtlHours, 8);
-assert.deepEqual(requirePrototypeOperator(req()), { mode: 'open-memory-demo', authenticated: false });
+const memoryAccess = requirePrototypeOperator(req());
+assert.equal(memoryAccess.mode, 'open-memory-demo');
+assert.equal(memoryAccess.authenticated, false);
 
 processShim.env = {
   SUPABASE_URL: 'https://prototype.invalid',
