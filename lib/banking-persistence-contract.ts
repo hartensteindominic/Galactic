@@ -2,6 +2,7 @@ import type { CanonicalBankingEvent } from './banking-provider-adapter';
 import type { LedgerJournal, ReconciliationSnapshot } from './financial-ledger';
 
 export type DurableBankingEnvironment = 'provider_sandbox' | 'production';
+export type BankingEventStatus = 'received' | 'processing' | 'processed' | 'failed';
 
 export type EventInboxRecord = {
   eventId: string;
@@ -11,8 +12,12 @@ export type EventInboxRecord = {
   canonicalEvent: CanonicalBankingEvent;
   receivedAt: string;
   processedAt: string | null;
-  status: 'received' | 'processed' | 'failed';
+  status: BankingEventStatus;
   failureCode?: string;
+  processingToken: string | null;
+  processingStartedAt: string | null;
+  attemptCount: number;
+  nextAttemptAt: string | null;
 };
 
 export type ProviderResourceLink = {
@@ -54,17 +59,21 @@ export type JournalWrite = {
   journal: LedgerJournal;
 };
 
+export type EventClaimInput = {
+  claimToken: string;
+  claimedAt: string;
+  staleBefore: string;
+  maxAttempts: number;
+};
+
 /**
  * Database-backed operations used inside and outside a transaction.
  *
- * Implementations must preserve uniqueness and append-only semantics at the
- * database layer, not only in application memory.
+ * Implementations must preserve uniqueness, lease ownership, and append-only
+ * semantics at the database layer, not only in application memory.
  */
 export interface BankingPersistenceOperations {
-  /**
-   * Atomically insert one provider event if it has never been seen.
-   * The unique constraint must cover provider + environment + rawProviderEventId.
-   */
+  /** Atomically insert one provider event if it has never been seen. */
   putEventIfAbsent(record: EventInboxRecord): Promise<{ inserted: boolean; record: EventInboxRecord }>;
 
   getEvent(eventId: string): Promise<EventInboxRecord | null>;
@@ -76,21 +85,39 @@ export interface BankingPersistenceOperations {
     resourceId: string;
   }): Promise<EventInboxRecord | null>;
 
+  /**
+   * Claim one known event for processing. A received/eligible failed event may
+   * be claimed, and a stale processing lease may be recovered. Active leases
+   * owned by another worker must not be stolen.
+   */
+  claimEventForProcessing(input: EventClaimInput & {
+    eventId: string;
+  }): Promise<EventInboxRecord | null>;
+
+  /**
+   * Atomically claim the oldest recoverable event using database row locking.
+   * Implementations should use SKIP LOCKED or an equivalent concurrency-safe
+   * mechanism so multiple workers cannot process the same event concurrently.
+   */
+  claimNextRecoverableEvent(input: EventClaimInput & {
+    environment: DurableBankingEnvironment;
+  }): Promise<EventInboxRecord | null>;
+
   markEventProcessed(input: {
     eventId: string;
+    processingToken: string;
     processedAt: string;
   }): Promise<void>;
 
   markEventFailed(input: {
     eventId: string;
+    processingToken: string;
     failureCode: string;
     processedAt: string;
+    nextAttemptAt: string | null;
   }): Promise<void>;
 
-  /**
-   * Append a balanced journal exactly once for the canonical event.
-   * The implementation must reject duplicate journal IDs and duplicate event IDs.
-   */
+  /** Append a balanced journal exactly once for the canonical event. */
   appendJournalIfAbsent(input: JournalWrite): Promise<{ inserted: boolean; journal: LedgerJournal }>;
 
   putProviderResourceLink(link: ProviderResourceLink): Promise<void>;
@@ -111,21 +138,16 @@ export interface BankingPersistenceOperations {
   appendAuditEvent(event: BankingAuditEvent): Promise<void>;
 }
 
-/**
- * Durable persistence boundary required before a real provider sandbox adapter
- * may be considered certification-complete.
- *
- * Implementations must be database-backed and transaction-safe. In-memory
- * Maps/Sets are acceptable only for the synthetic zero-money demonstration and
- * must never be used as production dedupe, ledger, reconciliation, or audit
- * storage.
- */
 export interface BankingPersistenceStore extends BankingPersistenceOperations {
   transaction<T>(work: (tx: BankingPersistenceOperations) => Promise<T>): Promise<T>;
 }
 
 export const PROVIDER_SANDBOX_DURABILITY_REQUIREMENTS = [
   'atomic_event_dedupe',
+  'leased_event_claims',
+  'skip_locked_concurrent_recovery',
+  'stale_claim_recovery',
+  'bounded_retry_attempts',
   'append_only_balanced_journal',
   'unique_event_to_journal_mapping',
   'provider_resource_mapping',
