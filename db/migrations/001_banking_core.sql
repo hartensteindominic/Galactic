@@ -26,16 +26,21 @@ CREATE TABLE IF NOT EXISTS banking_ledger_journals (
   journal_id text PRIMARY KEY,
   event_id text NOT NULL UNIQUE,
   environment text NOT NULL CHECK (environment IN ('provider_sandbox', 'production')),
-  description text NOT NULL,
+  currency text NOT NULL DEFAULT 'USD' CHECK (currency = 'USD'),
   occurred_at timestamptz NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now()
+  inserted_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS banking_ledger_lines (
   line_id text PRIMARY KEY,
   journal_id text NOT NULL REFERENCES banking_ledger_journals(journal_id) ON DELETE RESTRICT,
   event_id text NOT NULL,
-  account text NOT NULL CHECK (account IN ('partner_settlement_cash', 'customer_deposit_liability')),
+  account text NOT NULL CHECK (account IN (
+    'partner_settlement_cash',
+    'customer_deposit_liability',
+    'ach_in_transit_asset',
+    'ach_return_receivable'
+  )),
   debit_cents bigint NOT NULL DEFAULT 0 CHECK (debit_cents >= 0),
   credit_cents bigint NOT NULL DEFAULT 0 CHECK (credit_cents >= 0),
   description text NOT NULL,
@@ -73,11 +78,7 @@ CREATE TABLE IF NOT EXISTS banking_reconciliations (
   status text NOT NULL CHECK (status IN ('matched', 'discrepancy')),
   created_at timestamptz NOT NULL,
   resolved_at timestamptz,
-  resolution_note text,
-  CHECK (
-    (status = 'matched' AND resolved_at IS NULL)
-    OR status = 'discrepancy'
-  )
+  resolution_note text
 );
 
 CREATE INDEX IF NOT EXISTS banking_reconciliations_open_discrepancy_idx
