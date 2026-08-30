@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { answerGalacticQuestion } from '../../../lib/assistant';
-import { requireJsonRequest, requireTrustedOrigin, safeClientIp } from '../../../lib/request-security';
+import { readJsonBodyLimited, requireJsonRequest, requireTrustedOrigin, safeClientIp } from '../../../lib/request-security';
 import { bankingErrorResponse } from '../../../lib/banking-http';
 
 export const runtime = 'nodejs';
@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 
 const WINDOW_MS = 60_000;
 const LIMIT = 24;
+const MAX_BODY_BYTES = 4_096;
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(ip: string) {
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const body = await request.json();
+    const body = await readJsonBodyLimited<{ message?: unknown }>(request, MAX_BODY_BYTES);
     const message = String(body.message || '').trim();
     if (!message || message.length > 500) {
       return NextResponse.json({
@@ -50,7 +51,16 @@ export async function POST(request: Request) {
     }
 
     const reply = answerGalacticQuestion(message);
-    return NextResponse.json({ ok: true, reply }, {
+    return NextResponse.json({
+      ok: true,
+      reply,
+      assistantDisclosure: {
+        automated: true,
+        regulatedDecisioningEnabled: false,
+        accountSpecificDecisioningEnabled: false,
+        thirdPartyLlmCustomerDataEnabled: false
+      }
+    }, {
       headers: {
         'Cache-Control': 'no-store',
         'X-Robots-Tag': 'noindex, nofollow'
