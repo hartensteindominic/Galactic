@@ -21,6 +21,8 @@ const required = [
   ['lib/prototype-transparency.ts', 'thirdPartyLlmCustomerDataEnabled: false', 'Transparency Center must disclose third-party LLM customer-data use is off'],
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'Uninventoried production AI is prohibited.', 'AI governance must require an inventory'],
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'superseded SR 11-7', 'AI governance must reflect the 2026 model-risk guidance update'],
+  ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'withdrew that circular on May 12, 2025', 'AI governance must disclose the CFPB complex-algorithm circular was withdrawn'],
+  ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'rules-policy/regulations/1002/', 'credit governance must anchor to current Regulation B'],
   ['docs/NETWORK_RETRY_CHAOS_TEST_PLAN.md', 'Provider disappears after accepting intent', 'network chaos plan must include provider disappearance'],
   ['docs/NETWORK_RETRY_CHAOS_TEST_PLAN.md', 'pending/unknown', 'provider disappearance must preserve unknown state'],
   ['docs/EMERGENCY_MONEY_MOVEMENT_CONTROL.md', 'Time-to-first-customer-visible status', 'freeze drill must measure customer-visible status timing'],
@@ -36,6 +38,7 @@ const forbidden = [
   ['app/api/assistant/route.ts', 'await request.json()', 'Orbit API must not bypass bounded JSON parsing'],
   ['app/api/assistant/route.ts', 'regulatedDecisioningEnabled: true', 'Orbit API must not claim regulated decisioning is enabled'],
   ['app/api/assistant/route.ts', 'thirdPartyLlmCustomerDataEnabled: true', 'Orbit API must not claim third-party LLM customer-data use is enabled'],
+  ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'CFPB Circular 2022-03 states that', 'withdrawn CFPB circular must not be presented as current guidance'],
   ['lib/prototype-readiness.ts', 'customerVisibleIncidentStatusTimeVerified: true', 'incident-status timing must remain unverified until an exercise occurs'],
   ['lib/prototype-readiness.ts', 'providerDisappearanceDuringTransferDrillVerified: true', 'provider-disappearance drill must remain unverified until exercised']
 ];
@@ -50,4 +53,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('AI governance, automated-support and incident-drill safety checks passed.');
+console.log('AI governance, current-guidance, automated-support and incident-drill safety checks passed.');
