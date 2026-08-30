@@ -6,6 +6,7 @@ import { financialIntentControlStatus } from './financial-intent-state';
 import { institutionAccountabilityStatus } from './institution-accountability';
 import { prototypeIncidentCommunicationControlStatus } from './prototype-incident-status';
 import { prototypeMigrationIntegrityStatus } from './prototype-migration-integrity';
+import { sponsorDiligencePackStatus } from './sponsor-diligence-pack';
 import { supportCaseControlStatus } from './support-case-state';
 import { supportSensitiveDataControlStatus } from './support-sensitive-data';
 import { tenantBoundaryStatus } from './tenant-boundary';
@@ -28,6 +29,7 @@ export function prototypeTrustCenter() {
   const compliance = complianceObligationRegisterStatus();
   const accountability = institutionAccountabilityStatus();
   const bankPlan = threeYearBankPlanStatus();
+  const sponsorDiligence = sponsorDiligencePackStatus();
   const terms = customerTermsControlStatus();
   const intents = financialIntentControlStatus();
   const incident = prototypeIncidentCommunicationControlStatus();
@@ -80,6 +82,15 @@ export function prototypeTrustCenter() {
         ? `${bankPlan.requiredSectionCount} regulator-oriented plan sections are modeled with no default growth, deposit, revenue, capital, loss, liquidity, or profitability assumptions.`
         : 'A regulator-oriented bank-plan skeleton is not available.',
       limitation: 'This is not a board-approved, externally reviewed, regulator-reviewed, filed, accepted, or charter-application-ready business plan. Financial schedules, assumptions, management qualifications, capital/liquidity adequacy, and stable-profitability horizon remain unvalidated.'
+    },
+    {
+      id: 'sponsor-diligence-pack',
+      name: 'Sponsor diligence evidence pack',
+      status: 'external-approval-required',
+      summary: sponsorDiligence.packAvailable
+        ? `${sponsorDiligence.sectionCount} sponsor/program diligence sections are modeled; ${sponsorDiligence.completedSectionCount} are complete, ${sponsorDiligence.humanAttestedSectionCount} are human-attested, and ${sponsorDiligence.sponsorAcceptedSectionCount} are sponsor-accepted.`
+        : 'A machine-readable sponsor diligence pack is not available.',
+      limitation: 'No sponsor bank or BaaS provider is selected by this pack. It cannot authenticate evidence, attest as a human, submit a questionnaire, impersonate an applicant or sponsor, approve contracts/data flows, complete provider certification, obtain sponsor/program approval, or authorize live customer data or financial activity.'
     },
     {
       id: 'tenant-isolation',
@@ -171,6 +182,7 @@ export function prototypeTrustCenter() {
     `The compliance register contains ${compliance.unresolvedApplicabilityCount} unresolved future-bank applicability decisions; no accountable owner assignment, approved compliance responsibility matrix, operating CMS/BSA-AML/OFAC program, independent testing, or examination readiness is represented as complete.`,
     `The human-accountability model contains ${accountability.roleCount} future roles and ${accountability.assignedRoleCount} are represented as assigned; board, management, officer, assurance, sponsor-program, and charter-coordination qualifications/authority remain unverified.`,
     `The three-year bank-plan skeleton contains ${bankPlan.requiredSectionCount} required planning sections and ${bankPlan.validatedSectionCount} are represented as validated; no board approval, regulator review/acceptance, or charter-application readiness is represented as complete.`,
+    `The sponsor-diligence pack contains ${sponsorDiligence.sectionCount} evidence sections, with ${sponsorDiligence.completedSectionCount} complete and ${sponsorDiligence.sponsorAcceptedSectionCount} sponsor-accepted; no sponsor/program selection, submission, contract approval, data-flow approval, provider certification, or live-program approval is represented as complete.`,
     'No sponsor-bank or regulated-program approval is represented as complete.',
     'No qualified legal/compliance applicability review is represented as complete.',
     'No production provider webhook/certification claim is made.',
@@ -219,6 +231,17 @@ export function prototypeTrustCenter() {
     threeYearBankPlanBoardApproved: false,
     threeYearBankPlanRegulatorAccepted: false,
     threeYearBankPlanReadyForCharterApplication: false,
+    sponsorDiligencePackAvailable: sponsorDiligence.packAvailable,
+    sponsorDiligenceSectionCount: sponsorDiligence.sectionCount,
+    sponsorDiligenceCompletedSectionCount: sponsorDiligence.completedSectionCount,
+    sponsorDiligenceHumanAttestedSectionCount: sponsorDiligence.humanAttestedSectionCount,
+    sponsorDiligenceSponsorAcceptedSectionCount: sponsorDiligence.sponsorAcceptedSectionCount,
+    selectedSponsorBank: sponsorDiligence.selectedSponsorBank,
+    selectedBaasProvider: sponsorDiligence.selectedBaasProvider,
+    sponsorDiligenceAutomaticSubmissionEnabled: sponsorDiligence.automaticSubmissionEnabled,
+    sponsorDiligenceSoftwareAttestationEnabled: sponsorDiligence.softwareAttestationEnabled,
+    sponsorDiligenceReadyForSponsorSubmission: sponsorDiligence.readyForSponsorSubmission,
+    sponsorDiligenceReadyForLiveProgram: sponsorDiligence.readyForLiveProgram,
     customerIncidentStatusModelImplemented: true,
     productionCustomerStatusChannelConnected: false,
     approvedIncidentMessageWorkflowConnected: false,
@@ -239,6 +262,6 @@ export function prototypeTrustCenter() {
     legalComplianceApplicabilityReviewComplete: false,
     controls,
     productionGaps,
-    disclosure: 'Trust Center for the simulation prototype and long-term institution-building roadmap. It describes implemented software controls and known gaps; it is not a claim of legal compliance, human appointment or qualification, board action, bank charter, deposit insurance, sponsor-bank approval, charter application status, regulator-reviewed business plan, capital approval, opening authority, vendor approval, database migration execution, operating compliance-management/BSA-AML/OFAC programs, policy approval, independent audit, examination readiness, production incident-communications operation, security certification, or readiness for live customer funds.'
+    disclosure: 'Trust Center for the simulation prototype and long-term institution-building roadmap. It describes implemented software controls and known gaps; it is not a claim of legal compliance, human appointment or qualification, board action, bank charter, deposit insurance, sponsor-bank approval, sponsor diligence acceptance, charter application status, regulator-reviewed business plan, capital approval, opening authority, vendor approval, database migration execution, operating compliance-management/BSA-AML/OFAC programs, policy approval, independent audit, examination readiness, production incident-communications operation, security certification, or readiness for live customer funds.'
   } as const;
 }
