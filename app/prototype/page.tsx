@@ -14,5 +14,15 @@ export default async function PrototypePage({
     key: params.tenant
   });
 
-  return <PrototypeDashboard initialBrand={publicBrandConfig(brand)} />;
+  return (
+    <div className="relative">
+      <a
+        href={`/prototype/operations?tenant=${encodeURIComponent(brand.key)}`}
+        className="fixed bottom-4 right-4 z-50 rounded-2xl bg-[#0b153d] px-4 py-3 text-xs font-black text-white no-underline shadow-xl"
+      >
+        Operations health →
+      </a>
+      <PrototypeDashboard initialBrand={publicBrandConfig(brand)} />
+    </div>
+  );
 }
