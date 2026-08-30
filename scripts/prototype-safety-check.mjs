@@ -18,13 +18,18 @@ const required = [
   ['supabase/migrations/004_double_entry_ledger.sql', 'Prototype GL reconciliation cannot inspect non-simulated accounts.', 'GL reconciliation must reject non-simulated accounts'],
   ['lib/prototype-operations.ts', 'doubleEntryAvailableInBuild: true', 'operations status must expose double-entry build support'],
   ['lib/prototype-operations.ts', "'/rest/v1/rpc/reconcile_fintech_gl_profile'", 'persistent reconciliation must check the double-entry ledger'],
+  ['app/prototype/operations/operations-console.tsx', 'Layer 2 · Double-entry GL → account balance', 'operations UI must expose detailed GL reconciliation'],
   ['app/prototype/prototype-network-guard.tsx', "headers.set('Idempotency-Key', crypto.randomUUID())", 'prototype transfer client must attach idempotency keys'],
   ['app/api/prototype/webhooks/sandbox/route.ts', 'This route is not a production Plaid or BaaS webhook verifier.', 'sandbox webhook route must disclose that it is not production verification'],
   ['app/prototype/operations/operations-console.tsx', 'Real banking rails remain off.', 'operations console must label real rails as off'],
   ['lib/prototype-transparency.ts', 'liveMoneyEnabled: false', 'transparency model must keep every prototype product live-money disabled'],
   ['lib/prototype-transparency.ts', 'Prototype transparency center.', 'transparency model must disclose that live program terms are not yet approved'],
   ['app/prototype/transparency/page.tsx', 'SIMULATION ONLY', 'transparency UI must display simulation-only status'],
-  ['app/prototype/transparency/page.tsx', 'no pretending a partner-dependent feature is already live', 'transparency UI must reject premature live-feature claims']
+  ['app/prototype/transparency/page.tsx', 'no pretending a partner-dependent feature is already live', 'transparency UI must reject premature live-feature claims'],
+  ['lib/banking-provider-contract.ts', 'export interface BankingProviderAdapter', 'provider-neutral banking interface must exist'],
+  ['lib/banking-provider-contract.ts', 'productionWebhooks: false', 'disabled provider must not claim production webhook capability'],
+  ['lib/banking-provider-contract.ts', "'BANKING_PROVIDER_DISABLED'", 'disabled provider must fail closed'],
+  ['lib/banking-provider-contract.ts', 'verifyAndParseWebhook', 'provider contract must require explicit webhook verification/parsing']
 ];
 
 const forbidden = [
@@ -54,4 +59,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('White-label prototype safety, transparency and operational-readiness checks passed.');
+console.log('White-label prototype safety, transparency, provider-contract and operational-readiness checks passed.');
