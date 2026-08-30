@@ -50,11 +50,12 @@ The customer buys a branded software experience. Future live financial services 
 
 - `/prototype` — white-label banking-style dashboard with synthetic accounts, activity, transfers, cards and sandbox-link UX.
 - `/prototype/cashflow` — Safe-to-Spend planning with 7/14/30-day forecasts, known bills/income, savings plans, customer reserve, confidence labels, and explicit uncertainty disclosure.
+- `/prototype/bill-guard` — Bill Guard planning derived from the same cash-flow forecast, showing next known bill, scheduled vs estimated obligations, 7/14/30-day coverage, uncovered known-bill gaps, reserve pressure, and explicit no-autopay/no-funds-moved status.
 - `/prototype/transparency` — plain-English product status, fees, limits, eligibility, controlled prototype terms version, and whether a capability is prototype, sandbox, partner-required, or unavailable.
 - `/prototype/trust` — Trust & Security Center showing implemented prototype controls, what each control does **not** prove, and known production/legal/operational gaps.
 - `/prototype/operations` — operator-facing reconciliation, provider-event, audit and control evidence.
 
-The customer UI has a compact prototype dock so cash-flow intelligence, transparency, trust/security, and operations evidence are discoverable without typed URLs.
+The customer UI has a compact prototype dock so Safe-to-Spend, Bill Guard, transparency, trust/security, and operations evidence are discoverable without typed URLs.
 
 ### White-label configuration
 
@@ -144,7 +145,7 @@ The operations console renders both layers separately so an operator can identif
 
 Immutable accounting history is corrected through forward/reversing entries rather than destructive journal edits.
 
-## 8. Cash-flow intelligence
+## 8. Cash-flow intelligence and Bill Guard
 
 Safe-to-Spend is a planning layer, not a promise that spending a number is risk-free.
 
@@ -159,7 +160,18 @@ The engine considers:
 
 The headline conservative spendable estimate uses the lowest relevant spendable amount after preserving the reserve. The UI explains that pending card activity, variable bills, cash withdrawals, fees, and unknown obligations can change the result.
 
-A future Bill Guard / obligations experience may build on this data, but live bill payment or autopay must not be implied until an approved provider program exists.
+Bill Guard is implemented as a second simulation-only view derived from this same forecast source. It shows:
+
+- the next known bill;
+- known bills over the next 30 days;
+- scheduled vs estimated bill totals;
+- 7/14/30-day coverage percentages;
+- funds available for known bills after the selected reserve and planned savings assumptions;
+- uncovered known-bill gaps;
+- cash remaining after known bills, planned savings and reserve;
+- confidence warnings for estimated and unknown obligations.
+
+Bill Guard does **not** reserve or move funds, pay bills, enable autopay, connect a live bill-payment provider, guarantee bill coverage, prevent overdrafts, or authorize spending. Those production capabilities would require an approved regulated program, authenticated customer authorization, exact payment-provider integration, payment-state handling, returns/reversals, reconciliation, fraud/support controls, and approved customer terms before launch.
 
 ## 9. Controlled customer terms
 
@@ -252,7 +264,7 @@ Prototype browser mutations require trusted-origin checks where applicable, JSON
 
 Current body caps are intentionally small for operator login, reconciliation, sandbox linking, and support; moderate for transfers; and larger but still bounded for authenticated sandbox webhook payloads.
 
-Tenant-scoped UI and API routes use host-bound tenant resolution. Unknown tenants fail closed. The Transparency Center, Trust Center, prototype terms endpoint, dashboard, cash-flow routes, operations routes, and tenant-scoped APIs all use the tenant boundary. Authenticated server-to-server sandbox webhook tests must name an explicit known tenant after webhook authentication rather than trusting browser routing state.
+Tenant-scoped UI and API routes use host-bound tenant resolution. Unknown tenants fail closed. The Transparency Center, Trust Center, prototype terms endpoint, dashboard, Safe-to-Spend, Bill Guard, operations routes, and tenant-scoped APIs all use the tenant boundary. Authenticated server-to-server sandbox webhook tests must name an explicit known tenant after webhook authentication rather than trusting browser routing state.
 
 These controls reduce prototype cross-tenant and abuse risk but do not replace production penetration testing, distributed abuse controls, provider certification, or formal tenant-isolation verification.
 
@@ -304,6 +316,7 @@ The prototype is designed around the following permanent constraints:
 - no claim that support pattern detection equals production DLP;
 - no claim that a human-handoff marker equals a staffed support/case program;
 - no claim that versioned prototype terms are approved live terms;
+- no claim that Bill Guard reserves funds, pays bills, enables autopay, guarantees coverage, or connects a production payment provider;
 - no claim that documentation/CI proves legal compliance or program approval;
 - `readyForLiveBanking` remains false.
 
@@ -356,18 +369,19 @@ A BaaS or sponsor-bank relationship does not remove the platform's legal, compli
 1. Open `/prototype` on the selected preview tenant.
 2. Review synthetic accounts/activity and explicit simulation status.
 3. Open Safe-to-Spend and inspect the 7/14/30-day assumptions.
-4. Open Fees & Limits and verify the visible `prototype-terms-v1` source is not approved for live use.
-5. Open Trust & Security and verify every implemented control includes a limitation and known production gaps remain visible.
-6. Exercise Orbit general-support answers and regulated-topic human-handoff markers.
-7. Try a synthetic sensitive-data pattern and verify the client blocks it before send; separately verify the API rejects the same category without returning the matched value.
-8. Submit one simulated transfer.
-9. Replay the same transfer intent and verify no second persistent economic effect.
-10. Exercise an ambiguous response and verify the intent stays pending/unknown until authoritative evidence exists.
-11. Optional: connect Plaid Sandbox synthetic data.
-12. Sign into Operations using the privately configured prototype operator secret.
-13. Run transaction-history and GL reconciliation.
-14. Review sanitized audit/provider-event evidence.
-15. Check `/api/prototype/readiness`, `/api/prototype/terms`, and `/api/prototype/trust` for remaining gates.
+4. Open Bill Guard and verify next bill, known 30-day obligations, 7/14/30-day coverage, estimated-obligation warnings, and the visible no-autopay/no-funds-moved status.
+5. Open Fees & Limits and verify the visible `prototype-terms-v1` source is not approved for live use.
+6. Open Trust & Security and verify every implemented control includes a limitation and known production gaps remain visible.
+7. Exercise Orbit general-support answers and regulated-topic human-handoff markers.
+8. Try a synthetic sensitive-data pattern and verify the client blocks it before send; separately verify the API rejects the same category without returning the matched value.
+9. Submit one simulated transfer.
+10. Replay the same transfer intent and verify no second persistent economic effect.
+11. Exercise an ambiguous response and verify the intent stays pending/unknown until authoritative evidence exists.
+12. Optional: connect Plaid Sandbox synthetic data.
+13. Sign into Operations using the privately configured prototype operator secret.
+14. Run transaction-history and GL reconciliation.
+15. Review sanitized audit/provider-event evidence.
+16. Check `/api/prototype/readiness`, `/api/prototype/terms`, and `/api/prototype/trust` for remaining gates.
 
 ## 21. Future live customer onboarding
 
@@ -421,7 +435,7 @@ Use of funds can include:
 
 Pitch framing:
 
-> The customer experience, simulation ledger, accounting controls, retry safety, reconciliation, operator evidence, customer-terms control, support/AI boundaries, Trust Center, and white-label architecture already exist. The financing is to convert a disciplined prototype into an approved regulated program and repeatable white-label business—not to discover whether the software can be built.
+> The customer experience, Safe-to-Spend, Bill Guard, simulation ledger, accounting controls, retry safety, reconciliation, operator evidence, customer-terms control, support/AI boundaries, Trust Center, and white-label architecture already exist. The financing is to convert a disciplined prototype into an approved regulated program and repeatable white-label business—not to discover whether the software can be built.
 
 ## 24. Persistent prototype setup
 
@@ -438,7 +452,7 @@ Pitch framing:
 6. Optional: configure Plaid Sandbox credentials privately.
 7. Configure white-label tenant overrides/domains privately if needed.
 8. Deploy an actual PR preview.
-9. Exercise customer routes, controlled terms, Trust Center, Orbit guardrails, operator login/sign-out, host-bound tenant rejection, body limits, transfers, retries, both reconciliation layers, cash-flow persistence and webhook deduplication.
+9. Exercise customer routes, Safe-to-Spend, Bill Guard, controlled terms, Trust Center, Orbit guardrails, operator login/sign-out, host-bound tenant rejection, body limits, transfers, retries, both reconciliation layers, cash-flow persistence and webhook deduplication.
 10. Check `/api/prototype/readiness` and retain evidence.
 
 Never paste API secrets, bank credentials, private keys, operator secrets, webhook secrets, production financial credentials, full bank/card numbers, PINs, CVVs, SSNs, identity documents, or OTPs into chat, source code, logs, or public issues.
@@ -449,10 +463,10 @@ Do not merge the prototype PR solely because CI passes. Keep it draft until:
 
 - an actual Vercel PR preview exists;
 - migrations 001-005 run successfully in disposable Supabase;
-- persistent Safe-to-Spend data loads;
+- persistent Safe-to-Spend data loads and Bill Guard derives the expected known-bill coverage from that same persistent forecast;
 - operator access/fail-closed behavior is manually verified;
 - tenant isolation/body-limit rejection is manually verified;
-- controlled prototype terms and Trust Center are manually checked in the deployed preview;
+- controlled prototype terms, Bill Guard and Trust Center are manually checked in the deployed preview;
 - Orbit regulated-topic escalation and sensitive-data client/server rejection are manually exercised;
 - retry/ambiguous-response/concurrency tests show one economic effect per intended transfer;
 - transaction-history and GL reconciliation pass;
