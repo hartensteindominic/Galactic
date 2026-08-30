@@ -32,11 +32,26 @@ const required = [
   ['docs/THIRD_PARTY_AND_AI_VENDOR_RISK_REGISTER_TEMPLATE.md', 'Vendor-disappearance drill', 'vendor register must include provider disappearance testing'],
   ['docs/FINTECH_SECURITY_THREAT_MODEL.md', 'A control documented but never exercised is not treated as verified.', 'threat model must require exercised controls'],
   ['docs/FINTECH_SECURITY_THREAT_MODEL.md', 'timeout != failure', 'threat model must preserve ambiguous financial state'],
+  ['lib/financial-intent-state.ts', "| 'pending_unknown'", 'financial intent model must have an explicit unknown state'],
+  ['lib/financial-intent-state.ts', 'timeoutIsNotFailure: true', 'financial intent model must not treat timeout as failure'],
+  ['lib/financial-intent-state.ts', 'automaticReplacementAllowed: false', 'financial intent model must prohibit automatic replacement'],
+  ['lib/financial-intent-state.ts', "'REPLACEMENT_BLOCKED_WHILE_OUTCOME_UNKNOWN'", 'financial intent model must block replacement while unknown'],
+  ['lib/financial-intent-state.ts', 'productionProviderStateMappingVerified: false', 'provider state mapping must remain unverified until provider certification'],
   ['docs/NETWORK_RETRY_CHAOS_TEST_PLAN.md', 'Provider disappears after accepting intent', 'network chaos plan must include provider disappearance'],
   ['docs/NETWORK_RETRY_CHAOS_TEST_PLAN.md', 'pending/unknown', 'provider disappearance must preserve unknown state'],
   ['docs/EMERGENCY_MONEY_MOVEMENT_CONTROL.md', 'Time-to-first-customer-visible status', 'freeze drill must measure customer-visible status timing'],
+  ['lib/prototype-readiness.ts', 'financialIntentControls', 'readiness must expose financial intent controls'],
   ['lib/prototype-readiness.ts', 'customerVisibleIncidentStatusTimeVerified: false', 'readiness must not claim customer incident-status timing is verified'],
-  ['lib/prototype-readiness.ts', 'providerDisappearanceDuringTransferDrillVerified: false', 'readiness must not claim provider-disappearance drill is verified']
+  ['lib/prototype-readiness.ts', 'providerDisappearanceDuringTransferDrillVerified: false', 'readiness must not claim provider-disappearance drill is verified'],
+  ['lib/prototype-readiness.ts', 'complianceResponsibilityMatrixAssigned: false', 'responsibility assignment must remain unapproved until external parties are assigned'],
+  ['lib/prototype-readiness.ts', 'productionLegalComplianceApplicabilityReviewComplete: false', 'legal/compliance applicability review must remain unapproved'],
+  ['lib/prototype-readiness.ts', 'productionSponsorBankProgramApprovalComplete: false', 'sponsor-bank program approval must remain false'],
+  ['lib/prototype-readiness.ts', 'productionDataRetentionScheduleApproved: false', 'production retention schedule must remain unapproved'],
+  ['lib/prototype-readiness.ts', 'productionComplaintEscalationProgramApproved: false', 'production complaint program must remain unapproved'],
+  ['lib/prototype-readiness.ts', 'productionHumanSupportHandoffExercised: false', 'human support handoff must remain unverified'],
+  ['lib/prototype-readiness.ts', 'productionThirdPartyRiskProgramOperating: false', 'third-party risk program must remain unverified'],
+  ['lib/prototype-readiness.ts', 'productionCustomerTermsSourceOfTruthApproved: false', 'customer terms source must remain unapproved'],
+  ['lib/prototype-readiness.ts', 'productionThreatModelIndependentReviewComplete: false', 'independent threat-model review must remain unverified']
 ];
 
 const forbidden = [
@@ -49,8 +64,12 @@ const forbidden = [
   ['app/api/assistant/route.ts', 'thirdPartyLlmCustomerDataEnabled: true', 'Orbit API must not claim third-party LLM customer-data use is enabled'],
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'CFPB Circular 2022-03 states that', 'withdrawn CFPB circular must not be presented as current guidance'],
   ['docs/DATA_CLASSIFICATION_RETENTION_MAP.md', 'retain everything for seven years', 'data-retention policy must not invent a universal seven-year rule'],
+  ['lib/financial-intent-state.ts', 'automaticReplacementAllowed: true', 'financial intent control must never permit automatic replacement'],
   ['lib/prototype-readiness.ts', 'customerVisibleIncidentStatusTimeVerified: true', 'incident-status timing must remain unverified until an exercise occurs'],
-  ['lib/prototype-readiness.ts', 'providerDisappearanceDuringTransferDrillVerified: true', 'provider-disappearance drill must remain unverified until exercised']
+  ['lib/prototype-readiness.ts', 'providerDisappearanceDuringTransferDrillVerified: true', 'provider-disappearance drill must remain unverified until exercised'],
+  ['lib/prototype-readiness.ts', 'productionLegalComplianceApplicabilityReviewComplete: true', 'prototype must not claim legal/compliance review complete'],
+  ['lib/prototype-readiness.ts', 'productionSponsorBankProgramApprovalComplete: true', 'prototype must not claim sponsor-bank approval'],
+  ['lib/prototype-readiness.ts', 'productionDataRetentionScheduleApproved: true', 'prototype must not claim production retention approval']
 ];
 
 for (const [file, text, label] of required) {
@@ -63,4 +82,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('AI governance, current-guidance, compliance ownership, data classification, vendor risk, support escalation, threat-model and incident-drill safety checks passed.');
+console.log('AI governance, current-guidance, compliance ownership, data classification, vendor risk, support escalation, financial-intent unknown-state, threat-model and incident-drill safety checks passed.');
