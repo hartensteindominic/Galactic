@@ -1,5 +1,6 @@
 import { bankingErrorResponse, bankingJson } from '../../../../lib/banking-http';
 import { runPrototypeReconciliation } from '../../../../lib/prototype-operations';
+import { requirePrototypeOperator } from '../../../../lib/prototype-operator-auth';
 import { requireJsonRequest, requireTrustedOrigin } from '../../../../lib/request-security';
 import { resolveBrand } from '../../../../lib/white-label';
 
@@ -10,6 +11,7 @@ export async function POST(request: Request) {
   try {
     requireTrustedOrigin(request);
     requireJsonRequest(request);
+    requirePrototypeOperator(request);
 
     const body = await request.json() as { tenantKey?: string };
     const brand = resolveBrand({
@@ -21,7 +23,7 @@ export async function POST(request: Request) {
     return bankingJson({
       ok: true,
       reconciliation,
-      disclosure: 'Simulation reconciliation only. No real money moved.'
+      disclosure: 'Simulation reconciliation only. Persistent evidence requires an authenticated prototype operator session. No real money moved.'
     });
   } catch (error) {
     return bankingErrorResponse(error);
