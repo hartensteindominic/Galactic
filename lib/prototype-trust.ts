@@ -1,5 +1,6 @@
 import { aiGovernanceStatus } from './ai-governance';
 import { charterReadinessStatus } from './charter-readiness';
+import { complianceObligationRegisterStatus } from './compliance-obligation-register';
 import { customerTermsControlStatus } from './customer-terms-control';
 import { financialIntentControlStatus } from './financial-intent-state';
 import { prototypeIncidentCommunicationControlStatus } from './prototype-incident-status';
@@ -22,6 +23,7 @@ export type TrustControl = {
 export function prototypeTrustCenter() {
   const ai = aiGovernanceStatus();
   const charter = charterReadinessStatus();
+  const compliance = complianceObligationRegisterStatus();
   const terms = customerTermsControlStatus();
   const intents = financialIntentControlStatus();
   const incident = prototypeIncidentCommunicationControlStatus();
@@ -47,6 +49,15 @@ export function prototypeTrustCenter() {
         ? 'Galactic documents a staged path from fintech product proof through charter feasibility, organizer/application readiness, conditional approval, pre-opening, and eventual chartered operations if approved.'
         : 'A long-term charter-readiness roadmap is not documented.',
       limitation: 'The roadmap is a strategic goal only. No charter route, business-model proof, regulator-ready bank plan, capital approval, organizing group, charter application, deposit-insurance approval, pre-opening authorization, effective charter, or authority to market Galactic Trust as a bank is represented as complete.'
+    },
+    {
+      id: 'compliance-applicability-register',
+      name: 'Compliance applicability and ownership register',
+      status: 'external-approval-required',
+      summary: compliance.obligationRegisterAvailable && compliance.sourceRegistryAvailable
+        ? `${compliance.obligationCount} future-bank control obligations are mapped to current official supervisory/compliance sources; ${compliance.unresolvedApplicabilityCount} remain unassessed and require qualified human review.`
+        : 'A machine-readable compliance applicability register is not available.',
+      limitation: 'The register is planning infrastructure, not a legal applicability determination, compliance certification, approved responsibility matrix, operating compliance-management system, BSA/AML program, OFAC program, audit, examination result, license, sponsor approval, or authority to offer live financial services.'
     },
     {
       id: 'tenant-isolation',
@@ -135,6 +146,7 @@ export function prototypeTrustCenter() {
     'No live banking or real customer money movement is enabled.',
     'The future-chartered-bank objective is a roadmap goal only; no charter route, bank application, deposit-insurance approval, effective charter, or opening authorization is represented as complete.',
     'The target customer/problem/distribution/non-interchange revenue thesis and driver-based unit economics remain unvalidated for a future bank business plan.',
+    `The compliance register contains ${compliance.unresolvedApplicabilityCount} unresolved future-bank applicability decisions; no accountable owner assignment, approved compliance responsibility matrix, operating CMS/BSA-AML/OFAC program, independent testing, or examination readiness is represented as complete.`,
     'No sponsor-bank or regulated-program approval is represented as complete.',
     'No qualified legal/compliance applicability review is represented as complete.',
     'No production provider webhook/certification claim is made.',
@@ -162,6 +174,14 @@ export function prototypeTrustCenter() {
     liveBankingEnabled: false,
     regulatedAiDecisioningEnabled: false,
     thirdPartyLlmCustomerDataEnabled: false,
+    complianceApplicabilityRegisterAvailable: compliance.obligationRegisterAvailable,
+    complianceOfficialSourceRegistryAvailable: compliance.sourceRegistryAvailable,
+    complianceUnresolvedApplicabilityCount: compliance.unresolvedApplicabilityCount,
+    complianceResponsibilityMatrixAssigned: false,
+    productionComplianceManagementSystemOperating: false,
+    productionBsaAmlProgramOperating: false,
+    productionOfacProgramOperating: false,
+    complianceExaminationReady: false,
     customerIncidentStatusModelImplemented: true,
     productionCustomerStatusChannelConnected: false,
     approvedIncidentMessageWorkflowConnected: false,
@@ -182,6 +202,6 @@ export function prototypeTrustCenter() {
     legalComplianceApplicabilityReviewComplete: false,
     controls,
     productionGaps,
-    disclosure: 'Trust Center for the simulation prototype and long-term institution-building roadmap. It describes implemented software controls and known gaps; it is not a claim of legal compliance, bank charter, deposit insurance, sponsor-bank approval, charter application status, capital approval, opening authority, vendor approval, database migration execution, production incident-communications operation, security certification, or readiness for live customer funds.'
+    disclosure: 'Trust Center for the simulation prototype and long-term institution-building roadmap. It describes implemented software controls and known gaps; it is not a claim of legal compliance, bank charter, deposit insurance, sponsor-bank approval, charter application status, capital approval, opening authority, vendor approval, database migration execution, operating compliance-management/BSA-AML/OFAC programs, policy or board approval, independent audit, examination readiness, production incident-communications operation, security certification, or readiness for live customer funds.'
   } as const;
 }
