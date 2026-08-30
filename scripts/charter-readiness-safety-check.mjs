@@ -18,6 +18,15 @@ const required = [
   ['lib/charter-readiness.ts', 'fdicInsuranceEffective: false', 'effective FDIC insurance must remain unclaimed'],
   ['lib/charter-readiness.ts', 'customerFacingBankClaimAuthorized: false', 'customer-facing bank claim authority must remain false'],
   ['lib/charter-readiness.ts', 'No universal charter capital number is assumed', 'charter readiness must reject universal capital-number assumptions'],
+  ['lib/prototype-readiness.ts', 'charterReadiness: charterReadiness', 'prototype readiness must expose charter control posture'],
+  ['lib/prototype-readiness.ts', 'businessModelThesisValidatedForCharterPath: false', 'prototype readiness must keep business-model validation false'],
+  ['lib/prototype-readiness.ts', 'readyToFileCharterApplication: false', 'prototype readiness must not claim filing readiness'],
+  ['lib/prototype-readiness.ts', 'readyToOpenCharteredBank: false', 'prototype readiness must not claim opening readiness'],
+  ['lib/prototype-trust.ts', "id: 'future-charter-roadmap'", 'Trust Center must expose future-charter control'],
+  ['lib/prototype-trust.ts', "status: 'external-approval-required'", 'Trust Center charter goal must visibly require external approval'],
+  ['lib/prototype-trust.ts', 'No charter route, business-model proof, regulator-ready bank plan, capital approval', 'Trust Center must limit charter-roadmap claims'],
+  ['app/api/prototype/status/route.ts', 'charterReadiness: charterReadinessStatus()', 'general prototype status must expose charter control posture'],
+  ['app/api/prototype/status/route.ts', 'future-chartered-bank field is a long-term strategic goal', 'status disclosure must state charter field is only a goal'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'never hard-code a universal dollar amount as “the capital required to get a bank charter.”', 'charter roadmap must prohibit universal capital claims'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'A generic “better neobank UX” is not treated as a sufficient charter thesis.', 'charter roadmap must require a differentiated business thesis'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'None of those states may be collapsed into “we are a bank.”', 'application milestones must not collapse into bank status'],
@@ -37,6 +46,10 @@ const forbidden = [
   ['lib/charter-readiness.ts', 'bankCharterEffective: true', 'repository must not claim an effective bank charter'],
   ['lib/charter-readiness.ts', 'fdicInsuranceEffective: true', 'repository must not claim effective FDIC insurance'],
   ['lib/charter-readiness.ts', 'customerFacingBankClaimAuthorized: true', 'repository must not authorize customer-facing bank claims'],
+  ['lib/prototype-readiness.ts', 'readyToFileCharterApplication: true', 'readiness must not self-certify charter filing readiness'],
+  ['lib/prototype-readiness.ts', 'readyToOpenCharteredBank: true', 'readiness must not self-certify bank opening readiness'],
+  ['lib/prototype-trust.ts', 'bankCharterEffective: true', 'Trust Center must not claim an effective charter'],
+  ['app/api/prototype/status/route.ts', 'bankCharterEffective: true', 'status API must not claim an effective charter'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', '$50M–$200M', 'roadmap must not hard-code an unsupported universal charter-capital range'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'charter approved ✅', 'roadmap must not present approval as completed']
 ];
@@ -51,4 +64,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Future charter goal, business-model proof, sponsor-vs-charter separation, capital-claim, and regulatory-authority safety checks passed.');
+console.log('Future charter goal, business-model proof, cross-surface truth, sponsor-vs-charter separation, capital-claim, and regulatory-authority safety checks passed.');
