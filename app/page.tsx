@@ -64,7 +64,7 @@ export default function Home() {
           <span>
             Galactic<br />Trust
             <small style={{ display: 'block', marginTop: 7, fontSize: 9, lineHeight: 1, letterSpacing: '0.15em', fontWeight: 800, color: '#9ee8ff' }}>
-              ONLINE BANKING
+              ONLINE BANKING EXPERIENCE
             </small>
           </span>
         </div>
@@ -97,7 +97,7 @@ export default function Home() {
         <header className="dashboardHeader">
           <div>
             <div style={{ display: 'inline-flex', alignItems: 'center', marginBottom: 9, borderRadius: 999, padding: '5px 9px', background: '#eef1ff', color: '#4450c7', fontSize: 9, fontWeight: 900, letterSpacing: '0.12em' }}>
-              ONLINE BANKING · DEMO
+              ONLINE BANKING EXPERIENCE · DEMO
             </div>
             <h1>Welcome back, Nova! <span>👋</span></h1>
             <p>Your online banking dashboard for accounts, transfers, cards, bills, savings, and money insights.</p>
@@ -185,7 +185,7 @@ export default function Home() {
                 <span className="shieldBadge">✓</span>
               </div>
               <div className="securityList">
-                <div><span className="securityIcon">⌁</span><span><b>Protected sessions</b><small>Signed live-banking authentication and short-lived requests.</small></span></div>
+                <div><span className="securityIcon">⌁</span><span><b>Protected sessions</b><small>Signed banking-route authentication and short-lived requests.</small></span></div>
                 <div><span className="securityIcon">▣</span><span><b>Masked card data</b><small>Full card number, CVV and PIN are never shown in this dashboard.</small></span></div>
                 <div><span className="securityIcon">◎</span><span><b>Privacy-minded chat</b><small>Orbit never asks for passwords, PINs, CVVs or one-time codes.</small></span></div>
                 <div><span className="securityIcon">◈</span><span><b>Live-money guard</b><small>Real banking and crypto remain off until approved providers are configured.</small></span></div>
