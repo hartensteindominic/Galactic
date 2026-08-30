@@ -97,7 +97,8 @@ function partnerConfig() {
     providerName: process.env.BANKING_PROVIDER_NAME || '',
     partnerBankName: process.env.BANKING_PARTNER_BANK_NAME || '',
     disclosure: process.env.BANKING_PARTNER_DISCLOSURE || '',
-    liveWritesEnabled: process.env.BANKING_ENABLE_LIVE_WRITES === 'true'
+    liveWritesEnabled: process.env.BANKING_ENABLE_LIVE_WRITES === 'true',
+    emergencyFreezeActive: process.env.BANKING_EMERGENCY_FREEZE !== 'false'
   };
 }
 
@@ -111,20 +112,26 @@ export function bankingStatus() {
     config.providerName &&
     config.partnerBankName
   );
+  const liveWritesConfigured = currentMode === 'partner' && partnerConfigured && config.liveWritesEnabled;
+  const moneyMovementEnabled = liveWritesConfigured && !config.emergencyFreezeActive;
 
   return {
     mode: currentMode,
     providerName: config.providerName || null,
     partnerBankName: config.partnerBankName || null,
     partnerConfigured,
-    liveWritesEnabled: currentMode === 'partner' && partnerConfigured && config.liveWritesEnabled,
+    liveWritesConfigured,
+    liveWritesEnabled: moneyMovementEnabled,
+    emergencyFreezeActive: config.emergencyFreezeActive,
+    moneyMovementEnabled,
+    protectiveWritesAvailable: liveWritesConfigured,
     disclosure: currentMode === 'demo'
       ? 'Demo mode. No real deposits are held and no real money is moved.'
       : (config.disclosure || `Banking services are provided through ${config.partnerBankName || 'the configured regulated banking partner'}.`)
   };
 }
 
-function requirePartnerConfig(requireWrites = false) {
+function requirePartnerConfig(requireWrites = false, allowDuringEmergencyFreeze = false) {
   const status = bankingStatus();
   const config = partnerConfig();
 
@@ -137,15 +144,24 @@ function requirePartnerConfig(requireWrites = false) {
   }
 
   if (requireWrites && !config.liveWritesEnabled) {
-    throw new BankingError(503, 'LIVE_WRITES_DISABLED', 'Live money movement is disabled until the banking program is approved and explicitly enabled.');
+    throw new BankingError(503, 'LIVE_WRITES_DISABLED', 'Live writes are disabled until the banking program is approved and explicitly enabled.');
+  }
+
+  if (requireWrites && config.emergencyFreezeActive && !allowDuringEmergencyFreeze) {
+    throw new BankingError(503, 'MONEY_MOVEMENT_FROZEN', 'Money movement is temporarily frozen by the emergency operations control.');
   }
 
   return config;
 }
 
-async function partnerRequest<T>(path: string, init?: RequestInit): Promise<T> {
+async function partnerRequest<T>(
+  path: string,
+  init?: RequestInit,
+  options?: { allowDuringEmergencyFreeze?: boolean }
+): Promise<T> {
   const method = (init?.method || 'GET').toUpperCase();
-  const config = requirePartnerConfig(method !== 'GET' && method !== 'HEAD');
+  const isWrite = method !== 'GET' && method !== 'HEAD';
+  const config = requirePartnerConfig(isWrite, Boolean(options?.allowDuringEmergencyFreeze));
   const headers = new Headers(init?.headers);
   headers.set('Authorization', `Bearer ${config.apiKey}`);
   headers.set('Content-Type', 'application/json');
@@ -233,5 +249,5 @@ export async function setCardFrozen(input: { userId: string; cardId: string; fro
   return partnerRequest(`/v1/cards/${encodeURIComponent(input.cardId)}`, {
     method: 'PATCH',
     body: JSON.stringify({ userId: input.userId, frozen: input.frozen })
-  });
+  }, { allowDuringEmergencyFreeze: true });
 }
