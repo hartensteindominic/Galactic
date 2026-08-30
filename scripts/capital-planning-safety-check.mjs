@@ -19,6 +19,13 @@ const required = [
   ['app/api/prototype/capital-planning/route.ts', 'readJsonBodyLimited<CapitalPlanningRequest>(request, 16_384)', 'capital planning route must bound request body'],
   ['app/api/prototype/capital-planning/route.ts', 'resolveRequestBrand', 'capital planning route must remain tenant-bound'],
   ['app/api/prototype/capital-planning/route.ts', 'persisted: false', 'capital planning route must remain non-persistent'],
+  ['app/prototype/strategy/capital-planning-panel.tsx', 'Planning target ≠ capital adequacy', 'Strategy Lab must visibly separate planning target from capital adequacy'],
+  ['app/prototype/strategy/capital-planning-panel.tsx', 'Software does not authenticate this evidence.', 'Strategy Lab must disclose source-of-funds nonauthentication'],
+  ['app/prototype/strategy/capital-planning-panel.tsx', 'Regulatory sufficiency: not verified', 'Strategy Lab must visibly keep regulatory sufficiency unverified'],
+  ['app/prototype/strategy/capital-planning-panel.tsx', 'Not modeled or verified:', 'Strategy Lab must expose capital model limitations'],
+  ['app/prototype/strategy/strategy-shell.tsx', '<CapitalPlanningPanel tenantKey={tenantKey} />', 'capital workbench must remain inside protected Strategy Lab workspace'],
+  ['app/api/prototype/status/route.ts', 'capitalPlanning: capitalPlanningControlStatus()', 'general status API must expose safe capital-planning posture'],
+  ['app/api/prototype/status/route.ts', 'capital-planning workbench contains no default charter-capital amount', 'status disclosure must limit capital-planning claims'],
   ['scripts/capital-planning-runtime-check.mjs', 'Assumption-driven capital planning, gap/runway arithmetic, invalid-input/overflow, and regulatory-capital boundary runtime checks passed.', 'capital planning must have executable runtime coverage'],
   ['package.json', 'scripts/capital-planning-runtime-check.mjs', 'capital planning runtime coverage must run in CI']
 ];
@@ -32,7 +39,8 @@ const forbidden = [
   ['lib/capital-planning.ts', 'charterCapitalRequirementDetermined: true', 'capital workbench must not claim charter capital requirement determined'],
   ['lib/capital-planning.ts', 'approvedForCharterApplication: true', 'capital workbench must not self-approve charter use'],
   ['app/api/prototype/capital-planning/route.ts', 'await request.json()', 'capital planning route must not bypass bounded body reader'],
-  ['app/api/prototype/capital-planning/route.ts', 'persisted: true', 'capital planning route must not claim persistence']
+  ['app/api/prototype/capital-planning/route.ts', 'persisted: true', 'capital planning route must not claim persistence'],
+  ['app/prototype/strategy/capital-planning-panel.tsx', 'defaultValue=', 'capital workbench UI must not hide a default charter-capital assumption']
 ];
 
 for (const [file, text, label] of required) {
@@ -45,4 +53,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Capital planning no-default, operator/request, non-persistence, source-of-funds, and regulatory-adequacy safety checks passed.');
+console.log('Capital planning no-default, protected-Strategy-Lab, status, operator/request, non-persistence, source-of-funds, and regulatory-adequacy safety checks passed.');
