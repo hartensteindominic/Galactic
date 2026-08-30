@@ -1,0 +1,210 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+
+type OperationsStatus = {
+  databaseConfigured: boolean;
+  reconciliationMode: 'persistent' | 'memory';
+  webhookInboxConfigured: boolean;
+  realProviderWebhooksEnabled: false;
+  liveMoneyEnabled: false;
+  disclosure: string;
+};
+
+type ReconciliationRow = {
+  id: string;
+  account_id: string;
+  recorded_balance_cents: number;
+  expected_balance_cents: number;
+  delta_cents: number;
+  status: 'balanced' | 'mismatch';
+  checked_at: string;
+};
+
+type ProviderEvent = {
+  id: string;
+  provider: string;
+  provider_event_id: string;
+  event_type: string;
+  status: 'received' | 'processed' | 'ignored' | 'failed';
+  received_at: string;
+  processed_at: string | null;
+};
+
+type OperationsResponse = {
+  status: OperationsStatus;
+  latestReconciliations: ReconciliationRow[];
+  providerEvents: ProviderEvent[];
+};
+
+type ReconciliationResult = {
+  source: 'memory' | 'supabase';
+  balanced_accounts: number;
+  mismatched_accounts: number;
+  status: 'balanced' | 'attention';
+  message: string;
+  accounts: Array<{
+    account_id: string;
+    label: string;
+    recorded_balance_cents: number;
+    expected_balance_cents: number;
+    delta_cents: number;
+    status: 'balanced' | 'mismatch';
+  }>;
+};
+
+const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
+function dollars(cents: number) {
+  return money.format(cents / 100);
+}
+
+function time(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
+}
+
+export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string; brandName: string }) {
+  const [operations, setOperations] = useState<OperationsResponse | null>(null);
+  const [lastResult, setLastResult] = useState<ReconciliationResult | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const load = useCallback(async () => {
+    const response = await fetch(`/api/prototype/operations?tenant=${encodeURIComponent(tenantKey)}`, { cache: 'no-store' });
+    const data = await response.json();
+    if (!response.ok || !data?.ok) throw new Error(data?.error?.message || 'Operations status unavailable.');
+    setOperations(data.operations);
+  }, [tenantKey]);
+
+  useEffect(() => {
+    load().catch((error) => setMessage(error instanceof Error ? error.message : 'Operations status unavailable.'));
+  }, [load]);
+
+  async function reconcile() {
+    setBusy(true);
+    setMessage('');
+    try {
+      const response = await fetch('/api/prototype/reconcile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantKey })
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) throw new Error(data?.error?.message || 'Reconciliation failed.');
+      setLastResult(data.reconciliation);
+      setMessage(data.reconciliation.message || 'Reconciliation completed.');
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Reconciliation failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const latestMismatch = operations?.latestReconciliations.some((row) => row.status === 'mismatch') || false;
+
+  return (
+    <main className="min-h-screen bg-[#f5f7fb] px-4 py-6 text-slate-950 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-indigo-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-indigo-700">Operations lab</span>
+              <span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-amber-800">Simulation only</span>
+            </div>
+            <h1 className="m-0 mt-3 text-3xl font-black tracking-[-0.05em] sm:text-4xl">{brandName} operations</h1>
+            <p className="m-0 mt-2 max-w-2xl text-sm leading-6 text-slate-500">Reconciliation, provider-event visibility, and launch controls for the white-label prototype. Real banking rails remain off.</p>
+          </div>
+          <a href={`/prototype?tenant=${encodeURIComponent(tenantKey)}`} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 no-underline shadow-sm">← Banking demo</a>
+        </header>
+
+        {message ? <div className="mt-5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm" role="status">{message}</div> : null}
+
+        <section className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
+            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Ledger evidence</div>
+            <div className="mt-2 text-xl font-black">{operations?.status.databaseConfigured ? 'Persistent' : 'Memory demo'}</div>
+            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">{operations?.status.databaseConfigured ? 'Supabase stores reconciliation runs.' : 'No persistent operations evidence yet.'}</p>
+          </article>
+          <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
+            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Reconciliation</div>
+            <div className={`mt-2 text-xl font-black ${latestMismatch ? 'text-amber-700' : 'text-emerald-700'}`}>{latestMismatch ? 'Attention' : 'Healthy'}</div>
+            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">Expected balances are checked against posted ledger movements.</p>
+          </article>
+          <article className="rounded-[22px] bg-white p-5 shadow-[0_12px_35px_rgba(30,41,59,.07)]">
+            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">Webhook inbox</div>
+            <div className={`mt-2 text-xl font-black ${operations?.status.webhookInboxConfigured ? 'text-emerald-700' : 'text-amber-700'}`}>{operations?.status.webhookInboxConfigured ? 'Ready' : 'Not configured'}</div>
+            <p className="m-0 mt-2 text-xs leading-5 text-slate-500">Idempotent sandbox events only; production provider verification is separate.</p>
+          </article>
+          <article className="rounded-[22px] bg-[#0b153d] p-5 text-white shadow-xl">
+            <div className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-200">Live rails</div>
+            <div className="mt-2 text-xl font-black text-rose-200">Disabled</div>
+            <p className="m-0 mt-2 text-xs leading-5 text-white/65">No ACH, wires, deposits, cards, or real provider writes are enabled here.</p>
+          </article>
+        </section>
+
+        <section className="mt-5 rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Ledger reconciliation</h2>
+              <p className="m-0 mt-1 text-xs text-slate-500">Recompute each simulated account from its opening balance plus posted credits and debits.</p>
+            </div>
+            <button type="button" onClick={reconcile} disabled={busy} className="rounded-2xl border-0 bg-indigo-600 px-4 py-3 text-sm font-black text-white shadow-lg disabled:opacity-50">{busy ? 'Checking…' : 'Run reconciliation'}</button>
+          </div>
+
+          {lastResult ? (
+            <div className={`mt-5 rounded-2xl border p-4 ${lastResult.status === 'balanced' ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
+              <div className="font-black">{lastResult.status === 'balanced' ? 'All simulated accounts balance' : 'Ledger mismatch detected'}</div>
+              <div className="mt-1 text-xs text-slate-600">Balanced: {lastResult.balanced_accounts} · Mismatched: {lastResult.mismatched_accounts} · Source: {lastResult.source}</div>
+              <div className="mt-4 grid gap-2">
+                {lastResult.accounts.map((account) => (
+                  <div key={account.account_id} className="grid gap-1 rounded-xl bg-white px-3 py-3 text-xs shadow-sm sm:grid-cols-[1fr_auto_auto_auto] sm:items-center sm:gap-4">
+                    <b>{account.label}</b>
+                    <span className="text-slate-500">Recorded {dollars(account.recorded_balance_cents)}</span>
+                    <span className="text-slate-500">Expected {dollars(account.expected_balance_cents)}</span>
+                    <b className={account.status === 'balanced' ? 'text-emerald-700' : 'text-amber-700'}>{account.status === 'balanced' ? 'Balanced' : `Δ ${dollars(account.delta_cents)}`}</b>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </section>
+
+        <div className="mt-5 grid gap-5 lg:grid-cols-2">
+          <section className="rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
+            <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Recent reconciliation evidence</h2>
+            <div className="mt-4 grid gap-2">
+              {(operations?.latestReconciliations || []).length === 0 ? <p className="text-sm text-slate-500">No persistent runs yet.</p> : null}
+              {(operations?.latestReconciliations || []).map((row) => (
+                <div key={row.id} className="rounded-xl border border-slate-100 px-3 py-3 text-xs">
+                  <div className="flex justify-between gap-3"><b className={row.status === 'balanced' ? 'text-emerald-700' : 'text-amber-700'}>{row.status}</b><span className="text-slate-400">{time(row.checked_at)}</span></div>
+                  <div className="mt-1 text-slate-500">Recorded {dollars(row.recorded_balance_cents)} · Expected {dollars(row.expected_balance_cents)} · Δ {dollars(row.delta_cents)}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
+            <h2 className="m-0 text-lg font-black tracking-[-0.03em]">Sandbox provider events</h2>
+            <p className="m-0 mt-1 text-xs text-slate-500">Event IDs are deduplicated before they enter the simulated operations ledger.</p>
+            <div className="mt-4 grid gap-2">
+              {(operations?.providerEvents || []).length === 0 ? <p className="text-sm text-slate-500">No sandbox events recorded.</p> : null}
+              {(operations?.providerEvents || []).map((event) => (
+                <div key={event.id} className="rounded-xl border border-slate-100 px-3 py-3 text-xs">
+                  <div className="flex justify-between gap-3"><b>{event.event_type}</b><span className="text-slate-400">{time(event.received_at)}</span></div>
+                  <div className="mt-1 truncate text-slate-500">{event.provider} · {event.provider_event_id} · {event.status}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <footer className="mt-5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs leading-5 text-slate-500">
+          <b className="text-slate-700">Control boundary:</b> this console proves simulated ledger consistency and event-handling behavior. A production banking launch still requires approved partner contracts, exact provider webhook verification, customer authentication, KYC/AML, fraud controls, compliance procedures, reconciliation against partner statements, incident response, and approved disclosures.
+        </footer>
+      </div>
+    </main>
+  );
+}
