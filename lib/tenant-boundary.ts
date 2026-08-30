@@ -2,7 +2,15 @@ import { BankingError } from './banking';
 import { configuredBrands, resolveBrand, type WhiteLabelBrand } from './white-label';
 
 function normalizedHost(value: string | null | undefined) {
-  return (value || '').toLowerCase().split(':')[0].trim();
+  const raw = (value || '').trim().toLowerCase();
+  if (!raw) return '';
+
+  if (raw.startsWith('[')) {
+    const closingBracket = raw.indexOf(']');
+    if (closingBracket > 0) return raw.slice(1, closingBracket).replace(/\.$/, '');
+  }
+
+  return raw.replace(/:\d+$/, '').replace(/\.$/, '');
 }
 
 function isPreviewOverrideHost(host: string) {
