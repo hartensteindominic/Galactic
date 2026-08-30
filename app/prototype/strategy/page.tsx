@@ -1,4 +1,5 @@
 import { headers } from 'next/headers';
+import { assumptionEvidenceRegistryStatus } from '../../../lib/assumption-evidence-registry';
 import { charterReadinessStatus } from '../../../lib/charter-readiness';
 import { complianceObligationRegisterStatus } from '../../../lib/compliance-obligation-register';
 import { institutionAccountabilityStatus } from '../../../lib/institution-accountability';
@@ -30,6 +31,7 @@ export default async function PrototypeStrategyPage({
       accountability={institutionAccountabilityStatus()}
       threeYearBankPlan={threeYearBankPlanStatus()}
       sponsorDiligence={sponsorDiligencePackStatus()}
+      assumptionEvidence={assumptionEvidenceRegistryStatus()}
     />
   );
 }
