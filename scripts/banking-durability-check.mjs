@@ -99,10 +99,11 @@ if (idempotencyHeaderCount < 4) {
   throw new Error('Durable banking regression: all four provider sandbox write operations must send idempotency keys');
 }
 
-const verifyPosition = webhookRoute.indexOf('adapter.verifyWebhook');
-const normalizePosition = webhookRoute.indexOf('adapter.normalizeWebhook');
-const processPosition = webhookRoute.indexOf('captureAndProcessProviderSandboxEvent');
-if (!(verifyPosition >= 0 && normalizePosition > verifyPosition && processPosition > normalizePosition)) {
+const postHandlerPosition = webhookRoute.indexOf('export async function POST');
+const verifyPosition = webhookRoute.indexOf('const verified = await adapter.verifyWebhook', postHandlerPosition);
+const normalizePosition = webhookRoute.indexOf('const canonicalEvent = await adapter.normalizeWebhook', postHandlerPosition);
+const processPosition = webhookRoute.indexOf('const result = await captureAndProcessProviderSandboxEvent', postHandlerPosition);
+if (!(postHandlerPosition >= 0 && verifyPosition > postHandlerPosition && normalizePosition > verifyPosition && processPosition > normalizePosition)) {
   throw new Error('Durable banking regression: webhook must verify signature before normalization and processing');
 }
 
