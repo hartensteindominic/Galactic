@@ -58,3 +58,11 @@ export function requireApprovedLiveCustomerTerms(): never {
     'Live customer terms are unavailable until a versioned source has qualified approval and is connected to this application.'
   );
 }
+
+export function getCustomerTermsForRuntime(
+  mode: 'demo' | 'partner',
+  tenantKey = 'galactic-trust'
+): PrototypeCustomerTerms {
+  if (mode === 'demo') return getPrototypeCustomerTerms(tenantKey);
+  return requireApprovedLiveCustomerTerms();
+}
