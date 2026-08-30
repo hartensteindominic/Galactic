@@ -12,6 +12,7 @@ const COMMANDS = new Map([
   ['recover', { path: '/api/banking/provider-sandbox/recovery', buildBody: () => ({}) }],
   ['operations', { path: '/api/banking/provider-sandbox/operations', buildBody: () => ({}) }],
   ['reconciliations', { path: '/api/banking/provider-sandbox/reconciliations', buildBody: () => ({}) }],
+  ['reconcile-all-accounts', { path: '/api/banking/provider-sandbox/reconcile-all-accounts', buildBody: () => ({}) }],
   ['reconcile-account', {
     path: '/api/banking/provider-sandbox/reconcile-account',
     buildBody: ([accountResourceId]) => ({ accountResourceId: accountResourceId || '' })
@@ -32,7 +33,7 @@ function fail(message) {
 }
 
 function usage() {
-  console.log(`Galactic Trust provider-sandbox operator CLI\n\nCommands:\n  certify\n  recover\n  operations\n  reconciliations\n  reconcile-account <galactic-account-resource-id>\n  requeue-event <provider-event-id> <reason...>\n  resolve-reconciliation <reconciliation-id> <note...>\n\nRequired environment:\n  GALACTIC_SANDBOX_OPERATOR_CLIENT_ENABLED=true\n  GALACTIC_SANDBOX_BASE_URL=https://...\n  BANKING_SANDBOX_OPERATOR_ID=<allowlisted-id>\n  BANKING_SANDBOX_OPERATOR_SECRET=<server-matching-secret>\n\nThe secret is used only to sign the request and is never printed.`);
+  console.log(`Galactic Trust provider-sandbox operator CLI\n\nCommands:\n  certify\n  recover\n  operations\n  reconciliations\n  reconcile-all-accounts\n  reconcile-account <galactic-account-resource-id>\n  requeue-event <provider-event-id> <reason...>\n  resolve-reconciliation <reconciliation-id> <note...>\n\nRequired environment:\n  GALACTIC_SANDBOX_OPERATOR_CLIENT_ENABLED=true\n  GALACTIC_SANDBOX_BASE_URL=https://...\n  BANKING_SANDBOX_OPERATOR_ID=<allowlisted-id>\n  BANKING_SANDBOX_OPERATOR_SECRET=<server-matching-secret>\n\nThe secret is used only to sign the request and is never printed.`);
 }
 
 if (!COMMANDS.has(command)) {
