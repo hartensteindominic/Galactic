@@ -2,8 +2,6 @@
 -- Provider sandbox first; production use requires separate program approval.
 -- PostgreSQL 14+ compatible.
 
-BEGIN;
-
 CREATE TABLE IF NOT EXISTS banking_provider_events (
   event_id text PRIMARY KEY,
   provider text NOT NULL,
@@ -104,5 +102,3 @@ CREATE INDEX IF NOT EXISTS banking_audit_events_resource_idx
 -- Journals and audit records are append-only. Application/database roles used by
 -- Galactic Trust should not receive DELETE permissions on these tables.
 -- Corrections must be represented by new compensating journals/audit events.
-
-COMMIT;
