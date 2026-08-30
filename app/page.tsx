@@ -111,6 +111,13 @@ export default function Home() {
           <i>Compliance Center →</i>
         </a>
 
+        <nav className="mobileTrustLinks" aria-label="Beta trust and support">
+          <a href="/beta-notice">Beta Notice</a>
+          <a href="/privacy">Privacy</a>
+          <a href="/compliance">Compliance</a>
+          <a href="/support">Support</a>
+        </nav>
+
         <div className="contentGrid">
           <section className="mainColumn">
             <article className="balanceHero">
