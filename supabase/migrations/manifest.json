@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "purpose": "Repository integrity baseline for the simulation-only prototype migration chain. This manifest does not prove that any migration has been executed in Supabase or approved for production.",
+  "appendOnlyPolicy": "Once fingerprinted here, an existing migration must not be silently edited. Schema corrections should be introduced as a new sequential migration so history remains reviewable.",
+  "externalExecutionVerified": false,
+  "productionApprovalVerified": false,
+  "migrations": [
+    {
+      "id": "001",
+      "filename": "001_white_label_prototype.sql",
+      "gitBlobSha": "21aa43e2ad46ef64fd388bf8bc9171f1d5b990b3",
+      "classification": "foundation",
+      "simulationOnly": true
+    },
+    {
+      "id": "002",
+      "filename": "002_operations_reconciliation.sql",
+      "gitBlobSha": "b476436d7f31dbf0673f273a9bdcdbe00325e124",
+      "classification": "operations-reconciliation",
+      "simulationOnly": true
+    },
+    {
+      "id": "003",
+      "filename": "003_transfer_idempotency.sql",
+      "gitBlobSha": "16d546ecb80ac6d4b10b8c10c97b9ed724ebe17c",
+      "classification": "transfer-idempotency",
+      "simulationOnly": true
+    },
+    {
+      "id": "004",
+      "filename": "004_double_entry_ledger.sql",
+      "gitBlobSha": "f5d8441b9191b0a9f4817423bc96c19b6f40cf87",
+      "classification": "double-entry-ledger",
+      "simulationOnly": true
+    },
+    {
+      "id": "005",
+      "filename": "005_cashflow_intelligence.sql",
+      "gitBlobSha": "0c78ee5d60901ec4d945d1a80fc0d77c30f3579d",
+      "classification": "cashflow-planning",
+      "simulationOnly": true
+    }
+  ]
+}
