@@ -11,6 +11,22 @@ export type ReconciliationAccount = {
   status: 'balanced' | 'mismatch';
 };
 
+export type DoubleEntryReconciliationAccount = {
+  account_id: string;
+  label: string;
+  recorded_balance_cents: number;
+  gl_balance_cents: number;
+  delta_cents: number;
+  status: 'balanced' | 'mismatch';
+};
+
+export type DoubleEntryReconciliation = {
+  mismatched_accounts: number;
+  status: 'balanced' | 'attention';
+  accounts: DoubleEntryReconciliationAccount[];
+  message: string;
+};
+
 export type ReconciliationResult = {
   source: 'memory' | 'supabase';
   tenant_key: string;
@@ -19,6 +35,7 @@ export type ReconciliationResult = {
   mismatched_accounts: number;
   status: 'balanced' | 'attention';
   accounts: ReconciliationAccount[];
+  double_entry: DoubleEntryReconciliation;
   message: string;
 };
 
@@ -85,6 +102,7 @@ export function prototypeOperationsStatus() {
     databaseConfigured,
     reconciliationMode: databaseConfigured ? 'persistent' : 'memory',
     webhookInboxConfigured: databaseConfigured && webhookConfigured,
+    doubleEntryAvailableInBuild: true,
     realProviderWebhooksEnabled: false,
     liveMoneyEnabled: false,
     disclosure: databaseConfigured
@@ -113,19 +131,58 @@ export async function runPrototypeReconciliation(tenantKey: string, userId = 'de
       mismatched_accounts: 0,
       status: 'balanced',
       accounts,
+      double_entry: {
+        mismatched_accounts: 0,
+        status: 'balanced',
+        accounts: snapshot.accounts.map((account) => ({
+          account_id: account.id,
+          label: account.label,
+          recorded_balance_cents: account.balanceCents,
+          gl_balance_cents: account.balanceCents,
+          delta_cents: 0,
+          status: 'balanced'
+        })),
+        message: 'Memory-mode double-entry result is a UX simulation only; no persistent journal evidence exists.'
+      },
       message: 'Memory-mode simulation reconciled for demo UX. No persistent evidence was written and no real money moved.'
     };
   }
 
-  const result = await supabaseRequest<Omit<ReconciliationResult, 'source'>>('/rest/v1/rpc/reconcile_fintech_profile', {
-    method: 'POST',
-    body: JSON.stringify({
-      p_tenant_key: tenantKey,
-      p_user_external_id: userId
-    })
-  });
+  const [balanceResult, doubleEntryResult] = await Promise.all([
+    supabaseRequest<Omit<ReconciliationResult, 'source' | 'double_entry'>>('/rest/v1/rpc/reconcile_fintech_profile', {
+      method: 'POST',
+      body: JSON.stringify({
+        p_tenant_key: tenantKey,
+        p_user_external_id: userId
+      })
+    }),
+    supabaseRequest<DoubleEntryReconciliation & { tenant_key: string; user_external_id: string }>(
+      '/rest/v1/rpc/reconcile_fintech_gl_profile',
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          p_tenant_key: tenantKey,
+          p_user_external_id: userId
+        })
+      }
+    )
+  ]);
 
-  return { source: 'supabase', ...result };
+  const status = balanceResult.status === 'balanced' && doubleEntryResult.status === 'balanced'
+    ? 'balanced'
+    : 'attention';
+
+  return {
+    source: 'supabase',
+    ...balanceResult,
+    status,
+    double_entry: {
+      mismatched_accounts: doubleEntryResult.mismatched_accounts,
+      status: doubleEntryResult.status,
+      accounts: doubleEntryResult.accounts,
+      message: doubleEntryResult.message
+    }
+  };
 }
 
 export async function getPrototypeOperationsSnapshot(tenantKey: string) {
