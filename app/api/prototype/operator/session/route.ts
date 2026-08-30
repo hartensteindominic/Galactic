@@ -7,7 +7,7 @@ import {
   prototypeOperatorAccessStatus,
   requirePrototypeOperator
 } from '../../../../../lib/prototype-operator-auth';
-import { requireJsonRequest, requireTrustedOrigin, safeClientIp } from '../../../../../lib/request-security';
+import { readJsonBodyLimited, requireJsonRequest, requireTrustedOrigin, safeClientIp } from '../../../../../lib/request-security';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     requireJsonRequest(request);
     requireBestEffortLoginRateLimit(request);
 
-    const body = await request.json() as { accessSecret?: string };
+    const body = await readJsonBodyLimited<{ accessSecret?: string }>(request, 4_096);
     const session = createPrototypeOperatorSession(body.accessSecret?.trim() || '');
     return bankingJson({
       ok: true,
