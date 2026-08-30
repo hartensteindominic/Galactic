@@ -1,4 +1,5 @@
 import { bankingStatus } from '../../lib/banking';
+import { providerSandboxStatus } from '../../lib/provider-sandbox';
 import { sandboxCertificationStatus } from '../../lib/sandbox-certification';
 import { SandboxCertificationClient } from './sandbox-certification-client';
 
@@ -17,6 +18,7 @@ function Status({ label, ok, detail }: { label: string; ok: boolean; detail: str
 export default function SandboxReadinessPage() {
   const banking = bankingStatus();
   const certification = sandboxCertificationStatus();
+  const providerSandbox = providerSandboxStatus();
 
   return (
     <main className="sandboxPage">
@@ -54,6 +56,16 @@ export default function SandboxReadinessPage() {
           <Status label="Provider credentials prohibited" ok={!certification.providerCredentialsAllowed} detail="No banking API key or provider secret is consumed." />
           <Status label="Real money prohibited" ok={!certification.realMoneyAllowed} detail="The transfer is a synthetic ledger exercise only." />
         </article>
+
+        <article>
+          <small>PROVIDER SANDBOX NETWORK</small>
+          <h2>{providerSandbox.networkCallsEnabled ? 'Sandbox networking enabled' : 'Sandbox networking locked'}</h2>
+          <Status label="Sandbox credentials configured" ok={providerSandbox.configured} detail={providerSandbox.providerName ? `Provider: ${providerSandbox.providerName}` : 'No provider sandbox credentials are configured yet.'} />
+          <Status label="Credentials isolated from production" ok={providerSandbox.credentialsIsolated} detail="Sandbox gateway, API key, and program ID must not be reused from production." />
+          <Status label="Dedicated sandbox enable requested" ok={providerSandbox.enabledRequested} detail="BANKING_SANDBOX_PROVIDER_ENABLED is a sandbox-only networking switch." />
+          <Status label="Production live writes remain off" ok={!providerSandbox.productionLiveWritesEnabled} detail="Provider sandbox networking is blocked whenever production live writes are enabled." />
+          <Status label="Provider sandbox calls permitted" ok={providerSandbox.networkCallsEnabled} detail={providerSandbox.disclosure} />
+        </article>
       </section>
 
       <SandboxCertificationClient />
@@ -72,7 +84,7 @@ export default function SandboxReadinessPage() {
           <span>Reconciliation</span>
         </div>
         <p className="sandboxArchitectureNote">
-          A real provider adapter must implement the server-only contract in <code>lib/banking-provider-adapter.ts</code>. Provider credentials alone never activate production financial activity; Galactic Trust&apos;s partner, compliance, disclosure, and live-write gates remain independent.
+          A real provider adapter must implement the server-only contract in <code>lib/banking-provider-adapter.ts</code>. Provider sandbox credentials use their own isolated environment variables and dedicated enable flag. Production still requires the independent partner, compliance, disclosure, and live-write gates.
         </p>
       </section>
 
