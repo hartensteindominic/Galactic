@@ -8,10 +8,27 @@ For financial data, "rollback" does not mean deleting history until the database
 
 ## Current prototype facts
 
-- Migrations `001` through `004` build the simulated tenant/account/transaction model, reconciliation evidence, transfer idempotency, and append-only double-entry journals.
+- Migrations `001` through `005` build the simulated tenant/account/transaction model, reconciliation evidence, transfer idempotency, append-only double-entry journals, and cash-flow planning data.
 - The prototype transfer path rejects non-simulated accounts.
 - Journal records are append-only; corrections should use a reversing/correcting journal rather than rewriting historical entries.
 - Migration `004` anchors current simulated balances with opening journals rather than pretending historical transactions were fully backfilled.
+- Migration `005` adds simulation-only cash-flow planning data; it does not move or reserve customer funds.
+- `supabase/migrations/manifest.json` fingerprints the repository migration chain. CI requires sequential filenames and exact Git blob fingerprints for the locked migrations.
+- The migration manifest is **source-integrity evidence only**. `externalExecutionVerified` and `productionApprovalVerified` remain false; the manifest does not prove that migrations were run in Supabase, restored successfully, approved for production, or exercised against a live regulated program.
+
+## Repository migration integrity baseline
+
+Existing fingerprinted migrations should be treated as append-only source history. Once a migration is fingerprinted in `manifest.json`, do not silently modify it to make a later environment look correct. Introduce a new sequential migration for schema/data corrections so reviewers can see exactly what changed and when.
+
+The CI integrity check must:
+
+1. Enumerate every numbered SQL migration.
+2. Require one manifest entry per migration in sequential order.
+3. Recompute the Git blob fingerprint from the exact file bytes.
+4. Fail if a locked migration changed without a new migration number.
+5. Keep external execution and production approval flags false until independent evidence exists.
+
+This control does **not** replace a real migration table in the target database, Supabase migration history, backups, restore tests, change-management approvals, or post-migration reconciliation.
 
 ## Production rule: prefer forward recovery
 
@@ -30,6 +47,7 @@ Use this order of preference:
 
 - Delete journal rows to make balances match.
 - Update historical journal amounts in place.
+- Rewrite a fingerprinted migration instead of adding a new corrective migration.
 - Reuse an idempotency key for a different financial instruction.
 - Re-run a migration blindly because the first attempt was ambiguous.
 - Restore a database and reopen money movement before reconciling provider-side activity that happened after the restore point.
@@ -42,6 +60,8 @@ Before a production ledger migration:
 - Confirm emergency money-movement control works.
 - Take/verify the approved database backup or restore point.
 - Record current schema version and application commit.
+- Verify the repository migration fingerprint manifest against the artifact being deployed.
+- Compare target database migration history to the intended migration chain.
 - Run transaction-history/account reconciliation.
 - Run GL/account reconciliation.
 - Confirm provider reconciliation is within approved tolerance.
@@ -64,7 +84,7 @@ If the database transaction fully rolls back:
 
 1. Activate the emergency money-movement freeze.
 2. Stop automated retries of the migration.
-3. Capture schema metadata, logs, migration output, and current commit.
+3. Capture schema metadata, logs, migration output, migration fingerprints, and current commit.
 4. Run read-only checks to determine which DDL/data steps completed.
 5. Preserve a recovery copy/snapshot.
 6. Choose either a forward corrective migration or isolated restore based on evidence.
@@ -120,13 +140,16 @@ Before live launch, exercise at least:
 6. Restore from backup/PITR into an isolated environment.
 7. Provider event arrives during recovery.
 8. Duplicate financial request is replayed after recovery.
+9. Repository migration fingerprint does not match the deployment artifact.
+10. Target database migration history differs from the intended repository chain.
 
 For every drill, record whether idempotency and reconciliation still prevent double debit/credit.
 
 ## Evidence required
 
-- Migration identifier.
+- Migration identifier and repository fingerprint.
 - Source commit and deployed artifact.
+- Target database migration-history evidence.
 - Database restore point/backup evidence.
 - Pre-migration reconciliation output.
 - Post-migration reconciliation output.
@@ -137,4 +160,4 @@ For every drill, record whether idempotency and reconciliation still prevent dou
 
 ## Readiness rule
 
-`migrationRecoveryExerciseVerified` must remain false until a disposable or approved non-production environment has actually exercised the recovery path, including reconciliation after the simulated failure.
+`migrationRecoveryExerciseVerified` must remain false until a disposable or approved non-production environment has actually exercised the recovery path, including reconciliation after the simulated failure. Repository migration fingerprints and green CI are preparation evidence only and must not flip this readiness gate.
