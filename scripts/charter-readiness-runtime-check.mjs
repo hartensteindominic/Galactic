@@ -29,7 +29,19 @@ assert.equal(status.currentOperatingPosture, 'simulation-only-fintech-prototype'
 assert.equal(status.roadmapDocumented, true);
 assert.equal(status.currentSoftwareCanSelfApproveCharter, false);
 
-const externalApprovalFields = [
+const evidenceRequiredFields = [
+  'businessModelThesisDefined',
+  'targetCustomerSegmentValidated',
+  'painfulProblemValidated',
+  'distributionAdvantageValidated',
+  'primaryNonInterchangeRevenueModelValidated',
+  'driverBasedUnitEconomicsModelBuilt',
+  'unitEconomicsAssumptionsExternallyValidated',
+  'fraudLossAssumptionsValidated',
+  'customerSupportCostAssumptionsValidated',
+  'sponsorProviderCostAssumptionsValidated',
+  'customerRetentionAssumptionsValidated',
+  'providerExitContinuityPlanApproved',
   'charterRouteSelected',
   'deNovoVsAcquisitionRouteSelected',
   'nationalBankCharterSelected',
@@ -62,18 +74,21 @@ const externalApprovalFields = [
   'customerFacingBankClaimAuthorized'
 ];
 
-for (const field of externalApprovalFields) {
-  assert.equal(status[field], false, `${field} must remain false without external evidence`);
+for (const field of evidenceRequiredFields) {
+  assert.equal(status[field], false, `${field} must remain false without supporting evidence`);
 }
 
 assert.ok(Array.isArray(status.milestones));
 assert.ok(status.milestones.length >= 10);
 assert.equal(status.milestones.filter((milestone) => milestone.complete).length, 1);
 assert.equal(status.milestones.find((milestone) => milestone.id === 'simulation-control-foundation')?.complete, true);
+assert.equal(status.milestones.find((milestone) => milestone.id === 'business-model-proof')?.complete, false);
 assert.equal(status.milestones.find((milestone) => milestone.id === 'chartered-operations')?.complete, false);
 assert.match(status.disclosure, /not a charter application/i);
 assert.match(status.disclosure, /not.*regulatory approval/i);
 assert.match(status.disclosure, /not.*deposit-insurance approval/i);
 assert.match(status.disclosure, /not.*authorization to operate/i);
+assert.match(status.disclosure, /business model/i);
+assert.match(status.disclosure, /unit economics/i);
 
 console.log('Future bank charter readiness goal and external-approval truth boundaries passed runtime checks.');
