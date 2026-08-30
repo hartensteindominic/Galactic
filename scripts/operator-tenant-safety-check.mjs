@@ -13,6 +13,10 @@ const required = [
   ['lib/prototype-readiness.ts', 'productionOperatorIdentityReady: false', 'readiness must not claim production operator identity readiness'],
   ['lib/request-security.ts', "'REQUEST_BODY_TOO_LARGE'", 'bounded JSON reader must fail closed on oversized bodies'],
   ['lib/request-security.ts', "'INVALID_JSON'", 'bounded JSON reader must fail closed on malformed JSON'],
+  ['lib/white-label.ts', "'WHITE_LABEL_CONFIG_INVALID'", 'invalid tenant configuration must fail closed'],
+  ['lib/white-label.ts', 'Duplicate white-label tenant key detected', 'duplicate tenant keys must be rejected'],
+  ['lib/white-label.ts', 'is assigned to more than one white-label tenant', 'duplicate domain ownership must be rejected'],
+  ['lib/white-label.ts', 'must contain valid JSON', 'malformed tenant JSON must be rejected'],
   ['lib/tenant-boundary.ts', "'TENANT_HOST_MISMATCH'", 'cross-tenant host mismatch must fail closed'],
   ['lib/tenant-boundary.ts', "'TENANT_QUERY_OVERRIDE_FORBIDDEN'", 'production query tenant override must fail closed'],
   ['lib/tenant-boundary.ts', "'UNKNOWN_TENANT'", 'unknown tenant keys must fail closed'],
@@ -54,4 +58,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Prototype operator-access, request-boundary and tenant-isolation safety checks passed.');
+console.log('Prototype operator-access, request-boundary, tenant-isolation and tenant-configuration safety checks passed.');
