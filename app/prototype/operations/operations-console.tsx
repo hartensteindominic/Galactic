@@ -91,6 +91,51 @@ type ReconciliationResult = {
   };
 };
 
+type SchemaPreflightResource = {
+  migrationId: '001' | '002' | '003' | '004' | '005';
+  kind: 'table' | 'rpc';
+  name: string;
+  openApiPath: string;
+  observed?: boolean;
+};
+
+type SchemaPreflightResult = {
+  source: 'supabase-postgrest-openapi';
+  readOnlyObservation: true;
+  preflightExecuted: true;
+  expectedResourceCount: number;
+  observedResourceCount: number;
+  missingResourceCount: number;
+  allExpectedResourcesObserved: boolean;
+  resources: SchemaPreflightResource[];
+  missingResources: SchemaPreflightResource[];
+  targetMigrationHistoryVerified: false;
+  migrationsExecutedVerified: false;
+  dataCorrectnessVerified: false;
+  reconciliationExerciseVerified: false;
+  transferIdempotencyExerciseVerified: false;
+  restoreExerciseVerified: false;
+  productionApprovalVerified: false;
+  disclosure: string;
+};
+
+type EvidenceFreshness = {
+  state: 'none' | 'recent-evidence' | 'stale-evidence' | 'invalid-evidence' | 'future-evidence';
+  evidencePresent: boolean;
+  latestObservedAt: string | null;
+  ageMs: number | null;
+  continuousMonitoringVerified: false;
+  productionHealthVerified: false;
+  providerStatementReconciliationVerified: false;
+  disclosure: string;
+};
+
+type EvidenceFreshnessResponse = {
+  reconciliation: EvidenceFreshness;
+  sandboxProviderEvents: EvidenceFreshness;
+  audit: EvidenceFreshness;
+};
+
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 function dollars(cents: number) {
@@ -103,6 +148,30 @@ function time(value: string) {
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(date);
 }
 
+function ageLabel(ageMs: number | null) {
+  if (ageMs === null) return 'Age unknown';
+  const minutes = Math.floor(ageMs / 60000);
+  if (minutes < 1) return 'Less than 1 minute old';
+  if (minutes < 60) return `${minutes}m old`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 48) return `${hours}h old`;
+  return `${Math.floor(hours / 24)}d old`;
+}
+
+function freshnessLabel(value: EvidenceFreshness) {
+  if (value.state === 'recent-evidence') return 'Recent evidence';
+  if (value.state === 'stale-evidence') return 'Stale evidence';
+  if (value.state === 'invalid-evidence') return 'Invalid timestamp';
+  if (value.state === 'future-evidence') return 'Clock/data check';
+  return 'No evidence';
+}
+
+function freshnessTone(value: EvidenceFreshness) {
+  if (value.state === 'recent-evidence') return 'bg-indigo-100 text-indigo-700';
+  if (value.state === 'none') return 'bg-slate-100 text-slate-600';
+  return 'bg-amber-100 text-amber-800';
+}
+
 function entityReference(event: AuditEvent) {
   if (!event.entity_id) return event.entity_type;
   const shortId = event.entity_id.length > 16 ? `${event.entity_id.slice(0, 8)}…${event.entity_id.slice(-4)}` : event.entity_id;
@@ -112,7 +181,11 @@ function entityReference(event: AuditEvent) {
 export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string; brandName: string }) {
   const [operations, setOperations] = useState<OperationsResponse | null>(null);
   const [lastResult, setLastResult] = useState<ReconciliationResult | null>(null);
+  const [schemaPreflight, setSchemaPreflight] = useState<SchemaPreflightResult | null>(null);
+  const [freshness, setFreshness] = useState<EvidenceFreshnessResponse | null>(null);
   const [busy, setBusy] = useState(false);
+  const [preflightBusy, setPreflightBusy] = useState(false);
+  const [freshnessBusy, setFreshnessBusy] = useState(false);
   const [message, setMessage] = useState('');
 
   const load = useCallback(async () => {
@@ -144,6 +217,40 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
       setMessage(error instanceof Error ? error.message : 'Reconciliation failed.');
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function runSchemaPreflight() {
+    setPreflightBusy(true);
+    setMessage('');
+    try {
+      const response = await fetch(`/api/prototype/schema-preflight?tenant=${encodeURIComponent(tenantKey)}`, { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) throw new Error(data?.error?.message || 'Schema preflight unavailable.');
+      setSchemaPreflight(data.preflight);
+      setMessage(data.preflight.allExpectedResourcesObserved
+        ? 'Read-only capability observation completed. All expected paths were observed; migration execution and correctness remain unverified.'
+        : `Read-only capability observation found ${data.preflight.missingResourceCount} missing expected resource${data.preflight.missingResourceCount === 1 ? '' : 's'}.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Schema preflight unavailable.');
+    } finally {
+      setPreflightBusy(false);
+    }
+  }
+
+  async function refreshEvidenceFreshness() {
+    setFreshnessBusy(true);
+    setMessage('');
+    try {
+      const response = await fetch(`/api/prototype/operations/freshness?tenant=${encodeURIComponent(tenantKey)}`, { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !data?.ok) throw new Error(data?.error?.message || 'Evidence age unavailable.');
+      setFreshness(data.evidence);
+      setMessage('Evidence age refreshed. Recency is evidence timing only, not a production health status.');
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Evidence age unavailable.');
+    } finally {
+      setFreshnessBusy(false);
     }
   }
 
@@ -202,6 +309,79 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
             <div className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-200">Live rails</div>
             <div className="mt-2 text-xl font-black text-rose-200">Disabled</div>
             <p className="m-0 mt-2 text-xs leading-5 text-white/65">No ACH, wires, deposits, cards, or real provider writes are enabled here.</p>
+          </article>
+        </section>
+
+        <section className="mt-5 grid gap-5 xl:grid-cols-2">
+          <article className="rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.14em] text-indigo-600">Read-only target check</div>
+                <h2 className="m-0 mt-2 text-lg font-black tracking-[-0.03em]">Schema capability preflight</h2>
+                <p className="m-0 mt-1 max-w-xl text-xs leading-5 text-slate-500">Observes the PostgREST OpenAPI description for 16 expected table/RPC paths from migrations 001–005. It does not invoke financial RPCs or mutate data.</p>
+              </div>
+              <button type="button" onClick={runSchemaPreflight} disabled={preflightBusy || !operations?.status.databaseCredentialsConfigured} className="rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs font-black text-indigo-700 disabled:cursor-not-allowed disabled:opacity-45">{preflightBusy ? 'Observing…' : 'Run read-only preflight'}</button>
+            </div>
+
+            {!operations?.status.databaseCredentialsConfigured ? (
+              <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-500">A private/disposable Supabase environment must be configured before this read-only observation can run.</div>
+            ) : null}
+
+            {schemaPreflight ? (
+              <div className="mt-4">
+                <div className={`rounded-2xl border p-4 ${schemaPreflight.allExpectedResourcesObserved ? 'border-indigo-200 bg-indigo-50' : 'border-amber-200 bg-amber-50'}`}>
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <b>{schemaPreflight.observedResourceCount}/{schemaPreflight.expectedResourceCount} expected paths observed</b>
+                    <span className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wide ${schemaPreflight.allExpectedResourcesObserved ? 'bg-indigo-100 text-indigo-700' : 'bg-amber-100 text-amber-800'}`}>{schemaPreflight.allExpectedResourcesObserved ? 'Capabilities observed' : `${schemaPreflight.missingResourceCount} missing`}</span>
+                  </div>
+                  <p className="m-0 mt-2 text-xs leading-5 text-slate-600"><b>Capability evidence only.</b> Even 16/16 observed does not mean migrations were executed in order, data is correct, reconciliation/idempotency was exercised, restore works, or production is approved.</p>
+                </div>
+                {schemaPreflight.missingResources.length > 0 ? (
+                  <div className="mt-3 grid gap-2">
+                    {schemaPreflight.missingResources.map((resource) => (
+                      <div key={`${resource.migrationId}-${resource.name}`} className="rounded-xl border border-amber-100 bg-white px-3 py-2 text-xs">
+                        <b className="text-amber-800">Migration {resource.migrationId} · {resource.kind.toUpperCase()}</b>
+                        <div className="mt-1 text-slate-600">{resource.name} · {resource.openApiPath}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ) : (
+              <div className="mt-4 text-xs text-slate-400">Not run in this browser session.</div>
+            )}
+          </article>
+
+          <article className="rounded-[24px] bg-white p-5 shadow-[0_12px_40px_rgba(30,41,59,.07)] sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.14em] text-indigo-600">Evidence timing</div>
+                <h2 className="m-0 mt-2 text-lg font-black tracking-[-0.03em]">Evidence age</h2>
+                <p className="m-0 mt-1 max-w-xl text-xs leading-5 text-slate-500">Shows when reconciliation, sandbox-provider, and audit evidence was last observed. Recency is not a health status.</p>
+              </div>
+              <button type="button" onClick={refreshEvidenceFreshness} disabled={freshnessBusy || !operations?.status.databaseCredentialsConfigured} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs font-black text-slate-700 disabled:cursor-not-allowed disabled:opacity-45">{freshnessBusy ? 'Refreshing…' : 'Refresh evidence age'}</button>
+            </div>
+
+            {freshness ? (
+              <div className="mt-4 grid gap-2">
+                {([
+                  ['Reconciliation', freshness.reconciliation],
+                  ['Sandbox provider events', freshness.sandboxProviderEvents],
+                  ['Audit trail', freshness.audit]
+                ] as const).map(([label, value]) => (
+                  <div key={label} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <b>{label}</b>
+                      <span className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-wide ${freshnessTone(value)}`}>{freshnessLabel(value)}</span>
+                    </div>
+                    <div className="mt-2 text-slate-500">{value.latestObservedAt ? `${time(value.latestObservedAt)} · ${ageLabel(value.ageMs)}` : ageLabel(value.ageMs)}</div>
+                  </div>
+                ))}
+                <div className="rounded-2xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-xs leading-5 text-indigo-900"><b>Not a health status.</b> Recent evidence does not prove continuous monitoring, production health, or provider-statement reconciliation.</div>
+              </div>
+            ) : (
+              <div className="mt-4 text-xs text-slate-400">Not refreshed in this browser session.</div>
+            )}
           </article>
         </section>
 
@@ -313,7 +493,7 @@ export function OperationsConsole({ tenantKey, brandName }: { tenantKey: string;
         </div>
 
         <footer className="mt-5 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs leading-5 text-slate-500">
-          <b className="text-slate-700">Control boundary:</b> this console can display simulated reconciliation, provider-event, and audit evidence. Environment configuration, stored rows, a balanced individual run, or green CI do not by themselves prove continuous production operation or readiness. A production banking launch still requires approved partner contracts, exact provider webhook verification, customer authentication, KYC/AML, fraud controls, compliance procedures, reconciliation against partner statements, incident response, and approved disclosures.
+          <b className="text-slate-700">Control boundary:</b> this console can display simulated reconciliation, provider-event, audit, schema-capability, and evidence-age observations. Environment configuration, stored rows, 16/16 schema paths, recent evidence, a balanced individual run, or green CI do not by themselves prove migration execution/order, continuous production operation, production health, provider-statement reconciliation, or readiness. A production banking launch still requires approved partner contracts, exact provider webhook verification, customer authentication, KYC/AML, fraud controls, compliance procedures, reconciliation against partner statements, incident response, and approved disclosures.
         </footer>
       </div>
     </main>
