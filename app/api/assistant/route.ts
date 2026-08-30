@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { answerGalacticQuestion } from '../../../lib/assistant';
-import { readJsonBodyLimited, requireJsonRequest, requireTrustedOrigin, safeClientIp } from '../../../lib/request-security';
 import { bankingErrorResponse } from '../../../lib/banking-http';
+import { getPrototypeCustomerTerms } from '../../../lib/customer-terms-control';
+import { readJsonBodyLimited, requireJsonRequest, requireTrustedOrigin, safeClientIp } from '../../../lib/request-security';
+import { supportCaseControlStatus } from '../../../lib/support-case-state';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -51,6 +53,9 @@ export async function POST(request: Request) {
     }
 
     const reply = answerGalacticQuestion(message);
+    const prototypeTerms = getPrototypeCustomerTerms();
+    const supportCases = supportCaseControlStatus();
+
     return NextResponse.json({
       ok: true,
       reply,
@@ -58,7 +63,12 @@ export async function POST(request: Request) {
         automated: true,
         regulatedDecisioningEnabled: false,
         accountSpecificDecisioningEnabled: false,
-        thirdPartyLlmCustomerDataEnabled: false
+        thirdPartyLlmCustomerDataEnabled: false,
+        productionHumanCaseManagementConnected: supportCases.approvedProductionCaseSystemConnected,
+        automationMayResolveSupportCase: supportCases.automationMayResolveCase,
+        automationMayCloseSupportCase: supportCases.automationMayCloseCase,
+        prototypeTermsVersion: prototypeTerms.version,
+        liveCustomerTermsApproved: prototypeTerms.liveTermsApproved
       }
     }, {
       headers: {
