@@ -21,9 +21,12 @@ const required = [
   ['app/api/prototype/three-year-bank-plan/route.ts', 'requireJsonRequest(request)', 'three-year bank plan endpoint must require JSON'],
   ['app/api/prototype/three-year-bank-plan/route.ts', 'readJsonBodyLimited<ThreeYearBankPlanRequest>(request, 65_536)', 'three-year bank plan endpoint must bound request bodies'],
   ['app/api/prototype/three-year-bank-plan/route.ts', 'persisted: false', 'three-year bank plan endpoint must remain non-persistent'],
+  ['app/api/prototype/status/route.ts', 'threeYearBankPlan: threeYearBankPlanStatus()', 'status API must expose three-year bank plan posture'],
+  ['app/api/prototype/status/route.ts', 'contains no default market, growth, deposit, revenue, loss, capital, liquidity, or profitability assumptions', 'status disclosure must keep bank plan assumptions explicit and unseeded'],
   ['docs/REGULATOR_READY_THREE_YEAR_BANK_PLAN.md', 'No invented numbers rule', 'bank plan documentation must prohibit invented assumptions'],
   ['docs/REGULATOR_READY_THREE_YEAR_BANK_PLAN.md', 'AI may draft, structure, compare, calculate, detect inconsistency, and summarize evidence', 'bank plan documentation must bound AI authority'],
-  ['scripts/three-year-bank-plan-runtime-check.mjs', 'Three-year bank plan no-default, horizon, evidence, structural-only, and non-approval runtime checks passed.', 'three-year plan must have executable runtime coverage']
+  ['scripts/three-year-bank-plan-runtime-check.mjs', 'Three-year bank plan no-default, horizon, evidence, structural-only, and non-approval runtime checks passed.', 'three-year plan must have executable runtime coverage'],
+  ['package.json', 'scripts/three-year-bank-plan-runtime-check.mjs', 'three-year plan runtime coverage must run in CI']
 ];
 
 const forbidden = [
@@ -49,4 +52,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Three-year bank plan horizon, no-default, official-source, operator/request, documentation, non-persistence, and non-approval safety checks passed.');
+console.log('Three-year bank plan horizon, no-default, official-source, status, operator/request, documentation, non-persistence, and non-approval safety checks passed.');
