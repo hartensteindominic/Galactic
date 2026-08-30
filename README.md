@@ -1,12 +1,18 @@
 # Galactic Trust
 
-Galactic Trust is a fintech dashboard and banking-integration shell designed to connect to a regulated banking program without pretending that a prototype balance is a real deposit.
+Galactic Trust is a fintech dashboard and regulated-provider integration shell. It is designed to look and behave like a modern digital-banking product without presenting prototype balances, crypto holdings, or demo transactions as real customer assets.
 
-The repository currently runs in **demo banking mode by default**. Demo balances, transfers, cards, and activity are simulated. No real deposits are held and no real money moves unless a regulated partner program is configured and live writes are explicitly enabled.
+The repository runs in **demo banking and demo crypto mode by default**. Demo balances, transfers, cards, crypto prices, buys, sells, and activity are simulated. Real money or crypto activity remains fail-closed until approved provider programs are configured and server-side live switches are explicitly enabled.
+
+## Product experience
+
+- Galaxy-themed consumer banking dashboard matching the Galactic Trust reference design.
+- Transfer, add-money, card controls, accounts, recent activity, cards, spending insights, rewards, and responsive mobile behavior.
+- Guarded BTC, ETH, and USDC buy/sell interface. Demo mode clearly simulates orders; live trading requires a separately approved provider program.
+- Bottom-right **Orbit** support chatbot for transfers, cards, crypto, security, privacy, rewards, and product status.
+- Security & Privacy dashboard panel plus `/privacy` Privacy Center.
 
 ## Banking architecture
-
-The app now separates the customer experience from the regulated banking provider:
 
 `Galactic Trust UI -> Galactic banking API -> private partner gateway -> regulated banking platform / partner bank`
 
@@ -19,22 +25,49 @@ The server-side banking adapter lives in `lib/banking.ts`. It intentionally does
 - `POST /api/banking/transfers` - simulated in demo; partner gateway in approved live mode
 - `POST /api/banking/cards/freeze` - simulated in demo; partner gateway in approved live mode
 
-### Safety model
+## Crypto architecture
 
-- `BANKING_MODE=demo` is the default.
-- Partner banking requires the banking gateway URL, API key, program ID, provider name, partner bank name, and a signed authentication boundary.
-- Real transfer/card writes remain disabled unless `BANKING_ENABLE_LIVE_WRITES=true` is set server-side.
-- Partner mode fails closed when configuration or authenticated-session signatures are missing.
-- Provider API keys and auth signing secrets are server-only and must never be placed in client code.
-- Full card PAN, CVV, PIN, and equivalent sensitive card-authentication data are not exposed by this prototype.
-- Any FDIC, bank-partner, APR, fee, or account-eligibility language must match the actual approved program before public launch.
+`Galactic Trust crypto UI -> /api/crypto/* -> private crypto gateway -> approved trading/custody provider`
 
-### Partner environment variables
+- `GET /api/crypto/status` - trading mode, provider disclosure, and demo portfolio
+- `POST /api/crypto/orders` - simulated buy/sell in demo; approved provider gateway in live mode
+- `CRYPTO_MODE=demo` is the default.
+- Real crypto orders remain disabled unless `CRYPTO_ENABLE_LIVE_TRADING=true` is set server-side and all required provider configuration exists.
+- The client never receives the provider API key or program credentials.
+- Crypto UI states that prices can fall and does not promise returns.
+
+## Orbit assistant
+
+`POST /api/assistant` provides a privacy-aware support assistant for common Galactic Trust questions. It is intentionally limited to product support and general explanations.
+
+Orbit:
+
+- does not ask users for passwords, PINs, CVVs, recovery codes, or one-time authentication codes;
+- does not provide guaranteed-return claims or personalized crypto recommendations;
+- has same-origin request checks, input limits, no-store responses, and a basic server-side rate limit;
+- does not intentionally persist chat messages to an application database in the current implementation.
+
+## Security & privacy controls
+
+- Banking defaults to demo unless partner mode is explicitly enabled.
+- Crypto defaults to demo unless partner mode is explicitly enabled.
+- Real banking writes require `BANKING_ENABLE_LIVE_WRITES=true`.
+- Real crypto trading requires `CRYPTO_ENABLE_LIVE_TRADING=true`.
+- Partner banking requires signed short-lived authentication headers.
+- Money movement and crypto order endpoints validate JSON, reject untrusted browser origins, and use idempotency protection where appropriate.
+- Full card PAN, CVV, PIN, and equivalent sensitive card-authentication data are not exposed by the product UI.
+- Provider API keys and auth secrets are server-only.
+- Browser responses include a restrictive Content Security Policy, anti-framing, no-sniff, referrer, permissions, cross-origin, and HSTS protections.
+- `/privacy` explains the current privacy posture and the additional policy work required before real customer onboarding.
+- Any FDIC, partner-bank, crypto-provider, APR, fee, account-eligibility, custody, insurance, or consumer-rights language must match the actual approved live programs before public launch.
+
+## Partner environment variables
 
 ```bash
 BANKING_MODE=demo
+CRYPTO_MODE=demo
 
-# Configure only after a real banking program is approved.
+# Banking - configure only after a real banking program is approved.
 # BANKING_PROVIDER_NAME=Approved Banking Platform
 # BANKING_PARTNER_BANK_NAME=Approved FDIC-Insured Bank
 # BANKING_PARTNER_DISCLOSURE=Approved program disclosure text
@@ -43,30 +76,30 @@ BANKING_MODE=demo
 # BANKING_PROGRAM_ID=program-id
 # BANKING_AUTH_GATEWAY_SECRET=server-side-signing-secret
 # BANKING_ENABLE_LIVE_WRITES=false
+
+# Crypto - configure only after a real provider program is approved.
+# CRYPTO_PROVIDER_NAME=Approved Crypto Provider
+# CRYPTO_PARTNER_DISCLOSURE=Approved crypto disclosure text
+# CRYPTO_GATEWAY_BASE_URL=https://private-crypto-gateway.example.com
+# CRYPTO_GATEWAY_API_KEY=server-side-secret-only
+# CRYPTO_PROGRAM_ID=program-id
+# CRYPTO_ENABLE_LIVE_TRADING=false
 ```
 
 ## Revenue direction
 
-The intended regulated-fintech business model is a mix of card interchange/revenue share, deposit economics through the approved partner program, optional premium membership, merchant-funded rewards, and additional regulated products when eligible. Revenue is not guaranteed and depends on partner contracts, customer activity, fraud/credit losses where applicable, support costs, compliance costs, network/provider fees, and acquisition economics.
+The intended regulated-fintech business model is a mix of card interchange/revenue share, deposit economics through an approved banking partner program, optional premium membership, merchant-funded rewards, and additional regulated products when eligible. A future approved crypto program could add contracted trading/revenue-share economics. Revenue is not guaranteed and depends on partner agreements, activity, fraud/credit losses where applicable, compliance, support, provider/network fees, and customer acquisition economics.
 
 ## Existing x402 licensing routes
 
-The prior Galactic x402 licensing service remains in the repository as a separate digital-asset revenue feature:
+The prior Galactic x402 licensing service remains separate from banking and consumer crypto trading:
 
-- `GET /api/licenses/catalog` - free machine-readable catalog
-- `POST /api/licenses/use` - x402-paid one-use license receipt
-- `GET /api/paylink` - direct Base USDC paylink
-- `GET /api/agent/manifest` - agent discovery manifest
-- `GET /api/agent/openapi` - OpenAPI spec
-- `GET /api/agent/health` - x402 status and configuration
-
-The default public x402 payment receiver is:
-
-`0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb`
-
-The default VoxelFlip contract is:
-
-`0xa00758b05f96ef4409d97c3ffebb6794b2eafbde`
+- `GET /api/licenses/catalog`
+- `POST /api/licenses/use`
+- `GET /api/paylink`
+- `GET /api/agent/manifest`
+- `GET /api/agent/openapi`
+- `GET /api/agent/health`
 
 ## Run
 
@@ -78,4 +111,4 @@ npm run build
 npm run dev
 ```
 
-Deploy the Next.js app to a server-capable host such as Vercel. GitHub Pages can show the static preview, but the banking and x402 APIs require a server deployment.
+Deploy the Next.js app to a server-capable host such as Vercel. GitHub Pages can show a static demo preview, but banking, crypto, Orbit, and x402 API behavior require the Next.js server deployment.
