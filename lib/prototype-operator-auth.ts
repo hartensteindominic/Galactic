@@ -3,9 +3,15 @@ import { BankingError } from './banking';
 
 const COOKIE_NAME = 'gt_prototype_operator';
 const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+const MIN_SECRET_LENGTH = 32;
+
+function rawOperatorSecret() {
+  return process.env.PROTOTYPE_OPERATOR_ACCESS_SECRET?.trim() || '';
+}
 
 function operatorSecret() {
-  return process.env.PROTOTYPE_OPERATOR_ACCESS_SECRET?.trim() || '';
+  const raw = rawOperatorSecret();
+  return raw.length >= MIN_SECRET_LENGTH ? raw : '';
 }
 
 function persistentPrototypeConfigured() {
@@ -34,23 +40,37 @@ function cookieValue(request: Request, name: string) {
   return '';
 }
 
+function requireStrongConfiguredSecret() {
+  const raw = rawOperatorSecret();
+  const configured = operatorSecret();
+  if (configured) return configured;
+  if (raw) {
+    throw new BankingError(
+      503,
+      'OPERATOR_ACCESS_SECRET_TOO_WEAK',
+      `Prototype operator access is locked because the configured server secret is shorter than ${MIN_SECRET_LENGTH} characters.`
+    );
+  }
+  throw new BankingError(503, 'OPERATOR_ACCESS_NOT_CONFIGURED', 'Prototype operator access is not configured.');
+}
+
 export function prototypeOperatorAccessStatus() {
+  const raw = rawOperatorSecret();
   const configured = Boolean(operatorSecret());
   const persistentConfigured = persistentPrototypeConfigured();
   return {
     configured,
+    weakSecretConfigured: Boolean(raw) && !configured,
+    minimumSecretLength: MIN_SECRET_LENGTH,
     persistentConfigured,
-    required: configured || persistentConfigured,
+    required: Boolean(raw) || persistentConfigured,
     failClosedIfPersistentWithoutSecret: true,
     sessionTtlHours: SESSION_TTL_MS / (60 * 60 * 1000)
   } as const;
 }
 
 export function createPrototypeOperatorSession(presentedSecret: string) {
-  const configured = operatorSecret();
-  if (!configured) {
-    throw new BankingError(503, 'OPERATOR_ACCESS_NOT_CONFIGURED', 'Prototype operator access is not configured.');
-  }
+  const configured = requireStrongConfiguredSecret();
   if (!presentedSecret || !safeEqual(configured, presentedSecret)) {
     throw new BankingError(401, 'INVALID_OPERATOR_ACCESS', 'Operator access was not accepted.');
   }
@@ -76,15 +96,17 @@ export function clearOperatorSessionCookie() {
 }
 
 export function requirePrototypeOperator(request: Request) {
+  const raw = rawOperatorSecret();
   const configured = operatorSecret();
   const persistentConfigured = persistentPrototypeConfigured();
 
   if (!configured) {
+    if (raw) requireStrongConfiguredSecret();
     if (persistentConfigured) {
       throw new BankingError(
         503,
         'OPERATOR_ACCESS_NOT_CONFIGURED',
-        'Persistent prototype operations are locked until server-side operator access is configured.'
+        'Persistent prototype operations are locked until strong server-side operator access is configured.'
       );
     }
     return { mode: 'open-memory-demo' as const, authenticated: false };
