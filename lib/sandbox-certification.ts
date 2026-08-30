@@ -1,16 +1,6 @@
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { BankingError, bankingStatus } from './banking';
-
-type LedgerAccount = 'partner_settlement_cash' | 'customer_deposit_liability';
-
-type LedgerEntry = {
-  id: string;
-  eventId: string;
-  account: LedgerAccount;
-  debitCents: number;
-  creditCents: number;
-  description: string;
-};
+import { createInboundAchPostedJournal, reconcilePostedAmount } from './financial-ledger';
 
 type SandboxProviderEvent = {
   id: string;
@@ -39,7 +29,7 @@ function verifySandboxWebhook(payload: string, signature: string, secret: Buffer
 }
 
 function cents(value: number) {
-  if (!Number.isInteger(value) || value <= 0) {
+  if (!Number.isSafeInteger(value) || value <= 0) {
     throw new BankingError(500, 'SANDBOX_AMOUNT_INVALID', 'The synthetic certification amount is invalid.');
   }
   return value;
@@ -79,6 +69,7 @@ export function runSandboxCertification(userId: string) {
   const accountId = `sandbox-checking-${suffix}`;
   const transferId = `sandbox-ach-${suffix}`;
   const eventId = `sandbox-event-${suffix}`;
+  const journalId = `sandbox-journal-${suffix}`;
   const amountCents = cents(2500);
   const occurredAt = new Date().toISOString();
 
@@ -135,56 +126,52 @@ export function runSandboxCertification(userId: string) {
   }
 
   const processedEventIds = new Set<string>();
-  const ledgerEntries: LedgerEntry[] = [];
+  let journal = createInboundAchPostedJournal({
+    journalId,
+    eventId: providerEvent.id,
+    amountCents: providerEvent.amountCents,
+    createdAt: occurredAt
+  });
 
   function ingest(event: SandboxProviderEvent) {
     if (processedEventIds.has(event.id)) {
-      return { accepted: false, duplicate: true, ledgerEntriesAdded: 0 };
+      return { accepted: false, duplicate: true, journalCreated: false };
     }
 
     processedEventIds.add(event.id);
-    const before = ledgerEntries.length;
+    journal = createInboundAchPostedJournal({
+      journalId,
+      eventId: event.id,
+      amountCents: event.amountCents,
+      createdAt: event.occurredAt
+    });
 
-    ledgerEntries.push(
-      {
-        id: `${event.id}-debit`,
-        eventId: event.id,
-        account: 'partner_settlement_cash',
-        debitCents: event.amountCents,
-        creditCents: 0,
-        description: 'Synthetic settlement asset increase'
-      },
-      {
-        id: `${event.id}-credit`,
-        eventId: event.id,
-        account: 'customer_deposit_liability',
-        debitCents: 0,
-        creditCents: event.amountCents,
-        description: 'Synthetic customer balance liability increase'
-      }
-    );
-
-    return { accepted: true, duplicate: false, ledgerEntriesAdded: ledgerEntries.length - before };
+    return { accepted: true, duplicate: false, journalCreated: true };
   }
 
   const firstIngest = ingest(providerEvent);
   const duplicateIngest = ingest(providerEvent);
+  const duplicateWebhookRejected = duplicateIngest.duplicate && !duplicateIngest.journalCreated;
 
-  const totalDebitsCents = ledgerEntries.reduce((sum, entry) => sum + entry.debitCents, 0);
-  const totalCreditsCents = ledgerEntries.reduce((sum, entry) => sum + entry.creditCents, 0);
-  const ledgerBalanced = totalDebitsCents === totalCreditsCents;
-  const duplicateWebhookRejected = duplicateIngest.duplicate && duplicateIngest.ledgerEntriesAdded === 0;
-  const customerBalanceCents = totalCreditsCents;
+  const customerBalanceCents = journal.lines
+    .filter((entry) => entry.account === 'customer_deposit_liability')
+    .reduce((sum, entry) => sum + entry.creditCents - entry.debitCents, 0);
 
+  const reconciliationCore = reconcilePostedAmount({
+    providerAmountCents: providerEvent.amountCents,
+    internalAmountCents: customerBalanceCents,
+    journal,
+    eventCount: processedEventIds.size
+  });
+
+  const ledgerBalanced = reconciliationCore.ledgerDebitsCents === reconciliationCore.ledgerCreditsCents;
   const reconciliation = {
-    providerPostedCents: providerEvent.amountCents,
-    internalCustomerBalanceCents: customerBalanceCents,
-    ledgerDebitsCents: totalDebitsCents,
-    ledgerCreditsCents: totalCreditsCents,
-    matched:
-      providerEvent.amountCents === customerBalanceCents &&
-      totalDebitsCents === totalCreditsCents &&
-      processedEventIds.size === 1
+    providerPostedCents: reconciliationCore.providerAmountCents,
+    internalCustomerBalanceCents: reconciliationCore.internalAmountCents,
+    ledgerDebitsCents: reconciliationCore.ledgerDebitsCents,
+    ledgerCreditsCents: reconciliationCore.ledgerCreditsCents,
+    discrepancyCents: reconciliationCore.discrepancyCents,
+    matched: reconciliationCore.matched
   };
 
   const evidence = {
@@ -226,11 +213,12 @@ export function runSandboxCertification(userId: string) {
       secretReturned: false
     },
     ledger: {
-      entryCount: ledgerEntries.length,
-      totalDebitsCents,
-      totalCreditsCents,
+      journalId: journal.id,
+      entryCount: journal.lines.length,
+      totalDebitsCents: reconciliationCore.ledgerDebitsCents,
+      totalCreditsCents: reconciliationCore.ledgerCreditsCents,
       balanced: ledgerBalanced,
-      entries: ledgerEntries
+      entries: journal.lines
     },
     reconciliation,
     evidence,
