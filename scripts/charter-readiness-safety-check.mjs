@@ -5,6 +5,12 @@ const required = [
   ['lib/charter-readiness.ts', "currentPhase: 'fintech-proof'", 'current charter-readiness phase must remain fintech proof'],
   ['lib/charter-readiness.ts', "currentOperatingPosture: 'simulation-only-fintech-prototype'", 'current operating posture must remain simulation-only'],
   ['lib/charter-readiness.ts', 'currentSoftwareCanSelfApproveCharter: false', 'software must not self-approve charter status'],
+  ['lib/charter-readiness.ts', 'businessModelThesisDefined: false', 'business-model thesis must remain unclaimed until evidenced'],
+  ['lib/charter-readiness.ts', 'targetCustomerSegmentValidated: false', 'target customer must remain unvalidated'],
+  ['lib/charter-readiness.ts', 'distributionAdvantageValidated: false', 'distribution advantage must remain unvalidated'],
+  ['lib/charter-readiness.ts', 'primaryNonInterchangeRevenueModelValidated: false', 'non-interchange revenue must remain unvalidated'],
+  ['lib/charter-readiness.ts', 'driverBasedUnitEconomicsModelBuilt: false', 'unit-economics model must remain unclaimed until built'],
+  ['lib/charter-readiness.ts', 'providerExitContinuityPlanApproved: false', 'provider exit plan must remain unapproved'],
   ['lib/charter-readiness.ts', 'charterApplicationFiled: false', 'charter filing must remain unclaimed'],
   ['lib/charter-readiness.ts', 'depositInsuranceApproved: false', 'deposit insurance approval must remain unclaimed'],
   ['lib/charter-readiness.ts', 'openingAuthorizationReceived: false', 'opening authority must remain unclaimed'],
@@ -13,6 +19,7 @@ const required = [
   ['lib/charter-readiness.ts', 'customerFacingBankClaimAuthorized: false', 'customer-facing bank claim authority must remain false'],
   ['lib/charter-readiness.ts', 'No universal charter capital number is assumed', 'charter readiness must reject universal capital-number assumptions'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'never hard-code a universal dollar amount as “the capital required to get a bank charter.”', 'charter roadmap must prohibit universal capital claims'],
+  ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'A generic “better neobank UX” is not treated as a sufficient charter thesis.', 'charter roadmap must require a differentiated business thesis'],
   ['docs/FINTECH_TO_CHARTER_ROADMAP.md', 'None of those states may be collapsed into “we are a bank.”', 'application milestones must not collapse into bank status'],
   ['docs/SPONSOR_BANK_READINESS_CHECKLIST.md', 'Sponsor-program readiness is therefore treated as a learning and operating-evidence stage', 'sponsor readiness must remain distinct from charter approval'],
   ['docs/SPONSOR_BANK_READINESS_CHECKLIST.md', 'Exercise migrations `001`–`005`', 'sponsor checklist must reference all five current migrations'],
@@ -21,6 +28,9 @@ const required = [
 ];
 
 const forbidden = [
+  ['lib/charter-readiness.ts', 'businessModelThesisDefined: true', 'repository must not self-certify the business model thesis'],
+  ['lib/charter-readiness.ts', 'driverBasedUnitEconomicsModelBuilt: true', 'repository must not self-certify unit economics'],
+  ['lib/charter-readiness.ts', 'providerExitContinuityPlanApproved: true', 'repository must not self-approve provider exit continuity'],
   ['lib/charter-readiness.ts', 'charterApplicationFiled: true', 'repository must not claim a charter application has been filed'],
   ['lib/charter-readiness.ts', 'depositInsuranceApproved: true', 'repository must not claim deposit insurance approval'],
   ['lib/charter-readiness.ts', 'openingAuthorizationReceived: true', 'repository must not claim opening authorization'],
@@ -41,4 +51,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Future charter goal, sponsor-vs-charter separation, capital-claim, and regulatory-authority safety checks passed.');
+console.log('Future charter goal, business-model proof, sponsor-vs-charter separation, capital-claim, and regulatory-authority safety checks passed.');
