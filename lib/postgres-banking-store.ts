@@ -355,6 +355,36 @@ class PostgresBankingOperations implements BankingPersistenceOperations {
     }
   }
 
+  async requeueTerminalEvent(input: {
+    eventId: string;
+    environment: DurableBankingEnvironment;
+    maxAttempts: number;
+  }) {
+    if (!Number.isSafeInteger(input.maxAttempts) || input.maxAttempts < 1 || input.maxAttempts > 100) {
+      throw new BankingError(500, 'EVENT_MAX_ATTEMPTS_INVALID', 'Banking event maximum attempt count is invalid.');
+    }
+
+    const result = await this.executor.query(
+      `UPDATE banking_provider_events
+          SET status = 'received',
+              processed_at = NULL,
+              failure_code = NULL,
+              processing_token = NULL,
+              processing_started_at = NULL,
+              attempt_count = 0,
+              next_attempt_at = NULL,
+              updated_at = now()
+        WHERE event_id = $1
+          AND environment = $2
+          AND status = 'failed'
+          AND attempt_count >= $3
+        RETURNING ${EVENT_COLUMNS}`,
+      [input.eventId, input.environment, input.maxAttempts]
+    );
+
+    return result.rows[0] ? mapEvent(result.rows[0]) : null;
+  }
+
   async appendJournalIfAbsent(input: JournalWrite) {
     const { environment, journal } = input;
     assertBalancedJournal(journal);
@@ -478,6 +508,7 @@ export class PostgresBankingStore implements BankingPersistenceStore {
   claimNextRecoverableEvent(input: EventClaimInput & { environment: DurableBankingEnvironment }) { return this.operations.claimNextRecoverableEvent(input); }
   markEventProcessed(input: { eventId: string; processingToken: string; processedAt: string }) { return this.operations.markEventProcessed(input); }
   markEventFailed(input: { eventId: string; processingToken: string; failureCode: string; processedAt: string; nextAttemptAt: string | null }) { return this.operations.markEventFailed(input); }
+  requeueTerminalEvent(input: { eventId: string; environment: DurableBankingEnvironment; maxAttempts: number }) { return this.operations.requeueTerminalEvent(input); }
 
   appendJournalIfAbsent(input: JournalWrite) {
     return this.transaction((tx) => tx.appendJournalIfAbsent(input));
