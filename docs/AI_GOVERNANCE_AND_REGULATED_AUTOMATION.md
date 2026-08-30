@@ -44,7 +44,7 @@ The following are disabled in the prototype and must remain fail-closed unless a
    - approve or deny credit;
    - set individualized credit terms or limits;
    - generate the legally operative reason for adverse action;
-   - make protected-class or proxy-based decisions.
+   - make decisions using criteria prohibited by applicable law.
 
 2. **BSA/AML and sanctions disposition**
    - decide whether to file a SAR;
@@ -181,11 +181,17 @@ There must be a tested way to disable a problematic automated assistant while pr
 
 These references are included to guide engineering and diligence; counsel must determine applicability to the eventual entity, product, partner program, and jurisdiction.
 
-### Credit / explainability
+### Credit / adverse-action reasons
 
-CFPB Circular 2022-03 states that ECOA/Regulation B adverse-action requirements still apply when complex algorithms are used. Technology is not an excuse for failing to provide specific, accurate principal reasons for adverse action.
+The current Regulation B rule at 12 CFR § 1002.9 requires adverse-action notices to contain, or provide the applicant a right to obtain, specific reasons for the action. The official interpretation says the reasons must accurately describe the factors actually considered or scored. If a future Galactic program offers credit, its decision system therefore must preserve legally sufficient, accurate decision reasons and required notices.
 
-Reference: https://www.consumerfinance.gov/compliance/circulars/circular-2022-03-adverse-action-notification-requirements-in-connection-with-credit-decisions-based-on-complex-algorithms/
+Current references:
+- https://www.consumerfinance.gov/rules-policy/regulations/1002/
+- https://www.consumerfinance.gov/rules-policy/regulations/1002/interp-9/
+
+Historical note: CFPB Circular 2022-03 discussed complex algorithms and adverse-action reasons, but the CFPB **withdrew that circular on May 12, 2025**. It must not be cited as current CFPB guidance. The underlying Regulation B notification/reason requirements remain the relevant starting point, subject to current law and counsel review.
+
+Withdrawal reference: https://www.consumerfinance.gov/compliance/guidance/withdrawn-guidance/
 
 ### Customer-service automation
 
