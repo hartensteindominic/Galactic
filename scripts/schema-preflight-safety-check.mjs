@@ -22,6 +22,11 @@ const required = [
   ['app/api/prototype/schema-preflight/route.ts', 'Observed table/RPC paths do not prove migration execution/order, data correctness, recovery', 'schema preflight API must limit capability-evidence claims'],
   ['app/api/prototype/status/route.ts', 'schemaPreflight: prototypeSchemaPreflightControlStatus()', 'general prototype status must expose only schema preflight control posture'],
   ['app/api/prototype/status/route.ts', 'read-only schema capability observation do not prove Supabase migration execution/order, data correctness, recovery, or production approval', 'general prototype status must limit schema observation claims'],
+  ['app/prototype/operations/operations-console.tsx', 'Run read-only preflight', 'Operations UI must require an explicit operator action for schema observation'],
+  ['app/prototype/operations/operations-console.tsx', '16 expected table/RPC paths from migrations 001–005', 'Operations UI must explain the exact schema capability scope'],
+  ['app/prototype/operations/operations-console.tsx', 'Capability evidence only.', 'Operations UI must label schema results as capability evidence'],
+  ['app/prototype/operations/operations-console.tsx', 'Even 16/16 observed does not mean migrations were executed in order', 'Operations UI must not turn complete capability observation into migration verification'],
+  ['app/prototype/operations/operations-console.tsx', 'Not run in this browser session.', 'Operations UI must show that preflight is not auto-exercised'],
   ['scripts/schema-preflight-runtime-check.mjs', 'Prototype schema preflight read-only capability-observation runtime checks passed.', 'schema preflight must have executable runtime coverage'],
   ['package.json', 'scripts/schema-preflight-runtime-check.mjs', 'schema preflight runtime coverage must run in CI']
 ];
@@ -36,7 +41,9 @@ const forbidden = [
   ['lib/prototype-schema-preflight.ts', 'transferIdempotencyExerciseVerified: true', 'schema preflight must not self-certify idempotency exercise'],
   ['lib/prototype-schema-preflight.ts', 'restoreExerciseVerified: true', 'schema preflight must not self-certify restore exercise'],
   ['lib/prototype-schema-preflight.ts', 'productionApprovalVerified: true', 'schema preflight must not self-certify production approval'],
-  ['app/api/prototype/schema-preflight/route.ts', 'productionApprovalVerified: true', 'schema preflight API must not claim production approval']
+  ['app/api/prototype/schema-preflight/route.ts', 'productionApprovalVerified: true', 'schema preflight API must not claim production approval'],
+  ['app/prototype/operations/operations-console.tsx', 'Migrations verified', 'Operations UI must not claim schema preflight verifies migrations'],
+  ['app/prototype/operations/operations-console.tsx', 'Production ready', 'Operations UI must not claim schema preflight makes production ready']
 ];
 
 for (const [file, text, label] of required) {
@@ -49,4 +56,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Prototype schema preflight read-only, operator/tenant boundary, status API, and approval-truth safety checks passed.');
+console.log('Prototype schema preflight read-only, operator/tenant boundary, UI, status API, and approval-truth safety checks passed.');
