@@ -14,6 +14,9 @@ const required = [
   ['app/api/prototype/reconcile/route.ts', 'requireJsonRequest', 'prototype reconciliation must require JSON'],
   ['app/api/prototype/reconcile/route.ts', 'requireTrustedOrigin', 'prototype reconciliation must enforce trusted origin'],
   ['app/api/prototype/reconcile/route.ts', 'readJsonBodyLimited', 'prototype reconciliation must bound request bodies'],
+  ['app/api/prototype/business-thesis/route.ts', 'requireJsonRequest', 'business thesis must require JSON'],
+  ['app/api/prototype/business-thesis/route.ts', 'requireTrustedOrigin', 'business thesis must enforce trusted origin'],
+  ['app/api/prototype/business-thesis/route.ts', 'readJsonBodyLimited', 'business thesis must bound request bodies'],
   ['app/api/prototype/unit-economics/route.ts', 'requireJsonRequest', 'unit economics must require JSON'],
   ['app/api/prototype/unit-economics/route.ts', 'requireTrustedOrigin', 'unit economics must enforce trusted origin'],
   ['app/api/prototype/unit-economics/route.ts', 'readJsonBodyLimited', 'unit economics must bound request bodies'],
@@ -25,6 +28,7 @@ const required = [
 const forbidden = [
   ['app/api/prototype/transfers/route.ts', 'await request.json()', 'prototype transfers must not bypass bounded JSON parsing'],
   ['app/api/prototype/reconcile/route.ts', 'await request.json()', 'prototype reconciliation must not bypass bounded JSON parsing'],
+  ['app/api/prototype/business-thesis/route.ts', 'await request.json()', 'business thesis must not bypass bounded JSON parsing'],
   ['app/api/prototype/unit-economics/route.ts', 'await request.json()', 'unit economics must not bypass bounded JSON parsing'],
   ['app/api/prototype/operator/session/route.ts', 'await request.json()', 'operator sign-in must not bypass bounded JSON parsing'],
   ['app/api/assistant/route.ts', 'await request.json()', 'assistant endpoint must not bypass bounded JSON parsing']
