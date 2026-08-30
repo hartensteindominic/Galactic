@@ -7,6 +7,7 @@ import { prototypeLedgerStatus } from './prototype-ledger';
 import { prototypeOperationsStatus } from './prototype-operations';
 import { prototypeOperatorAccessStatus } from './prototype-operator-auth';
 import { supportCaseControlStatus } from './support-case-state';
+import { supportSensitiveDataControlStatus } from './support-sensitive-data';
 import { tenantBoundaryStatus } from './tenant-boundary';
 
 export function prototypeReadiness() {
@@ -19,6 +20,7 @@ export function prototypeReadiness() {
   const operations = prototypeOperationsStatus();
   const operatorAccess = prototypeOperatorAccessStatus();
   const supportCaseControls = supportCaseControlStatus();
+  const supportSensitiveDataControls = supportSensitiveDataControlStatus();
   const tenantBoundary = tenantBoundaryStatus();
 
   const persistentDemoConfigured = ledger.configured;
@@ -56,6 +58,7 @@ export function prototypeReadiness() {
     financialIntentControls,
     customerTermsControl,
     supportCaseControls,
+    supportSensitiveDataControls,
     prototypeOperatorAccessRequired: operatorAccess.required,
     prototypeOperatorAccessConfigured: operatorAccess.configured,
     prototypeOperatorWeakSecretConfigured: operatorAccess.weakSecretConfigured,
@@ -68,6 +71,7 @@ export function prototypeReadiness() {
     boundedPrototypeMutationBodies: true,
     prototypeOperatorLoginBestEffortThrottle: true,
     productionDistributedRateLimitReady: false,
+    productionSupportDlpReady: false,
     aiGovernance,
     governanceDocumentationAvailable: true,
     complianceResponsibilityMatrixAssigned: false,
@@ -94,6 +98,6 @@ export function prototypeReadiness() {
     migrationRecoveryExerciseVerified: false,
     readyForLiveBanking: false,
     nextSafeStep,
-    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. Persistent prototype setup currently requires migrations 001-005. Orbit is an automated deterministic support assistant, not a regulated decision maker; regulated AI decisioning and third-party LLM use of customer financial data remain disabled. The prototype now centralizes changing customer-facing prototype terms under one versioned source and fails closed when live terms are requested without an approved live source; that does not mean production terms are approved. Material support cases have an explicit human-controlled state model, and automation cannot acknowledge as a human, resolve, or close them; no production case-management system or response deadlines are configured. Financial intent controls explicitly preserve submitted/pending-unknown states, treat timeout as non-terminal, block replacement while outcome is unknown, and still require provider-specific state mapping to be verified before production. Governance documents exist, but responsibility assignment, legal/compliance applicability review, sponsor-bank/program approval, production retention, complaint escalation, human support handoff, third-party risk operation, approved live customer-term source-of-truth, and independent threat-model review remain unapproved/unverified. Provider-disappearance handling and customer-visible incident-status timing are documented but remain unverified until exercised in an approved environment. The prototype operator session, tenant host binding, body limits, and best-effort login throttle improve demo safety but are not production workforce identity or distributed abuse prevention. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
+    disclosure: 'Readiness is for the white-label simulation and partner-diligence path only. Persistent prototype setup currently requires migrations 001-005. Orbit is an automated deterministic support assistant, not a regulated decision maker; regulated AI decisioning and third-party LLM use of customer financial data remain disabled. The support chat now has best-effort client preflight plus server-side rejection for several high-risk secret/identifier patterns, but this is explicitly not production DLP and does not replace secure document/identity workflows or logging/privacy controls. The prototype centralizes changing customer-facing prototype terms under one versioned source and fails closed when live terms are requested without an approved live source; that does not mean production terms are approved. Material support cases have an explicit human-controlled state model, and automation cannot acknowledge as a human, resolve, or close them; no production case-management system or response deadlines are configured. Financial intent controls explicitly preserve submitted/pending-unknown states, treat timeout as non-terminal, block replacement while outcome is unknown, and still require provider-specific state mapping to be verified before production. Governance documents exist, but responsibility assignment, legal/compliance applicability review, sponsor-bank/program approval, production retention, complaint escalation, human support handoff, third-party risk operation, approved live customer-term source-of-truth, and independent threat-model review remain unapproved/unverified. Provider-disappearance handling and customer-visible incident-status timing are documented but remain unverified until exercised in an approved environment. The prototype operator session, tenant host binding, body limits, best-effort login throttle, and support sensitive-data detector improve demo safety but are not production workforce identity, distributed abuse prevention, or DLP. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
   } as const;
 }
