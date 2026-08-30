@@ -23,6 +23,11 @@ const required = [
   ['app/prototype/operations/operations-console.tsx', 'Layer 2 · Double-entry GL → account balance', 'operations UI must expose detailed GL reconciliation'],
   ['app/prototype/operations/operations-console.tsx', 'Raw metadata is deliberately not returned to this UI.', 'operations UI must disclose the audit metadata boundary'],
   ['app/prototype/prototype-network-guard.tsx', "headers.set('Idempotency-Key', crypto.randomUUID())", 'prototype transfer client must attach idempotency keys'],
+  ['app/prototype/prototype-network-guard.tsx', 'inFlightTransfers', 'prototype network guard must deduplicate an identical in-flight transfer intent'],
+  ['app/prototype/prototype-network-guard.tsx', 'retryKeys', 'prototype network guard must retain a key after ambiguous transfer failures'],
+  ['app/prototype/prototype-network-guard.tsx', 'RETRY_KEY_TTL_MS', 'ambiguous retry-key reuse must be time bounded'],
+  ['app/prototype/prototype-network-guard.tsx', 'return (await existing).clone();', 'concurrent identical callers must share one network result safely'],
+  ['app/prototype/prototype-network-guard.tsx', 'response.status >= 500', 'server errors must preserve the original transfer idempotency key for retry'],
   ['app/api/prototype/webhooks/sandbox/route.ts', 'This route is not a production Plaid or BaaS webhook verifier.', 'sandbox webhook route must disclose that it is not production verification'],
   ['app/prototype/operations/operations-console.tsx', 'Real banking rails remain off.', 'operations console must label real rails as off'],
   ['lib/prototype-transparency.ts', 'liveMoneyEnabled: false', 'transparency model must keep every prototype product live-money disabled'],
@@ -41,6 +46,8 @@ const forbidden = [
   ['lib/prototype-readiness.ts', 'emergencyFreezeResponseTimeVerified: true', 'prototype readiness must not claim emergency response-time verification'],
   ['lib/prototype-readiness.ts', 'disasterRecoveryExerciseVerified: true', 'prototype readiness must not claim disaster-recovery verification'],
   ['lib/prototype-readiness.ts', 'migrationRecoveryExerciseVerified: true', 'prototype readiness must not claim migration-recovery verification'],
+  ['app/prototype/prototype-network-guard.tsx', 'localStorage', 'transfer retry keys must not be persisted in browser localStorage'],
+  ['app/prototype/prototype-network-guard.tsx', 'sessionStorage', 'transfer retry keys must not be persisted in browser sessionStorage'],
   ['app/prototype/prototype-network-guard.tsx', 'SUPABASE_SECRET_KEY', 'network guard must not contain Supabase secrets'],
   ['app/prototype/prototype-network-guard.tsx', 'PLAID_SECRET', 'network guard must not contain Plaid secrets'],
   ['app/prototype/prototype-network-guard.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'network guard must not contain webhook secrets'],
@@ -63,4 +70,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('White-label prototype safety, transparency, audit, provider-contract and operational-readiness checks passed.');
+console.log('White-label prototype safety, transfer-intent retry, transparency, audit, provider-contract and operational-readiness checks passed.');
