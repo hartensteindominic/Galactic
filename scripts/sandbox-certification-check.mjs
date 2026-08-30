@@ -4,6 +4,8 @@ const certification = fs.readFileSync('lib/sandbox-certification.ts', 'utf8');
 const route = fs.readFileSync('app/api/banking/sandbox-certification/route.ts', 'utf8');
 const page = fs.readFileSync('app/sandbox-readiness/page.tsx', 'utf8');
 const client = fs.readFileSync('app/sandbox-readiness/sandbox-certification-client.tsx', 'utf8');
+const dashboard = fs.readFileSync('app/page.tsx', 'utf8');
+const compliance = fs.readFileSync('app/compliance/page.tsx', 'utf8');
 const adapter = fs.readFileSync('lib/banking-provider-adapter.ts', 'utf8');
 const ledger = fs.readFileSync('lib/financial-ledger.ts', 'utf8');
 const providerSandbox = fs.readFileSync('lib/provider-sandbox.ts', 'utf8');
@@ -62,7 +64,11 @@ const required = [
   [page, 'Production live writes remain off', 'review page must expose production/live isolation status'],
   [client, 'No real money moved', 'review UI must display zero-money evidence'],
   [client, 'Duplicate webhook rejected', 'review UI must display dedupe evidence'],
-  [client, 'Reconciliation matched', 'review UI must display reconciliation evidence']
+  [client, 'Reconciliation matched', 'review UI must display reconciliation evidence'],
+  [dashboard, 'href="/sandbox-readiness"', 'main dashboard must link to Sandbox Readiness'],
+  [dashboard, 'Open Sandbox Readiness', 'Security and Privacy surface must link to Sandbox Readiness'],
+  [compliance, 'Open Sandbox Readiness', 'Compliance Center must link to Sandbox Readiness'],
+  [compliance, 'ZERO-MONEY SANDBOX', 'Compliance Center must expose sandbox certification state']
 ];
 
 const forbidden = [
@@ -89,4 +95,4 @@ for (const [source, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(`Sandbox certification safety regression: ${label}`);
 }
 
-console.log('Galactic Trust zero-money sandbox, provider isolation, ledger, reconciliation and durability safety checks passed.');
+console.log('Galactic Trust zero-money sandbox, provider isolation, ledger, reconciliation, durability and discoverability safety checks passed.');
