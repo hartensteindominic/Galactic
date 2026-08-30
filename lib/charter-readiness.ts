@@ -31,7 +31,7 @@ const milestones: CharterReadinessMilestone[] = [
     label: 'Evidence-backed customer, problem, distribution, and durable-revenue thesis',
     status: 'future-internal-work',
     complete: false,
-    evidence: 'No specific target segment, painful problem, distribution advantage, non-interchange revenue proof, or driver-based unit-economics evidence is represented as validated yet.'
+    evidence: 'A driver-based scenario calculator exists, but no specific target segment, painful problem, distribution advantage, non-interchange revenue proof, or unit-economics assumptions are represented as validated yet.'
   },
   {
     id: 'charter-route-selection',
@@ -135,7 +135,8 @@ export function charterReadinessStatus() {
     painfulProblemValidated: false,
     distributionAdvantageValidated: false,
     primaryNonInterchangeRevenueModelValidated: false,
-    driverBasedUnitEconomicsModelBuilt: false,
+    unitEconomicsScenarioEngineImplemented: true,
+    validatedUnitEconomicsModelBuilt: false,
     unitEconomicsAssumptionsExternallyValidated: false,
     fraudLossAssumptionsValidated: false,
     customerSupportCostAssumptionsValidated: false,
@@ -174,6 +175,6 @@ export function charterReadinessStatus() {
     customerFacingBankClaimAuthorized: false,
     milestones,
     disclosure:
-      'This is a long-term charter-readiness roadmap, not a charter application, legal conclusion, regulatory approval, deposit-insurance approval, capital approval, or authorization to operate or market Galactic Trust as a bank. The business model, unit economics, applicable charter route, regulators, applications, capital, governance, staffing, and opening conditions must be determined and evidenced with real operating data, accountable human owners, qualified legal/compliance advisers, and the relevant authorities.'
+      'This is a long-term charter-readiness roadmap, not a charter application, legal conclusion, regulatory approval, deposit-insurance approval, capital approval, or authorization to operate or market Galactic Trust as a bank. A scenario calculator is implemented, but the business model, unit-economics assumptions, applicable charter route, regulators, applications, capital, governance, staffing, and opening conditions must be determined and evidenced with real operating data, accountable human owners, qualified legal/compliance advisers, and the relevant authorities.'
   } as const;
 }
