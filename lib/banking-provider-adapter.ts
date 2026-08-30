@@ -17,6 +17,14 @@ export type ProviderDepositAccount = {
   synthetic: boolean;
 };
 
+export type ProviderAccountBalance = {
+  accountId: string;
+  environment: BankingEnvironment;
+  currentBalanceCents: number;
+  availableBalanceCents: number;
+  asOf: string;
+};
+
 export type ProviderTransfer = {
   id: string;
   customerId: string;
@@ -83,6 +91,7 @@ export interface BankingProviderAdapter {
     type: 'checking' | 'savings';
     idempotencyKey: string;
   }): Promise<ProviderDepositAccount>;
+  getAccountBalance(accountId: string): Promise<ProviderAccountBalance>;
   createAchTransfer(input: {
     customerId: string;
     accountId: string;
