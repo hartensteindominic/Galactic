@@ -32,7 +32,7 @@ export async function POST(request: Request) {
             message: 'A unit-economics scenario is required.'
           }
         },
-        { status: 400 }
+        400
       );
     }
 
