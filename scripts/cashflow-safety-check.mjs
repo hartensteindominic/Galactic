@@ -6,7 +6,10 @@ const required = [
   ['lib/prototype-cashflow.ts', "kind: 'income' | 'bill' | 'planned_savings'", 'forecast must distinguish income, bills, and planned savings'],
   ['app/prototype/cashflow/cashflow-console.tsx', 'Simulation only', 'cash-flow UI must label simulation mode'],
   ['app/prototype/cashflow/cashflow-console.tsx', 'Why this number can change', 'cash-flow UI must explain forecast limitations'],
-  ['supabase/migrations/005_cashflow_intelligence.sql', 'simulated boolean not null default true', 'cash-flow planning records must default to simulated']
+  ['supabase/migrations/005_cashflow_intelligence.sql', 'simulated boolean not null default true', 'cash-flow planning records must default to simulated'],
+  ['.env.example', '005_cashflow_intelligence.sql', 'persistent setup template must include cash-flow migration 005'],
+  ['lib/prototype-readiness.ts', 'requiredPrototypeMigrationCount: 5', 'readiness must report all five prototype migrations'],
+  ['lib/prototype-readiness.ts', 'run migrations 001-005 in order', 'readiness next-step guidance must include migration 005']
 ];
 
 const forbidden = [
@@ -27,4 +30,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Cash-flow intelligence safety checks passed.');
+console.log('Cash-flow intelligence and persistent setup safety checks passed.');
