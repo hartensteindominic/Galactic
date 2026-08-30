@@ -1,58 +1,81 @@
-# Galactic x402 Licensing
+# Galactic Trust
 
-Galactic is now a deployable x402 money app for AI asset licensing.
+Galactic Trust is a fintech dashboard and banking-integration shell designed to connect to a regulated banking program without pretending that a prototype balance is a real deposit.
 
-The product is simple: agents can read a free catalog, choose an eligible Base VoxelFlip NFT, pay a tiny USDC fee through x402, and receive exactly one machine-use license receipt. A second use requires a second payment.
+The repository currently runs in **demo banking mode by default**. Demo balances, transfers, cards, and activity are simulated. No real deposits are held and no real money moves unless a regulated partner program is configured and live writes are explicitly enabled.
 
-## Money endpoints
+## Banking architecture
+
+The app now separates the customer experience from the regulated banking provider:
+
+`Galactic Trust UI -> Galactic banking API -> private partner gateway -> regulated banking platform / partner bank`
+
+The server-side banking adapter lives in `lib/banking.ts`. It intentionally does not hard-code a bank vendor so Galactic Trust can integrate with an approved provider through a private gateway after commercial, compliance, and technical onboarding are complete.
+
+### Banking endpoints
+
+- `GET /api/banking/status` - public integration status and disclosure
+- `GET /api/banking/summary` - authenticated account summary; demo data in demo mode
+- `POST /api/banking/transfers` - simulated in demo; partner gateway in approved live mode
+- `POST /api/banking/cards/freeze` - simulated in demo; partner gateway in approved live mode
+
+### Safety model
+
+- `BANKING_MODE=demo` is the default.
+- Partner banking requires the banking gateway URL, API key, program ID, provider name, partner bank name, and a signed authentication boundary.
+- Real transfer/card writes remain disabled unless `BANKING_ENABLE_LIVE_WRITES=true` is set server-side.
+- Partner mode fails closed when configuration or authenticated-session signatures are missing.
+- Provider API keys and auth signing secrets are server-only and must never be placed in client code.
+- Full card PAN, CVV, PIN, and equivalent sensitive card-authentication data are not exposed by this prototype.
+- Any FDIC, bank-partner, APR, fee, or account-eligibility language must match the actual approved program before public launch.
+
+### Partner environment variables
+
+```bash
+BANKING_MODE=demo
+
+# Configure only after a real banking program is approved.
+# BANKING_PROVIDER_NAME=Approved Banking Platform
+# BANKING_PARTNER_BANK_NAME=Approved FDIC-Insured Bank
+# BANKING_PARTNER_DISCLOSURE=Approved program disclosure text
+# BANKING_GATEWAY_BASE_URL=https://private-banking-gateway.example.com
+# BANKING_GATEWAY_API_KEY=server-side-secret-only
+# BANKING_PROGRAM_ID=program-id
+# BANKING_AUTH_GATEWAY_SECRET=server-side-signing-secret
+# BANKING_ENABLE_LIVE_WRITES=false
+```
+
+## Revenue direction
+
+The intended regulated-fintech business model is a mix of card interchange/revenue share, deposit economics through the approved partner program, optional premium membership, merchant-funded rewards, and additional regulated products when eligible. Revenue is not guaranteed and depends on partner contracts, customer activity, fraud/credit losses where applicable, support costs, compliance costs, network/provider fees, and acquisition economics.
+
+## Existing x402 licensing routes
+
+The prior Galactic x402 licensing service remains in the repository as a separate digital-asset revenue feature:
 
 - `GET /api/licenses/catalog` - free machine-readable catalog
 - `POST /api/licenses/use` - x402-paid one-use license receipt
-- `GET /api/paylink` - direct Base USDC paylink for human buyers
+- `GET /api/paylink` - direct Base USDC paylink
 - `GET /api/agent/manifest` - agent discovery manifest
 - `GET /api/agent/openapi` - OpenAPI spec
-- `GET /api/agent/health` - status and configuration
+- `GET /api/agent/health` - x402 status and configuration
 
-## View Everything
-
-- Public preview: `https://hartensteindominic.github.io/Galactic/`
-- Static paylink: `https://hartensteindominic.github.io/Galactic/paylink.json`
-- Static catalog mirror: `https://hartensteindominic.github.io/Galactic/catalog.json`
-- Static agent manifest: `https://hartensteindominic.github.io/Galactic/agent-manifest.json`
-- Static OpenAPI file: `https://hartensteindominic.github.io/Galactic/openapi.json`
-
-## Default revenue setup
-
-The default receiver is the reviewed Base owner wallet from the Voxel Vault flow:
+The default public x402 payment receiver is:
 
 `0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb`
-
-The app points both the direct Base USDC payment button and the x402-paid API route at this same receiver.
 
 The default VoxelFlip contract is:
 
 `0xa00758b05f96ef4409d97c3ffebb6794b2eafbde`
 
-Set these in the hosting environment if you want to override them:
-
-```bash
-X402_PAY_TO=0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb
-X402_FACILITATOR_URL=https://x402.org/facilitator
-X402_LICENSE_PRICE=$0.01
-X402_LICENSE_USDC_ATOMIC=10000
-BASE_RPC_URL=https://mainnet.base.org
-VOXELFLIP_CONTRACT_ADDRESS=0xa00758b05f96ef4409d97c3ffebb6794b2eafbde
-AI_LICENSE_LICENSOR_WALLET=0x02f93c7547309ca50EEAB446DaEBE8ce8E694cBb
-```
-
-Optional: set `LICENSE_TOKEN_IDS=1,2,3` to skip event scanning and make the catalog faster.
-
 ## Run
 
 ```bash
 npm install
-npm run dev
+npm run typecheck
 npm run test:safety
+npm run build
+npm run dev
 ```
 
-Deploy this repo to a server-capable host such as Vercel. GitHub Pages can show the static root page, but live x402 payment enforcement needs the Next.js API routes.
+Deploy the Next.js app to a server-capable host such as Vercel. GitHub Pages can show the static preview, but the banking and x402 APIs require a server deployment.
