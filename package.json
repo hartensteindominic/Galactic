@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test:safety": "node scripts/safety-check.mjs"
+    "test:safety": "node scripts/safety-check.mjs && node scripts/prototype-safety-check.mjs"
   },
   "dependencies": {
     "@x402/core": "2.24.0",
