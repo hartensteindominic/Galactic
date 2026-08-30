@@ -4,6 +4,11 @@ const required = [
   ['lib/prototype-readiness.ts', 'readyForLiveBanking: false', 'readiness must never claim the prototype is ready for live banking'],
   ['lib/prototype-readiness.ts', 'productionProviderWebhooksEnabled: false', 'readiness must keep production provider webhooks disabled'],
   ['lib/prototype-readiness.ts', 'doubleEntryAccountingAvailable', 'readiness must expose double-entry accounting availability'],
+  ['lib/prototype-readiness.ts', 'emergencyMoneyMovementFreezeActive', 'readiness must expose emergency money-movement freeze posture'],
+  ['lib/prototype-readiness.ts', 'emergencyFreezeFailsClosedByDefault: true', 'readiness must state the emergency freeze fails closed by default'],
+  ['lib/prototype-readiness.ts', 'emergencyFreezeResponseTimeVerified: false', 'readiness must not claim emergency response-time testing before it occurs'],
+  ['lib/prototype-readiness.ts', 'disasterRecoveryExerciseVerified: false', 'readiness must not claim disaster-recovery exercise completion before it occurs'],
+  ['lib/prototype-readiness.ts', 'migrationRecoveryExerciseVerified: false', 'readiness must not claim ledger-recovery exercise completion before it occurs'],
   ['lib/prototype-ledger.ts', 'persistentTransferIdempotency', 'ledger status must report persistent transfer idempotency'],
   ['supabase/migrations/003_transfer_idempotency.sql', 'Duplicate simulated transfer request safely replayed. No second debit occurred.', 'persistent transfer retry must not double debit'],
   ['supabase/migrations/004_double_entry_ledger.sql', 'Double-entry ledger records are append-only. Post a reversing journal instead.', 'double-entry journals must be append-only'],
@@ -21,6 +26,9 @@ const required = [
 const forbidden = [
   ['lib/prototype-readiness.ts', 'readyForLiveBanking: true', 'prototype readiness must not claim live banking readiness'],
   ['lib/prototype-readiness.ts', 'productionProviderWebhooksEnabled: true', 'prototype readiness must not enable production provider webhooks'],
+  ['lib/prototype-readiness.ts', 'emergencyFreezeResponseTimeVerified: true', 'prototype readiness must not claim emergency response-time verification'],
+  ['lib/prototype-readiness.ts', 'disasterRecoveryExerciseVerified: true', 'prototype readiness must not claim disaster-recovery verification'],
+  ['lib/prototype-readiness.ts', 'migrationRecoveryExerciseVerified: true', 'prototype readiness must not claim migration-recovery verification'],
   ['app/prototype/prototype-network-guard.tsx', 'SUPABASE_SECRET_KEY', 'network guard must not contain Supabase secrets'],
   ['app/prototype/prototype-network-guard.tsx', 'PLAID_SECRET', 'network guard must not contain Plaid secrets'],
   ['app/prototype/prototype-network-guard.tsx', 'PROTOTYPE_WEBHOOK_SECRET', 'network guard must not contain webhook secrets'],
@@ -39,4 +47,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('White-label prototype safety checks passed.');
+console.log('White-label prototype safety and operational-readiness checks passed.');
