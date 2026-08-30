@@ -66,28 +66,22 @@ export type ProviderAdapterCapabilities = {
   reconciliationData: boolean;
 };
 
-/**
- * Provider-neutral boundary for an approved sponsor-bank/BaaS sandbox.
- *
- * Implementations belong in server-only modules and must never expose provider
- * secrets to client code. A production adapter must not be activated merely
- * because credentials exist; Galactic Trust's compliance/disclosure/live gates
- * remain separate and mandatory.
- */
 export interface BankingProviderAdapter {
   readonly providerName: string;
   readonly environment: 'provider_sandbox' | 'production';
   readonly capabilities: ProviderAdapterCapabilities;
 
-  createCustomer(input: { externalUserId: string }): Promise<ProviderCustomer>;
+  createCustomer(input: { externalUserId: string; idempotencyKey: string }): Promise<ProviderCustomer>;
   getCustomer(customerId: string): Promise<ProviderCustomer>;
   startKyc(input: {
     customerId: string;
     sandboxScenario: 'approve' | 'manual_review' | 'reject';
+    idempotencyKey: string;
   }): Promise<ProviderCustomer>;
   createDepositAccount(input: {
     customerId: string;
     type: 'checking' | 'savings';
+    idempotencyKey: string;
   }): Promise<ProviderDepositAccount>;
   createAchTransfer(input: {
     customerId: string;
