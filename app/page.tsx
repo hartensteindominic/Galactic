@@ -73,6 +73,7 @@ export default function Home() {
         <div className="sideUtilities">
           <a href="#security"><span className="navIcon">⚙</span><span>Settings</span></a>
           <a href="/compliance"><span className="navIcon">✓</span><span>Compliance Center</span></a>
+          <a href="/sandbox-readiness"><span className="navIcon">◎</span><span>Sandbox Readiness</span></a>
           <a href="/beta-notice"><span className="navIcon">β</span><span>Beta Notice</span></a>
           <a href="/support"><span className="navIcon">?</span><span>Help Center</span></a>
           <div className="sideRule" />
@@ -115,6 +116,7 @@ export default function Home() {
           <a href="/beta-notice">Beta Notice</a>
           <a href="/privacy">Privacy</a>
           <a href="/compliance">Compliance</a>
+          <a href="/sandbox-readiness">Sandbox</a>
           <a href="/support">Support</a>
         </nav>
 
@@ -195,6 +197,7 @@ export default function Home() {
                 <div><span className="securityIcon">◎</span><span><b>Privacy-minded chat</b><small>Orbit never asks for passwords, PINs, CVVs or one-time codes.</small></span></div>
                 <div><span className="securityIcon">◈</span><span><b>Live-money guard</b><small>Real banking and crypto remain off until approved providers, compliance review, and disclosures are configured.</small></span></div>
               </div>
+              <a className="privacyCenterLink" href="/sandbox-readiness">Open Sandbox Readiness <span>›</span></a>
               <a className="privacyCenterLink" href="/beta-notice">Read Public Beta Notice <span>›</span></a>
               <a className="privacyCenterLink" href="/privacy">Open Privacy Center <span>›</span></a>
               <a className="privacyCenterLink" href="/compliance">Open Compliance Center <span>›</span></a>
