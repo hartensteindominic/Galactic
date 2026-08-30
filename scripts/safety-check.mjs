@@ -43,6 +43,14 @@ const required = [
   ['app/compliance/page.tsx', 'not a chartered bank', 'compliance center states the current legal role clearly'],
   ['app/compliance/page.tsx', 'Credentials alone can never enable transfers.', 'compliance center explains fail-closed banking activation'],
   ['app/compliance/page.tsx', 'Provider credentials alone can never enable real orders.', 'compliance center explains fail-closed crypto activation'],
+  ['app/compliance/page.tsx', 'Public Beta Notice', 'compliance center links to the public beta notice'],
+  ['app/compliance/page.tsx', 'Support &amp; Safety', 'compliance center links to support and safety'],
+  ['app/beta-notice/page.tsx', 'Not a chartered bank', 'beta notice states Galactic Trust is not a chartered bank'],
+  ['app/beta-notice/page.tsx', 'No real deposits', 'beta notice states that the beta does not accept real deposits'],
+  ['app/beta-notice/page.tsx', 'Cards are previews', 'beta notice avoids implying a live card program'],
+  ['app/beta-notice/page.tsx', 'Crypto is simulated', 'beta notice identifies crypto as simulated'],
+  ['app/support/page.tsx', 'Never share secrets', 'support page warns users not to share sensitive credentials'],
+  ['app/support/page.tsx', 'No live transaction disputes yet', 'support page distinguishes demo support from live regulated dispute handling'],
   ['app/page.tsx', 'Financial technology demo — not a chartered bank', 'dashboard carries a prominent pre-launch disclosure'],
   ['app/page.tsx', 'DEMO CARD', 'demo cards are explicitly labeled'],
   ['app/page.tsx', 'Compliance Center', 'dashboard links to compliance status'],
@@ -83,4 +91,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Galactic Trust sponsor-bank readiness, banking, crypto, assistant, privacy and x402 safety checks passed.');
+console.log('Galactic Trust sponsor-bank readiness, public beta disclosure, banking, crypto, assistant, privacy and x402 safety checks passed.');
