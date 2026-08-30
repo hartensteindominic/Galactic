@@ -90,7 +90,9 @@ export default function ComplianceCenter() {
           <span>{crypto.disclosure}</span>
         </div>
         <div className="complianceLinks">
+          <a href="/beta-notice">Public Beta Notice</a>
           <a href="/privacy">Privacy Center</a>
+          <a href="/support">Support &amp; Safety</a>
           <a href="/">Return to dashboard</a>
         </div>
       </section>
