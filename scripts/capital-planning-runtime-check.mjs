@@ -92,7 +92,8 @@ for (const invalid of [
   { ...base, planningTargetOpeningCapitalCents: -1 },
   { ...base, documentedCommittedCapitalCents: 1.5 },
   { ...base, modeledMonthsUntilOpening: 121 },
-  { ...base, cashCurrentlyAvailableForProjectCents: -1 }
+  { ...base, cashCurrentlyAvailableForProjectCents: -1 },
+  { ...base, planningTargetOpeningCapitalCents: 1000000000001 }
 ]) {
   assert.throws(
     () => calculateCapitalPlanningScenario(invalid),
@@ -100,21 +101,22 @@ for (const invalid of [
   );
 }
 
-assert.throws(
-  () => calculateCapitalPlanningScenario({
-    ...base,
-    planningTargetOpeningCapitalCents: 1000000000000,
-    documentedCommittedCapitalCents: 1000000000000,
-    documentedVerifiedSourceOfFundsCents: 1000000000000,
-    cashCurrentlyAvailableForProjectCents: 1000000000000,
-    plannedPreOpeningOneTimeCostsCents: 1000000000000,
-    monthlyFintechOperatingBurnCents: 1000000000000,
-    monthlyBankOrganizationPreOpeningBurnCents: 1000000000000,
-    modeledMonthsUntilOpening: 120,
-    internalContingencyReserveCents: 1000000000000
-  }),
-  (error) => error instanceof BankingError && error.status === 400 && error.code === 'CAPITAL_PLANNING_OVERFLOW'
-);
+const boundedMaximum = calculateCapitalPlanningScenario({
+  ...base,
+  planningTargetOpeningCapitalCents: 1000000000000,
+  documentedCommittedCapitalCents: 1000000000000,
+  documentedVerifiedSourceOfFundsCents: 1000000000000,
+  cashCurrentlyAvailableForProjectCents: 1000000000000,
+  plannedPreOpeningOneTimeCostsCents: 1000000000000,
+  monthlyFintechOperatingBurnCents: 1000000000000,
+  monthlyBankOrganizationPreOpeningBurnCents: 1000000000000,
+  modeledMonthsUntilOpening: 120,
+  internalContingencyReserveCents: 1000000000000
+});
+assert.equal(Number.isSafeInteger(boundedMaximum.preOpening.modeledOperatingBurnUntilOpeningCents), true);
+assert.equal(Number.isSafeInteger(boundedMaximum.preOpening.modeledTotalPreOpeningCashNeedCents), true);
+assert.equal(Number.isSafeInteger(boundedMaximum.preOpening.modeledCashGapBeforeOpeningCents), true);
+assert.equal(Number.isFinite(boundedMaximum.preOpening.currentCashRunwayMonths), true);
 
 const controls = capitalPlanningControlStatus();
 assert.equal(controls.assumptionDrivenPlanningEngineImplemented, true);
@@ -132,4 +134,4 @@ assert.equal(controls.charterCapitalRequirementDetermined, false);
 assert.equal(controls.approvedForFundraising, false);
 assert.equal(controls.approvedForCharterApplication, false);
 
-console.log('Assumption-driven capital planning, gap/runway arithmetic, invalid-input/overflow, and regulatory-capital boundary runtime checks passed.');
+console.log('Assumption-driven capital planning, gap/runway arithmetic, bounded-maximum, invalid-input, and regulatory-capital boundary runtime checks passed.');
