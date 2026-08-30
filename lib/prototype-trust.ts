@@ -4,6 +4,7 @@ import { financialIntentControlStatus } from './financial-intent-state';
 import { supportCaseControlStatus } from './support-case-state';
 import { supportSensitiveDataControlStatus } from './support-sensitive-data';
 import { tenantBoundaryStatus } from './tenant-boundary';
+import { thirdPartyInventoryStatus } from './third-party-inventory';
 
 export type TrustControlStatus = 'implemented-prototype' | 'not-production-ready' | 'external-approval-required';
 
@@ -22,6 +23,7 @@ export function prototypeTrustCenter() {
   const support = supportCaseControlStatus();
   const sensitiveData = supportSensitiveDataControlStatus();
   const tenant = tenantBoundaryStatus();
+  const vendors = thirdPartyInventoryStatus();
 
   const controls: TrustControl[] = [
     {
@@ -84,6 +86,15 @@ export function prototypeTrustCenter() {
         ? 'Automation may detect and route a material issue, but cannot impersonate human acknowledgement, resolution, or closure.'
         : 'Support-case authority boundaries are incomplete.',
       limitation: 'Production case tooling, required response deadlines, staffing, escalation coverage, and handoff testing are not configured.'
+    },
+    {
+      id: 'third-party-inventory',
+      name: 'Third-party dependency inventory',
+      status: 'implemented-prototype',
+      summary: vendors.machineReadableInventoryAvailable
+        ? `The prototype records ${vendors.currentPrototypeServiceCount} currently referenced services and separately lists regulated vendor categories that remain unselected.`
+        : 'Third-party dependency inventory is not available.',
+      limitation: 'Inventory is not due diligence, contract approval, privacy/security approval, sponsor-bank approval, an operating third-party-risk program, or authorization to send live customer financial or Restricted data to a vendor.'
     }
   ];
 
@@ -92,6 +103,7 @@ export function prototypeTrustCenter() {
     'No sponsor-bank or regulated-program approval is represented as complete.',
     'No qualified legal/compliance applicability review is represented as complete.',
     'No production provider webhook/certification claim is made.',
+    'No high/critical production third-party-risk program, vendor-contract approval, or live-data-flow approval is represented as operating.',
     'No production workforce identity, phishing-resistant MFA, RBAC, or high-risk dual control is represented as ready.',
     'No production distributed rate limiting/WAF or DLP is represented as ready.',
     'No approved live customer-terms source is connected.',
@@ -105,6 +117,10 @@ export function prototypeTrustCenter() {
     liveBankingEnabled: false,
     regulatedAiDecisioningEnabled: false,
     thirdPartyLlmCustomerDataEnabled: false,
+    machineReadableThirdPartyInventoryAvailable: true,
+    productionThirdPartyRiskProgramOperating: false,
+    productionVendorContractsApproved: false,
+    productionVendorDataFlowsApproved: false,
     approvedLiveCustomerTerms: false,
     productionSupportDlpReady: false,
     productionHumanCaseManagementConnected: false,
@@ -112,6 +128,6 @@ export function prototypeTrustCenter() {
     legalComplianceApplicabilityReviewComplete: false,
     controls,
     productionGaps,
-    disclosure: 'Trust Center for the simulation prototype. It describes implemented software controls and known gaps; it is not a claim of legal compliance, bank charter, deposit insurance, sponsor-bank approval, security certification, or readiness for live customer funds.'
+    disclosure: 'Trust Center for the simulation prototype. It describes implemented software controls and known gaps; it is not a claim of legal compliance, bank charter, deposit insurance, sponsor-bank approval, vendor approval, security certification, or readiness for live customer funds.'
   } as const;
 }
