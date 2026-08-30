@@ -4,11 +4,12 @@ import { x402ResourceServer } from '@x402/next';
 import { BASE_NETWORK, DEFAULT_RECEIVER, requireAddress, shortAddress } from './config';
 
 export const X402_FACILITATOR_URL = process.env.X402_FACILITATOR_URL || 'https://x402.org/facilitator';
+const X402_NETWORK = BASE_NETWORK as `${string}:${string}`;
 
 const facilitatorClient = new HTTPFacilitatorClient({ url: X402_FACILITATOR_URL });
 
 export const resourceServer = new x402ResourceServer(facilitatorClient).register(
-  BASE_NETWORK,
+  X402_NETWORK,
   new ExactEvmScheme()
 );
 
@@ -28,7 +29,7 @@ export function x402Status() {
     payTo,
     payToShort: shortAddress(payTo),
     facilitator: X402_FACILITATOR_URL,
-    network: BASE_NETWORK,
+    network: X402_NETWORK,
     protocol: 'x402',
     asset: 'USDC'
   };
@@ -39,7 +40,7 @@ export function licenseRouteConfig() {
     accepts: {
       scheme: 'exact' as const,
       price: licensePrice(),
-      network: BASE_NETWORK,
+      network: X402_NETWORK,
       payTo: x402PayTo(),
       maxTimeoutSeconds: 60
     },
