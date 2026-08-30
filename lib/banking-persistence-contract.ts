@@ -66,6 +66,22 @@ export type EventClaimInput = {
   maxAttempts: number;
 };
 
+export type BankingOperationsSnapshot = {
+  environment: DurableBankingEnvironment;
+  asOf: string;
+  events: {
+    received: number;
+    processing: number;
+    staleProcessing: number;
+    retryableFailed: number;
+    terminalFailed: number;
+    processed: number;
+  };
+  reconciliations: {
+    openDiscrepancies: number;
+  };
+};
+
 /**
  * Database-backed operations used inside and outside a transaction.
  *
@@ -85,20 +101,10 @@ export interface BankingPersistenceOperations {
     resourceId: string;
   }): Promise<EventInboxRecord | null>;
 
-  /**
-   * Claim one known event for processing. A received/eligible failed event may
-   * be claimed, and a stale processing lease may be recovered. Active leases
-   * owned by another worker must not be stolen.
-   */
   claimEventForProcessing(input: EventClaimInput & {
     eventId: string;
   }): Promise<EventInboxRecord | null>;
 
-  /**
-   * Atomically claim the oldest recoverable event using database row locking.
-   * Implementations should use SKIP LOCKED or an equivalent concurrency-safe
-   * mechanism so multiple workers cannot process the same event concurrently.
-   */
   claimNextRecoverableEvent(input: EventClaimInput & {
     environment: DurableBankingEnvironment;
   }): Promise<EventInboxRecord | null>;
@@ -117,7 +123,6 @@ export interface BankingPersistenceOperations {
     nextAttemptAt: string | null;
   }): Promise<void>;
 
-  /** Append a balanced journal exactly once for the canonical event. */
   appendJournalIfAbsent(input: JournalWrite): Promise<{ inserted: boolean; journal: LedgerJournal }>;
 
   putProviderResourceLink(link: ProviderResourceLink): Promise<void>;
@@ -136,6 +141,12 @@ export interface BankingPersistenceOperations {
   }): Promise<void>;
 
   appendAuditEvent(event: BankingAuditEvent): Promise<void>;
+
+  getOperationsSnapshot(input: {
+    environment: DurableBankingEnvironment;
+    staleBefore: string;
+    maxAttempts: number;
+  }): Promise<BankingOperationsSnapshot>;
 }
 
 export interface BankingPersistenceStore extends BankingPersistenceOperations {
@@ -148,6 +159,8 @@ export const PROVIDER_SANDBOX_DURABILITY_REQUIREMENTS = [
   'skip_locked_concurrent_recovery',
   'stale_claim_recovery',
   'bounded_retry_attempts',
+  'operational_queue_visibility',
+  'open_reconciliation_visibility',
   'append_only_balanced_journal',
   'unique_event_to_journal_mapping',
   'provider_resource_mapping',
