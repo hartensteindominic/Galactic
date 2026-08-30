@@ -1,0 +1,35 @@
+.mobileTrustLinks {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  .mobileTrustLinks {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin: -6px 0 18px;
+  }
+
+  .mobileTrustLinks a {
+    min-width: 0;
+    min-height: 42px;
+    display: grid;
+    place-items: center;
+    padding: 8px 6px;
+    border: 1px solid #e5e8f5;
+    border-radius: 12px;
+    color: #394775;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 5px 14px rgba(44, 53, 112, 0.05);
+    font-size: 10px;
+    font-weight: 800;
+    text-align: center;
+    text-decoration: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .mobileTrustLinks {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
