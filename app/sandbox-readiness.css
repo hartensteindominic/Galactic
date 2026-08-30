@@ -92,6 +92,10 @@
   padding: 22px;
 }
 
+.sandboxGuardGrid article:last-child {
+  grid-column: 1 / -1;
+}
+
 .sandboxGuardGrid article > small,
 .sandboxResultGrid article > small,
 .sandboxRunnerHeader small {
@@ -270,8 +274,15 @@
   place-items: center;
   border-radius: 14px;
   color: #fff;
-  background: currentColor;
   box-shadow: inset 0 0 0 999px rgba(0,0,0,.04);
+}
+
+.sandboxVerdict.passed > span {
+  background: #0d7448;
+}
+
+.sandboxVerdict.failed > span {
+  background: #9d2c49;
 }
 
 .sandboxVerdict small {
@@ -380,6 +391,10 @@
   .sandboxGuardGrid,
   .sandboxResultGrid {
     grid-template-columns: 1fr;
+  }
+
+  .sandboxGuardGrid article:last-child {
+    grid-column: auto;
   }
 
   .sandboxRunnerHeader {
