@@ -10,7 +10,6 @@ const navItems = [
   ['▤', 'Cards'],
   ['▧', 'Pay Bills'],
   ['▥', 'Investments'],
-  ['◈', 'Crypto'],
   ['◇', 'Goals'],
   ['✿', 'Rewards'],
 ];
@@ -73,7 +72,6 @@ export default function Home() {
         <div className="sidebarSpacer" />
         <div className="sideUtilities">
           <a href="#security"><span className="navIcon">⚙</span><span>Settings</span></a>
-          <a href="#security"><span className="navIcon">◉</span><span>Security &amp; Privacy</span></a>
           <a href="#help"><span className="navIcon">?</span><span>Help Center</span></a>
           <div className="sideRule" />
           <a href="#logout"><span className="navIcon">↪</span><span>Log Out</span></a>
@@ -181,6 +179,7 @@ export default function Home() {
                 <div><span className="securityIcon">◎</span><span><b>Privacy-minded chat</b><small>Orbit never asks for passwords, PINs, CVVs or one-time codes.</small></span></div>
                 <div><span className="securityIcon">◈</span><span><b>Live-money guard</b><small>Real banking and crypto remain off until approved providers are configured.</small></span></div>
               </div>
+              <a className="privacyCenterLink" href="/privacy">Open Privacy Center <span>›</span></a>
               <p className="securityFootnote">Demo balances and trades are simulated. Real product disclosures must match the approved partner programs before launch.</p>
             </section>
           </aside>
