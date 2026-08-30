@@ -1,6 +1,7 @@
 import { headers } from 'next/headers';
 import { prototypeTransparency } from '../../../lib/prototype-transparency';
-import { publicBrandConfig, resolveBrand } from '../../../lib/white-label';
+import { resolveRequestBrand } from '../../../lib/tenant-boundary';
+import { publicBrandConfig } from '../../../lib/white-label';
 
 const STATUS_LABELS = {
   prototype: 'Prototype',
@@ -16,9 +17,9 @@ export default async function PrototypeTransparencyPage({
 }) {
   const requestHeaders = await headers();
   const params = await searchParams;
-  const brand = resolveBrand({
+  const brand = resolveRequestBrand({
     host: requestHeaders.get('host'),
-    key: params.tenant
+    requestedKey: params.tenant
   });
   const publicBrand = publicBrandConfig(brand);
   const transparency = prototypeTransparency();
