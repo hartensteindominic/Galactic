@@ -41,6 +41,21 @@ const required = [
   ['lib/prototype-readiness.ts', 'supportCaseControls,', 'readiness must expose support-case controls'],
   ['lib/prototype-readiness.ts', 'supportSensitiveDataControls,', 'readiness must expose support sensitive-data controls'],
   ['lib/prototype-readiness.ts', 'productionSupportDlpReady: false', 'readiness must not claim production DLP is ready'],
+  ['lib/prototype-trust.ts', 'simulationOnly: true', 'Trust Center must explicitly report simulation-only status'],
+  ['lib/prototype-trust.ts', 'liveBankingEnabled: false', 'Trust Center must explicitly report live banking disabled'],
+  ['lib/prototype-trust.ts', 'productionSupportDlpReady: false', 'Trust Center must explicitly report production DLP not ready'],
+  ['lib/prototype-trust.ts', 'approvedLiveCustomerTerms: false', 'Trust Center must explicitly report live terms unapproved'],
+  ['lib/prototype-trust.ts', 'sponsorBankProgramApprovalComplete: false', 'Trust Center must explicitly report sponsor-bank approval incomplete'],
+  ['lib/prototype-trust.ts', 'legalComplianceApplicabilityReviewComplete: false', 'Trust Center must explicitly report legal/compliance applicability review incomplete'],
+  ['lib/prototype-trust.ts', 'What this', 'Trust Center source must describe limitations rather than only controls'],
+  ['app/prototype/trust/page.tsx', 'SIMULATION ONLY', 'Trust Center UI must visibly disclose simulation-only status'],
+  ['app/prototype/trust/page.tsx', 'What this does not prove', 'Trust Center UI must show limitations for implemented controls'],
+  ['app/prototype/trust/page.tsx', 'Production DLP', 'Trust Center UI must show production DLP gap'],
+  ['app/prototype/trust/page.tsx', 'NOT APPROVED', 'Trust Center UI must show unapproved live terms/program status'],
+  ['app/prototype/trust/page.tsx', 'resolveRequestBrand', 'Trust Center page must enforce tenant host boundary'],
+  ['app/api/prototype/trust/route.ts', 'resolveRequestBrand', 'Trust API must enforce tenant host boundary'],
+  ['app/api/prototype/trust/route.ts', 'bankingErrorResponse', 'Trust API must use standardized sanitized error handling'],
+  ['app/prototype/page.tsx', 'Trust & security', 'prototype dock must expose Trust Center'],
   ['docs/CUSTOMER_TERMS_CHANGE_CONTROL.md', 'Do not silently substitute hardcoded defaults', 'terms change control must fail closed rather than invent defaults'],
   ['docs/CUSTOMER_TERMS_CHANGE_CONTROL.md', 'A correction is not permission to backdate an approval that did not exist.', 'terms correction process must prohibit backdated approval']
 ];
@@ -61,7 +76,11 @@ const forbidden = [
   ['app/api/assistant/route.ts', 'rawMessage:', 'Orbit API must never return the raw submitted message'],
   ['app/api/assistant/route.ts', 'submittedMessage:', 'Orbit API must never return the raw submitted message'],
   ['app/galactic-chat.tsx', 'Your case has been opened', 'prototype chat must not imply a real case was created'],
-  ['app/galactic-chat.tsx', 'Your complaint has been filed', 'prototype chat must not imply a real complaint was filed']
+  ['app/galactic-chat.tsx', 'Your complaint has been filed', 'prototype chat must not imply a real complaint was filed'],
+  ['app/prototype/trust/page.tsx', 'fully compliant', 'Trust Center must not claim full compliance'],
+  ['app/prototype/trust/page.tsx', 'FDIC insured', 'Trust Center must not claim deposit insurance'],
+  ['app/prototype/trust/page.tsx', 'bank-grade verified', 'Trust Center must not claim bank-grade verification'],
+  ['app/prototype/trust/page.tsx', 'guaranteed secure', 'Trust Center must not guarantee security']
 ];
 
 for (const [file, text, label] of required) {
@@ -74,4 +93,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Customer terms, human support-case, and support sensitive-data governance safety checks passed.');
+console.log('Customer terms, human support-case, sensitive-data, and Trust Center governance safety checks passed.');
