@@ -23,6 +23,10 @@ const required = [
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'superseded SR 11-7', 'AI governance must reflect the 2026 model-risk guidance update'],
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'withdrew that circular on May 12, 2025', 'AI governance must disclose the CFPB complex-algorithm circular was withdrawn'],
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'rules-policy/regulations/1002/', 'credit governance must anchor to current Regulation B'],
+  ['docs/REGULATORY_REFERENCE_CHANGELOG.md', 'removed the Regulation B “effects test”', 'regulatory changelog must record the current 2026 Regulation B effects-test change'],
+  ['docs/REGULATORY_REFERENCE_CHANGELOG.md', 'both were withdrawn on May 12, 2025', 'regulatory changelog must mark historical CFPB circulars withdrawn'],
+  ['docs/REGULATORY_REFERENCE_CHANGELOG.md', 'Do not write “SR 11-7 requires X for ChatGPT/generative AI.”', 'regulatory changelog must reject stale SR 11-7 generative-AI claims'],
+  ['docs/REGULATORY_REFERENCE_CHANGELOG.md', 'Do not claim the FTC Safeguards Rule automatically applies to Galactic', 'regulatory changelog must distinguish scope analysis from appearance'],
   ['docs/COMPLIANCE_RESPONSIBILITY_MATRIX_TEMPLATE.md', 'A blank or disputed ownership cell is a release blocker', 'responsibility matrix must fail closed on unowned controls'],
   ['docs/DATA_CLASSIFICATION_RETENTION_MAP.md', 'SAR / SAR-revealing information', 'data map must classify SAR-revealing information'],
   ['docs/DATA_CLASSIFICATION_RETENTION_MAP.md', 'Production retention periods are **TBD', 'retention map must not invent universal production retention periods'],
@@ -82,4 +86,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('AI governance, current-guidance, compliance ownership, data classification, vendor risk, support escalation, financial-intent unknown-state, threat-model and incident-drill safety checks passed.');
+console.log('AI governance, current-regulatory-reference hygiene, compliance ownership, data classification, vendor risk, support escalation, financial-intent unknown-state, threat-model and incident-drill safety checks passed.');
