@@ -29,6 +29,13 @@ const required = [
   ['lib/prototype-trust.ts', "id: 'compliance-applicability-register'", 'Trust Center must expose compliance applicability register'],
   ['lib/prototype-trust.ts', 'external-approval-required', 'Trust Center compliance applicability must require external/human approval'],
   ['lib/prototype-trust.ts', 'legal/compliance applicability review is represented as complete', 'Trust Center must keep legal applicability review incomplete'],
+  ['app/prototype/strategy/page.tsx', 'compliance={complianceObligationRegisterStatus()}', 'Strategy page must pass server compliance metadata into the protected workbench'],
+  ['app/prototype/strategy/strategy-shell.tsx', '<ComplianceApplicabilityPanel tenantKey={tenantKey} status={compliance} />', 'Compliance Workbench must remain inside protected Strategy Lab workspace'],
+  ['app/prototype/strategy/compliance-applicability-panel.tsx', 'Select a proposed decision…', 'Compliance Workbench must not default a legal decision'],
+  ['app/prototype/strategy/compliance-applicability-panel.tsx', 'Source mapping ≠ Galactic applicability.', 'Compliance Workbench must distinguish source mapping from legal applicability'],
+  ['app/prototype/strategy/compliance-applicability-panel.tsx', 'Structurally complete for qualified review', 'Compliance Workbench may only claim structural completeness'],
+  ['app/prototype/strategy/compliance-applicability-panel.tsx', 'Not operating / not verified:', 'Compliance Workbench must expose unverified program state'],
+  ['app/prototype/strategy/compliance-applicability-panel.tsx', 'do not paste private evidence into this public-repo tool', 'Compliance Workbench must warn against sensitive evidence entry'],
   ['docs/COMPLIANCE_APPLICABILITY_AND_OWNERSHIP.md', 'source identified ≠ applicable law determined ≠ owner assigned ≠ control designed ≠ control operating ≠ control tested ≠ externally approved.', 'operating model must distinguish compliance evidence stages'],
   ['docs/COMPLIANCE_APPLICABILITY_AND_OWNERSHIP.md', 'Never-auto-promote rule', 'operating model must prohibit automatic compliance promotion'],
   ['scripts/compliance-obligation-register-runtime-check.mjs', 'Compliance obligation register unresolved-applicability, source coverage, human-review, and software-noncertification runtime checks passed.', 'compliance register must have executable runtime coverage'],
@@ -48,6 +55,7 @@ const forbidden = [
   ['lib/compliance-obligation-register.ts', 'productionOfacProgramOperating: true', 'register must not claim a live OFAC program'],
   ['app/api/prototype/compliance-applicability/route.ts', 'await request.json()', 'compliance applicability endpoint must not bypass bounded JSON parsing'],
   ['app/api/prototype/compliance-applicability/route.ts', 'persisted: true', 'compliance applicability endpoint must not claim persistence'],
+  ['app/prototype/strategy/compliance-applicability-panel.tsx', 'defaultValue=', 'Compliance Workbench must not hide default legal facts/decisions'],
   ['docs/COMPLIANCE_APPLICABILITY_AND_OWNERSHIP.md', 'Galactic is fully compliant', 'operating model must not self-certify compliance'],
   ['docs/COMPLIANCE_APPLICABILITY_AND_OWNERSHIP.md', 'examination ready ✅', 'operating model must not present exam readiness as complete']
 ];
@@ -62,4 +70,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Compliance obligation register applicability, ownership, official-source, cross-surface, operator/request, non-persistence, and non-certification safety checks passed.');
+console.log('Compliance obligation register applicability, ownership, official-source, protected-workbench, cross-surface, operator/request, non-persistence, and non-certification safety checks passed.');
