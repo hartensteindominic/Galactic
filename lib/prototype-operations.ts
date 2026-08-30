@@ -70,6 +70,11 @@ type AuditEventRow = {
 
 type TenantRow = { id: string };
 
+export type PrototypeOperatorAuditAction =
+  | 'operator.session_started'
+  | 'operator.session_ended'
+  | 'operator.reconciliation_requested';
+
 function supabaseConfig() {
   const baseUrl = process.env.SUPABASE_URL?.replace(/\/$/, '') || '';
   const secretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -103,6 +108,15 @@ async function supabaseRequest<T>(path: string, init?: RequestInit): Promise<T> 
   return response.json() as Promise<T>;
 }
 
+async function tenantRow(tenantKey: string) {
+  const tenants = await supabaseRequest<TenantRow[]>(
+    `/rest/v1/fintech_tenants?select=id&tenant_key=eq.${encodeURIComponent(tenantKey)}&limit=1`
+  );
+  const tenant = tenants[0];
+  if (!tenant) throw new BankingError(404, 'UNKNOWN_TENANT', 'Unknown prototype tenant.');
+  return tenant;
+}
+
 export function prototypeOperationsStatus() {
   const databaseConfigured = supabaseConfig().configured;
   const webhookConfigured = Boolean(process.env.PROTOTYPE_WEBHOOK_SECRET?.trim());
@@ -113,12 +127,55 @@ export function prototypeOperationsStatus() {
     webhookInboxConfigured: databaseConfigured && webhookConfigured,
     doubleEntryAvailableInBuild: true,
     sanitizedAuditEvidenceAvailable: databaseConfigured,
+    operatorAuditEvidenceAvailable: databaseConfigured,
     realProviderWebhooksEnabled: false,
     liveMoneyEnabled: false,
     disclosure: databaseConfigured
       ? 'Persistent simulation reconciliation and sanitized audit evidence are available. Real provider webhook processing and live money remain disabled.'
       : 'Memory-mode reconciliation is available for demo UX only. Configure Supabase to persist operations evidence.'
   } as const;
+}
+
+export async function recordPrototypeOperatorAuditEvent(input: {
+  tenantKey: string;
+  action: PrototypeOperatorAuditAction;
+  entityType: 'operator_session' | 'profile';
+  entityId?: string | null;
+  resultStatus?: 'balanced' | 'attention';
+  reconciliationSource?: 'memory' | 'supabase';
+}) {
+  if (!supabaseConfig().configured) {
+    return { persisted: false, mode: 'memory' as const };
+  }
+
+  if (!input.tenantKey.trim()) {
+    throw new BankingError(400, 'TENANT_REQUIRED', 'A tenant is required for prototype operator audit evidence.');
+  }
+  if (input.entityId && input.entityId.length > 180) {
+    throw new BankingError(400, 'INVALID_AUDIT_ENTITY_ID', 'Prototype audit entity identifier is too long.');
+  }
+
+  const tenant = await tenantRow(input.tenantKey);
+  const metadata: Record<string, string | boolean> = {
+    simulation_only: true
+  };
+  if (input.resultStatus) metadata.result_status = input.resultStatus;
+  if (input.reconciliationSource) metadata.reconciliation_source = input.reconciliationSource;
+
+  await supabaseRequest<Array<{ id: string }>>('/rest/v1/fintech_audit_events', {
+    method: 'POST',
+    headers: { Prefer: 'return=representation' },
+    body: JSON.stringify({
+      tenant_id: tenant.id,
+      actor_type: 'operator',
+      action: input.action,
+      entity_type: input.entityType,
+      entity_id: input.entityId || null,
+      metadata
+    })
+  });
+
+  return { persisted: true, mode: 'supabase' as const };
 }
 
 export async function runPrototypeReconciliation(tenantKey: string, userId = 'demo-nova'): Promise<ReconciliationResult> {
@@ -206,10 +263,10 @@ export async function getPrototypeOperationsSnapshot(tenantKey: string) {
     };
   }
 
-  const tenants = await supabaseRequest<TenantRow[]>(
-    `/rest/v1/fintech_tenants?select=id&tenant_key=eq.${encodeURIComponent(tenantKey)}&limit=1`
-  );
-  const tenant = tenants[0];
+  const tenant = await tenantRow(tenantKey).catch((error) => {
+    if (error instanceof BankingError && error.status === 404) return null;
+    throw error;
+  });
   if (!tenant) {
     return { status, latestReconciliations: [], providerEvents: [], auditEvents: [] };
   }
@@ -254,11 +311,7 @@ export async function recordPrototypeProviderEvent(input: {
     throw new BankingError(400, 'INVALID_EVENT_TYPE', 'A valid sandbox event type is required.');
   }
 
-  const tenants = await supabaseRequest<TenantRow[]>(
-    `/rest/v1/fintech_tenants?select=id&tenant_key=eq.${encodeURIComponent(input.tenantKey)}&limit=1`
-  );
-  const tenant = tenants[0];
-  if (!tenant) throw new BankingError(404, 'UNKNOWN_TENANT', 'Unknown prototype tenant.');
+  const tenant = await tenantRow(input.tenantKey);
 
   const serialized = JSON.stringify(input.payload ?? null);
   if (serialized.length > 100000) {
