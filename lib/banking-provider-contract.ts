@@ -64,6 +64,15 @@ export type ProviderRequestContext = {
   correlationId: string;
 };
 
+export type ProviderWebhookAuthenticityEvidence = {
+  rawBodyUsedForVerification: true;
+  providerAuthenticityVerified: true;
+  antiReplayVerified: true;
+  providerEventIdentityVerified: true;
+  verificationScheme: string;
+  verifiedAt: string;
+};
+
 export type VerifiedProviderEvent = {
   provider: string;
   providerEventId: string;
@@ -71,11 +80,13 @@ export type VerifiedProviderEvent = {
   occurredAt?: string;
   resourceId?: string;
   rawPayloadDigest: string;
+  authenticity: ProviderWebhookAuthenticityEvidence;
 };
 
 export type ProviderWebhookInput = {
   rawBody: Uint8Array;
   headers: Headers;
+  receivedAt: string;
 };
 
 export type ProviderReconciliationItem = {
