@@ -26,6 +26,14 @@ const milestones: CharterReadinessMilestone[] = [
     evidence: 'The prototype has fail-closed live-money boundaries, tenant isolation, ledger/reconciliation controls, controlled terms, and machine-readable readiness evidence.'
   },
   {
+    id: 'business-model-proof',
+    phase: 'fintech-proof',
+    label: 'Evidence-backed customer, problem, distribution, and durable-revenue thesis',
+    status: 'future-internal-work',
+    complete: false,
+    evidence: 'No specific target segment, painful problem, distribution advantage, non-interchange revenue proof, or driver-based unit-economics evidence is represented as validated yet.'
+  },
+  {
     id: 'charter-route-selection',
     phase: 'charter-feasibility',
     label: 'Select charter route and corporate structure with qualified advisers',
@@ -122,6 +130,18 @@ export function charterReadinessStatus() {
     currentOperatingPosture: 'simulation-only-fintech-prototype',
     roadmapDocumented: true,
     currentSoftwareCanSelfApproveCharter: false,
+    businessModelThesisDefined: false,
+    targetCustomerSegmentValidated: false,
+    painfulProblemValidated: false,
+    distributionAdvantageValidated: false,
+    primaryNonInterchangeRevenueModelValidated: false,
+    driverBasedUnitEconomicsModelBuilt: false,
+    unitEconomicsAssumptionsExternallyValidated: false,
+    fraudLossAssumptionsValidated: false,
+    customerSupportCostAssumptionsValidated: false,
+    sponsorProviderCostAssumptionsValidated: false,
+    customerRetentionAssumptionsValidated: false,
+    providerExitContinuityPlanApproved: false,
     charterRouteSelected: false,
     deNovoVsAcquisitionRouteSelected: false,
     nationalBankCharterSelected: false,
@@ -154,6 +174,6 @@ export function charterReadinessStatus() {
     customerFacingBankClaimAuthorized: false,
     milestones,
     disclosure:
-      'This is a long-term charter-readiness roadmap, not a charter application, legal conclusion, regulatory approval, deposit-insurance approval, capital approval, or authorization to operate or market Galactic Trust as a bank. The applicable charter route, regulators, applications, capital, governance, staffing, and opening conditions must be determined and evidenced with qualified legal/compliance advisers and the relevant authorities.'
+      'This is a long-term charter-readiness roadmap, not a charter application, legal conclusion, regulatory approval, deposit-insurance approval, capital approval, or authorization to operate or market Galactic Trust as a bank. The business model, unit economics, applicable charter route, regulators, applications, capital, governance, staffing, and opening conditions must be determined and evidenced with real operating data, accountable human owners, qualified legal/compliance advisers, and the relevant authorities.'
   } as const;
 }
