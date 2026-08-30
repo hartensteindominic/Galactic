@@ -212,9 +212,11 @@ export function answerGalacticQuestion(input: string): AssistantReply {
 
   if (includesAny(text, ['human', 'agent', 'support', 'help center', 'contact', 'complaint'])) {
     return humanReply(
-      'For account-specific issues, complaints, fraud reports, identity verification, disputes, compliance questions, or anything requiring regulated judgment, use the verified human support channel shown inside the authenticated product. Never trust support requests asking for your PIN, CVV, password, recovery code, or one-time code.',
+      banking.mode === 'demo'
+        ? 'This prototype does not operate a live human case-management channel. Orbit can mark that an issue requires human handling, but that marker is not a complaint/dispute case, human acknowledgement, investigation, or resolution. A live program must connect an authenticated, staffed, governed support/case system before launch. Never send your PIN, CVV, password, recovery code, or one-time code in chat.'
+        : 'For account-specific issues, complaints, fraud reports, identity verification, disputes, compliance questions, or anything requiring regulated judgment, use the verified human support channel shown inside the authenticated product. Never trust support requests asking for your PIN, CVV, password, recovery code, or one-time code.',
       'general',
-      ['Security protections', 'Freeze my card', 'Privacy']
+      ['Security protections', 'Product status', 'Privacy']
     );
   }
 
