@@ -1,6 +1,7 @@
 import { aiGovernanceStatus } from './ai-governance';
 import { customerTermsControlStatus } from './customer-terms-control';
 import { financialIntentControlStatus } from './financial-intent-state';
+import { prototypeIncidentCommunicationControlStatus } from './prototype-incident-status';
 import { prototypeMigrationIntegrityStatus } from './prototype-migration-integrity';
 import { supportCaseControlStatus } from './support-case-state';
 import { supportSensitiveDataControlStatus } from './support-sensitive-data';
@@ -21,6 +22,7 @@ export function prototypeTrustCenter() {
   const ai = aiGovernanceStatus();
   const terms = customerTermsControlStatus();
   const intents = financialIntentControlStatus();
+  const incident = prototypeIncidentCommunicationControlStatus();
   const migrations = prototypeMigrationIntegrityStatus();
   const support = supportCaseControlStatus();
   const sensitiveData = supportSensitiveDataControlStatus();
@@ -52,6 +54,15 @@ export function prototypeTrustCenter() {
         ? 'A timeout or provider ambiguity can remain pending/unknown instead of being mislabeled as failure, and automatic replacement is disabled.'
         : 'Financial-intent ambiguity controls are incomplete.',
       limitation: 'Provider-specific state mapping and disappearance/recovery behavior remain unverified until a real provider certification environment is selected.'
+    },
+    {
+      id: 'incident-communication',
+      name: 'Truthful incident-status wording',
+      status: 'implemented-prototype',
+      summary: incident.explicitTemporaryUnavailableVsTransactionOutcome && incident.unknownOutcomeDoesNotBecomeFailure
+        ? 'Prototype incident wording keeps service availability separate from transaction outcome and preserves submitted/unknown instructions as awaiting confirmation.'
+        : 'Incident-status wording controls are incomplete.',
+      limitation: 'No production customer-status channel, approved incident-message workflow, production human incident-support path, provider-status integration, or measured customer-visible status timing is connected or verified.'
     },
     {
       id: 'migration-integrity',
@@ -114,6 +125,7 @@ export function prototypeTrustCenter() {
     'No sponsor-bank or regulated-program approval is represented as complete.',
     'No qualified legal/compliance applicability review is represented as complete.',
     'No production provider webhook/certification claim is made.',
+    'No production customer-status channel, approved incident-message workflow, or measured customer-visible incident timing is represented as operating.',
     'Repository migration fingerprints exist, but target database migration history, Supabase execution, backup/restore behavior, and migration recovery remain unverified.',
     'No high/critical production third-party-risk program, vendor-contract approval, or live-data-flow approval is represented as operating.',
     'No production workforce identity, phishing-resistant MFA, RBAC, or high-risk dual control is represented as ready.',
@@ -129,6 +141,11 @@ export function prototypeTrustCenter() {
     liveBankingEnabled: false,
     regulatedAiDecisioningEnabled: false,
     thirdPartyLlmCustomerDataEnabled: false,
+    customerIncidentStatusModelImplemented: true,
+    productionCustomerStatusChannelConnected: false,
+    approvedIncidentMessageWorkflowConnected: false,
+    productionHumanIncidentSupportPathConnected: false,
+    customerVisibleIncidentStatusTimingVerified: false,
     repositoryMigrationManifestAvailable: migrations.repositoryManifestAvailable,
     repositoryMigrationFingerprintsEnforced: migrations.appendOnlyFingerprintEnforcedInCi,
     targetDatabaseMigrationHistoryVerified: false,
@@ -144,6 +161,6 @@ export function prototypeTrustCenter() {
     legalComplianceApplicabilityReviewComplete: false,
     controls,
     productionGaps,
-    disclosure: 'Trust Center for the simulation prototype. It describes implemented software controls and known gaps; it is not a claim of legal compliance, bank charter, deposit insurance, sponsor-bank approval, vendor approval, database migration execution, security certification, or readiness for live customer funds.'
+    disclosure: 'Trust Center for the simulation prototype. It describes implemented software controls and known gaps; it is not a claim of legal compliance, bank charter, deposit insurance, sponsor-bank approval, vendor approval, database migration execution, production incident-communications operation, security certification, or readiness for live customer funds.'
   } as const;
 }
