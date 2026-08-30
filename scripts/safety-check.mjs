@@ -18,8 +18,21 @@ const required = [
   ['lib/banking-auth.ts', 'createHmac', 'partner banking requires signed authentication'],
   ['lib/banking-auth.ts', 'BANKING_AUTH_GATEWAY_SECRET', 'partner banking auth requires a server secret'],
   ['app/api/banking/transfers/route.ts', 'requireBankingUser', 'transfers require a banking user boundary'],
+  ['app/api/banking/transfers/route.ts', 'requireTrustedOrigin', 'transfers reject untrusted browser origins'],
   ['app/api/banking/cards/freeze/route.ts', 'requireBankingUser', 'card freeze requires a banking user boundary'],
-  ['app/banking-actions.tsx', 'Demo transfers never move real money.', 'client labels simulated transfers clearly']
+  ['app/api/banking/cards/freeze/route.ts', 'requireTrustedOrigin', 'card freeze rejects untrusted browser origins'],
+  ['app/banking-actions.tsx', 'Demo transfers never move real money.', 'client labels simulated transfers clearly'],
+  ['lib/crypto.ts', "process.env.CRYPTO_MODE === 'partner' ? 'partner' : 'demo'", 'crypto defaults to demo unless partner is explicit'],
+  ['lib/crypto.ts', "process.env.CRYPTO_ENABLE_LIVE_TRADING === 'true'", 'live crypto trading requires an explicit server flag'],
+  ['lib/crypto.ts', "throw new BankingError(503, 'CRYPTO_LIVE_TRADING_DISABLED'", 'crypto fails closed when live trading is disabled'],
+  ['app/api/crypto/orders/route.ts', 'requireBankingUser', 'crypto orders require a banking user boundary'],
+  ['app/api/crypto/orders/route.ts', 'requireTrustedOrigin', 'crypto orders reject untrusted browser origins'],
+  ['app/crypto-trading.tsx', 'No guaranteed returns.', 'crypto UI avoids guaranteed return claims'],
+  ['app/api/assistant/route.ts', 'RATE_LIMITED', 'assistant endpoint has a rate limit'],
+  ['lib/assistant.ts', 'Never share passwords, PINs, CVVs, recovery codes, or one-time codes in chat.', 'assistant warns against sharing authentication secrets'],
+  ['next.config.mjs', "frame-ancestors 'none'", 'content security policy blocks framing'],
+  ['next.config.mjs', "Permissions-Policy", 'browser permissions are restricted'],
+  ['next.config.mjs', "X-Content-Type-Options", 'MIME sniffing protection is enabled']
 ];
 
 const forbidden = [
@@ -31,7 +44,11 @@ const forbidden = [
   ['app/banking-actions.tsx', 'BANKING_GATEWAY_API_KEY', 'banking provider API keys must never appear in client code'],
   ['app/banking-actions.tsx', 'BANKING_AUTH_GATEWAY_SECRET', 'banking auth secrets must never appear in client code'],
   ['app/banking-actions.tsx', 'name="cvv"', 'client must not collect CVV data'],
-  ['app/banking-actions.tsx', 'name="pin"', 'client must not collect PIN data']
+  ['app/banking-actions.tsx', 'name="pin"', 'client must not collect PIN data'],
+  ['app/crypto-trading.tsx', 'CRYPTO_GATEWAY_API_KEY', 'crypto provider API keys must never appear in client code'],
+  ['app/crypto-trading.tsx', 'CRYPTO_PROGRAM_ID', 'crypto provider program identifiers must remain server-side'],
+  ['app/galactic-chat.tsx', 'BANKING_GATEWAY_API_KEY', 'chat must never contain banking provider credentials'],
+  ['app/galactic-chat.tsx', 'CRYPTO_GATEWAY_API_KEY', 'chat must never contain crypto provider credentials']
 ];
 
 for (const [file, text, label] of required) {
@@ -44,4 +61,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Galactic Trust banking and x402 safety checks passed.');
+console.log('Galactic Trust banking, crypto, assistant, privacy and x402 safety checks passed.');
