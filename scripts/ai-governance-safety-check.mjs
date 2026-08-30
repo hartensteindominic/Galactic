@@ -23,6 +23,15 @@ const required = [
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'superseded SR 11-7', 'AI governance must reflect the 2026 model-risk guidance update'],
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'withdrew that circular on May 12, 2025', 'AI governance must disclose the CFPB complex-algorithm circular was withdrawn'],
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'rules-policy/regulations/1002/', 'credit governance must anchor to current Regulation B'],
+  ['docs/COMPLIANCE_RESPONSIBILITY_MATRIX_TEMPLATE.md', 'A blank or disputed ownership cell is a release blocker', 'responsibility matrix must fail closed on unowned controls'],
+  ['docs/DATA_CLASSIFICATION_RETENTION_MAP.md', 'SAR / SAR-revealing information', 'data map must classify SAR-revealing information'],
+  ['docs/DATA_CLASSIFICATION_RETENTION_MAP.md', 'Production retention periods are **TBD', 'retention map must not invent universal production retention periods'],
+  ['docs/CUSTOMER_SUPPORT_COMPLAINT_ESCALATION_MODEL.md', 'Do not use “closed” merely because automation sent a response.', 'support model must not let automation close material cases'],
+  ['docs/CUSTOMER_SUPPORT_COMPLAINT_ESCALATION_MODEL.md', 'Do not require magic words such as “formal complaint.”', 'support model must recognize complaints without magic words'],
+  ['docs/THIRD_PARTY_AND_AI_VENDOR_RISK_REGISTER_TEMPLATE.md', 'AI cannot be approved as a generic vendor category.', 'AI vendor approval must be use-case specific'],
+  ['docs/THIRD_PARTY_AND_AI_VENDOR_RISK_REGISTER_TEMPLATE.md', 'Vendor-disappearance drill', 'vendor register must include provider disappearance testing'],
+  ['docs/FINTECH_SECURITY_THREAT_MODEL.md', 'A control documented but never exercised is not treated as verified.', 'threat model must require exercised controls'],
+  ['docs/FINTECH_SECURITY_THREAT_MODEL.md', 'timeout != failure', 'threat model must preserve ambiguous financial state'],
   ['docs/NETWORK_RETRY_CHAOS_TEST_PLAN.md', 'Provider disappears after accepting intent', 'network chaos plan must include provider disappearance'],
   ['docs/NETWORK_RETRY_CHAOS_TEST_PLAN.md', 'pending/unknown', 'provider disappearance must preserve unknown state'],
   ['docs/EMERGENCY_MONEY_MOVEMENT_CONTROL.md', 'Time-to-first-customer-visible status', 'freeze drill must measure customer-visible status timing'],
@@ -39,6 +48,7 @@ const forbidden = [
   ['app/api/assistant/route.ts', 'regulatedDecisioningEnabled: true', 'Orbit API must not claim regulated decisioning is enabled'],
   ['app/api/assistant/route.ts', 'thirdPartyLlmCustomerDataEnabled: true', 'Orbit API must not claim third-party LLM customer-data use is enabled'],
   ['docs/AI_GOVERNANCE_AND_REGULATED_AUTOMATION.md', 'CFPB Circular 2022-03 states that', 'withdrawn CFPB circular must not be presented as current guidance'],
+  ['docs/DATA_CLASSIFICATION_RETENTION_MAP.md', 'retain everything for seven years', 'data-retention policy must not invent a universal seven-year rule'],
   ['lib/prototype-readiness.ts', 'customerVisibleIncidentStatusTimeVerified: true', 'incident-status timing must remain unverified until an exercise occurs'],
   ['lib/prototype-readiness.ts', 'providerDisappearanceDuringTransferDrillVerified: true', 'provider-disappearance drill must remain unverified until exercised']
 ];
@@ -53,4 +63,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('AI governance, current-guidance, automated-support and incident-drill safety checks passed.');
+console.log('AI governance, current-guidance, compliance ownership, data classification, vendor risk, support escalation, threat-model and incident-drill safety checks passed.');
