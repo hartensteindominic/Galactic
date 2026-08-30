@@ -1,5 +1,6 @@
 import { headers } from 'next/headers';
 import { charterReadinessStatus } from '../../../lib/charter-readiness';
+import { complianceObligationRegisterStatus } from '../../../lib/compliance-obligation-register';
 import { resolveRequestBrand } from '../../../lib/tenant-boundary';
 import { unitEconomicsControlStatus } from '../../../lib/unit-economics';
 import { StrategyShell } from './strategy-shell';
@@ -22,6 +23,7 @@ export default async function PrototypeStrategyPage({
       brandName={brand.name}
       charter={charterReadinessStatus()}
       economicsControls={unitEconomicsControlStatus()}
+      compliance={complianceObligationRegisterStatus()}
     />
   );
 }
