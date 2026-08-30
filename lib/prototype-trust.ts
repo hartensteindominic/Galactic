@@ -1,6 +1,7 @@
 import { aiGovernanceStatus } from './ai-governance';
 import { customerTermsControlStatus } from './customer-terms-control';
 import { financialIntentControlStatus } from './financial-intent-state';
+import { prototypeMigrationIntegrityStatus } from './prototype-migration-integrity';
 import { supportCaseControlStatus } from './support-case-state';
 import { supportSensitiveDataControlStatus } from './support-sensitive-data';
 import { tenantBoundaryStatus } from './tenant-boundary';
@@ -20,6 +21,7 @@ export function prototypeTrustCenter() {
   const ai = aiGovernanceStatus();
   const terms = customerTermsControlStatus();
   const intents = financialIntentControlStatus();
+  const migrations = prototypeMigrationIntegrityStatus();
   const support = supportCaseControlStatus();
   const sensitiveData = supportSensitiveDataControlStatus();
   const tenant = tenantBoundaryStatus();
@@ -50,6 +52,15 @@ export function prototypeTrustCenter() {
         ? 'A timeout or provider ambiguity can remain pending/unknown instead of being mislabeled as failure, and automatic replacement is disabled.'
         : 'Financial-intent ambiguity controls are incomplete.',
       limitation: 'Provider-specific state mapping and disappearance/recovery behavior remain unverified until a real provider certification environment is selected.'
+    },
+    {
+      id: 'migration-integrity',
+      name: 'Migration source integrity',
+      status: 'implemented-prototype',
+      summary: migrations.repositoryManifestAvailable && migrations.appendOnlyFingerprintEnforcedInCi
+        ? `Migrations 001-${String(migrations.lockedMigrationCount).padStart(3, '0')} are fingerprinted and CI rejects silent edits to locked migration files.`
+        : 'Migration source-integrity controls are incomplete.',
+      limitation: 'Repository fingerprints do not prove target-database migration history, Supabase execution, backup/restore success, recovery exercises, or production approval.'
     },
     {
       id: 'automated-support',
@@ -103,6 +114,7 @@ export function prototypeTrustCenter() {
     'No sponsor-bank or regulated-program approval is represented as complete.',
     'No qualified legal/compliance applicability review is represented as complete.',
     'No production provider webhook/certification claim is made.',
+    'Repository migration fingerprints exist, but target database migration history, Supabase execution, backup/restore behavior, and migration recovery remain unverified.',
     'No high/critical production third-party-risk program, vendor-contract approval, or live-data-flow approval is represented as operating.',
     'No production workforce identity, phishing-resistant MFA, RBAC, or high-risk dual control is represented as ready.',
     'No production distributed rate limiting/WAF or DLP is represented as ready.',
@@ -117,6 +129,10 @@ export function prototypeTrustCenter() {
     liveBankingEnabled: false,
     regulatedAiDecisioningEnabled: false,
     thirdPartyLlmCustomerDataEnabled: false,
+    repositoryMigrationManifestAvailable: migrations.repositoryManifestAvailable,
+    repositoryMigrationFingerprintsEnforced: migrations.appendOnlyFingerprintEnforcedInCi,
+    targetDatabaseMigrationHistoryVerified: false,
+    prototypeMigrationsExternalExecutionVerified: false,
     machineReadableThirdPartyInventoryAvailable: true,
     productionThirdPartyRiskProgramOperating: false,
     productionVendorContractsApproved: false,
@@ -128,6 +144,6 @@ export function prototypeTrustCenter() {
     legalComplianceApplicabilityReviewComplete: false,
     controls,
     productionGaps,
-    disclosure: 'Trust Center for the simulation prototype. It describes implemented software controls and known gaps; it is not a claim of legal compliance, bank charter, deposit insurance, sponsor-bank approval, vendor approval, security certification, or readiness for live customer funds.'
+    disclosure: 'Trust Center for the simulation prototype. It describes implemented software controls and known gaps; it is not a claim of legal compliance, bank charter, deposit insurance, sponsor-bank approval, vendor approval, database migration execution, security certification, or readiness for live customer funds.'
   } as const;
 }
