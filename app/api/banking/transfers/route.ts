@@ -14,7 +14,8 @@ export async function POST(request: Request) {
       fromAccountId: String(body.fromAccountId || ''),
       recipient: String(body.recipient || ''),
       amount: Number(body.amount),
-      memo: body.memo ? String(body.memo) : undefined
+      memo: body.memo ? String(body.memo) : undefined,
+      idempotencyKey: request.headers.get('idempotency-key') || undefined
     });
 
     return bankingJson({ ok: true, transfer }, 201);
