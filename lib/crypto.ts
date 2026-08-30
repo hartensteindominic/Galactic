@@ -124,6 +124,15 @@ export async function createCryptoOrder(input: {
   }
 
   if (mode() === 'demo') {
+    const availableValueUsd = asset.demoHolding * asset.demoPriceUsd;
+    if (input.side === 'sell' && input.usdAmount > availableValueUsd + 0.005) {
+      throw new BankingError(
+        400,
+        'INSUFFICIENT_DEMO_CRYPTO',
+        `The demo ${asset.symbol} holding is only worth about $${availableValueUsd.toFixed(2)}.`
+      );
+    }
+
     const units = input.usdAmount / asset.demoPriceUsd;
     return {
       id: `demo-crypto-${Date.now()}`,
