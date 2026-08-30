@@ -6,7 +6,9 @@ Financial idempotency is only trustworthy if it survives ambiguous network failu
 
 A client may submit a transfer, lose the response after the server commits, and then retry because it cannot tell whether the first request succeeded. The retry must return the existing result and must not create a second debit or journal.
 
-This plan is for the simulation/persistent prototype first. It must be repeated against any future approved provider sandbox/certification environment using that provider's exact idempotency semantics.
+A future provider can also disappear after accepting an intent but before returning or delivering a terminal state. That state is not the same as a clean failure. The system must preserve one economic intent, expose uncertainty honestly, and reconcile to an authoritative result rather than creating a replacement transfer blindly.
+
+This plan is for the simulation/persistent prototype first. It must be repeated against any future approved provider sandbox/certification environment using that provider's exact idempotency and status semantics.
 
 ## Safety boundary
 
@@ -14,6 +16,8 @@ This plan is for the simulation/persistent prototype first. It must be repeated 
 - Do not introduce a hidden production fault-injection endpoint.
 - Do not weaken webhook verification, origin checks, authentication, or idempotency requirements to make testing easier.
 - Preserve the same idempotency key when retrying an ambiguous request.
+- Never treat an unknown provider outcome as a confirmed failure merely because a timeout elapsed.
+- Do not create a replacement economic intent until provider/internal reconciliation rules establish that doing so is safe.
 
 ## Current client protections
 
@@ -24,7 +28,9 @@ The route-scoped prototype network guard now adds two layers on top of database 
 
 The retry-key cache is memory-only and is cleared on route teardown. It is not stored in `localStorage` or `sessionStorage`.
 
-These protections improve prototype behavior but do not replace the required database unique constraint, provider idempotency, or mobile/network chaos testing.
+These protections improve prototype behavior but do not replace the required database unique constraint, provider idempotency, authoritative status lookup, provider reconciliation, or mobile/network chaos testing.
+
+For any future live/provider implementation, the retry/idempotency retention policy must be derived from the selected provider's documented idempotency window, status semantics, and Galactic's approved reconciliation/timeout policy. Do not invent a generic production TTL.
 
 ## Core scenarios
 
@@ -108,6 +114,27 @@ Simulate a path where the database transaction commits but the application times
 
 Expected result: retry with the same key resolves to the existing transaction and never double-debits.
 
+### 9. Provider disappears after accepting intent
+
+This scenario is for a future approved provider sandbox/certification environment, or a provider stub that accurately models the selected provider's documented semantics.
+
+1. Create one internal payment/transfer intent with idempotency key `K`.
+2. Submit it to the provider and capture the provider request/reference if one is returned.
+3. Simulate the provider connection/API becoming unavailable after submission but before Galactic receives a terminal status.
+4. Mark the customer-facing/internal state as **pending/unknown**, not failed and not succeeded.
+5. Do not create a second economic intent or mint a new idempotency key merely because the provider is unavailable.
+6. Exercise the approved status-recovery path: provider status lookup when available, verified webhook/event processing, statement/balance reconciliation, or other provider-certified authoritative evidence.
+7. Verify that a later terminal success produces one economic effect and one internally reconciled event.
+8. Verify that a later terminal failure produces no duplicate/replacement effect unless a separately authorized retry is created after the first intent is authoritatively closed.
+9. Verify that an unresolved provider state appears in Operations as requiring attention and remains traceable by internal and provider references.
+10. Record how long the intent remained unknown and which evidence resolved it.
+
+Expected state discipline:
+
+`created -> submitted -> pending/unknown -> reconciled terminal success|failure`
+
+Do not model `provider timeout -> failed -> automatically submit new transfer` as a safe transition.
+
 ## Evidence to capture
 
 For every scenario retain:
@@ -116,7 +143,10 @@ For every scenario retain:
 - Application commit SHA.
 - Environment.
 - Idempotency key hash/reference (do not log sensitive credentials).
+- Provider reference/status where applicable.
 - HTTP request/response status sequence.
+- Unknown/pending duration where applicable.
+- Authoritative evidence used to resolve an unknown provider state.
 - Transaction count before/after.
 - Account balance before/after.
 - GL journal count before/after.
@@ -133,9 +163,11 @@ A scenario passes only if:
 - Exactly one economic event is represented for the idempotency key.
 - GL remains balanced.
 - Account, transaction-history, and GL reconciliation agree.
-- Ambiguous network state is not presented as definite success/failure without authoritative evidence.
+- Ambiguous network/provider state is not presented as definite success/failure without authoritative evidence.
 - Reusing a key with changed financial intent is rejected.
+- Provider disappearance does not cause an automatic replacement transfer.
+- An unknown provider outcome remains traceable until reconciled to authoritative evidence.
 
 ## Future provider certification
 
-Provider idempotency windows, key formats, webhook ordering, ACH/card state transitions, and retry semantics vary. Once a regulated provider is selected, create a provider-specific version of this plan from its official certification documentation and reconcile internal references to provider transfer/payment IDs.
+Provider idempotency windows, key formats, webhook ordering, payment/ACH/card state transitions, status-query capabilities, and retry semantics vary. Once a regulated provider is selected, create a provider-specific version of this plan from its official certification documentation and reconcile internal references to provider transfer/payment IDs. The provider-specific test suite must define exactly how long an unknown state may remain unresolved, what evidence is authoritative, and who is allowed to authorize any replacement/retry after terminal failure.
