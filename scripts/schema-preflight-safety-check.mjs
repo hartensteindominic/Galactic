@@ -20,6 +20,8 @@ const required = [
   ['app/api/prototype/schema-preflight/route.ts', 'resolveRequestBrand', 'schema preflight route must remain tenant host-bound'],
   ['app/api/prototype/schema-preflight/route.ts', 'runPrototypeSchemaPreflight()', 'schema preflight route must use centralized read-only preflight'],
   ['app/api/prototype/schema-preflight/route.ts', 'Observed table/RPC paths do not prove migration execution/order, data correctness, recovery', 'schema preflight API must limit capability-evidence claims'],
+  ['app/api/prototype/status/route.ts', 'schemaPreflight: prototypeSchemaPreflightControlStatus()', 'general prototype status must expose only schema preflight control posture'],
+  ['app/api/prototype/status/route.ts', 'read-only schema capability observation do not prove Supabase migration execution/order, data correctness, recovery, or production approval', 'general prototype status must limit schema observation claims'],
   ['scripts/schema-preflight-runtime-check.mjs', 'Prototype schema preflight read-only capability-observation runtime checks passed.', 'schema preflight must have executable runtime coverage'],
   ['package.json', 'scripts/schema-preflight-runtime-check.mjs', 'schema preflight runtime coverage must run in CI']
 ];
@@ -47,4 +49,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Prototype schema preflight read-only, operator/tenant boundary, and approval-truth safety checks passed.');
+console.log('Prototype schema preflight read-only, operator/tenant boundary, status API, and approval-truth safety checks passed.');
