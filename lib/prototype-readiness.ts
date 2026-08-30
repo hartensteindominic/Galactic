@@ -2,9 +2,11 @@ import { aiGovernanceStatus } from './ai-governance';
 import { bankingStatus } from './banking';
 import { billGuardControlStatus } from './prototype-bill-guard';
 import { charterReadinessStatus } from './charter-readiness';
+import { complianceObligationRegisterStatus } from './compliance-obligation-register';
 import { customerTermsControlStatus } from './customer-terms-control';
 import { financialIntentControlStatus } from './financial-intent-state';
 import { plaidSandboxStatus } from './plaid-sandbox';
+import { providerContinuityControlStatus } from './provider-continuity';
 import { prototypeIncidentCommunicationControlStatus } from './prototype-incident-status';
 import { prototypeLedgerStatus } from './prototype-ledger';
 import { prototypeMigrationIntegrityStatus } from './prototype-migration-integrity';
@@ -20,6 +22,7 @@ export function prototypeReadiness() {
   const banking = bankingStatus();
   const billGuardControls = billGuardControlStatus();
   const charterReadiness = charterReadinessStatus();
+  const complianceApplicability = complianceObligationRegisterStatus();
   const customerTermsControl = customerTermsControlStatus();
   const financialIntentControls = financialIntentControlStatus();
   const incidentCommunicationControls = prototypeIncidentCommunicationControlStatus();
@@ -28,6 +31,7 @@ export function prototypeReadiness() {
   const bankLink = plaidSandboxStatus();
   const operations = prototypeOperationsStatus();
   const operatorAccess = prototypeOperatorAccessStatus();
+  const providerContinuity = providerContinuityControlStatus();
   const supportCaseControls = supportCaseControlStatus();
   const supportSensitiveDataControls = supportSensitiveDataControlStatus();
   const tenantBoundary = tenantBoundaryStatus();
@@ -134,8 +138,20 @@ export function prototypeReadiness() {
     machineReadableThirdPartyInventoryAvailable: true,
     thirdPartyInventory,
     governanceDocumentationAvailable: true,
-    complianceResponsibilityMatrixAssigned: false,
-    productionLegalComplianceApplicabilityReviewComplete: false,
+    complianceApplicabilityRegisterAvailable: complianceApplicability.obligationRegisterAvailable,
+    complianceOfficialSourceRegistryAvailable: complianceApplicability.sourceRegistryAvailable,
+    complianceApplicability,
+    complianceUnresolvedApplicabilityCount: complianceApplicability.unresolvedApplicabilityCount,
+    complianceAccountableOwnerAssignedCount: complianceApplicability.accountableOwnerAssignedCount,
+    complianceApprovedPolicyCount: complianceApplicability.approvedPolicyCount,
+    complianceVerifiedOperatingEvidenceCount: complianceApplicability.verifiedOperatingEvidenceCount,
+    complianceVerifiedIndependentTestingCount: complianceApplicability.verifiedIndependentTestingCount,
+    complianceResponsibilityMatrixAssigned: complianceApplicability.complianceResponsibilityMatrixAssigned,
+    productionLegalComplianceApplicabilityReviewComplete: complianceApplicability.qualifiedLegalComplianceApplicabilityReviewComplete,
+    productionComplianceManagementSystemOperating: complianceApplicability.productionComplianceManagementSystemOperating,
+    productionBsaAmlProgramOperating: complianceApplicability.productionBsaAmlProgramOperating,
+    productionOfacProgramOperating: complianceApplicability.productionOfacProgramOperating,
+    complianceExaminationReady: complianceApplicability.examinationReady,
     productionSponsorBankProgramApprovalComplete: false,
     productionDataRetentionScheduleApproved: false,
     productionComplaintEscalationProgramApproved: false,
@@ -144,6 +160,16 @@ export function prototypeReadiness() {
     productionCustomerTermsSourceOfTruthApproved: false,
     productionThreatModelIndependentReviewComplete: false,
     productionProviderWebhooksEnabled: false,
+    providerContinuity,
+    providerExitStateModelImplemented: providerContinuity.providerExitStateModelImplemented,
+    automaticProviderSwitchEnabled: providerContinuity.automaticProviderSwitchEnabled,
+    automaticFinancialInstructionReroutingEnabled: providerContinuity.automaticFinancialInstructionReroutingEnabled,
+    automaticCustomerFundsMigrationEnabled: providerContinuity.automaticCustomerFundsMigrationEnabled,
+    productionProviderContinuityPlanApproved: providerContinuity.productionProviderContinuityPlanApproved,
+    providerContractTerminationTermsReviewed: providerContinuity.providerContractTerminationTermsReviewed,
+    providerDataPortabilityVerified: providerContinuity.providerDataPortabilityVerified,
+    alternateProviderProgramApproved: providerContinuity.alternateProviderProgramApproved,
+    providerExitExerciseVerified: providerContinuity.providerExitExerciseVerified,
     liveBankingEnabled: false,
     partnerShellConfigured: banking.partnerConfigured,
     partnerLiveWritesConfigured: banking.liveWritesConfigured,
@@ -160,6 +186,6 @@ export function prototypeReadiness() {
     readyToFileCharterApplication: false,
     readyToOpenCharteredBank: false,
     nextSafeStep,
-    disclosure: 'Readiness is for the white-label simulation, sponsor-program diligence path, and long-term charter planning only. The future-chartered-bank field is a strategic goal, not a bank charter, deposit-insurance approval, regulatory filing, capital approval, opening authorization, or permission to market Galactic Trust as a bank. The business-model thesis, unit economics, charter route, organizers, bank board/management, regulator-ready plan, capital, applications, and pre-opening conditions all remain unverified. Supabase credentials, when present, mean only that a server-side database endpoint is configured; they do not prove migrations ran, schema is correct, persistent transfer idempotency works, reconciliation works, or webhook persistence works. Plaid Sandbox credentials, when present, mean only that the sandbox environment is configured; they do not prove the sandbox token/account/transaction flow, persistence path, provider semantics, webhook verification, or production provider approval has been exercised. The repository fingerprints migrations 001-005 and CI rejects silent edits to those locked files, but target database migration history, external Supabase execution, backup/restore behavior, and migration recovery remain unverified until exercised in a disposable or approved environment. The incident-status model keeps service availability separate from transaction outcome: submitted or unknown instructions may still be processing and are never relabeled failed merely because money movement is temporarily unavailable. No production customer-status channel, approved incident-message workflow, production human incident-support path, or measured customer-visible status timing is connected or verified. Safe-to-Spend and Bill Guard are planning UX only: Bill Guard does not reserve or move funds, pay bills, enable autopay, connect a live bill provider, or guarantee bill coverage; production bill-payment controls remain unverified. The machine-readable third-party inventory records services referenced by the prototype and keeps production approvals/live-customer-data permissions false; it is not vendor due diligence, contract approval, sponsor approval, or authorization to send live customer financial or Restricted data to a vendor. Orbit is an automated deterministic support assistant, not a regulated decision maker; regulated AI decisioning and third-party LLM use of customer financial data remain disabled. The support chat has best-effort client preflight plus server-side rejection for several high-risk secret/identifier patterns, but this is explicitly not production DLP and does not replace secure document/identity workflows or logging/privacy controls. The prototype centralizes changing customer-facing prototype terms under one versioned source and fails closed when live terms are requested without an approved live source; that does not mean production terms are approved. Material support cases have an explicit human-controlled state model, and automation cannot acknowledge as a human, resolve, or close them; no production case-management system or response deadlines are configured. Financial intent controls explicitly preserve submitted/pending-unknown states, treat timeout as non-terminal, block replacement while outcome is unknown, and still require provider-specific state mapping to be verified before production. Governance documents exist, but responsibility assignment, legal/compliance applicability review, sponsor-bank/program approval, production retention, complaint escalation, human support handoff, third-party risk operation, approved live customer-term source-of-truth, and independent threat-model review remain unapproved/unverified. Provider-disappearance handling and customer-visible incident-status timing are documented but remain unverified until exercised in an approved environment. The prototype operator session, tenant host binding, body limits, best-effort login throttle, and support sensitive-data detector improve demo safety but are not production workforce identity, distributed abuse prevention, or DLP. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
+    disclosure: 'Readiness is for the white-label simulation, sponsor-program diligence path, and long-term charter planning only. The future-chartered-bank field is a strategic goal, not a bank charter, deposit-insurance approval, regulatory filing, capital approval, opening authorization, or permission to market Galactic Trust as a bank. The business-model thesis, unit economics, charter route, organizers, bank board/management, regulator-ready plan, capital, applications, and pre-opening conditions all remain unverified. The compliance-applicability register uses current official supervisory/compliance sources as future-bank design inputs, but all seeded applicability decisions remain unresolved, no accountable human compliance owner is represented as assigned, and no compliance-management system, BSA/AML program, OFAC program, approved policy set, operating compliance evidence, independent testing, or examination readiness is represented as complete. A structurally complete applicability package is not legal advice or a compliance determination. Supabase credentials, when present, mean only that a server-side database endpoint is configured; they do not prove migrations ran, schema is correct, persistent transfer idempotency works, reconciliation works, or webhook persistence works. Plaid Sandbox credentials, when present, mean only that the sandbox environment is configured; they do not prove the sandbox token/account/transaction flow, persistence path, provider semantics, webhook verification, or production provider approval has been exercised. The repository fingerprints migrations 001-005 and CI rejects silent edits to those locked files, but target database migration history, external Supabase execution, backup/restore behavior, and migration recovery remain unverified until exercised in a disposable or approved environment. The incident-status model keeps service availability separate from transaction outcome: submitted or unknown instructions may still be processing and are never relabeled failed merely because money movement is temporarily unavailable. No production customer-status channel, approved incident-message workflow, production human incident-support path, or measured customer-visible status timing is connected or verified. Safe-to-Spend and Bill Guard are planning UX only: Bill Guard does not reserve or move funds, pay bills, enable autopay, connect a live bill provider, or guarantee bill coverage; production bill-payment controls remain unverified. The machine-readable third-party inventory records services referenced by the prototype and keeps production approvals/live-customer-data permissions false; it is not vendor due diligence, contract approval, sponsor approval, or authorization to send live customer financial or Restricted data to a vendor. Orbit is an automated deterministic support assistant, not a regulated decision maker; regulated AI decisioning and third-party LLM use of customer financial data remain disabled. The support chat has best-effort client preflight plus server-side rejection for several high-risk secret/identifier patterns, but this is explicitly not production DLP and does not replace secure document/identity workflows or logging/privacy controls. The prototype centralizes changing customer-facing prototype terms under one versioned source and fails closed when live terms are requested without an approved live source; that does not mean production terms are approved. Material support cases have an explicit human-controlled state model, and automation cannot acknowledge as a human, resolve, or close them; no production case-management system or response deadlines are configured. Financial intent controls explicitly preserve submitted/pending-unknown states, treat timeout as non-terminal, block replacement while outcome is unknown, and still require provider-specific state mapping to be verified before production. Provider-continuity controls block automatic provider switching, instruction rerouting, and customer-funds migration; the contract termination terms, data portability, alternate provider approval, production continuity plan, and provider-exit exercise remain unverified. Governance documents exist, but responsibility assignment, legal/compliance applicability review, sponsor-bank/program approval, production retention, complaint escalation, human support handoff, third-party risk operation, approved live customer-term source-of-truth, and independent threat-model review remain unapproved/unverified. Provider-disappearance handling and customer-visible incident-status timing are documented but remain unverified until exercised in an approved environment. The prototype operator session, tenant host binding, body limits, best-effort login throttle, and support sensitive-data detector improve demo safety but are not production workforce identity, distributed abuse prevention, or DLP. Live banking requires an approved regulated program, exact provider integrations, phishing-resistant operator MFA/SSO, RBAC/dual control, distributed rate/abuse controls, KYC/AML, fraud, security, compliance, support, provider-statement reconciliation, approved disclosures, tested emergency controls, and exercised disaster-recovery and ledger-recovery procedures.'
   } as const;
 }
