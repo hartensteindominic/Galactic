@@ -29,6 +29,12 @@ export default async function PrototypePage({
           Safe-to-Spend
         </a>
         <a
+          href={`/prototype/bill-guard?tenant=${tenant}`}
+          className="rounded-xl bg-violet-50 px-3 py-2 text-[11px] font-black text-violet-700 no-underline sm:text-xs"
+        >
+          Bill Guard
+        </a>
+        <a
           href={`/prototype/transparency?tenant=${tenant}`}
           className="rounded-xl bg-emerald-50 px-3 py-2 text-[11px] font-black text-emerald-700 no-underline sm:text-xs"
         >
