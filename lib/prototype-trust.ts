@@ -3,12 +3,14 @@ import { charterReadinessStatus } from './charter-readiness';
 import { complianceObligationRegisterStatus } from './compliance-obligation-register';
 import { customerTermsControlStatus } from './customer-terms-control';
 import { financialIntentControlStatus } from './financial-intent-state';
+import { institutionAccountabilityStatus } from './institution-accountability';
 import { prototypeIncidentCommunicationControlStatus } from './prototype-incident-status';
 import { prototypeMigrationIntegrityStatus } from './prototype-migration-integrity';
 import { supportCaseControlStatus } from './support-case-state';
 import { supportSensitiveDataControlStatus } from './support-sensitive-data';
 import { tenantBoundaryStatus } from './tenant-boundary';
 import { thirdPartyInventoryStatus } from './third-party-inventory';
+import { threeYearBankPlanStatus } from './three-year-bank-plan';
 
 export type TrustControlStatus = 'implemented-prototype' | 'not-production-ready' | 'external-approval-required';
 
@@ -24,6 +26,8 @@ export function prototypeTrustCenter() {
   const ai = aiGovernanceStatus();
   const charter = charterReadinessStatus();
   const compliance = complianceObligationRegisterStatus();
+  const accountability = institutionAccountabilityStatus();
+  const bankPlan = threeYearBankPlanStatus();
   const terms = customerTermsControlStatus();
   const intents = financialIntentControlStatus();
   const incident = prototypeIncidentCommunicationControlStatus();
@@ -58,6 +62,24 @@ export function prototypeTrustCenter() {
         ? `${compliance.obligationCount} future-bank control obligations are mapped to current official supervisory/compliance sources; ${compliance.unresolvedApplicabilityCount} remain unassessed and require qualified human review.`
         : 'A machine-readable compliance applicability register is not available.',
       limitation: 'The register is planning infrastructure, not a legal applicability determination, compliance certification, approved responsibility matrix, operating compliance-management system, BSA/AML program, OFAC program, audit, examination result, license, sponsor approval, or authority to offer live financial services.'
+    },
+    {
+      id: 'institution-accountability',
+      name: 'Human institution accountability model',
+      status: 'external-approval-required',
+      summary: accountability.accountabilityModelAvailable
+        ? `${accountability.roleCount} future institution/program roles are explicitly modeled and ${accountability.assignedRoleCount} are currently represented as assigned. AI and software are prohibited from serving as accountable owners.`
+        : 'A machine-readable human accountability model is not available.',
+      limitation: 'The model does not appoint or qualify any director, officer, BSA/AML officer, compliance owner, risk owner, finance owner, audit function, organizer, sponsor-bank accountable function, or regulator-facing representative. Actual people/functions, authority, independence, governance approval, contracts, and external acceptance remain unverified.'
+    },
+    {
+      id: 'three-year-bank-plan',
+      name: 'Three-year bank-plan evidence skeleton',
+      status: 'external-approval-required',
+      summary: bankPlan.planningSkeletonAvailable
+        ? `${bankPlan.requiredSectionCount} regulator-oriented plan sections are modeled with no default growth, deposit, revenue, capital, loss, liquidity, or profitability assumptions.`
+        : 'A regulator-oriented bank-plan skeleton is not available.',
+      limitation: 'This is not a board-approved, externally reviewed, regulator-reviewed, filed, accepted, or charter-application-ready business plan. Financial schedules, assumptions, management qualifications, capital/liquidity adequacy, and stable-profitability horizon remain unvalidated.'
     },
     {
       id: 'tenant-isolation',
@@ -147,6 +169,8 @@ export function prototypeTrustCenter() {
     'The future-chartered-bank objective is a roadmap goal only; no charter route, bank application, deposit-insurance approval, effective charter, or opening authorization is represented as complete.',
     'The target customer/problem/distribution/non-interchange revenue thesis and driver-based unit economics remain unvalidated for a future bank business plan.',
     `The compliance register contains ${compliance.unresolvedApplicabilityCount} unresolved future-bank applicability decisions; no accountable owner assignment, approved compliance responsibility matrix, operating CMS/BSA-AML/OFAC program, independent testing, or examination readiness is represented as complete.`,
+    `The human-accountability model contains ${accountability.roleCount} future roles and ${accountability.assignedRoleCount} are represented as assigned; board, management, officer, assurance, sponsor-program, and charter-coordination qualifications/authority remain unverified.`,
+    `The three-year bank-plan skeleton contains ${bankPlan.requiredSectionCount} required planning sections and ${bankPlan.validatedSectionCount} are represented as validated; no board approval, regulator review/acceptance, or charter-application readiness is represented as complete.`,
     'No sponsor-bank or regulated-program approval is represented as complete.',
     'No qualified legal/compliance applicability review is represented as complete.',
     'No production provider webhook/certification claim is made.',
@@ -182,6 +206,19 @@ export function prototypeTrustCenter() {
     productionBsaAmlProgramOperating: false,
     productionOfacProgramOperating: false,
     complianceExaminationReady: false,
+    institutionAccountabilityModelAvailable: accountability.accountabilityModelAvailable,
+    institutionAccountabilityRoleCount: accountability.roleCount,
+    institutionAssignedRoleCount: accountability.assignedRoleCount,
+    proposedBankBoardAssignedAndQualified: false,
+    bsaAmlOfficerAssignedAndQualified: false,
+    independentAuditFunctionAssignedAndQualified: false,
+    aiMayServeAsAccountableInstitutionOwner: false,
+    threeYearBankPlanSkeletonAvailable: bankPlan.planningSkeletonAvailable,
+    threeYearBankPlanRequiredSectionCount: bankPlan.requiredSectionCount,
+    threeYearBankPlanValidatedSectionCount: bankPlan.validatedSectionCount,
+    threeYearBankPlanBoardApproved: false,
+    threeYearBankPlanRegulatorAccepted: false,
+    threeYearBankPlanReadyForCharterApplication: false,
     customerIncidentStatusModelImplemented: true,
     productionCustomerStatusChannelConnected: false,
     approvedIncidentMessageWorkflowConnected: false,
@@ -202,6 +239,6 @@ export function prototypeTrustCenter() {
     legalComplianceApplicabilityReviewComplete: false,
     controls,
     productionGaps,
-    disclosure: 'Trust Center for the simulation prototype and long-term institution-building roadmap. It describes implemented software controls and known gaps; it is not a claim of legal compliance, bank charter, deposit insurance, sponsor-bank approval, charter application status, capital approval, opening authority, vendor approval, database migration execution, operating compliance-management/BSA-AML/OFAC programs, policy or board approval, independent audit, examination readiness, production incident-communications operation, security certification, or readiness for live customer funds.'
+    disclosure: 'Trust Center for the simulation prototype and long-term institution-building roadmap. It describes implemented software controls and known gaps; it is not a claim of legal compliance, human appointment or qualification, board action, bank charter, deposit insurance, sponsor-bank approval, charter application status, regulator-reviewed business plan, capital approval, opening authority, vendor approval, database migration execution, operating compliance-management/BSA-AML/OFAC programs, policy approval, independent audit, examination readiness, production incident-communications operation, security certification, or readiness for live customer funds.'
   } as const;
 }
