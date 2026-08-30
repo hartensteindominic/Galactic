@@ -1,8 +1,19 @@
+import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { BankingError } from './banking';
-import { providerSandboxDatabaseStatus } from './banking-sandbox-database';
-import type { BankingOperationsSnapshot } from './banking-persistence-contract';
+import { getProviderSandboxBankingStore, providerSandboxDatabaseStatus } from './banking-sandbox-database';
+import type { BankingOperationsSnapshot, ReconciliationRecord } from './banking-persistence-contract';
 import { PROVIDER_EVENT_LEASE_MS, PROVIDER_EVENT_MAX_ATTEMPTS } from './provider-sandbox-event-processor';
+
+export type OpenReconciliationSummary = {
+  id: string;
+  provider: string;
+  resourceId: string;
+  createdAt: string;
+  providerAmountCents: number;
+  internalAmountCents: number;
+  discrepancyCents: number;
+};
 
 function number(value: unknown) {
   const parsed = Number(value);
@@ -12,15 +23,31 @@ function number(value: unknown) {
   return parsed;
 }
 
-export async function getProviderSandboxOperationsSnapshot(): Promise<BankingOperationsSnapshot> {
+function signedNumber(value: unknown) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new BankingError(500, 'OPERATIONS_METRIC_INVALID', 'Provider sandbox reconciliation metric is invalid.');
+  }
+  return parsed;
+}
+
+function jsonObject<T>(value: unknown): T {
+  if (typeof value === 'string') return JSON.parse(value) as T;
+  return value as T;
+}
+
+function requireDatabaseStatus() {
   const status = providerSandboxDatabaseStatus();
   if (!status.enabled) {
     throw new BankingError(503, 'SANDBOX_DATABASE_DISABLED', 'Provider-sandbox durable storage is not enabled.');
   }
+  return status;
+}
 
-  const connectionString = (process.env.BANKING_SANDBOX_DATABASE_URL || '').trim();
+async function withReadOnlyPool<T>(work: (pool: Pool) => Promise<T>) {
+  const status = requireDatabaseStatus();
   const pool = new Pool({
-    connectionString,
+    connectionString: (process.env.BANKING_SANDBOX_DATABASE_URL || '').trim(),
     max: 1,
     connectionTimeoutMillis: 5_000,
     idleTimeoutMillis: 5_000,
@@ -28,10 +55,17 @@ export async function getProviderSandboxOperationsSnapshot(): Promise<BankingOpe
     ssl: status.sslEnabled ? { rejectUnauthorized: true } : false
   });
 
-  const asOf = new Date();
-  const staleBefore = new Date(asOf.getTime() - PROVIDER_EVENT_LEASE_MS).toISOString();
-
   try {
+    return await work(pool);
+  } finally {
+    await pool.end();
+  }
+}
+
+export async function getProviderSandboxOperationsSnapshot(): Promise<BankingOperationsSnapshot> {
+  return withReadOnlyPool(async (pool) => {
+    const asOf = new Date();
+    const staleBefore = new Date(asOf.getTime() - PROVIDER_EVENT_LEASE_MS).toISOString();
     const [eventsResult, reconciliationResult] = await Promise.all([
       pool.query(
         `SELECT
@@ -73,7 +107,71 @@ export async function getProviderSandboxOperationsSnapshot(): Promise<BankingOpe
         openDiscrepancies: number(reconciliationRow.open_discrepancies ?? 0)
       }
     };
-  } finally {
-    await pool.end();
+  });
+}
+
+export async function listOpenProviderSandboxReconciliations(): Promise<OpenReconciliationSummary[]> {
+  return withReadOnlyPool(async (pool) => {
+    const result = await pool.query(
+      `SELECT id, provider, resource_id, snapshot, created_at
+         FROM banking_reconciliations
+        WHERE environment = $1
+          AND status = 'discrepancy'
+          AND resolved_at IS NULL
+        ORDER BY created_at
+        LIMIT 25`,
+      ['provider_sandbox']
+    );
+
+    return result.rows.map((row) => {
+      const snapshot = jsonObject<ReconciliationRecord['snapshot']>(row.snapshot);
+      return {
+        id: String(row.id),
+        provider: String(row.provider),
+        resourceId: String(row.resource_id),
+        createdAt: new Date(row.created_at).toISOString(),
+        providerAmountCents: number(snapshot.providerAmountCents),
+        internalAmountCents: number(snapshot.internalAmountCents),
+        discrepancyCents: signedNumber(snapshot.discrepancyCents)
+      };
+    });
+  });
+}
+
+export async function resolveProviderSandboxReconciliation(input: {
+  operatorId: string;
+  id: string;
+  resolutionNote: string;
+}) {
+  const id = input.id.trim();
+  const resolutionNote = input.resolutionNote.trim();
+  if (!id || id.length > 200) {
+    throw new BankingError(400, 'RECONCILIATION_ID_INVALID', 'A valid reconciliation ID is required.');
   }
+  if (resolutionNote.length < 8 || resolutionNote.length > 500) {
+    throw new BankingError(400, 'RECONCILIATION_NOTE_INVALID', 'Resolution note must contain 8-500 characters.');
+  }
+
+  requireDatabaseStatus();
+  const store = getProviderSandboxBankingStore();
+  const resolvedAt = new Date().toISOString();
+
+  await store.transaction(async (tx) => {
+    await tx.resolveReconciliation({ id, resolvedAt, resolutionNote });
+    await tx.appendAuditEvent({
+      id: randomUUID(),
+      actorType: 'admin',
+      actorId: input.operatorId,
+      action: 'reconciliation_resolved',
+      resourceType: 'reconciliation',
+      resourceId: id,
+      environment: 'provider_sandbox',
+      occurredAt: resolvedAt,
+      metadata: {
+        resolutionNoteLength: resolutionNote.length
+      }
+    });
+  });
+
+  return { id, resolvedAt, audited: true };
 }
