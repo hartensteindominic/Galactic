@@ -51,7 +51,7 @@ const required = [
   ['lib/prototype-readiness.ts', 'providerDisappearanceDuringTransferDrillVerified: false', 'readiness must not claim provider-disappearance drill is verified'],
   ['lib/prototype-readiness.ts', 'complianceResponsibilityMatrixAssigned: complianceApplicability.complianceResponsibilityMatrixAssigned', 'responsibility assignment must remain sourced from the unapproved compliance register posture'],
   ['lib/prototype-readiness.ts', 'productionLegalComplianceApplicabilityReviewComplete: complianceApplicability.qualifiedLegalComplianceApplicabilityReviewComplete', 'legal/compliance applicability review must remain sourced from the incomplete compliance register posture'],
-  ['lib/prototype-readiness.ts', 'productionSponsorBankProgramApprovalComplete: false', 'sponsor-bank program approval must remain false'],
+  ['lib/prototype-readiness.ts', 'productionSponsorBankProgramApprovalComplete: sponsorDiligence.sponsorProgramApprovalComplete', 'sponsor-bank program approval must remain sourced from the explicit unapproved sponsor-diligence posture'],
   ['lib/prototype-readiness.ts', 'productionDataRetentionScheduleApproved: false', 'production retention schedule must remain unapproved'],
   ['lib/prototype-readiness.ts', 'productionComplaintEscalationProgramApproved: false', 'production complaint program must remain unapproved'],
   ['lib/prototype-readiness.ts', 'productionHumanSupportHandoffExercised: false', 'human support handoff must remain unverified'],
