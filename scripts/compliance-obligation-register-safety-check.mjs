@@ -18,6 +18,14 @@ const required = [
   ['lib/compliance-obligation-register.ts', "authority: 'FFIEC'", 'official FFIEC source must be registered'],
   ['lib/compliance-obligation-register.ts', "authority: 'OFAC'", 'official OFAC source must be registered'],
   ['lib/compliance-obligation-register.ts', 'createsGalacticApplicabilityByItself: false', 'official source presence must not self-create Galactic applicability'],
+  ['lib/prototype-readiness.ts', 'complianceApplicabilityRegisterAvailable: complianceApplicability.obligationRegisterAvailable', 'Readiness must expose compliance register availability'],
+  ['lib/prototype-readiness.ts', 'complianceUnresolvedApplicabilityCount: complianceApplicability.unresolvedApplicabilityCount', 'Readiness must expose unresolved applicability count'],
+  ['lib/prototype-readiness.ts', 'complianceResponsibilityMatrixAssigned: complianceApplicability.complianceResponsibilityMatrixAssigned', 'Readiness must source responsibility assignment from register posture'],
+  ['lib/prototype-readiness.ts', 'productionLegalComplianceApplicabilityReviewComplete: complianceApplicability.qualifiedLegalComplianceApplicabilityReviewComplete', 'Readiness must source legal applicability review posture from register'],
+  ['lib/prototype-readiness.ts', 'productionComplianceManagementSystemOperating: complianceApplicability.productionComplianceManagementSystemOperating', 'Readiness must keep production CMS tied to register posture'],
+  ['lib/prototype-readiness.ts', 'productionBsaAmlProgramOperating: complianceApplicability.productionBsaAmlProgramOperating', 'Readiness must keep production BSA AML tied to register posture'],
+  ['lib/prototype-readiness.ts', 'productionOfacProgramOperating: complianceApplicability.productionOfacProgramOperating', 'Readiness must keep production OFAC tied to register posture'],
+  ['lib/prototype-readiness.ts', 'complianceExaminationReady: complianceApplicability.examinationReady', 'Readiness must keep examination readiness tied to register posture'],
   ['app/api/prototype/compliance-applicability/route.ts', 'requirePrototypeOperator(request)', 'compliance applicability endpoint must require operator access'],
   ['app/api/prototype/compliance-applicability/route.ts', 'requireTrustedOrigin(request)', 'compliance applicability endpoint must enforce trusted origin'],
   ['app/api/prototype/compliance-applicability/route.ts', 'requireJsonRequest(request)', 'compliance applicability endpoint must require JSON'],
@@ -70,4 +78,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Compliance obligation register applicability, ownership, official-source, protected-workbench, cross-surface, operator/request, non-persistence, and non-certification safety checks passed.');
+console.log('Compliance obligation register applicability, ownership, official-source, readiness, protected-workbench, cross-surface, operator/request, non-persistence, and non-certification safety checks passed.');
