@@ -14,7 +14,10 @@ const required = [
   ['app/api/agent/openapi/route.ts', "'/api/licenses/use'", 'OpenAPI exposes paid endpoint'],
   ['lib/banking.ts', "process.env.BANKING_MODE === 'partner' ? 'partner' : 'demo'", 'banking defaults to demo unless partner is explicit'],
   ['lib/banking.ts', "process.env.BANKING_ENABLE_LIVE_WRITES === 'true'", 'live banking writes require an explicit server flag'],
+  ['lib/banking.ts', "process.env.BANKING_EMERGENCY_FREEZE !== 'false'", 'banking emergency freeze defaults to active'],
   ['lib/banking.ts', "throw new BankingError(503, 'LIVE_WRITES_DISABLED'", 'banking fails closed when live writes are disabled'],
+  ['lib/banking.ts', "throw new BankingError(503, 'MONEY_MOVEMENT_FROZEN'", 'banking blocks money movement while the emergency freeze is active'],
+  ['lib/banking.ts', '{ allowDuringEmergencyFreeze: true }', 'protective card freeze can remain available during a money-movement freeze'],
   ['lib/banking-auth.ts', 'createHmac', 'partner banking requires signed authentication'],
   ['lib/banking-auth.ts', 'BANKING_AUTH_GATEWAY_SECRET', 'partner banking auth requires a server secret'],
   ['app/api/banking/transfers/route.ts', 'requireBankingUser', 'transfers require a banking user boundary'],
@@ -56,6 +59,7 @@ const forbidden = [
   ['app/api/licenses/use/route.ts', 'sendTransaction', 'paid route must not submit transactions'],
   ['app/banking-actions.tsx', 'BANKING_GATEWAY_API_KEY', 'banking provider API keys must never appear in client code'],
   ['app/banking-actions.tsx', 'BANKING_AUTH_GATEWAY_SECRET', 'banking auth secrets must never appear in client code'],
+  ['app/banking-actions.tsx', 'BANKING_EMERGENCY_FREEZE', 'banking emergency controls must never appear in client code'],
   ['app/banking-actions.tsx', 'name="cvv"', 'client must not collect CVV data'],
   ['app/banking-actions.tsx', 'name="pin"', 'client must not collect PIN data'],
   ['app/crypto-trading.tsx', 'CRYPTO_GATEWAY_API_KEY', 'crypto provider API keys must never appear in client code'],
@@ -84,4 +88,4 @@ for (const [file, text, label] of forbidden) {
   if (source.includes(text)) throw new Error(label);
 }
 
-console.log('Galactic Trust banking, crypto, assistant, privacy, prototype operations, idempotency and x402 safety checks passed.');
+console.log('Galactic Trust banking, emergency-freeze, crypto, assistant, privacy, prototype operations, idempotency and x402 safety checks passed.');
