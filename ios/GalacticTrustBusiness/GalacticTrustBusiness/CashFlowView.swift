@@ -74,7 +74,10 @@ struct CashFlowView: View {
         GalacticCard {
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
-                    SectionHeader(title: "Income vs expenses")
+                    Text("Income vs expenses")
+                        .font(.headline)
+                        .foregroundStyle(GalacticTheme.navy)
+                    Spacer()
                     Text("6 months")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
@@ -100,7 +103,7 @@ struct CashFlowView: View {
                         AxisGridLine().foregroundStyle(Color.secondary.opacity(0.15))
                         AxisValueLabel {
                             if let number = value.as(Double.self) {
-                                Text(number.formatted(.currency(code: store.profile.currencyCode).notation(.compactName)))
+                                Text(number.formatted(.currency(code: store.profile.currencyCode).precision(.fractionLength(0))))
                                     .font(.caption2)
                             }
                         }
