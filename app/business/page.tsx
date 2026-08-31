@@ -1,3 +1,4 @@
+import './business-enhancements.css';
 import { BusinessDashboard } from './business-dashboard';
 
 export const metadata = {
