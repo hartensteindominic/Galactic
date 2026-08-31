@@ -3,15 +3,16 @@ import { CryptoTrading } from './crypto-trading';
 import { GalacticChat } from './galactic-chat';
 
 const navItems = [
-  ['⌂', 'Dashboard'],
-  ['▣', 'Accounts'],
-  ['⇄', 'Transfer'],
-  ['✣', 'Add Money'],
-  ['▤', 'Cards'],
-  ['▧', 'Pay Bills'],
-  ['▥', 'Investments'],
-  ['◇', 'Goals'],
-  ['✿', 'Rewards'],
+  ['⌂', 'Dashboard', '#dashboard'],
+  ['✦', 'Business AI', '/business'],
+  ['▣', 'Accounts', '#accounts'],
+  ['⇄', 'Transfer', '#transfer'],
+  ['✣', 'Add Money', '#add-money'],
+  ['▤', 'Cards', '#cards'],
+  ['▧', 'Pay Bills', '#pay-bills'],
+  ['▥', 'Investments', '#investments'],
+  ['◇', 'Goals', '#goals'],
+  ['✿', 'Rewards', '#rewards'],
 ];
 
 const activity = [
@@ -62,8 +63,8 @@ export default function Home() {
         <div className="brandLockup"><PlanetLogo /><span>Galactic<br />Trust</span></div>
 
         <nav className="sideNav" aria-label="Primary navigation">
-          {navItems.map(([icon, label], index) => (
-            <a key={label} href={`#${label.toLowerCase().replace(' ', '-')}`} className={index === 0 ? 'active' : ''}>
+          {navItems.map(([icon, label, href], index) => (
+            <a key={label} href={href} className={index === 0 ? 'active' : ''}>
               <span className="navIcon">{icon}</span><span>{label}</span>
             </a>
           ))}
