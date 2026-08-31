@@ -1,22 +1,18 @@
-name: Galactic Trust Business App Store
+name: Galactic Trust Business TestFlight
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/ios-app-store.yml'
 
 permissions:
   contents: read
 
 concurrency:
-  group: galactic-trust-business-app-store
+  group: galactic-trust-business-testflight
   cancel-in-progress: false
 
 jobs:
   upload:
-    name: Build and upload iOS app
+    name: Build and upload to TestFlight
     runs-on: macos-latest
     timeout-minutes: 45
     env:
@@ -46,7 +42,7 @@ jobs:
             exit 1
           fi
 
-      - name: Verify App Store credentials
+      - name: Verify TestFlight credentials
         shell: bash
         run: |
           set -euo pipefail
@@ -88,7 +84,7 @@ jobs:
           chmod 600 "$KEY_PATH"
           echo "key_path=$KEY_PATH" >> "$GITHUB_OUTPUT"
 
-      - name: Archive with Apple automatic signing
+      - name: Archive signed TestFlight build
         working-directory: ios/GalacticTrustBusiness
         shell: bash
         env:
@@ -110,7 +106,7 @@ jobs:
             -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
             archive
 
-      - name: Upload archive to App Store Connect
+      - name: Upload build to TestFlight
         shell: bash
         env:
           ASC_KEY_PATH: ${{ steps.asc.outputs.key_path }}
@@ -138,10 +134,13 @@ jobs:
           </plist>
           EOF
 
+          # Uploading a signed build to App Store Connect makes it available
+          # for TestFlight after Apple finishes processing. This workflow does
+          # not submit an App Store version for review or release.
           xcodebuild \
             -exportArchive \
             -archivePath "$RUNNER_TEMP/GalacticTrustBusiness.xcarchive" \
-            -exportPath "$RUNNER_TEMP/AppStoreExport" \
+            -exportPath "$RUNNER_TEMP/TestFlightExport" \
             -exportOptionsPlist "$EXPORT_OPTIONS" \
             -allowProvisioningUpdates \
             -authenticationKeyPath "$ASC_KEY_PATH" \
