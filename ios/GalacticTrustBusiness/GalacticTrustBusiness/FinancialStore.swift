@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 
 @MainActor
 final class FinancialStore: ObservableObject {
@@ -165,6 +166,23 @@ final class FinancialStore: ObservableObject {
         save()
     }
 
+    func addInvoice(_ invoice: BusinessInvoice) {
+        invoices.append(invoice)
+        invoices.sort { $0.dueDate < $1.dueDate }
+        save()
+    }
+
+    func updateInvoiceStatus(id: UUID, status: BusinessInvoice.Status) {
+        guard let index = invoices.firstIndex(where: { $0.id == id }) else { return }
+        invoices[index].status = status
+        save()
+    }
+
+    func deleteInvoice(id: UUID) {
+        invoices.removeAll { $0.id == id }
+        save()
+    }
+
     func updateProfile(name: String) {
         let clean = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !clean.isEmpty else { return }
@@ -178,6 +196,13 @@ final class FinancialStore: ObservableObject {
         transactions = demo.transactions
         invoices = demo.invoices
         openingBalance = demo.openingBalance
+        save()
+    }
+
+    func clearFinancialData() {
+        transactions = []
+        invoices = []
+        openingBalance = 0
         save()
     }
 
