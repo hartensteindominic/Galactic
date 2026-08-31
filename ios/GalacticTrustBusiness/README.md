@@ -21,7 +21,7 @@ A native SwiftUI business-finance monitor based on the Galactic Trust visual sys
 From this directory:
 
 ```bash
-./bootstrap.sh
+bash bootstrap.sh
 ```
 
 That command generates the 1024x1024 App Store icon and the Xcode project, then opens Xcode.
