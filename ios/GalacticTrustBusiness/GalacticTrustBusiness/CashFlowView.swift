@@ -3,7 +3,6 @@ import Charts
 
 struct CashFlowView: View {
     @EnvironmentObject private var store: FinancialStore
-    @State private var range: CashFlowRange = .sixMonths
 
     private var projectedThirtyDayBalance: Double {
         store.balance + store.currentMonthNet
@@ -17,13 +16,6 @@ struct CashFlowView: View {
     var body: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
-                Picker("Range", selection: $range) {
-                    ForEach(CashFlowRange.allCases) { option in
-                        Text(option.rawValue).tag(option)
-                    }
-                }
-                .pickerStyle(.segmented)
-
                 cashFlowHero
                 trendCard
                 categoryCard
@@ -81,7 +73,12 @@ struct CashFlowView: View {
     private var trendCard: some View {
         GalacticCard {
             VStack(alignment: .leading, spacing: 14) {
-                SectionHeader(title: "Income vs expenses")
+                HStack {
+                    SectionHeader(title: "Income vs expenses")
+                    Text("6 months")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                }
 
                 Chart(store.monthlyPoints) { point in
                     BarMark(
@@ -210,11 +207,4 @@ struct CashFlowView: View {
         }
         .padding(.horizontal, 6)
     }
-}
-
-enum CashFlowRange: String, CaseIterable, Identifiable {
-    case threeMonths = "3M"
-    case sixMonths = "6M"
-    case year = "1Y"
-    var id: String { rawValue }
 }
