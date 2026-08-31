@@ -36,22 +36,20 @@ jobs:
       - name: Build for iOS Simulator
         working-directory: ios/GalacticTrustBusiness
         run: |
-          set -o pipefail
           xcodebuild \
             -project GalacticTrustBusiness.xcodeproj \
             -scheme GalacticTrustBusiness \
             -destination 'generic/platform=iOS Simulator' \
             CODE_SIGNING_ALLOWED=NO \
-            build | xcpretty
+            build
 
       - name: Run unit tests
         working-directory: ios/GalacticTrustBusiness
         run: |
-          set -o pipefail
           DEVICE_ID="$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin)["devices"]; print(next(v["udid"] for runtime in d.values() for v in runtime if v["name"].startswith("iPhone") and v["isAvailable"]))')"
           xcodebuild \
             -project GalacticTrustBusiness.xcodeproj \
             -scheme GalacticTrustBusiness \
             -destination "platform=iOS Simulator,id=${DEVICE_ID}" \
             CODE_SIGNING_ALLOWED=NO \
-            test | xcpretty
+            test
