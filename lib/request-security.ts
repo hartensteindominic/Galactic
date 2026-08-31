@@ -7,6 +7,19 @@ export function requireJsonRequest(request: Request) {
   }
 }
 
+export async function readJsonBodyLimited<T>(request: Request, maxBytes = 16_384): Promise<T> {
+  const text = await request.text();
+  const byteLength = new TextEncoder().encode(text).byteLength;
+  if (byteLength > maxBytes) {
+    throw new BankingError(413, 'REQUEST_BODY_TOO_LARGE', `Request body exceeds the ${maxBytes}-byte limit.`);
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new BankingError(400, 'INVALID_JSON', 'Request body must contain valid JSON.');
+  }
+}
+
 export function requireTrustedOrigin(request: Request) {
   const origin = request.headers.get('origin');
   if (!origin) return;

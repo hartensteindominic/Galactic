@@ -1,13 +1,17 @@
 import { NextResponse } from 'next/server';
 import { answerGalacticQuestion } from '../../../lib/assistant';
-import { requireJsonRequest, requireTrustedOrigin, safeClientIp } from '../../../lib/request-security';
 import { bankingErrorResponse } from '../../../lib/banking-http';
+import { getPrototypeCustomerTerms } from '../../../lib/customer-terms-control';
+import { readJsonBodyLimited, requireJsonRequest, requireTrustedOrigin, safeClientIp } from '../../../lib/request-security';
+import { supportCaseControlStatus } from '../../../lib/support-case-state';
+import { detectSupportSensitiveData, supportSensitiveDataControlStatus } from '../../../lib/support-sensitive-data';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const WINDOW_MS = 60_000;
 const LIMIT = 24;
+const MAX_BODY_BYTES = 4_096;
 const buckets = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(ip: string) {
@@ -40,7 +44,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const body = await request.json();
+    const body = await readJsonBodyLimited<{ message?: unknown }>(request, MAX_BODY_BYTES);
     const message = String(body.message || '').trim();
     if (!message || message.length > 500) {
       return NextResponse.json({
@@ -49,8 +53,46 @@ export async function POST(request: Request) {
       }, { status: 400, headers: { 'Cache-Control': 'no-store' } });
     }
 
+    const sensitiveCategories = detectSupportSensitiveData(message);
+    if (sensitiveCategories.length > 0) {
+      return NextResponse.json({
+        ok: false,
+        error: {
+          code: 'SENSITIVE_DATA_REJECTED',
+          message: 'Remove sensitive financial, identity, authentication, or credential data and ask again using masked or general details.',
+          detectedCategories: sensitiveCategories
+        }
+      }, {
+        status: 400,
+        headers: {
+          'Cache-Control': 'no-store',
+          'X-Robots-Tag': 'noindex, nofollow'
+        }
+      });
+    }
+
     const reply = answerGalacticQuestion(message);
-    return NextResponse.json({ ok: true, reply }, {
+    const prototypeTerms = getPrototypeCustomerTerms();
+    const supportCases = supportCaseControlStatus();
+    const sensitiveDataControls = supportSensitiveDataControlStatus();
+
+    return NextResponse.json({
+      ok: true,
+      reply,
+      assistantDisclosure: {
+        automated: true,
+        regulatedDecisioningEnabled: false,
+        accountSpecificDecisioningEnabled: false,
+        thirdPartyLlmCustomerDataEnabled: false,
+        productionHumanCaseManagementConnected: supportCases.approvedProductionCaseSystemConnected,
+        automationMayResolveSupportCase: supportCases.automationMayResolveCase,
+        automationMayCloseSupportCase: supportCases.automationMayCloseCase,
+        sensitiveDataPatternDetectionEnabled: sensitiveDataControls.clientPreflightDetectionAvailable,
+        sensitiveDataDetectionIsProductionDlp: false,
+        prototypeTermsVersion: prototypeTerms.version,
+        liveCustomerTermsApproved: prototypeTerms.liveTermsApproved
+      }
+    }, {
       headers: {
         'Cache-Control': 'no-store',
         'X-Robots-Tag': 'noindex, nofollow'

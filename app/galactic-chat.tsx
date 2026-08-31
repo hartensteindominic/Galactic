@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useRef, useState } from 'react';
+import { detectSupportSensitiveData } from '../lib/support-sensitive-data';
 
 type ChatMessage = {
   id: string;
@@ -11,9 +12,12 @@ type ChatMessage = {
 type Reply = {
   message: string;
   suggestions?: string[];
+  requiresHuman?: boolean;
+  policyArea?: string;
+  termsVersion?: string;
 };
 
-const starterSuggestions = ['How do transfers work?', 'How does crypto work?', 'Is my data private?'];
+const starterSuggestions = ['What can Orbit do?', 'How do transfers work?', 'Is my data private?'];
 
 function newId() {
   return `${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
@@ -24,11 +28,12 @@ export function GalacticChat() {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [suggestions, setSuggestions] = useState(starterSuggestions);
+  const [humanEscalation, setHumanEscalation] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Hi! I’m Orbit 👋 Ask me about transfers, cards, crypto, security, privacy, or Galactic Trust.'
+      text: 'Hi! I’m Orbit 👋 I’m an automated support assistant for general product questions. I do not make regulated or account-specific decisions, and I’ll mark when a protected human workflow would be required.'
     }
   ]);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -37,9 +42,23 @@ export function GalacticChat() {
     const text = raw.trim().slice(0, 500);
     if (!text || busy) return;
 
+    const sensitiveCategories = detectSupportSensitiveData(text);
+    if (sensitiveCategories.length > 0) {
+      setInput('');
+      setHumanEscalation(false);
+      setSuggestions(['What should I never share?', 'Privacy', 'Security protections']);
+      setMessages((current) => [...current, {
+        id: newId(),
+        role: 'assistant',
+        text: 'I didn’t send that message because it appears to contain sensitive financial, identity, authentication, or credential data. Remove full card/account numbers, SSNs, passwords, PINs, one-time codes, or private/API keys and ask again using masked or general details.'
+      }]);
+      return;
+    }
+
     setMessages((current) => [...current, { id: newId(), role: 'user', text }]);
     setInput('');
     setSuggestions([]);
+    setHumanEscalation(false);
     setBusy(true);
 
     try {
@@ -52,6 +71,7 @@ export function GalacticChat() {
       if (!response.ok || !data?.ok) throw new Error(data?.error?.message || 'Orbit could not answer right now.');
       const reply = data.reply as Reply;
       setMessages((current) => [...current, { id: newId(), role: 'assistant', text: reply.message }]);
+      setHumanEscalation(Boolean(reply.requiresHuman));
       setSuggestions(reply.suggestions?.slice(0, 3) || starterSuggestions);
     } catch (error) {
       setMessages((current) => [...current, {
@@ -59,7 +79,8 @@ export function GalacticChat() {
         role: 'assistant',
         text: error instanceof Error ? error.message : 'Orbit could not answer right now.'
       }]);
-      setSuggestions(starterSuggestions);
+      setHumanEscalation(true);
+      setSuggestions(['Product status', 'Security protections', 'Privacy']);
     } finally {
       setBusy(false);
       requestAnimationFrame(() => {
@@ -77,16 +98,16 @@ export function GalacticChat() {
   return (
     <div className={`galacticChat ${open ? 'open' : ''}`}>
       {open && (
-        <div className="chatPanel" ref={panelRef} role="dialog" aria-label="Galactic Trust support assistant">
+        <div className="chatPanel" ref={panelRef} role="dialog" aria-label="Galactic Trust automated support assistant">
           <div className="chatHeader">
             <div className="chatBotAvatar" aria-hidden="true">✦</div>
-            <div><strong>Orbit</strong><small><i /> Galactic Trust assistant</small></div>
+            <div><strong>Orbit</strong><small><i /> Automated support · general guidance</small></div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close chat">×</button>
           </div>
 
           <div className="chatSafetyNote">
             <span>🔒</span>
-            <p>Never share passwords, PINs, CVVs, recovery codes, or one-time codes here.</p>
+            <p>Never share passwords, PINs, CVVs, recovery codes, one-time codes, SSNs, or identity documents here.</p>
           </div>
 
           <div className="chatMessages" aria-live="polite">
@@ -95,6 +116,13 @@ export function GalacticChat() {
             ))}
             {busy && <div className="chatBubble assistant typing" aria-label="Orbit is typing"><span /><span /><span /></div>}
           </div>
+
+          {humanEscalation ? (
+            <div className="chatSafetyNote" role="status">
+              <span>👤</span>
+              <p>Prototype handoff marker: this needs authorized human handling in a live program. No production case-management channel is connected here, and Orbit has not acknowledged, investigated, or resolved a case.</p>
+            </div>
+          ) : null}
 
           {suggestions.length > 0 && (
             <div className="chatSuggestions">
@@ -106,14 +134,14 @@ export function GalacticChat() {
 
           <form className="chatComposer" onSubmit={submit}>
             <label className="srOnly" htmlFor="orbit-message">Message Orbit</label>
-            <input id="orbit-message" value={input} onChange={(event) => setInput(event.target.value)} maxLength={500} placeholder="Ask Orbit anything…" autoComplete="off" />
+            <input id="orbit-message" value={input} onChange={(event) => setInput(event.target.value)} maxLength={500} placeholder="Ask a general support question…" autoComplete="off" />
             <button type="submit" disabled={busy || !input.trim()} aria-label="Send message">➤</button>
           </form>
-          <div className="chatPrivacyLine">Support chat is not a place for sensitive account credentials.</div>
+          <div className="chatPrivacyLine">Automated prototype support. Required human handling is a marker only until an approved human case-management channel is connected.</div>
         </div>
       )}
 
-      <button className="chatLauncher" type="button" onClick={() => setOpen((value) => !value)} aria-label={open ? 'Close support chat' : 'Open support chat'}>
+      <button className="chatLauncher" type="button" onClick={() => setOpen((value) => !value)} aria-label={open ? 'Close support chat' : 'Open automated support chat'}>
         {open ? <span className="launcherClose">×</span> : <><span className="launcherPlanet">✦</span><span className="launcherBadge">1</span></>}
       </button>
     </div>

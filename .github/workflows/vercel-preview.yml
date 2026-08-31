@@ -1,0 +1,69 @@
+name: Galactic Trust Vercel Preview
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+concurrency:
+  group: galactic-trust-vercel-preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-preview:
+    # Repository secrets are never exposed to fork PRs. Keep this workflow limited to same-repo branches.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Check Vercel preview configuration
+        id: vercel_config
+        shell: bash
+        run: |
+          if [ -n "$VERCEL_TOKEN" ] && [ -n "$VERCEL_ORG_ID" ] && [ -n "$VERCEL_PROJECT_ID" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Vercel preview deployment is configured." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Preview skipped: Vercel repository secrets are not configured." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Checkout pull request head
+        if: steps.vercel_config.outputs.ready == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup Node
+        if: steps.vercel_config.outputs.ready == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Vercel CLI
+        if: steps.vercel_config.outputs.ready == 'true'
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel preview environment
+        if: steps.vercel_config.outputs.ready == 'true'
+        run: vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
+
+      - name: Build preview
+        if: steps.vercel_config.outputs.ready == 'true'
+        run: vercel build --token="$VERCEL_TOKEN"
+
+      - name: Deploy preview
+        if: steps.vercel_config.outputs.ready == 'true'
+        shell: bash
+        run: |
+          DEPLOY_URL="$(vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN" | tail -n 1)"
+          echo "Preview deployment: $DEPLOY_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deployment URL: $DEPLOY_URL"
