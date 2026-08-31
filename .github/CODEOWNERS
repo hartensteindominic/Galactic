@@ -1,0 +1,31 @@
+# Review routing for Galactic Trust.
+# CODEOWNERS requests review; actual merge protection depends on repository branch/ruleset settings.
+
+* @hartensteindominic
+
+# Banking/provider integration and money-state controls
+/lib/banking.ts @hartensteindominic
+/lib/banking-*.ts @hartensteindominic
+/lib/provider-sandbox*.ts @hartensteindominic
+/lib/gateway-banking-sandbox-adapter.ts @hartensteindominic
+/lib/financial-ledger.ts @hartensteindominic
+/lib/postgres-banking-store.ts @hartensteindominic
+/lib/sandbox-operator-*.ts @hartensteindominic
+/app/api/banking/** @hartensteindominic
+
+# Banking persistence/migrations
+/db/migrations/** @hartensteindominic
+/scripts/run-banking-sandbox-migrations.mjs @hartensteindominic
+
+# Security/safety/release controls
+/.github/workflows/** @hartensteindominic
+/scripts/*safety*.mjs @hartensteindominic
+/scripts/banking-*.mjs @hartensteindominic
+/SECURITY.md @hartensteindominic
+
+# Sponsor-bank diligence and operational runbooks
+/docs/sponsor-bank/** @hartensteindominic
+
+# Environment templates and security headers
+/.env.example @hartensteindominic
+/next.config.mjs @hartensteindominic

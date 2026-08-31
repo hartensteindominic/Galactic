@@ -28,7 +28,9 @@ function config() {
     programId: process.env.CRYPTO_PROGRAM_ID || '',
     providerName: process.env.CRYPTO_PROVIDER_NAME || '',
     disclosure: process.env.CRYPTO_PARTNER_DISCLOSURE || '',
-    liveTradingEnabled: process.env.CRYPTO_ENABLE_LIVE_TRADING === 'true'
+    complianceApproved: process.env.CRYPTO_COMPLIANCE_APPROVED === 'true',
+    disclosuresApproved: process.env.CRYPTO_DISCLOSURES_APPROVED === 'true',
+    liveTradingRequested: process.env.CRYPTO_ENABLE_LIVE_TRADING === 'true'
   };
 }
 
@@ -39,17 +41,36 @@ export function cryptoStatus() {
     current.gatewayBaseUrl &&
     current.apiKey &&
     current.programId &&
-    current.providerName
+    current.providerName &&
+    current.disclosure
   );
+  const activationBlockedReasons: string[] = [];
+
+  if (currentMode !== 'partner') activationBlockedReasons.push('demo_mode');
+  if (!partnerConfigured) activationBlockedReasons.push('partner_not_configured');
+  if (!current.complianceApproved) activationBlockedReasons.push('compliance_not_approved');
+  if (!current.disclosuresApproved) activationBlockedReasons.push('disclosures_not_approved');
+  if (!current.liveTradingRequested) activationBlockedReasons.push('live_trading_not_requested');
+
+  const liveTradingEnabled = currentMode === 'partner'
+    && partnerConfigured
+    && current.complianceApproved
+    && current.disclosuresApproved
+    && current.liveTradingRequested;
 
   return {
     mode: currentMode,
     providerName: current.providerName || null,
     partnerConfigured,
-    liveTradingEnabled: currentMode === 'partner' && partnerConfigured && current.liveTradingEnabled,
+    complianceApproved: current.complianceApproved,
+    disclosuresApproved: current.disclosuresApproved,
+    liveTradingRequested: current.liveTradingRequested,
+    liveTradingEnabled,
+    activationBlockedReasons,
+    legalRole: 'fintech_interface' as const,
     disclosure: currentMode === 'demo'
       ? 'Crypto trading is in demo mode. Quotes, holdings, buys, and sells are simulated and no real assets are purchased or sold.'
-      : (current.disclosure || `Crypto services are provided through ${current.providerName || 'the configured regulated crypto provider'}, subject to eligibility and approved disclosures.`)
+      : (current.disclosure || 'Partner crypto mode is configured, but customer-facing crypto disclosures have not been approved.')
   };
 }
 
@@ -62,11 +83,19 @@ function requirePartnerConfig() {
   }
 
   if (!status.partnerConfigured) {
-    throw new BankingError(503, 'CRYPTO_PARTNER_NOT_CONFIGURED', 'A crypto trading partner has not been configured yet.');
+    throw new BankingError(503, 'CRYPTO_PARTNER_NOT_CONFIGURED', 'A crypto partner and approved disclosure have not been fully configured yet.');
   }
 
-  if (!current.liveTradingEnabled) {
-    throw new BankingError(503, 'CRYPTO_LIVE_TRADING_DISABLED', 'Live crypto trading is disabled until the provider program is approved and explicitly enabled.');
+  if (!status.complianceApproved) {
+    throw new BankingError(503, 'CRYPTO_COMPLIANCE_NOT_APPROVED', 'Live crypto trading is disabled until the provider program has documented compliance approval.');
+  }
+
+  if (!status.disclosuresApproved) {
+    throw new BankingError(503, 'CRYPTO_DISCLOSURES_NOT_APPROVED', 'Live crypto trading is disabled until customer-facing crypto disclosures are approved.');
+  }
+
+  if (!status.liveTradingEnabled) {
+    throw new BankingError(503, 'CRYPTO_LIVE_TRADING_DISABLED', 'Live crypto trading is disabled until the approved provider program is explicitly enabled.');
   }
 
   return current;

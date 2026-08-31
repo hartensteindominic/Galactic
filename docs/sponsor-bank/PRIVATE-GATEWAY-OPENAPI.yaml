@@ -1,0 +1,344 @@
+openapi: 3.1.0
+info:
+  title: Galactic Trust Private Banking Sandbox Gateway
+  version: 1.0.0
+  description: >-
+    Provider-neutral private gateway contract used by Galactic Trust during
+    sponsor-bank/BaaS sandbox certification. This contract is sandbox-only and
+    does not authorize production money movement.
+servers:
+  - url: https://sandbox-gateway.example.invalid
+    description: Placeholder only. Configure the approved private sandbox gateway server-side.
+security:
+  - bearerAuth: []
+    galacticProgramId: []
+paths:
+  /v1/sandbox/customers:
+    post:
+      summary: Create provider sandbox customer
+      operationId: createSandboxCustomer
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [externalUserId]
+              properties:
+                externalUserId:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomerResponse'
+        '201':
+          $ref: '#/components/responses/CustomerResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /v1/sandbox/customers/{customerId}:
+    get:
+      summary: Get sandbox customer
+      operationId: getSandboxCustomer
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomerResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /v1/sandbox/customers/{customerId}/kyc:
+    post:
+      summary: Run approved provider sandbox KYC fixture
+      operationId: startSandboxKyc
+      parameters:
+        - $ref: '#/components/parameters/CustomerId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [sandboxScenario]
+              properties:
+                sandboxScenario:
+                  type: string
+                  enum: [approve, manual_review, reject]
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomerResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /v1/sandbox/accounts:
+    post:
+      summary: Create sandbox deposit account
+      operationId: createSandboxAccount
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [customerId, type]
+              properties:
+                customerId:
+                  type: string
+                  minLength: 1
+                type:
+                  type: string
+                  enum: [checking, savings]
+      responses:
+        '200':
+          $ref: '#/components/responses/AccountResponse'
+        '201':
+          $ref: '#/components/responses/AccountResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /v1/sandbox/accounts/{accountId}/balance:
+    get:
+      summary: Get provider sandbox account balance for reconciliation
+      operationId: getSandboxAccountBalance
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: Current provider sandbox balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountBalance'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+  /v1/sandbox/ach-transfers:
+    post:
+      summary: Create sandbox ACH transfer
+      operationId: createSandboxAchTransfer
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [customerId, accountId, direction, amountCents]
+              properties:
+                customerId:
+                  type: string
+                  minLength: 1
+                accountId:
+                  type: string
+                  minLength: 1
+                direction:
+                  type: string
+                  enum: [inbound, outbound]
+                amountCents:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          $ref: '#/components/responses/TransferResponse'
+        '201':
+          $ref: '#/components/responses/TransferResponse'
+        default:
+          $ref: '#/components/responses/ErrorResponse'
+webhooks:
+  providerSandboxEvent:
+    post:
+      summary: Provider/private gateway sends signed canonical sandbox events to Galactic
+      description: >-
+        Target URL is the Galactic sandbox webhook endpoint. The gateway must
+        HMAC-SHA256 sign the exact string `<timestamp>.<raw-body>` using the
+        dedicated provider-sandbox webhook secret. Timestamp must be suitable
+        for Galactic's five-minute replay window.
+      parameters:
+        - name: x-galactic-webhook-timestamp
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: x-galactic-webhook-signature
+          in: header
+          required: true
+          schema:
+            type: string
+            description: Hex HMAC-SHA256, optionally prefixed with sha256=.
+        - name: x-galactic-webhook-event-id
+          in: header
+          required: false
+          schema:
+            type: string
+            description: When present, must equal body.id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookEvent'
+      responses:
+        '200':
+          description: Accepted, deduplicated, or already processed.
+        '400':
+          description: Invalid payload/event type.
+        '401':
+          description: Missing/invalid/expired signature.
+        '413':
+          description: Body exceeds Galactic's configured webhook limit.
+        '503':
+          description: Sandbox provider/database gate unavailable.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Server-side provider sandbox API credential. Never expose to browser code.
+    galacticProgramId:
+      type: apiKey
+      in: header
+      name: X-Galactic-Program-Id
+      description: Provider sandbox program identifier.
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 8
+        maxLength: 128
+      description: Required on every provider-side write.
+    CustomerId:
+      name: customerId
+      in: path
+      required: true
+      schema:
+        type: string
+        minLength: 1
+  responses:
+    CustomerResponse:
+      description: Provider-neutral sandbox customer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Customer'
+    AccountResponse:
+      description: Provider-neutral sandbox account
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Account'
+    TransferResponse:
+      description: Provider-neutral sandbox ACH transfer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Transfer'
+    ErrorResponse:
+      description: Gateway/provider error
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+  schemas:
+    Customer:
+      type: object
+      additionalProperties: false
+      required: [id, kycStatus]
+      properties:
+        id:
+          type: string
+        kycStatus:
+          type: string
+          enum: [not_started, pending, approved, rejected, manual_review]
+    Account:
+      type: object
+      additionalProperties: false
+      required: [id, customerId, type, status]
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        type:
+          type: string
+          enum: [checking, savings]
+        status:
+          type: string
+          enum: [pending, open, restricted, closed]
+    AccountBalance:
+      type: object
+      additionalProperties: false
+      required: [accountId, currentBalanceCents, availableBalanceCents, asOf]
+      properties:
+        accountId:
+          type: string
+        currentBalanceCents:
+          type: integer
+        availableBalanceCents:
+          type: integer
+        asOf:
+          type: string
+          format: date-time
+    Transfer:
+      type: object
+      additionalProperties: false
+      required: [id, customerId, accountId, direction, amountCents, status]
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        accountId:
+          type: string
+        direction:
+          type: string
+          enum: [inbound, outbound]
+        amountCents:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [pending, posted, returned, failed]
+    WebhookEvent:
+      type: object
+      additionalProperties: false
+      required: [id, type, resourceId, customerId, occurredAt]
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum:
+            - customer.kyc.updated
+            - account.opened
+            - ach.transfer.pending
+            - ach.transfer.posted
+            - ach.transfer.returned
+            - ach.transfer.failed
+        resourceId:
+          type: string
+        customerId:
+          type: string
+        accountId:
+          type: string
+        amountCents:
+          type: integer
+          minimum: 0
+        occurredAt:
+          type: string
+          format: date-time

@@ -4,10 +4,13 @@ import './banking-controls.css';
 import './extras.css';
 import './privacy.css';
 import './privacy-link.css';
+import './compliance.css';
+import './mobile-trust.css';
+import './sandbox-readiness.css';
 
 export const metadata: Metadata = {
   title: 'Galactic Trust',
-  description: 'Galactic Trust digital banking dashboard.'
+  description: 'Galactic Trust financial technology demo and sponsor-bank-ready product interface.'
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

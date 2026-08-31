@@ -116,10 +116,10 @@ export function BankingActions() {
           <span className="quickIcon add">＋</span><span><b>Add Money</b><small>Deposit funds</small></span>
         </button>
         <button type="button" onClick={toggleFreeze} disabled={busy}>
-          <span className="quickIcon freeze">❄</span><span><b>{frozen ? 'Unfreeze Card' : 'Freeze Card'}</b><small>{frozen ? 'Resume card use' : 'Temporarily lock'}</small></span>
+          <span className="quickIcon freeze">❄</span><span><b>{frozen ? 'Unfreeze Card' : 'Freeze Card'}</b><small>{frozen ? 'Resume preview' : 'Simulate lock'}</small></span>
         </button>
         <button type="button" onClick={() => setAction(action === 'card' ? null : 'card')}>
-          <span className="quickIcon card">▣</span><span><b>View Card</b><small>See safe card details</small></span>
+          <span className="quickIcon card">▣</span><span><b>View Card</b><small>See preview details</small></span>
         </button>
       </div>
 
@@ -147,13 +147,13 @@ export function BankingActions() {
           {action === 'funding' && (
             <div>
               <div className="bankingSheetHeader">
-                <div><small>Funding</small><h3>Add money</h3></div>
+                <div><small>Funding preview</small><h3>Add money</h3></div>
                 <button type="button" className="sheetClose" onClick={() => setAction(null)}>×</button>
               </div>
               <div className="fundingOptions">
-                <button type="button"><span>🏦</span><b>Bank transfer</b><small>ACH funding through a banking partner</small></button>
-                <button type="button"><span>💳</span><b>Debit card</b><small>Card funding through an approved processor</small></button>
-                <button type="button"><span>↗</span><b>Direct deposit</b><small>Available after real account issuance</small></button>
+                <button type="button"><span>🏦</span><b>Bank transfer</b><small>Preview of future ACH funding through an approved banking partner</small></button>
+                <button type="button"><span>💳</span><b>Card funding</b><small>Preview only until an approved processor/program exists</small></button>
+                <button type="button"><span>↗</span><b>Direct deposit</b><small>Preview only; requires actual account issuance</small></button>
               </div>
               <p className="bankingFinePrint">{status.mode === 'demo' ? 'These funding methods are previews only until a regulated banking partner is connected.' : 'Funding availability is controlled by the configured banking partner and customer eligibility.'}</p>
             </div>
@@ -162,15 +162,15 @@ export function BankingActions() {
           {action === 'card' && (
             <div>
               <div className="bankingSheetHeader">
-                <div><small>Card security</small><h3>Nebula Blue</h3></div>
+                <div><small>Card preview</small><h3>Nebula Blue</h3></div>
                 <button type="button" className="sheetClose" onClick={() => setAction(null)}>×</button>
               </div>
               <div className="safeCardDetails">
-                <span>Card number</span><strong>•••• •••• •••• 4532</strong>
-                <span>Status</span><strong>{frozen ? 'Frozen' : 'Active'}</strong>
-                <span>Network</span><strong>Visa</strong>
+                <span>Preview number</span><strong>•••• •••• •••• 4532</strong>
+                <span>Preview status</span><strong>{frozen ? 'Simulated frozen' : 'Simulated active'}</strong>
+                <span>Network</span><strong>Preview only — no network affiliation</strong>
               </div>
-              <p className="bankingFinePrint">Full PAN, CVV, PIN, and sensitive authentication data are intentionally never exposed by this prototype.</p>
+              <p className="bankingFinePrint">This is a demo card preview, not an issued payment card. Full PAN, CVV, PIN, and sensitive authentication data are intentionally never collected or exposed by this prototype.</p>
             </div>
           )}
         </div>
