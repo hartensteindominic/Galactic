@@ -2,6 +2,10 @@ name: Galactic Trust Business App Store
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ios-app-store.yml'
 
 permissions:
   contents: read
