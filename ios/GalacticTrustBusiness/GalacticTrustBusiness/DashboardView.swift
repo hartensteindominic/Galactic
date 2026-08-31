@@ -6,6 +6,7 @@ struct DashboardView: View {
     @Binding var selection: AppTab
     @State private var showingAddIncome = false
     @State private var showingAddExpense = false
+    @State private var showingInvoices = false
     @State private var selectedInsight: FinancialInsight?
 
     private let columns = [
@@ -36,6 +37,10 @@ struct DashboardView: View {
         }
         .sheet(isPresented: $showingAddExpense) {
             AddTransactionView(defaultKind: .expense)
+        }
+        .sheet(isPresented: $showingInvoices) {
+            NavigationStack { InvoicesView() }
+                .environmentObject(store)
         }
         .sheet(item: $selectedInsight) { insight in
             InsightEvidenceView(insight: insight)
@@ -131,7 +136,7 @@ struct DashboardView: View {
         HStack(spacing: 10) {
             quickAction("Income", icon: "plus", tint: GalacticTheme.green) { showingAddIncome = true }
             quickAction("Expense", icon: "minus", tint: GalacticTheme.pink) { showingAddExpense = true }
-            quickAction("Invoices", icon: "doc.text.fill", tint: GalacticTheme.violet) { }
+            quickAction("Invoices", icon: "doc.text.fill", tint: GalacticTheme.violet) { showingInvoices = true }
             quickAction("Ask AI", icon: "sparkles", tint: GalacticTheme.indigo) { selection = .ai }
         }
     }
@@ -346,7 +351,9 @@ struct DashboardView: View {
     private var invoiceCard: some View {
         GalacticCard {
             VStack(alignment: .leading, spacing: 12) {
-                SectionHeader(title: "Outstanding invoices")
+                SectionHeader(title: "Outstanding invoices", actionTitle: "View all") {
+                    showingInvoices = true
+                }
                 if store.invoices.filter({ $0.status != .paid }).isEmpty {
                     Text("No outstanding invoices")
                         .font(.subheadline)
