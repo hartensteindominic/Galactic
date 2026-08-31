@@ -17,6 +17,11 @@ targets:
     resources:
       - path: GalacticTrustBusiness/Assets.xcassets
       - path: GalacticTrustBusiness/PrivacyInfo.xcprivacy
+    preBuildScripts:
+      - name: Generate Galactic App Icon
+        script: |
+          python3 "$SRCROOT/scripts/generate_app_icon.py"
+        basedOnDependencyAnalysis: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.hartensteindominic.galactictrustbusiness
@@ -28,7 +33,6 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
-        INFOPLIST_KEY_NSFaceIDUsageDescription: Face ID can protect access to your business financial dashboard.
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
         TARGETED_DEVICE_FAMILY: "1,2"
         SUPPORTS_MACCATALYST: NO
