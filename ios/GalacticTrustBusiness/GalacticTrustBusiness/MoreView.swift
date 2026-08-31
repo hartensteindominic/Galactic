@@ -87,7 +87,7 @@ struct BusinessProfileView: View {
             }
 
             Section("How it is used") {
-                Text("Your business name appears on the dashboard and stays in the encrypted-at-rest app data file on this device.")
+                Text("Your business name appears on the dashboard and stays in the protected app data file on this device.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -235,12 +235,24 @@ struct ImportGuideView: View {
 }
 
 struct SecurityPrivacyView: View {
+    @EnvironmentObject private var store: FinancialStore
+    @State private var confirmingClear = false
+
     var body: some View {
         List {
             Section("Data protection") {
                 privacyRow("Protected local file", detail: "Financial records are stored in the app container with iOS complete file protection.", icon: "lock.fill")
                 privacyRow("Read-only intelligence", detail: "The AI manager analyzes and explains records. It cannot send money or approve payments.", icon: "sparkles")
                 privacyRow("No ad tracking", detail: "This native build includes no advertising SDK or cross-app tracking.", icon: "hand.raised.fill")
+            }
+
+            Section("Your data") {
+                Button("Clear local financial data", role: .destructive) {
+                    confirmingClear = true
+                }
+                Text("This removes transactions, invoices, and the opening balance stored by this app. Your business display name stays in place.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
 
             Section("Important") {
@@ -251,6 +263,14 @@ struct SecurityPrivacyView: View {
         }
         .navigationTitle("Security & Privacy")
         .navigationBarTitleDisplayMode(.inline)
+        .alert("Clear local financial data?", isPresented: $confirmingClear) {
+            Button("Cancel", role: .cancel) { }
+            Button("Clear Data", role: .destructive) {
+                store.clearFinancialData()
+            }
+        } message: {
+            Text("This cannot be undone. Imported and manually entered financial records will be removed from this device.")
+        }
     }
 
     private func privacyRow(_ title: String, detail: String, icon: String) -> some View {
