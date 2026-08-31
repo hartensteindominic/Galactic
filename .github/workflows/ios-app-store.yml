@@ -23,7 +23,7 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
       APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-      APP_STORE_CONNECT_API_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_API_KEY_BASE64 }}
+      APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
 
     steps:
       - name: Checkout
@@ -54,7 +54,7 @@ jobs:
             APPLE_TEAM_ID
             APP_STORE_CONNECT_ISSUER_ID
             APP_STORE_CONNECT_KEY_ID
-            APP_STORE_CONNECT_API_KEY_BASE64
+            APP_STORE_CONNECT_API_KEY
           )
           missing=()
           for name in "${required[@]}"; do
@@ -84,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
           KEY_PATH="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_KEY_ID}.p8"
-          printf '%s' "$APP_STORE_CONNECT_API_KEY_BASE64" | base64 --decode > "$KEY_PATH"
+          printf '%s' "$APP_STORE_CONNECT_API_KEY" > "$KEY_PATH"
           chmod 600 "$KEY_PATH"
           echo "key_path=$KEY_PATH" >> "$GITHUB_OUTPUT"
 
