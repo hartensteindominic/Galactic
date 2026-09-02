@@ -74,30 +74,27 @@ jobs:
           def pick(names, fallback_words):
               for name in names:
                   if name in by_name:
-                      return by_name[name]['identifier'], name
+                      return by_name[name]['identifier']
               for d in reversed(types):
                   lower = d['name'].lower()
                   if all(word in lower for word in fallback_words):
-                      return d['identifier'], d['name']
+                      return d['identifier']
               raise SystemExit('No matching simulator device type found')
 
-          iphone_id, iphone_name = pick(
+          iphone_id = pick(
               ['iPhone 11 Pro Max', 'iPhone 16 Pro Max', 'iPhone 16 Plus', 'iPhone 15 Pro Max'],
               ['iphone', 'max']
           )
-          ipad_id, ipad_name = pick(
+          ipad_id = pick(
               ['iPad Pro 13-inch (M4)', 'iPad Pro 13-inch (M5)', 'iPad Pro (13-inch) (M4)', 'iPad Pro (12.9-inch) (6th generation)'],
               ['ipad', 'pro']
           )
 
           print(f'RUNTIME={runtime}')
           print(f'IPHONE_TYPE={iphone_id}')
-          print(f'IPHONE_NAME={iphone_name}')
           print(f'IPAD_TYPE={ipad_id}')
-          print(f'IPAD_NAME={ipad_name}')
           PY
 
-          cat "$RUNNER_TEMP/simulators.env"
           source "$RUNNER_TEMP/simulators.env"
 
           capture() {
