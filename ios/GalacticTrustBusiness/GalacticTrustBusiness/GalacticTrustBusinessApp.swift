@@ -76,7 +76,7 @@ struct RootView: View {
     private func compactDestination(for tab: AppTab) -> some View {
         switch tab {
         case .dashboard:
-            NavigationStack { FinalDashboardView(selection: $selection) }
+            NavigationStack { PolishedDashboardView(selection: $selection) }
         case .transactions:
             NavigationStack { TransactionsView() }
         case .cashFlow:
@@ -86,7 +86,7 @@ struct RootView: View {
         case .more:
             NavigationStack { MoreView() }
         default:
-            NavigationStack { FinalDashboardView(selection: $selection) }
+            NavigationStack { PolishedDashboardView(selection: $selection) }
         }
     }
 
@@ -94,7 +94,7 @@ struct RootView: View {
     private func destination(for tab: AppTab) -> some View {
         switch tab {
         case .dashboard:
-            NavigationStack { FinalDashboardView(selection: $selection) }
+            NavigationStack { PolishedDashboardView(selection: $selection) }
         case .accounts:
             NavigationStack { BusinessModuleView(kind: .accounts) }
         case .transactions:
