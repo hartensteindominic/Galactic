@@ -57,6 +57,7 @@ jobs:
         run: |
           set -euo pipefail
           APP="$RUNNER_TEMP/GalacticDerivedData/Build/Products/Release-iphonesimulator/GalacticTrustBusiness.app"
+          BUNDLE_ID="com.hartensteindominic.galactictrustbusiness"
           OUT="$GITHUB_WORKSPACE/app-store-screenshots"
           mkdir -p "$OUT"
 
@@ -101,22 +102,35 @@ jobs:
 
           source "$RUNNER_TEMP/simulators.env"
 
-          timeout_run() {
-            python3 - "$@" <<'PY'
+          run_with_timeout() {
+            seconds="$1"
+            shift
+            python3 - "$seconds" "$@" <<'PY'
           import subprocess, sys
-          subprocess.run(sys.argv[1:], check=True, timeout=60)
+          seconds = int(sys.argv[1])
+          subprocess.run(sys.argv[2:], check=True, timeout=seconds)
           PY
           }
 
           wait_for_boot() {
             udid="$1"
-            for attempt in $(seq 1 60); do
+            for attempt in $(seq 1 75); do
               if xcrun simctl list devices | grep "$udid" | grep -q '(Booted)'; then
                 return 0
               fi
               sleep 2
             done
             echo "Simulator $udid did not reach Booted state" >&2
+            return 1
+          }
+
+          wait_for_app_process() {
+            for attempt in $(seq 1 45); do
+              if pgrep -f 'GalacticTrustBusiness.app/GalacticTrustBusiness' >/dev/null 2>&1; then
+                return 0
+              fi
+              sleep 2
+            done
             return 1
           }
 
@@ -127,22 +141,52 @@ jobs:
             final="$4"
             width="$5"
             height="$6"
+            launch_log="$OUT/${label}-launch.log"
 
             udid=$(xcrun simctl create "Galactic-${label}-${GITHUB_RUN_ID}" "$dtype" "$RUNTIME")
             echo "Created $label simulator $udid"
-            timeout_run xcrun simctl boot "$udid" || true
-            wait_for_boot "$udid"
-            sleep 5
 
-            timeout_run xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
-            timeout_run xcrun simctl install "$udid" "$APP"
-            timeout_run xcrun simctl launch "$udid" com.hartensteindominic.galactictrustbusiness
-            sleep 8
-            timeout_run xcrun simctl io "$udid" screenshot "$raw"
+            run_with_timeout 30 xcrun simctl boot "$udid" || true
+            wait_for_boot "$udid"
+
+            # A simulator can report Booted before SpringBoard and app-launch services
+            # are fully ready. Give them a short settling window before installation.
+            sleep 10
+
+            run_with_timeout 30 xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
+            run_with_timeout 60 xcrun simctl install "$udid" "$APP"
+
+            # On hosted macOS runners, simctl launch can occasionally stay attached
+            # even after it has successfully started the app. Launch it in the
+            # background and verify the actual app process instead of treating that
+            # attached CLI process as a failure.
+            (xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE_ID" >"$launch_log" 2>&1) &
+            launch_cli_pid=$!
+
+            if ! wait_for_app_process; then
+              echo "The Galactic Trust Business process did not appear after launch." >&2
+              echo "--- simctl launch output ---" >&2
+              cat "$launch_log" >&2 || true
+              echo "--- simulator devices ---" >&2
+              xcrun simctl list devices >&2 || true
+              kill "$launch_cli_pid" >/dev/null 2>&1 || true
+              wait "$launch_cli_pid" >/dev/null 2>&1 || true
+              return 1
+            fi
+
+            echo "Galactic Trust Business is running on the $label simulator."
+            sleep 12
+            run_with_timeout 45 xcrun simctl io "$udid" screenshot "$raw"
+
+            # Produce App Store Connect-compatible dimensions while preserving the
+            # real pixels captured from the native simulator session.
             sips --resampleHeightWidth "$height" "$width" "$raw" --out "$final" >/dev/null
             sips -g pixelWidth -g pixelHeight "$final"
+            file "$final"
 
-            xcrun simctl terminate "$udid" com.hartensteindominic.galactictrustbusiness || true
+            kill "$launch_cli_pid" >/dev/null 2>&1 || true
+            wait "$launch_cli_pid" >/dev/null 2>&1 || true
+            xcrun simctl terminate "$udid" "$BUNDLE_ID" || true
             xcrun simctl shutdown "$udid" || true
             xcrun simctl delete "$udid" || true
           }
@@ -151,7 +195,7 @@ jobs:
 
           capture iphone "$IPHONE_TYPE" "$OUT/iphone-raw.png" "$OUT/Galactic-Trust-Business-iPhone-6.5.png" 1242 2688
           capture ipad "$IPAD_TYPE" "$OUT/ipad-raw.png" "$OUT/Galactic-Trust-Business-iPad-13.png" 2064 2752
-          rm -f "$OUT/iphone-raw.png" "$OUT/ipad-raw.png"
+          rm -f "$OUT/iphone-raw.png" "$OUT/ipad-raw.png" "$OUT/iphone-launch.log" "$OUT/ipad-launch.log"
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
