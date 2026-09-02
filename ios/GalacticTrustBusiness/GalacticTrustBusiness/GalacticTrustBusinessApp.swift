@@ -15,6 +15,8 @@ struct GalacticTrustBusinessApp: App {
 
 struct RootView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @AppStorage(GalacticThemeOption.storageKey) private var selectedThemeID = GalacticThemeOption.defaultTheme.rawValue
+    @AppStorage(GalacticLayoutStyle.storageKey) private var selectedLayoutID = GalacticLayoutStyle.defaultLayout.rawValue
     @State private var selection: AppTab = .dashboard
 
     var body: some View {
@@ -37,6 +39,8 @@ struct RootView: View {
             }
         }
         .tint(GalacticTheme.indigo)
+        .animation(.easeInOut(duration: 0.32), value: selectedThemeID)
+        .animation(.snappy(duration: 0.24), value: selectedLayoutID)
     }
 
     private var compactShell: some View {
@@ -46,10 +50,10 @@ struct RootView: View {
                 GalacticTheme.backgroundGlow
 
                 RadialGradient(
-                    colors: [GalacticTheme.violet.opacity(0.065), Color.clear],
+                    colors: [GalacticTheme.palette.highlight.opacity(0.10), Color.clear],
                     center: .bottomLeading,
                     startRadius: 12,
-                    endRadius: 330
+                    endRadius: 360
                 )
             }
             .ignoresSafeArea()
@@ -161,21 +165,23 @@ private struct GalacticFloatingTabBar: View {
                                     .frame(width: 31, height: 31)
                                     .overlay {
                                         Circle()
-                                            .stroke(Color.white.opacity(0.34), lineWidth: 0.8)
+                                            .stroke(Color.white.opacity(0.42), lineWidth: 0.9)
                                     }
                                     .shadow(color: GalacticTheme.cyan.opacity(0.30), radius: 8)
-                                    .shadow(color: GalacticTheme.violet.opacity(0.36), radius: 12)
+                                    .shadow(color: GalacticTheme.palette.highlight.opacity(0.34), radius: 12)
                             }
 
                             Image(systemName: item.icon)
                                 .font(.system(size: isSelected ? 15 : 17, weight: .semibold))
                                 .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(isSelected ? Color.white : GalacticTheme.dockSecondaryForeground)
                                 .symbolEffect(.bounce, value: isSelected)
                         }
                         .frame(height: 31)
 
                         Text(item.title)
                             .font(.system(size: 9.5, weight: isSelected ? .bold : .semibold, design: .rounded))
+                            .foregroundStyle(isSelected ? GalacticTheme.dockForeground : GalacticTheme.dockSecondaryForeground)
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
 
@@ -184,16 +190,15 @@ private struct GalacticFloatingTabBar: View {
                             .frame(width: isSelected ? 18 : 4, height: 2)
                             .shadow(color: isSelected ? GalacticTheme.cyan.opacity(0.55) : .clear, radius: 4)
                     }
-                    .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.62))
                     .frame(maxWidth: .infinity)
                     .frame(height: 55)
                     .background {
                         if isSelected {
                             RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                .fill(Color.white.opacity(0.075))
+                                .fill(Color.white.opacity(GalacticTheme.palette.dockIsDark ? 0.075 : 0.50))
                                 .overlay {
                                     RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                        .stroke(Color.white.opacity(0.08), lineWidth: 0.8)
+                                        .stroke(Color.white.opacity(GalacticTheme.palette.dockIsDark ? 0.10 : 0.72), lineWidth: 0.8)
                                 }
                         }
                     }
@@ -206,39 +211,38 @@ private struct GalacticFloatingTabBar: View {
         }
         .padding(5)
         .background {
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: GalacticTheme.selectedLayout == .compactPro ? 19 : 24, style: .continuous)
                 .fill(GalacticTheme.sidebarGradient)
                 .overlay {
                     ZStack {
                         RadialGradient(
-                            colors: [GalacticTheme.indigo.opacity(0.24), Color.clear],
+                            colors: [GalacticTheme.violet.opacity(0.20), Color.clear],
                             center: .topLeading,
                             startRadius: 0,
                             endRadius: 180
                         )
 
                         RadialGradient(
-                            colors: [GalacticTheme.cyan.opacity(0.16), Color.clear],
+                            colors: [GalacticTheme.palette.highlight.opacity(0.18), GalacticTheme.cyan.opacity(0.10), Color.clear],
                             center: .bottomTrailing,
                             startRadius: 0,
-                            endRadius: 180
+                            endRadius: 190
                         )
                     }
-                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: GalacticTheme.selectedLayout == .compactPro ? 19 : 24, style: .continuous))
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    RoundedRectangle(cornerRadius: GalacticTheme.selectedLayout == .compactPro ? 19 : 24, style: .continuous)
                         .stroke(
                             LinearGradient(
-                                colors: [Color.white.opacity(0.24), GalacticTheme.cyan.opacity(0.16), GalacticTheme.violet.opacity(0.18)],
+                                colors: [Color.white.opacity(0.52), GalacticTheme.cyan.opacity(0.18), GalacticTheme.palette.highlight.opacity(0.22)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ),
                             lineWidth: 1
                         )
                 }
-                .shadow(color: GalacticTheme.navy.opacity(0.38), radius: 22, y: 11)
-                .shadow(color: GalacticTheme.indigo.opacity(0.12), radius: 8, y: 2)
+                .shadow(color: GalacticTheme.palette.dockIsDark ? GalacticTheme.navy.opacity(0.30) : GalacticTheme.indigo.opacity(0.12), radius: GalacticTheme.selectedLayout == .boldGlow ? 28 : 18, y: 9)
         }
     }
 }
