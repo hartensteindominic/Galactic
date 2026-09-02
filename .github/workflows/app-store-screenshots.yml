@@ -9,10 +9,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: app-store-screenshots
+  cancel-in-progress: true
+
 jobs:
   capture:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -97,6 +101,25 @@ jobs:
 
           source "$RUNNER_TEMP/simulators.env"
 
+          timeout_run() {
+            python3 - "$@" <<'PY'
+          import subprocess, sys
+          subprocess.run(sys.argv[1:], check=True, timeout=60)
+          PY
+          }
+
+          wait_for_boot() {
+            udid="$1"
+            for attempt in $(seq 1 60); do
+              if xcrun simctl list devices | grep "$udid" | grep -q '(Booted)'; then
+                return 0
+              fi
+              sleep 2
+            done
+            echo "Simulator $udid did not reach Booted state" >&2
+            return 1
+          }
+
           capture() {
             label="$1"
             dtype="$2"
@@ -106,19 +129,25 @@ jobs:
             height="$6"
 
             udid=$(xcrun simctl create "Galactic-${label}-${GITHUB_RUN_ID}" "$dtype" "$RUNTIME")
-            xcrun simctl boot "$udid"
-            xcrun simctl bootstatus "$udid" -b
-            xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
-            xcrun simctl install "$udid" "$APP"
-            xcrun simctl launch "$udid" com.hartensteindominic.galactictrustbusiness
+            echo "Created $label simulator $udid"
+            xcrun simctl boot "$udid" || true
+            wait_for_boot "$udid"
+            sleep 5
+
+            timeout_run xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
+            timeout_run xcrun simctl install "$udid" "$APP"
+            timeout_run xcrun simctl launch "$udid" com.hartensteindominic.galactictrustbusiness
             sleep 8
-            xcrun simctl io "$udid" screenshot "$raw"
+            timeout_run xcrun simctl io "$udid" screenshot "$raw"
             sips --resampleHeightWidth "$height" "$width" "$raw" --out "$final" >/dev/null
             sips -g pixelWidth -g pixelHeight "$final"
+
             xcrun simctl terminate "$udid" com.hartensteindominic.galactictrustbusiness || true
             xcrun simctl shutdown "$udid" || true
             xcrun simctl delete "$udid" || true
           }
+
+          trap 'xcrun simctl shutdown all >/dev/null 2>&1 || true; xcrun simctl delete unavailable >/dev/null 2>&1 || true' EXIT
 
           capture iphone "$IPHONE_TYPE" "$OUT/iphone-raw.png" "$OUT/Galactic-Trust-Business-iPhone-6.5.png" 1242 2688
           capture ipad "$IPAD_TYPE" "$OUT/ipad-raw.png" "$OUT/Galactic-Trust-Business-iPad-13.png" 2064 2752
