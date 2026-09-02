@@ -11,35 +11,84 @@ struct GalacticTheme {
     static let orange = Color(red: 1.00, green: 0.55, blue: 0.12)
     static let blue = Color(red: 0.08, green: 0.39, blue: 0.96)
     static let teal = Color(red: 0.02, green: 0.64, blue: 0.67)
-    static let page = Color(red: 0.972, green: 0.976, blue: 0.998)
+
+    // A very light cosmic canvas keeps financial data easy to read while making
+    // the app feel more playful and unmistakably Galactic Trust.
+    static let page = Color(red: 0.958, green: 0.966, blue: 1.0)
     static let panel = Color.white
-    static let softPanel = Color(red: 0.982, green: 0.984, blue: 1.0)
-    static let mutedText = Color(red: 0.31, green: 0.33, blue: 0.46)
-    static let divider = Color(red: 0.89, green: 0.90, blue: 0.95)
+    static let softPanel = Color(red: 0.976, green: 0.980, blue: 1.0)
+    static let mutedText = Color(red: 0.29, green: 0.31, blue: 0.45)
+    static let divider = Color(red: 0.865, green: 0.875, blue: 0.95)
 
     static let heroGradient = LinearGradient(
-        colors: [Color(red: 0.015, green: 0.08, blue: 0.78), indigo, violet],
+        colors: [
+            Color(red: 0.005, green: 0.055, blue: 0.62),
+            indigo,
+            violet,
+            cyan.opacity(0.82)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    static let accentGradient = LinearGradient(
+        colors: [indigo, violet, cyan],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+
+    static let glassGradient = LinearGradient(
+        colors: [
+            Color.white.opacity(0.98),
+            Color.white.opacity(0.92),
+            Color(red: 0.95, green: 0.96, blue: 1.0).opacity(0.96)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    static let cardBorderGradient = LinearGradient(
+        colors: [
+            Color.white.opacity(0.92),
+            indigo.opacity(0.18),
+            cyan.opacity(0.14),
+            violet.opacity(0.16)
+        ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static let spaceGradient = LinearGradient(
-        colors: [navy, Color(red: 0.035, green: 0.03, blue: 0.28), deepBlue.opacity(0.92)],
+        colors: [
+            Color(red: 0.006, green: 0.012, blue: 0.09),
+            navy,
+            Color(red: 0.055, green: 0.025, blue: 0.30),
+            deepBlue.opacity(0.96)
+        ],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
 
     static let sidebarGradient = LinearGradient(
-        colors: [Color(red: 0.015, green: 0.025, blue: 0.16), Color(red: 0.04, green: 0.035, blue: 0.32)],
+        colors: [
+            Color(red: 0.008, green: 0.016, blue: 0.11),
+            Color(red: 0.035, green: 0.025, blue: 0.27),
+            Color(red: 0.025, green: 0.065, blue: 0.35)
+        ],
         startPoint: .top,
         endPoint: .bottom
     )
 
     static let backgroundGlow = RadialGradient(
-        colors: [indigo.opacity(0.10), Color.clear],
+        colors: [
+            cyan.opacity(0.12),
+            violet.opacity(0.10),
+            indigo.opacity(0.055),
+            Color.clear
+        ],
         center: .topTrailing,
-        startRadius: 20,
-        endRadius: 520
+        startRadius: 8,
+        endRadius: 610
     )
 }
 
@@ -57,13 +106,32 @@ struct GalacticCard<Content: View>: View {
     var body: some View {
         content
             .padding(padding)
-            .background(GalacticTheme.panel)
+            .background {
+                ZStack {
+                    GalacticTheme.glassGradient
+
+                    RadialGradient(
+                        colors: [GalacticTheme.cyan.opacity(0.055), Color.clear],
+                        center: .topTrailing,
+                        startRadius: 0,
+                        endRadius: 190
+                    )
+
+                    RadialGradient(
+                        colors: [GalacticTheme.violet.opacity(0.045), Color.clear],
+                        center: .bottomLeading,
+                        startRadius: 0,
+                        endRadius: 170
+                    )
+                }
+            }
             .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
             .overlay {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .stroke(GalacticTheme.divider.opacity(0.72), lineWidth: 1)
+                    .stroke(GalacticTheme.cardBorderGradient, lineWidth: 1.15)
             }
-            .shadow(color: GalacticTheme.navy.opacity(0.065), radius: 20, y: 9)
+            .shadow(color: GalacticTheme.indigo.opacity(0.10), radius: 22, y: 10)
+            .shadow(color: GalacticTheme.cyan.opacity(0.055), radius: 8, y: 2)
     }
 }
 
@@ -75,14 +143,22 @@ struct MetricTile: View {
     let tint: Color
 
     var body: some View {
-        GalacticCard(padding: 16, radius: 18) {
+        GalacticCard(padding: 16, radius: 20) {
             HStack(alignment: .top, spacing: 13) {
                 Image(systemName: systemImage)
                     .font(.subheadline.bold())
+                    .symbolRenderingMode(.hierarchical)
                     .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
-                    .background(tint.gradient)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .frame(width: 42, height: 42)
+                    .background {
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .fill(tint.gradient)
+                    }
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .stroke(Color.white.opacity(0.34), lineWidth: 0.8)
+                    }
+                    .shadow(color: tint.opacity(0.30), radius: 10, y: 5)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
@@ -111,14 +187,27 @@ struct SectionHeader: View {
 
     var body: some View {
         HStack {
-            Text(title)
-                .font(.headline)
-                .foregroundStyle(GalacticTheme.navy)
+            HStack(spacing: 7) {
+                Circle()
+                    .fill(GalacticTheme.accentGradient)
+                    .frame(width: 7, height: 7)
+                    .shadow(color: GalacticTheme.cyan.opacity(0.40), radius: 4)
+
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(GalacticTheme.navy)
+            }
+
             Spacer()
+
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .font(.caption.weight(.semibold))
+                    .font(.caption.weight(.bold))
                     .foregroundStyle(GalacticTheme.indigo)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(GalacticTheme.indigo.opacity(0.075))
+                    .clipShape(Capsule())
             }
         }
     }
