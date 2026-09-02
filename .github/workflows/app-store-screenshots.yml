@@ -2,8 +2,11 @@ name: App Store Screenshots
 
 on:
   push:
+    branches:
+      - main
     paths:
       - .github/workflows/app-store-screenshots.yml
+      - 'ios/GalacticTrustBusiness/**'
   workflow_dispatch:
 
 permissions:
