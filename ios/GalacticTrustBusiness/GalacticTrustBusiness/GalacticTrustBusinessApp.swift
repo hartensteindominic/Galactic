@@ -115,48 +115,55 @@ struct RootView: View {
 private struct GalacticFloatingTabBar: View {
     @Binding var selection: AppTab
 
-    private let tabs: [(AppTab, String, String)] = [
-        (.dashboard, "Home", "house.fill"),
-        (.transactions, "Activity", "list.bullet.rectangle.portrait.fill"),
-        (.cashFlow, "Cash Flow", "chart.xyaxis.line"),
-        (.ai, "AI", "sparkles"),
-        (.more, "More", "ellipsis.circle.fill")
+    private struct TabItem: Identifiable {
+        let tab: AppTab
+        let title: String
+        let icon: String
+
+        var id: AppTab { tab }
+    }
+
+    private let tabs: [TabItem] = [
+        TabItem(tab: .dashboard, title: "Home", icon: "house.fill"),
+        TabItem(tab: .transactions, title: "Activity", icon: "list.bullet.rectangle.portrait.fill"),
+        TabItem(tab: .cashFlow, title: "Cash Flow", icon: "chart.xyaxis.line"),
+        TabItem(tab: .ai, title: "AI", icon: "sparkles"),
+        TabItem(tab: .more, title: "More", icon: "ellipsis.circle.fill")
     ]
 
     var body: some View {
         HStack(spacing: 5) {
-            ForEach(tabs, id: \.0) { tab, title, icon in
+            ForEach(tabs) { item in
                 Button {
                     withAnimation(.snappy(duration: 0.24)) {
-                        selection = tab
+                        selection = item.tab
                     }
                 } label: {
                     VStack(spacing: 4) {
-                        Image(systemName: icon)
+                        Image(systemName: item.icon)
                             .font(.system(size: 17, weight: .semibold))
-                            .symbolEffect(.bounce, value: selection == tab)
+                            .symbolEffect(.bounce, value: selection == item.tab)
 
-                        Text(title)
+                        Text(item.title)
                             .font(.system(size: 9.5, weight: .semibold, design: .rounded))
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
                     }
-                    .foregroundStyle(selection == tab ? Color.white : Color.white.opacity(0.68))
+                    .foregroundStyle(selection == item.tab ? Color.white : Color.white.opacity(0.68))
                     .frame(maxWidth: .infinity)
                     .frame(height: 52)
                     .background {
-                        if selection == tab {
+                        if selection == item.tab {
                             RoundedRectangle(cornerRadius: 13, style: .continuous)
                                 .fill(GalacticTheme.heroGradient)
                                 .shadow(color: GalacticTheme.indigo.opacity(0.48), radius: 11, y: 5)
-                                .matchedGeometryEffectPlaceholder(id: "selected-tab")
                         }
                     }
                     .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(title)
-                .accessibilityAddTraits(selection == tab ? .isSelected : [])
+                .accessibilityLabel(item.title)
+                .accessibilityAddTraits(selection == item.tab ? .isSelected : [])
             }
         }
         .padding(6)
@@ -169,13 +176,6 @@ private struct GalacticFloatingTabBar: View {
                 }
                 .shadow(color: GalacticTheme.navy.opacity(0.34), radius: 24, y: 12)
         }
-    }
-}
-
-private extension View {
-    @ViewBuilder
-    func matchedGeometryEffectPlaceholder(id: String) -> some View {
-        self
     }
 }
 
