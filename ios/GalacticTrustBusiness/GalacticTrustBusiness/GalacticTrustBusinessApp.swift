@@ -28,7 +28,7 @@ struct RootView: View {
                 }
                 .background(GalacticTheme.page)
             } else {
-                compactTabs
+                compactShell
                     .onAppear {
                         if !selection.supportsCompactTab {
                             selection = .dashboard
@@ -39,29 +39,36 @@ struct RootView: View {
         .tint(GalacticTheme.indigo)
     }
 
-    private var compactTabs: some View {
-        TabView(selection: $selection) {
-            NavigationStack { DashboardView(selection: $selection) }
-                .tabItem { Label("Home", systemImage: "house.fill") }
-                .tag(AppTab.dashboard)
+    private var compactShell: some View {
+        ZStack(alignment: .bottom) {
+            compactDestination(for: selection)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.bottom, 76)
 
-            NavigationStack { TransactionsView() }
-                .tabItem { Label("Transactions", systemImage: "list.bullet.rectangle.portrait.fill") }
-                .tag(AppTab.transactions)
-
-            NavigationStack { CashFlowView() }
-                .tabItem { Label("Cash Flow", systemImage: "chart.xyaxis.line") }
-                .tag(AppTab.cashFlow)
-
-            NavigationStack { AIManagerView() }
-                .tabItem { Label("AI", systemImage: "sparkles") }
-                .tag(AppTab.ai)
-
-            NavigationStack { MoreView() }
-                .tabItem { Label("More", systemImage: "ellipsis.circle.fill") }
-                .tag(AppTab.more)
+            GalacticFloatingTabBar(selection: $selection)
+                .padding(.horizontal, 10)
+                .padding(.bottom, 8)
         }
-        .tint(GalacticTheme.indigo)
+        .background(GalacticTheme.page.ignoresSafeArea())
+        .animation(.snappy(duration: 0.28), value: selection)
+    }
+
+    @ViewBuilder
+    private func compactDestination(for tab: AppTab) -> some View {
+        switch tab {
+        case .dashboard:
+            NavigationStack { DashboardView(selection: $selection) }
+        case .transactions:
+            NavigationStack { TransactionsView() }
+        case .cashFlow:
+            NavigationStack { CashFlowView() }
+        case .ai:
+            NavigationStack { AIManagerView() }
+        case .more:
+            NavigationStack { MoreView() }
+        default:
+            NavigationStack { DashboardView(selection: $selection) }
+        }
     }
 
     @ViewBuilder
@@ -101,6 +108,73 @@ struct RootView: View {
             NavigationStack { ImportGuideView() }
         case .help:
             NavigationStack { BusinessModuleView(kind: .help) }
+        }
+    }
+}
+
+private struct GalacticFloatingTabBar: View {
+    @Binding var selection: AppTab
+
+    private struct TabItem: Identifiable {
+        let tab: AppTab
+        let title: String
+        let icon: String
+
+        var id: AppTab { tab }
+    }
+
+    private let tabs: [TabItem] = [
+        TabItem(tab: .dashboard, title: "Home", icon: "house.fill"),
+        TabItem(tab: .transactions, title: "Activity", icon: "list.bullet.rectangle.portrait.fill"),
+        TabItem(tab: .cashFlow, title: "Cash Flow", icon: "chart.xyaxis.line"),
+        TabItem(tab: .ai, title: "AI", icon: "sparkles"),
+        TabItem(tab: .more, title: "More", icon: "ellipsis.circle.fill")
+    ]
+
+    var body: some View {
+        HStack(spacing: 5) {
+            ForEach(tabs) { item in
+                Button {
+                    withAnimation(.snappy(duration: 0.24)) {
+                        selection = item.tab
+                    }
+                } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: item.icon)
+                            .font(.system(size: 17, weight: .semibold))
+                            .symbolEffect(.bounce, value: selection == item.tab)
+
+                        Text(item.title)
+                            .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                    }
+                    .foregroundStyle(selection == item.tab ? Color.white : Color.white.opacity(0.68))
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 52)
+                    .background {
+                        if selection == item.tab {
+                            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                                .fill(GalacticTheme.heroGradient)
+                                .shadow(color: GalacticTheme.indigo.opacity(0.48), radius: 11, y: 5)
+                        }
+                    }
+                    .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(item.title)
+                .accessibilityAddTraits(selection == item.tab ? .isSelected : [])
+            }
+        }
+        .padding(6)
+        .background {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(GalacticTheme.sidebarGradient)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                }
+                .shadow(color: GalacticTheme.navy.opacity(0.34), radius: 24, y: 12)
         }
     }
 }
