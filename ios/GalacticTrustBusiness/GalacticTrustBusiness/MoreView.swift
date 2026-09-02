@@ -23,6 +23,12 @@ struct MoreView: View {
 
             Section {
                 NavigationLink {
+                    ThemeStudioView()
+                } label: {
+                    moreRow("Theme Studio", icon: "paintpalette.fill", tint: GalacticTheme.palette.highlight)
+                }
+
+                NavigationLink {
                     ImportGuideView()
                 } label: {
                     moreRow("Import financial data", icon: "square.and.arrow.down.fill", tint: GalacticTheme.green)
@@ -34,7 +40,7 @@ struct MoreView: View {
                     moreRow("Security & privacy", icon: "lock.shield.fill", tint: GalacticTheme.cyan)
                 }
             } header: {
-                Text("Data")
+                Text("Personalize & Data")
             }
 
             Section {
@@ -48,7 +54,12 @@ struct MoreView: View {
             }
         }
         .scrollContentBackground(.hidden)
-        .background(GalacticTheme.page)
+        .background {
+            ZStack {
+                GalacticTheme.page
+                GalacticTheme.backgroundGlow
+            }
+        }
         .navigationTitle("More")
     }
 
@@ -62,6 +73,310 @@ struct MoreView: View {
                 .frame(width: 30, height: 30)
                 .background(tint.gradient)
                 .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+        }
+    }
+}
+
+struct ThemeStudioView: View {
+    @AppStorage(GalacticThemeOption.storageKey) private var selectedThemeID = GalacticThemeOption.defaultTheme.rawValue
+    @AppStorage(GalacticLayoutStyle.storageKey) private var selectedLayoutID = GalacticLayoutStyle.defaultLayout.rawValue
+
+    private let themeColumns = [
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
+    ]
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 22) {
+                heroPreview
+                layoutPicker
+
+                VStack(alignment: .leading, spacing: 5) {
+                    Text("20 Galactic color worlds")
+                        .font(.title3.bold())
+                        .foregroundStyle(GalacticTheme.navy)
+                    Text("Tap any theme to recolor the app instantly. Your choice stays selected when you reopen the app.")
+                        .font(.caption)
+                        .foregroundStyle(GalacticTheme.mutedText)
+                }
+
+                LazyVGrid(columns: themeColumns, spacing: 10) {
+                    ForEach(GalacticThemeOption.allCases) { option in
+                        themeCard(option)
+                    }
+                }
+
+                Label("Themes change appearance only. They never change financial data, calculations, privacy, or app permissions.", systemImage: "checkmark.shield.fill")
+                    .font(.caption)
+                    .foregroundStyle(GalacticTheme.mutedText)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(GalacticTheme.glassGradient)
+                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                            .stroke(GalacticTheme.cardBorderGradient, lineWidth: 1)
+                    }
+            }
+            .padding(16)
+            .padding(.bottom, 18)
+        }
+        .background {
+            ZStack {
+                GalacticTheme.page
+                GalacticTheme.backgroundGlow
+            }
+            .ignoresSafeArea()
+        }
+        .navigationTitle("Theme Studio")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var selectedTheme: GalacticThemeOption {
+        GalacticThemeOption(rawValue: selectedThemeID) ?? GalacticThemeOption.defaultTheme
+    }
+
+    private var selectedLayout: GalacticLayoutStyle {
+        GalacticLayoutStyle(rawValue: selectedLayoutID) ?? GalacticLayoutStyle.defaultLayout
+    }
+
+    private var heroPreview: some View {
+        let palette = selectedTheme.palette
+
+        return VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("YOUR GALACTIC LOOK")
+                        .font(.system(size: 9, weight: .bold))
+                        .tracking(1.2)
+                    Text(selectedTheme.name)
+                        .font(.title2.bold())
+                    Text("\(selectedLayout.name) • \(selectedTheme.subtitle)")
+                        .font(.caption)
+                }
+                .foregroundStyle(selectedTheme.usesDarkHeroText ? palette.ink : Color.white)
+
+                Spacer()
+                miniMoon(palette: palette, size: 70)
+            }
+
+            HStack(spacing: 10) {
+                previewPill("Balance", value: "$249K", palette: palette)
+                previewPill("Net", value: "+$45K", palette: palette)
+                previewPill("AI", value: "Ready", palette: palette)
+            }
+        }
+        .padding(18)
+        .background {
+            ZStack {
+                LinearGradient(
+                    colors: [palette.heroStart, palette.heroMid, palette.heroEnd],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+
+                RadialGradient(
+                    colors: [palette.highlight.opacity(0.42), Color.clear],
+                    center: .topTrailing,
+                    startRadius: 0,
+                    endRadius: 180
+                )
+
+                LinearGradient(
+                    colors: [Color.white.opacity(0.16), Color.clear, Color.white.opacity(0.08)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: selectedLayout.cardRadius + 4, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: selectedLayout.cardRadius + 4, style: .continuous)
+                .stroke(Color.white.opacity(0.70), lineWidth: selectedLayout.strokeWidth)
+        }
+        .shadow(color: palette.primary.opacity(0.16), radius: selectedLayout.shadowRadius, y: 10)
+    }
+
+    private var layoutPicker: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Choose your layout")
+                    .font(.headline)
+                    .foregroundStyle(GalacticTheme.navy)
+                Text("Five shapes × twenty colors = 100 possible Galactic combinations.")
+                    .font(.caption)
+                    .foregroundStyle(GalacticTheme.mutedText)
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(GalacticLayoutStyle.allCases) { layout in
+                        Button {
+                            withAnimation(.snappy(duration: 0.24)) {
+                                selectedLayoutID = layout.rawValue
+                            }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Image(systemName: layout.icon)
+                                        .font(.headline)
+                                    Spacer()
+                                    if selectedLayoutID == layout.rawValue {
+                                        Image(systemName: "checkmark.circle.fill")
+                                    }
+                                }
+                                Text(layout.name)
+                                    .font(.subheadline.bold())
+                                Text(layout.subtitle)
+                                    .font(.caption2)
+                                    .foregroundStyle(GalacticTheme.mutedText)
+                            }
+                            .foregroundStyle(GalacticTheme.navy)
+                            .frame(width: 128, height: 88, alignment: .leading)
+                            .padding(12)
+                            .background {
+                                RoundedRectangle(cornerRadius: layout.cardRadius, style: .continuous)
+                                    .fill(selectedLayoutID == layout.rawValue ? GalacticTheme.softPanel : Color.white.opacity(0.78))
+                            }
+                            .overlay {
+                                RoundedRectangle(cornerRadius: layout.cardRadius, style: .continuous)
+                                    .stroke(selectedLayoutID == layout.rawValue ? GalacticTheme.indigo : GalacticTheme.divider, lineWidth: selectedLayoutID == layout.rawValue ? 1.7 : 1)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+        }
+    }
+
+    private func themeCard(_ option: GalacticThemeOption) -> some View {
+        let palette = option.palette
+        let selected = selectedThemeID == option.rawValue
+
+        return Button {
+            withAnimation(.easeInOut(duration: 0.30)) {
+                selectedThemeID = option.rawValue
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: 9) {
+                ZStack(alignment: .bottomLeading) {
+                    LinearGradient(
+                        colors: [palette.heroStart, palette.heroMid, palette.heroEnd],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+
+                    RadialGradient(
+                        colors: [palette.highlight.opacity(0.50), Color.clear],
+                        center: .topTrailing,
+                        startRadius: 0,
+                        endRadius: 100
+                    )
+
+                    miniMoon(palette: palette, size: 48)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                        .padding(8)
+
+                    HStack(spacing: 5) {
+                        Circle().fill(palette.primary).frame(width: 8, height: 8)
+                        Circle().fill(palette.secondary).frame(width: 8, height: 8)
+                        Circle().fill(palette.tertiary).frame(width: 8, height: 8)
+                        Circle().fill(palette.highlight).frame(width: 8, height: 8)
+                    }
+                    .padding(9)
+                }
+                .frame(height: 92)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.white.opacity(0.70), lineWidth: 1)
+                }
+
+                HStack(alignment: .top, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(option.name)
+                            .font(.caption.bold())
+                            .foregroundStyle(GalacticTheme.navy)
+                        Text(option.subtitle)
+                            .font(.system(size: 9.5, weight: .medium))
+                            .foregroundStyle(GalacticTheme.mutedText)
+                            .lineLimit(2)
+                    }
+                    Spacer(minLength: 2)
+                    if selected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(GalacticTheme.indigo)
+                    }
+                }
+            }
+            .padding(8)
+            .background(Color.white.opacity(selected ? 0.94 : 0.70))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(selected ? GalacticTheme.indigo : GalacticTheme.divider.opacity(0.85), lineWidth: selected ? 1.7 : 1)
+            }
+            .shadow(color: selected ? GalacticTheme.indigo.opacity(0.12) : .clear, radius: 12, y: 5)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(option.name), \(option.subtitle)\(selected ? ", selected" : "")")
+    }
+
+    private func miniMoon(palette: GalacticPalette, size: CGFloat) -> some View {
+        ZStack {
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [Color.white, palette.heroEnd, palette.secondary.opacity(0.88)],
+                        center: .topLeading,
+                        startRadius: 1,
+                        endRadius: size * 0.78
+                    )
+                )
+                .overlay {
+                    Circle()
+                        .stroke(Color.white.opacity(0.78), lineWidth: 1)
+                }
+                .shadow(color: palette.tertiary.opacity(0.42), radius: 10)
+
+            Circle()
+                .fill(palette.ink.opacity(0.10))
+                .frame(width: size * 0.18, height: size * 0.18)
+                .offset(x: -size * 0.16, y: -size * 0.08)
+
+            Circle()
+                .fill(Color.white.opacity(0.24))
+                .frame(width: size * 0.13, height: size * 0.13)
+                .offset(x: size * 0.15, y: size * 0.13)
+
+            Ellipse()
+                .stroke(
+                    LinearGradient(colors: [palette.highlight, palette.tertiary], startPoint: .leading, endPoint: .trailing),
+                    lineWidth: max(2, size * 0.045)
+                )
+                .frame(width: size * 1.14, height: size * 0.38)
+                .rotationEffect(.degrees(-13))
+        }
+        .frame(width: size, height: size)
+    }
+
+    private func previewPill(_ title: String, value: String, palette: GalacticPalette) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(title)
+                .font(.system(size: 8, weight: .semibold))
+            Text(value)
+                .font(.caption.bold())
+        }
+        .foregroundStyle(selectedTheme.usesDarkHeroText ? palette.ink : Color.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(Color.white.opacity(selectedTheme.usesDarkHeroText ? 0.48 : 0.14))
+        .clipShape(Capsule())
+        .overlay {
+            Capsule().stroke(Color.white.opacity(0.46), lineWidth: 0.8)
         }
     }
 }
