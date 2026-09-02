@@ -21,26 +21,28 @@ struct RootView: View {
 
     var body: some View {
         Group {
-            if horizontalSizeClass == .regular {
-                HStack(spacing: 0) {
-                    GalacticSidebar(selection: $selection)
-                        .frame(width: 230)
-                    destination(for: selection)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .background(GalacticTheme.page)
+            if selection.supportsCompactTab {
+                compactShell
+            } else if horizontalSizeClass == .regular {
+                regularShell
             } else {
                 compactShell
-                    .onAppear {
-                        if !selection.supportsCompactTab {
-                            selection = .dashboard
-                        }
-                    }
+                    .onAppear { selection = .dashboard }
             }
         }
         .tint(GalacticTheme.indigo)
         .animation(.easeInOut(duration: 0.32), value: selectedThemeID)
         .animation(.snappy(duration: 0.24), value: selectedLayoutID)
+    }
+
+    private var regularShell: some View {
+        HStack(spacing: 0) {
+            GalacticSidebar(selection: $selection)
+                .frame(width: 230)
+            destination(for: selection)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .background(GalacticTheme.page)
     }
 
     private var compactShell: some View {
@@ -63,6 +65,7 @@ struct RootView: View {
                 .padding(.bottom, 76)
 
             GalacticFloatingTabBar(selection: $selection)
+                .frame(maxWidth: 620)
                 .padding(.horizontal, 12)
                 .padding(.bottom, 6)
         }
@@ -91,7 +94,7 @@ struct RootView: View {
     private func destination(for tab: AppTab) -> some View {
         switch tab {
         case .dashboard:
-            NavigationStack { DashboardView(selection: $selection) }
+            NavigationStack { ConceptDashboardView(selection: $selection) }
         case .accounts:
             NavigationStack { BusinessModuleView(kind: .accounts) }
         case .transactions:
