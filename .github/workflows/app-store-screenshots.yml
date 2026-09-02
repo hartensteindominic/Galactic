@@ -130,7 +130,7 @@ jobs:
 
             udid=$(xcrun simctl create "Galactic-${label}-${GITHUB_RUN_ID}" "$dtype" "$RUNTIME")
             echo "Created $label simulator $udid"
-            xcrun simctl boot "$udid" || true
+            timeout_run xcrun simctl boot "$udid" || true
             wait_for_boot "$udid"
             sleep 5
 
