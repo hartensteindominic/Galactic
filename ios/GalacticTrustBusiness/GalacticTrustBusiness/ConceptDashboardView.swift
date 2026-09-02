@@ -15,26 +15,24 @@ struct ConceptDashboardView: View {
     private let green = Color(red: 0.03, green: 0.76, blue: 0.37)
 
     var body: some View {
-        GeometryReader { proxy in
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 8) {
-                    header
-                    searchRow
-                    cashHero
-                    quickActions
-                    metricGrid
-                    aiBrief
-                }
-                .frame(maxWidth: 470)
-                .padding(.horizontal, 12)
-                .padding(.top, 6)
-                .padding(.bottom, 8)
-                .frame(maxWidth: .infinity)
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 8) {
+                header
+                searchRow
+                cashHero
+                quickActions
+                metricGrid
+                aiBrief
             }
-            .background {
-                ConceptPastelPageBackground()
-                    .ignoresSafeArea()
-            }
+            .frame(maxWidth: 470)
+            .padding(.horizontal, 12)
+            .padding(.top, 6)
+            .padding(.bottom, 8)
+            .frame(maxWidth: .infinity)
+        }
+        .background {
+            ConceptPastelPageBackground()
+                .ignoresSafeArea()
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showingInvoices) {
@@ -115,32 +113,34 @@ struct ConceptDashboardView: View {
                 ConceptPastelHeroBackground()
 
                 GeometryReader { geo in
-                    ConceptMoon()
-                        .frame(width: min(geo.size.width * 0.50, 194), height: min(geo.size.width * 0.50, 194))
+                    Image("ApprovedMoon")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: min(geo.size.width * 0.54, 206), height: min(geo.size.width * 0.54, 206))
+                        .shadow(color: Color.white.opacity(0.82), radius: 8)
+                        .shadow(color: violet.opacity(0.22), radius: 18)
                         .position(x: geo.size.width * 0.82, y: geo.size.height * 0.58)
 
                     Circle()
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color(red: 0.75, green: 0.48, blue: 1.0),
-                                    Color(red: 0.54, green: 0.64, blue: 1.0),
-                                    Color(red: 0.48, green: 0.86, blue: 1.0)
+                                    Color(red: 0.76, green: 0.50, blue: 1.0),
+                                    Color(red: 0.55, green: 0.64, blue: 1.0),
+                                    Color(red: 0.48, green: 0.87, blue: 1.0)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .frame(width: 48, height: 48)
-                        .overlay {
-                            Circle().stroke(Color.white.opacity(0.78), lineWidth: 1.1)
-                        }
+                        .overlay { Circle().stroke(Color.white.opacity(0.82), lineWidth: 1.1) }
                         .overlay {
                             Image(systemName: "arrow.up.right")
                                 .font(.system(size: 22, weight: .semibold))
                                 .foregroundStyle(.white)
                         }
-                        .shadow(color: Color.white.opacity(0.72), radius: 6)
+                        .shadow(color: Color.white.opacity(0.74), radius: 6)
                         .shadow(color: violet.opacity(0.30), radius: 15)
                         .position(x: geo.size.width * 0.91, y: geo.size.height * 0.82)
                 }
@@ -195,18 +195,18 @@ struct ConceptDashboardView: View {
                         LinearGradient(
                             colors: [
                                 Color.white,
-                                Color(red: 1.0, green: 0.78, blue: 0.87).opacity(0.92),
-                                Color(red: 0.69, green: 0.63, blue: 1.0).opacity(0.88),
-                                Color(red: 0.50, green: 0.88, blue: 1.0).opacity(0.94)
+                                Color(red: 1.0, green: 0.78, blue: 0.87).opacity(0.94),
+                                Color(red: 0.69, green: 0.63, blue: 1.0).opacity(0.90),
+                                Color(red: 0.50, green: 0.88, blue: 1.0).opacity(0.96)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1.6
+                        lineWidth: 1.7
                     )
             }
-            .shadow(color: Color(red: 0.48, green: 0.42, blue: 0.92).opacity(0.16), radius: 17, y: 8)
-            .shadow(color: Color.white.opacity(0.92), radius: 2)
+            .shadow(color: Color(red: 0.48, green: 0.42, blue: 0.92).opacity(0.17), radius: 18, y: 8)
+            .shadow(color: Color.white.opacity(0.94), radius: 2)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Recorded cash \(store.currency(store.balance)). Open cash flow.")
@@ -516,28 +516,28 @@ private struct ConceptPastelPageBackground: View {
                 )
 
                 RadialGradient(
-                    colors: [Color(red: 1.0, green: 0.78, blue: 0.54).opacity(0.24), .clear],
+                    colors: [Color(red: 1.0, green: 0.78, blue: 0.54).opacity(0.24), Color.clear],
                     center: UnitPoint(x: 0.68, y: 0.20),
                     startRadius: 0,
                     endRadius: proxy.size.width * 0.72
                 )
 
                 RadialGradient(
-                    colors: [Color(red: 1.0, green: 0.62, blue: 0.76).opacity(0.26), .clear],
+                    colors: [Color(red: 1.0, green: 0.62, blue: 0.76).opacity(0.26), Color.clear],
                     center: UnitPoint(x: 0.92, y: 0.34),
                     startRadius: 0,
                     endRadius: proxy.size.width * 0.82
                 )
 
                 RadialGradient(
-                    colors: [Color(red: 0.63, green: 0.55, blue: 1.0).opacity(0.20), .clear],
+                    colors: [Color(red: 0.63, green: 0.55, blue: 1.0).opacity(0.20), Color.clear],
                     center: UnitPoint(x: 0.18, y: 0.80),
                     startRadius: 0,
                     endRadius: proxy.size.width * 0.88
                 )
 
                 RadialGradient(
-                    colors: [Color(red: 0.46, green: 0.78, blue: 1.0).opacity(0.17), .clear],
+                    colors: [Color(red: 0.46, green: 0.78, blue: 1.0).opacity(0.17), Color.clear],
                     center: .bottomTrailing,
                     startRadius: 0,
                     endRadius: proxy.size.width * 0.90
@@ -565,21 +565,21 @@ private struct ConceptPastelHeroBackground: View {
             )
 
             RadialGradient(
-                colors: [Color.white.opacity(0.78), .clear],
+                colors: [Color.white.opacity(0.78), Color.clear],
                 center: UnitPoint(x: 0.12, y: 0.20),
                 startRadius: 0,
                 endRadius: 165
             )
 
             RadialGradient(
-                colors: [Color(red: 1.0, green: 0.47, blue: 0.83).opacity(0.32), .clear],
+                colors: [Color(red: 1.0, green: 0.47, blue: 0.83).opacity(0.32), Color.clear],
                 center: UnitPoint(x: 0.52, y: 0.82),
                 startRadius: 0,
                 endRadius: 185
             )
 
             RadialGradient(
-                colors: [Color(red: 0.39, green: 0.61, blue: 1.0).opacity(0.27), .clear],
+                colors: [Color(red: 0.39, green: 0.61, blue: 1.0).opacity(0.27), Color.clear],
                 center: .topTrailing,
                 startRadius: 0,
                 endRadius: 180
@@ -660,138 +660,13 @@ private struct ConceptStars: View {
                                 .fill(Color.white.opacity(opacity * 0.72))
                                 .frame(width: 9, height: 1)
                         }
-                        .shadow(color: .white.opacity(opacity), radius: 4)
+                        .shadow(color: Color.white.opacity(opacity), radius: 4)
                         .position(x: proxy.size.width * x, y: proxy.size.height * y)
                     }
                 }
             }
         }
         .allowsHitTesting(false)
-    }
-}
-
-private struct ConceptMoon: View {
-    var body: some View {
-        GeometryReader { proxy in
-            let s = min(proxy.size.width, proxy.size.height)
-
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.72))
-                    .frame(width: s * 1.18, height: s * 1.18)
-                    .blur(radius: s * 0.10)
-
-                Ellipse()
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.98),
-                                Color(red: 1.0, green: 0.68, blue: 0.93),
-                                Color(red: 0.72, green: 0.60, blue: 1.0),
-                                Color(red: 0.43, green: 0.88, blue: 1.0)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ),
-                        lineWidth: max(3, s * 0.035)
-                    )
-                    .frame(width: s * 1.24, height: s * 0.40)
-                    .rotationEffect(.degrees(-16))
-                    .shadow(color: Color.white.opacity(0.95), radius: 8)
-                    .shadow(color: Color(red: 0.58, green: 0.45, blue: 1.0).opacity(0.34), radius: 12)
-
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color(red: 1.0, green: 0.96, blue: 0.88),
-                                Color(red: 1.0, green: 0.82, blue: 0.86),
-                                Color(red: 0.87, green: 0.66, blue: 0.96),
-                                Color(red: 0.50, green: 0.57, blue: 0.96),
-                                Color(red: 0.28, green: 0.43, blue: 0.88)
-                            ],
-                            center: UnitPoint(x: 0.28, y: 0.22),
-                            startRadius: 0,
-                            endRadius: s * 0.72
-                        )
-                    )
-                    .overlay {
-                        MoonTexture()
-                            .clipShape(Circle())
-                    }
-                    .overlay {
-                        RadialGradient(
-                            colors: [Color.white.opacity(0.55), .clear],
-                            center: UnitPoint(x: 0.25, y: 0.18),
-                            startRadius: 0,
-                            endRadius: s * 0.40
-                        )
-                        .clipShape(Circle())
-                    }
-                    .overlay {
-                        Circle()
-                            .stroke(
-                                LinearGradient(
-                                    colors: [Color.white.opacity(0.96), Color(red: 0.55, green: 0.83, blue: 1.0).opacity(0.48)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1.2
-                            )
-                    }
-                    .shadow(color: Color.white.opacity(0.88), radius: 4)
-                    .shadow(color: Color(red: 0.52, green: 0.67, blue: 1.0).opacity(0.58), radius: 20)
-            }
-            .frame(width: s, height: s)
-        }
-        .accessibilityHidden(true)
-    }
-}
-
-private struct MoonTexture: View {
-    var body: some View {
-        GeometryReader { proxy in
-            let s = min(proxy.size.width, proxy.size.height)
-
-            ZStack {
-                ForEach(0..<30, id: \.self) { index in
-                    let crater = s * CGFloat(0.018 + Double(index % 5) * 0.009)
-                    let x = s * CGFloat(0.12 + Double((index * 31) % 76) / 100.0)
-                    let y = s * CGFloat(0.10 + Double((index * 47) % 78) / 100.0)
-
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color(red: 0.24, green: 0.25, blue: 0.58).opacity(0.24),
-                                    Color(red: 0.54, green: 0.45, blue: 0.78).opacity(0.10),
-                                    Color.clear
-                                ],
-                                center: .bottomTrailing,
-                                startRadius: 0,
-                                endRadius: crater
-                            )
-                        )
-                        .overlay {
-                            Circle()
-                                .stroke(Color.white.opacity(index.isMultiple(of: 3) ? 0.28 : 0.14), lineWidth: 0.7)
-                        }
-                        .frame(width: crater, height: crater)
-                        .position(x: x, y: y)
-                }
-
-                ForEach(0..<8, id: \.self) { index in
-                    Ellipse()
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        .frame(width: s * CGFloat(0.20 + Double(index % 3) * 0.05), height: s * 0.04)
-                        .rotationEffect(.degrees(Double(index * 17 - 45)))
-                        .position(
-                            x: s * CGFloat(0.18 + Double((index * 23) % 66) / 100.0),
-                            y: s * CGFloat(0.16 + Double((index * 39) % 66) / 100.0)
-                        )
-                }
-            }
-        }
     }
 }
 
