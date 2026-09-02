@@ -41,15 +41,27 @@ struct RootView: View {
 
     private var compactShell: some View {
         ZStack(alignment: .bottom) {
+            ZStack {
+                GalacticTheme.page
+                GalacticTheme.backgroundGlow
+
+                RadialGradient(
+                    colors: [GalacticTheme.violet.opacity(0.065), Color.clear],
+                    center: .bottomLeading,
+                    startRadius: 12,
+                    endRadius: 330
+                )
+            }
+            .ignoresSafeArea()
+
             compactDestination(for: selection)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.bottom, 72)
+                .padding(.bottom, 76)
 
             GalacticFloatingTabBar(selection: $selection)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 12)
                 .padding(.bottom, 6)
         }
-        .background(GalacticTheme.page.ignoresSafeArea())
         .animation(.snappy(duration: 0.28), value: selection)
     }
 
@@ -132,49 +144,101 @@ private struct GalacticFloatingTabBar: View {
     ]
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 3) {
             ForEach(tabs) { item in
+                let isSelected = selection == item.tab
+
                 Button {
                     withAnimation(.snappy(duration: 0.24)) {
                         selection = item.tab
                     }
                 } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: item.icon)
-                            .font(.system(size: 17, weight: .semibold))
-                            .symbolEffect(.bounce, value: selection == item.tab)
+                    VStack(spacing: 3) {
+                        ZStack {
+                            if isSelected {
+                                Circle()
+                                    .fill(GalacticTheme.heroGradient)
+                                    .frame(width: 31, height: 31)
+                                    .overlay {
+                                        Circle()
+                                            .stroke(Color.white.opacity(0.34), lineWidth: 0.8)
+                                    }
+                                    .shadow(color: GalacticTheme.cyan.opacity(0.30), radius: 8)
+                                    .shadow(color: GalacticTheme.violet.opacity(0.36), radius: 12)
+                            }
+
+                            Image(systemName: item.icon)
+                                .font(.system(size: isSelected ? 15 : 17, weight: .semibold))
+                                .symbolRenderingMode(.hierarchical)
+                                .symbolEffect(.bounce, value: isSelected)
+                        }
+                        .frame(height: 31)
 
                         Text(item.title)
-                            .font(.system(size: 9.5, weight: .semibold, design: .rounded))
+                            .font(.system(size: 9.5, weight: isSelected ? .bold : .semibold, design: .rounded))
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
+
+                        Capsule()
+                            .fill(isSelected ? AnyShapeStyle(GalacticTheme.accentGradient) : AnyShapeStyle(Color.clear))
+                            .frame(width: isSelected ? 18 : 4, height: 2)
+                            .shadow(color: isSelected ? GalacticTheme.cyan.opacity(0.55) : .clear, radius: 4)
                     }
-                    .foregroundStyle(selection == item.tab ? Color.white : Color.white.opacity(0.68))
+                    .foregroundStyle(isSelected ? Color.white : Color.white.opacity(0.62))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 50)
+                    .frame(height: 55)
                     .background {
-                        if selection == item.tab {
-                            RoundedRectangle(cornerRadius: 13, style: .continuous)
-                                .fill(GalacticTheme.heroGradient)
-                                .shadow(color: GalacticTheme.indigo.opacity(0.48), radius: 11, y: 5)
+                        if isSelected {
+                            RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                .fill(Color.white.opacity(0.075))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 15, style: .continuous)
+                                        .stroke(Color.white.opacity(0.08), lineWidth: 0.8)
+                                }
                         }
                     }
-                    .contentShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .contentShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(item.title)
-                .accessibilityAddTraits(selection == item.tab ? .isSelected : [])
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
             }
         }
-        .padding(6)
+        .padding(5)
         .background {
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(GalacticTheme.sidebarGradient)
                 .overlay {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    ZStack {
+                        RadialGradient(
+                            colors: [GalacticTheme.indigo.opacity(0.24), Color.clear],
+                            center: .topLeading,
+                            startRadius: 0,
+                            endRadius: 180
+                        )
+
+                        RadialGradient(
+                            colors: [GalacticTheme.cyan.opacity(0.16), Color.clear],
+                            center: .bottomTrailing,
+                            startRadius: 0,
+                            endRadius: 180
+                        )
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                 }
-                .shadow(color: GalacticTheme.navy.opacity(0.28), radius: 20, y: 10)
+                .overlay {
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0.24), GalacticTheme.cyan.opacity(0.16), GalacticTheme.violet.opacity(0.18)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                }
+                .shadow(color: GalacticTheme.navy.opacity(0.38), radius: 22, y: 11)
+                .shadow(color: GalacticTheme.indigo.opacity(0.12), radius: 8, y: 2)
         }
     }
 }
