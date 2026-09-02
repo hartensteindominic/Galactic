@@ -37,4 +37,14 @@ final class GalacticTrustBusinessTests: XCTestCase {
         XCTAssertEqual(rows[0].kind, .expense)
         XCTAssertEqual(rows[1].kind, .income)
     }
+
+    @MainActor
+    func testDemoWorkspaceAlwaysHasCurrentMonthActivity() {
+        let store = FinancialStore()
+        store.resetToDemo()
+
+        XCTAssertGreaterThan(store.currentMonthIncome, 0)
+        XCTAssertGreaterThan(store.currentMonthExpenses, 0)
+        XCTAssertGreaterThan(store.currentMonthNet, 0)
+    }
 }

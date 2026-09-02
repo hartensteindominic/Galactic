@@ -16,20 +16,24 @@ struct DashboardView: View {
     var body: some View {
         GeometryReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 14) {
+                LazyVStack(spacing: proxy.size.width <= 560 ? 12 : 14) {
                     topHeader(width: proxy.size.width)
 
                     if !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         searchResults
                     }
 
-                    metricGrid(width: proxy.size.width)
-                    heroGrid(width: proxy.size.width)
-                    analyticsGrid(width: proxy.size.width)
-                    activityGrid(width: proxy.size.width)
+                    if proxy.size.width <= 560 {
+                        compactDashboard(width: proxy.size.width)
+                    } else {
+                        metricGrid(width: proxy.size.width)
+                        heroGrid(width: proxy.size.width)
+                        analyticsGrid(width: proxy.size.width)
+                        activityGrid(width: proxy.size.width)
+                    }
                 }
-                .padding(.horizontal, proxy.size.width > 700 ? 24 : 16)
-                .padding(.top, 18)
+                .padding(.horizontal, proxy.size.width > 700 ? 24 : 14)
+                .padding(.top, proxy.size.width <= 560 ? 10 : 18)
                 .padding(.bottom, 28)
             }
             .background {
@@ -57,11 +61,19 @@ struct DashboardView: View {
         VStack(spacing: 12) {
             HStack(alignment: .center, spacing: 14) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Welcome back, \(store.profile.name)! 👋")
-                        .font(width > 760 ? .system(size: 25, weight: .bold) : .title3.bold())
+                    if width <= 560 {
+                        Text("GALACTIC TRUST • BUSINESS")
+                            .font(.system(size: 9, weight: .bold))
+                            .tracking(1.25)
+                            .foregroundStyle(GalacticTheme.indigo)
+                    }
+                    Text("Welcome back, \(store.profile.name)")
+                        .font(width > 760 ? .system(size: 25, weight: .bold) : .system(size: 21, weight: .bold, design: .rounded))
                         .foregroundStyle(GalacticTheme.navy)
-                    Text("Here’s your business financial overview.")
-                        .font(.subheadline)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.70)
+                    Text(width <= 560 ? "Your business money, made clear." : "Here’s your business financial overview.")
+                        .font(width <= 560 ? .caption : .subheadline)
                         .foregroundStyle(GalacticTheme.mutedText)
                 }
 
@@ -137,13 +149,16 @@ struct DashboardView: View {
                             .textInputAutocapitalization(.never)
                     }
                     .padding(.horizontal, 13)
+                    .frame(maxWidth: .infinity)
                     .frame(height: 40)
                     .background(.white)
                     .clipShape(Capsule())
                     .overlay { Capsule().stroke(GalacticTheme.divider, lineWidth: 1) }
                 }
 
-                Spacer(minLength: 0)
+                if width > 760 {
+                    Spacer(minLength: 0)
+                }
 
                 Menu {
                     Button("This month") { rangeMonths = 1 }
@@ -151,17 +166,20 @@ struct DashboardView: View {
                     Button("Last 6 months") { rangeMonths = 6 }
                 } label: {
                     HStack(spacing: 8) {
-                        Text(rangeLabel)
+                        if width > 760 {
+                            Text(rangeLabel)
+                        }
                         Image(systemName: "calendar")
                     }
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(GalacticTheme.navy)
-                    .padding(.horizontal, 13)
+                    .padding(.horizontal, width > 760 ? 13 : 12)
                     .frame(height: 40)
                     .background(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(GalacticTheme.divider, lineWidth: 1) }
+                    .clipShape(RoundedRectangle(cornerRadius: width > 760 ? 12 : 20, style: .continuous))
+                    .overlay { RoundedRectangle(cornerRadius: width > 760 ? 12 : 20, style: .continuous).stroke(GalacticTheme.divider, lineWidth: 1) }
                 }
+                .accessibilityLabel("Choose reporting period, currently \(rangeLabel)")
 
                 Menu {
                     ForEach(DashboardFilter.allCases) { option in
@@ -170,18 +188,257 @@ struct DashboardView: View {
                 } label: {
                     HStack(spacing: 7) {
                         Image(systemName: "line.3.horizontal.decrease")
-                        Text(filter == .all ? "Filters" : filter.rawValue)
+                        if width > 760 {
+                            Text(filter == .all ? "Filters" : filter.rawValue)
+                        }
                     }
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(GalacticTheme.navy)
-                    .padding(.horizontal, 13)
+                    .padding(.horizontal, width > 760 ? 13 : 12)
                     .frame(height: 40)
                     .background(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(GalacticTheme.divider, lineWidth: 1) }
+                    .clipShape(RoundedRectangle(cornerRadius: width > 760 ? 12 : 20, style: .continuous))
+                    .overlay { RoundedRectangle(cornerRadius: width > 760 ? 12 : 20, style: .continuous).stroke(GalacticTheme.divider, lineWidth: 1) }
                 }
+                .accessibilityLabel("Filter activity, currently \(filter.rawValue)")
             }
         }
+    }
+
+    // MARK: - Compact dashboard
+
+    private func compactDashboard(width: CGFloat) -> some View {
+        VStack(spacing: 12) {
+            compactCashHero(width: width)
+            compactQuickActions
+            compactMetricGrid
+            compactAIBriefCard
+            analyticsGrid(width: width)
+            activityGrid(width: width)
+        }
+    }
+
+    private func compactCashHero(width: CGFloat) -> some View {
+        Button {
+            selection = .cashFlow
+        } label: {
+            ZStack(alignment: .leading) {
+                Image("CosmicHeroBackground")
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: max(width - 28, 0), height: 194)
+
+                LinearGradient(
+                    colors: [GalacticTheme.navy.opacity(0.98), GalacticTheme.deepBlue.opacity(0.72), Color.clear],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 7) {
+                        Text("RECORDED CASH")
+                            .font(.system(size: 10, weight: .bold))
+                            .tracking(1.05)
+                        Spacer()
+                        Label("PRIVATE", systemImage: "checkmark.shield.fill")
+                            .font(.system(size: 9, weight: .bold))
+                    }
+                    .foregroundStyle(.white.opacity(0.82))
+
+                    Text(store.currency(store.balance))
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .minimumScaleFactor(0.60)
+                        .lineLimit(1)
+                        .contentTransition(.numericText())
+
+                    Text("Your current balance from recorded activity")
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.68))
+
+                    Spacer(minLength: 2)
+
+                    HStack(spacing: 20) {
+                        compactHeroAmount("Money in", value: "+\(store.currency(rangeIncome))", color: Color.mint)
+                        compactHeroAmount("Money out", value: "−\(store.currency(rangeExpenses))", color: Color(red: 1, green: 0.48, blue: 0.66))
+                        Spacer(minLength: 0)
+                        Image(systemName: "arrow.up.right")
+                            .font(.caption.bold())
+                            .foregroundStyle(.white)
+                            .frame(width: 30, height: 30)
+                            .background(.white.opacity(0.14))
+                            .clipShape(Circle())
+                    }
+                }
+                .padding(18)
+            }
+            .frame(height: 194)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(Color.white.opacity(0.13), lineWidth: 1)
+            }
+            .shadow(color: GalacticTheme.deepBlue.opacity(0.30), radius: 22, y: 12)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Recorded cash \(store.currency(store.balance)). Open cash flow.")
+    }
+
+    private func compactHeroAmount(_ title: String, value: String, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.caption.bold())
+                .foregroundStyle(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.72)
+            Text(title)
+                .font(.system(size: 9, weight: .medium))
+                .foregroundStyle(.white.opacity(0.62))
+        }
+    }
+
+    private var compactQuickActions: some View {
+        HStack(spacing: 8) {
+            compactQuickAction(title: "Add", icon: "plus", tint: GalacticTheme.blue) {
+                selection = .transactions
+            }
+            compactQuickAction(title: "Invoices", icon: "doc.text.fill", tint: GalacticTheme.teal) {
+                showingInvoices = true
+            }
+            compactQuickAction(title: "Cash Flow", icon: "chart.line.uptrend.xyaxis", tint: GalacticTheme.violet) {
+                selection = .cashFlow
+            }
+            compactQuickAction(title: "Ask AI", icon: "sparkles", tint: GalacticTheme.pink) {
+                selection = .ai
+            }
+        }
+    }
+
+    private func compactQuickAction(
+        title: String,
+        icon: String,
+        tint: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(.white)
+                    .frame(width: 38, height: 38)
+                    .background(tint.gradient)
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .shadow(color: tint.opacity(0.28), radius: 8, y: 4)
+                Text(title)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(GalacticTheme.navy)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+            }
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(.white)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(GalacticTheme.divider.opacity(0.78), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var compactMetricGrid: some View {
+        LazyVGrid(
+            columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)],
+            spacing: 10
+        ) {
+            CompactDashboardMetricCard(
+                title: "Revenue",
+                value: store.currency(rangeIncome),
+                status: changeLabel(revenueChange),
+                statusIsPositive: revenueChange >= 0,
+                icon: "arrow.down.left",
+                tint: GalacticTheme.green,
+                values: store.monthlyPoints.map(\.income)
+            )
+            CompactDashboardMetricCard(
+                title: "Expenses",
+                value: store.currency(rangeExpenses),
+                status: changeLabel(expenseChange),
+                statusIsPositive: expenseChange <= 0,
+                icon: "arrow.up.right",
+                tint: GalacticTheme.pink,
+                values: store.monthlyPoints.map(\.expense)
+            )
+            CompactDashboardMetricCard(
+                title: "Net profit",
+                value: store.currency(rangeNet),
+                status: changeLabel(netChange),
+                statusIsPositive: netChange >= 0,
+                icon: "chart.line.uptrend.xyaxis",
+                tint: GalacticTheme.blue,
+                values: store.monthlyPoints.map { $0.income - $0.expense }
+            )
+            CompactDashboardMetricCard(
+                title: "Outstanding",
+                value: store.currency(store.outstandingInvoices),
+                status: store.overdueInvoices.isEmpty ? "All on track" : "\(store.overdueInvoices.count) overdue",
+                statusIsPositive: store.overdueInvoices.isEmpty,
+                icon: "doc.text.fill",
+                tint: GalacticTheme.violet,
+                values: cumulativeBalancePoints
+            )
+        }
+    }
+
+    private var compactAIBriefCard: some View {
+        Button {
+            selection = .ai
+        } label: {
+            HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Label("GALACTIC AI BRIEF", systemImage: "sparkles")
+                        .font(.system(size: 10, weight: .bold))
+                        .tracking(0.85)
+                        .foregroundStyle(GalacticTheme.violet)
+
+                    Text(store.insights.first?.title ?? "Your financial brief is ready")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                        .foregroundStyle(GalacticTheme.navy)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+
+                    HStack(spacing: 4) {
+                        Text("Review the numbers")
+                        Image(systemName: "arrow.right")
+                    }
+                    .font(.caption.bold())
+                    .foregroundStyle(GalacticTheme.indigo)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                GalacticRobot()
+                    .frame(width: 92, height: 92)
+            }
+            .padding(.leading, 16)
+            .padding(.trailing, 10)
+            .padding(.vertical, 10)
+            .background {
+                LinearGradient(
+                    colors: [Color.white, GalacticTheme.violet.opacity(0.08)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+            .overlay {
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(GalacticTheme.violet.opacity(0.16), lineWidth: 1)
+            }
+            .shadow(color: GalacticTheme.violet.opacity(0.10), radius: 18, y: 8)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Galactic AI brief. \(store.insights.first?.title ?? "Your financial brief is ready")")
     }
 
     private var searchResults: some View {
@@ -792,6 +1049,11 @@ struct DashboardView: View {
         return ((current - previous) / abs(previous)) * 100
     }
 
+    private func changeLabel(_ value: Double) -> String {
+        let direction = value >= 0 ? "↑" : "↓"
+        return "\(direction) \(abs(value).formatted(.number.precision(.fractionLength(1))))%"
+    }
+
     private func percentOfExpenses(_ amount: Double) -> String {
         guard rangeExpenses > 0 else { return "0%" }
         return "\((amount / rangeExpenses * 100).formatted(.number.precision(.fractionLength(0))))%"
@@ -938,6 +1200,70 @@ private struct DashboardMetricCard: View {
                     .chartXAxis(.hidden)
                     .chartYAxis(.hidden)
                     .frame(height: 44)
+                }
+            }
+        }
+    }
+}
+
+private struct CompactDashboardMetricCard: View {
+    let title: String
+    let value: String
+    let status: String
+    let statusIsPositive: Bool
+    let icon: String
+    let tint: Color
+    let values: [Double]
+
+    private var points: [DashboardSparkPoint] {
+        values.enumerated().map { DashboardSparkPoint(index: $0.offset, value: $0.element) }
+    }
+
+    var body: some View {
+        GalacticCard(padding: 12, radius: 18) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 8) {
+                    Image(systemName: icon)
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 32, height: 32)
+                        .background(tint.gradient)
+                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(title)
+                            .font(.system(size: 10, weight: .semibold))
+                            .foregroundStyle(GalacticTheme.mutedText)
+                        Text(value)
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+                            .foregroundStyle(GalacticTheme.navy)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.58)
+                    }
+                    Spacer(minLength: 0)
+                }
+
+                HStack(spacing: 6) {
+                    Text(status)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(statusIsPositive ? GalacticTheme.green : GalacticTheme.pink)
+                        .lineLimit(1)
+
+                    Spacer(minLength: 2)
+
+                    if points.count > 1 {
+                        Chart(points) { point in
+                            LineMark(
+                                x: .value("Period", point.index),
+                                y: .value("Value", point.value)
+                            )
+                            .foregroundStyle(tint)
+                            .lineStyle(StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
+                        }
+                        .chartXAxis(.hidden)
+                        .chartYAxis(.hidden)
+                        .frame(width: 62, height: 24)
+                    }
                 }
             }
         }

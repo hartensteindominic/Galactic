@@ -43,11 +43,11 @@ struct RootView: View {
         ZStack(alignment: .bottom) {
             compactDestination(for: selection)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.bottom, 76)
+                .padding(.bottom, 72)
 
             GalacticFloatingTabBar(selection: $selection)
-                .padding(.horizontal, 10)
-                .padding(.bottom, 8)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 6)
         }
         .background(GalacticTheme.page.ignoresSafeArea())
         .animation(.snappy(duration: 0.28), value: selection)
@@ -132,7 +132,7 @@ private struct GalacticFloatingTabBar: View {
     ]
 
     var body: some View {
-        HStack(spacing: 5) {
+        HStack(spacing: 4) {
             ForEach(tabs) { item in
                 Button {
                     withAnimation(.snappy(duration: 0.24)) {
@@ -151,7 +151,7 @@ private struct GalacticFloatingTabBar: View {
                     }
                     .foregroundStyle(selection == item.tab ? Color.white : Color.white.opacity(0.68))
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
+                    .frame(height: 50)
                     .background {
                         if selection == item.tab {
                             RoundedRectangle(cornerRadius: 13, style: .continuous)
@@ -168,13 +168,13 @@ private struct GalacticFloatingTabBar: View {
         }
         .padding(6)
         .background {
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
                 .fill(GalacticTheme.sidebarGradient)
                 .overlay {
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 }
-                .shadow(color: GalacticTheme.navy.opacity(0.34), radius: 24, y: 12)
+                .shadow(color: GalacticTheme.navy.opacity(0.28), radius: 20, y: 10)
         }
     }
 }
