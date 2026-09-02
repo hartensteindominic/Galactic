@@ -73,7 +73,7 @@ struct RootView: View {
     private func compactDestination(for tab: AppTab) -> some View {
         switch tab {
         case .dashboard:
-            NavigationStack { DashboardView(selection: $selection) }
+            NavigationStack { ConceptDashboardView(selection: $selection) }
         case .transactions:
             NavigationStack { TransactionsView() }
         case .cashFlow:
@@ -83,7 +83,7 @@ struct RootView: View {
         case .more:
             NavigationStack { MoreView() }
         default:
-            NavigationStack { DashboardView(selection: $selection) }
+            NavigationStack { ConceptDashboardView(selection: $selection) }
         }
     }
 
@@ -158,51 +158,39 @@ private struct GalacticFloatingTabBar: View {
                     }
                 } label: {
                     VStack(spacing: 3) {
-                        ZStack {
-                            if isSelected {
-                                Circle()
-                                    .fill(GalacticTheme.heroGradient)
-                                    .frame(width: 31, height: 31)
-                                    .overlay {
-                                        Circle()
-                                            .stroke(Color.white.opacity(0.42), lineWidth: 0.9)
-                                    }
-                                    .shadow(color: GalacticTheme.cyan.opacity(0.30), radius: 8)
-                                    .shadow(color: GalacticTheme.palette.highlight.opacity(0.34), radius: 12)
-                            }
-
-                            Image(systemName: item.icon)
-                                .font(.system(size: isSelected ? 15 : 17, weight: .semibold))
-                                .symbolRenderingMode(.hierarchical)
-                                .foregroundStyle(isSelected ? Color.white : GalacticTheme.dockSecondaryForeground)
-                                .symbolEffect(.bounce, value: isSelected)
-                        }
-                        .frame(height: 31)
+                        Image(systemName: item.icon)
+                            .font(.system(size: 17, weight: .semibold))
+                            .symbolRenderingMode(.hierarchical)
+                            .foregroundStyle(isSelected ? GalacticTheme.indigo : GalacticTheme.navy.opacity(0.72))
+                            .symbolEffect(.bounce, value: isSelected)
+                            .frame(height: 25)
 
                         Text(item.title)
                             .font(.system(size: 9.5, weight: isSelected ? .bold : .semibold, design: .rounded))
-                            .foregroundStyle(isSelected ? GalacticTheme.dockForeground : GalacticTheme.dockSecondaryForeground)
+                            .foregroundStyle(isSelected ? GalacticTheme.indigo : GalacticTheme.navy.opacity(0.66))
                             .lineLimit(1)
                             .minimumScaleFactor(0.72)
-
-                        Capsule()
-                            .fill(isSelected ? AnyShapeStyle(GalacticTheme.accentGradient) : AnyShapeStyle(Color.clear))
-                            .frame(width: isSelected ? 18 : 4, height: 2)
-                            .shadow(color: isSelected ? GalacticTheme.cyan.opacity(0.55) : .clear, radius: 4)
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: 55)
+                    .frame(height: 54)
                     .background {
                         if isSelected {
-                            RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                .fill(Color.white.opacity(GalacticTheme.palette.dockIsDark ? 0.075 : 0.50))
+                            RoundedRectangle(cornerRadius: 17, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.94), GalacticTheme.violet.opacity(0.10)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
                                 .overlay {
-                                    RoundedRectangle(cornerRadius: 15, style: .continuous)
-                                        .stroke(Color.white.opacity(GalacticTheme.palette.dockIsDark ? 0.10 : 0.72), lineWidth: 0.8)
+                                    RoundedRectangle(cornerRadius: 17, style: .continuous)
+                                        .stroke(Color.white.opacity(0.96), lineWidth: 1)
                                 }
+                                .shadow(color: GalacticTheme.violet.opacity(0.12), radius: 8, y: 4)
                         }
                     }
-                    .contentShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+                    .contentShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(item.title)
@@ -211,38 +199,21 @@ private struct GalacticFloatingTabBar: View {
         }
         .padding(5)
         .background {
-            RoundedRectangle(cornerRadius: GalacticTheme.selectedLayout == .compactPro ? 19 : 24, style: .continuous)
-                .fill(GalacticTheme.sidebarGradient)
+            RoundedRectangle(cornerRadius: 25, style: .continuous)
+                .fill(Color.white.opacity(0.83))
                 .overlay {
-                    ZStack {
-                        RadialGradient(
-                            colors: [GalacticTheme.violet.opacity(0.20), Color.clear],
-                            center: .topLeading,
-                            startRadius: 0,
-                            endRadius: 180
-                        )
-
-                        RadialGradient(
-                            colors: [GalacticTheme.palette.highlight.opacity(0.18), GalacticTheme.cyan.opacity(0.10), Color.clear],
-                            center: .bottomTrailing,
-                            startRadius: 0,
-                            endRadius: 190
-                        )
-                    }
-                    .clipShape(RoundedRectangle(cornerRadius: GalacticTheme.selectedLayout == .compactPro ? 19 : 24, style: .continuous))
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.35), GalacticTheme.violet.opacity(0.045), GalacticTheme.cyan.opacity(0.045)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
                 }
                 .overlay {
-                    RoundedRectangle(cornerRadius: GalacticTheme.selectedLayout == .compactPro ? 19 : 24, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.52), GalacticTheme.cyan.opacity(0.18), GalacticTheme.palette.highlight.opacity(0.22)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                    RoundedRectangle(cornerRadius: 25, style: .continuous)
+                        .stroke(Color.white.opacity(0.96), lineWidth: 1)
                 }
-                .shadow(color: GalacticTheme.palette.dockIsDark ? GalacticTheme.navy.opacity(0.30) : GalacticTheme.indigo.opacity(0.12), radius: GalacticTheme.selectedLayout == .boldGlow ? 28 : 18, y: 9)
+                .shadow(color: GalacticTheme.violet.opacity(0.13), radius: 18, y: 8)
         }
     }
 }
