@@ -1,137 +1,406 @@
 import SwiftUI
+import Foundation
+
+private extension Color {
+    static func galactic(_ hex: UInt32, alpha: Double = 1) -> Color {
+        Color(
+            red: Double((hex >> 16) & 0xFF) / 255,
+            green: Double((hex >> 8) & 0xFF) / 255,
+            blue: Double(hex & 0xFF) / 255,
+            opacity: alpha
+        )
+    }
+}
+
+struct GalacticPalette {
+    let page: Color
+    let panel: Color
+    let softPanel: Color
+    let ink: Color
+    let muted: Color
+    let divider: Color
+    let primary: Color
+    let secondary: Color
+    let tertiary: Color
+    let highlight: Color
+    let heroStart: Color
+    let heroMid: Color
+    let heroEnd: Color
+    let dockStart: Color
+    let dockEnd: Color
+    let dockIsDark: Bool
+    let glassOpacity: Double
+}
+
+enum GalacticThemeOption: String, CaseIterable, Identifiable {
+    case cosmicBlue
+    case nebulaPurple
+    case galaxyTeal
+    case solarWhite
+    case stardustGold
+    case auroraMint
+    case cometPink
+    case quantumBlue
+    case neonCyber
+    case celestialLight
+    case sunriseNebula
+    case lunarLavender
+    case iceCrystal
+    case peachOrbit
+    case emeraldNova
+    case sapphireGlass
+    case roseGoldMoon
+    case arcticAurora
+    case champagneCosmos
+    case prismSky
+
+    static let storageKey = "galacticThemeID"
+    static let defaultTheme: GalacticThemeOption = .sunriseNebula
+
+    var id: String { rawValue }
+
+    var name: String {
+        switch self {
+        case .cosmicBlue: "Cosmic Blue"
+        case .nebulaPurple: "Nebula Purple"
+        case .galaxyTeal: "Galaxy Teal"
+        case .solarWhite: "Solar White"
+        case .stardustGold: "Stardust Gold"
+        case .auroraMint: "Aurora Mint"
+        case .cometPink: "Comet Pink"
+        case .quantumBlue: "Quantum Blue"
+        case .neonCyber: "Neon Cyber"
+        case .celestialLight: "Celestial Light"
+        case .sunriseNebula: "Sunrise Nebula"
+        case .lunarLavender: "Lunar Lavender"
+        case .iceCrystal: "Ice Crystal"
+        case .peachOrbit: "Peach Orbit"
+        case .emeraldNova: "Emerald Nova"
+        case .sapphireGlass: "Sapphire Glass"
+        case .roseGoldMoon: "Rose Gold Moon"
+        case .arcticAurora: "Arctic Aurora"
+        case .champagneCosmos: "Champagne Cosmos"
+        case .prismSky: "Prism Sky"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .cosmicBlue: "Classic deep-space blue"
+        case .nebulaPurple: "Violet nebula glow"
+        case .galaxyTeal: "Bright cyan + teal"
+        case .solarWhite: "Clean white with sunshine"
+        case .stardustGold: "Warm gold glass"
+        case .auroraMint: "Fresh mint aurora"
+        case .cometPink: "Playful pink comet"
+        case .quantumBlue: "Electric blue clarity"
+        case .neonCyber: "High-energy neon accents"
+        case .celestialLight: "Soft luminous blue"
+        case .sunriseNebula: "Yellow, peach + violet sky"
+        case .lunarLavender: "Moonlit lavender glass"
+        case .iceCrystal: "Icy crystal blue"
+        case .peachOrbit: "Peach sunrise orbit"
+        case .emeraldNova: "Green + blue nova"
+        case .sapphireGlass: "Premium sapphire glass"
+        case .roseGoldMoon: "Warm rose-gold moon"
+        case .arcticAurora: "Arctic blue + mint"
+        case .champagneCosmos: "Creamy champagne glow"
+        case .prismSky: "Rainbow prism highlights"
+        }
+    }
+
+    var palette: GalacticPalette {
+        switch self {
+        case .cosmicBlue:
+            return GalacticPalette(page: .galactic(0xF1F6FF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xF5F8FF), ink: .galactic(0x071347), muted: .galactic(0x596487), divider: .galactic(0xD9E4FF), primary: .galactic(0x245CFF), secondary: .galactic(0x6B45FF), tertiary: .galactic(0x32C9FF), highlight: .galactic(0xA86BFF), heroStart: .galactic(0x073CD8), heroMid: .galactic(0x2B4FFF), heroEnd: .galactic(0x36C8FF), dockStart: .galactic(0x071347), dockEnd: .galactic(0x162B78), dockIsDark: true, glassOpacity: 0.94)
+        case .nebulaPurple:
+            return GalacticPalette(page: .galactic(0xF7F3FF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFAF6FF), ink: .galactic(0x17083F), muted: .galactic(0x665B80), divider: .galactic(0xE6D9FF), primary: .galactic(0x7248FF), secondary: .galactic(0xB343FF), tertiary: .galactic(0x5CD7FF), highlight: .galactic(0xFF7BD5), heroStart: .galactic(0x5A25D8), heroMid: .galactic(0x8F31E8), heroEnd: .galactic(0xE45DDD), dockStart: .galactic(0x1A093E), dockEnd: .galactic(0x42206B), dockIsDark: true, glassOpacity: 0.93)
+        case .galaxyTeal:
+            return GalacticPalette(page: .galactic(0xEDFBFC), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xF0FCFD), ink: .galactic(0x063B4A), muted: .galactic(0x4E6D75), divider: .galactic(0xCBECEF), primary: .galactic(0x00AFC1), secondary: .galactic(0x1C74E8), tertiary: .galactic(0x29E0D0), highlight: .galactic(0x70E7FF), heroStart: .galactic(0x008CA2), heroMid: .galactic(0x00B6C7), heroEnd: .galactic(0x28D7E5), dockStart: .galactic(0x053A49), dockEnd: .galactic(0x006E78), dockIsDark: true, glassOpacity: 0.94)
+        case .solarWhite:
+            return GalacticPalette(page: .galactic(0xFFFDF7), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFFF9EE), ink: .galactic(0x17162A), muted: .galactic(0x696478), divider: .galactic(0xF0E4CD), primary: .galactic(0xFF9E1A), secondary: .galactic(0xFFCA52), tertiary: .galactic(0x7ABEFF), highlight: .galactic(0xFF7CC8), heroStart: .galactic(0xFFB548), heroMid: .galactic(0xFFD77B), heroEnd: .galactic(0xA7D9FF), dockStart: .galactic(0xFFFDF8), dockEnd: .galactic(0xFFF5E4), dockIsDark: false, glassOpacity: 0.90)
+        case .stardustGold:
+            return GalacticPalette(page: .galactic(0xFFF9EB), panel: .galactic(0xFFFEFB), softPanel: .galactic(0xFFF5DC), ink: .galactic(0x28200C), muted: .galactic(0x776B4E), divider: .galactic(0xECD8A8), primary: .galactic(0xE8A51B), secondary: .galactic(0xFFCA4F), tertiary: .galactic(0xF2B9FF), highlight: .galactic(0xFF8F5A), heroStart: .galactic(0xD98B0B), heroMid: .galactic(0xF6BA2B), heroEnd: .galactic(0xFFE6A2), dockStart: .galactic(0xFFF9EB), dockEnd: .galactic(0xFBEBC3), dockIsDark: false, glassOpacity: 0.91)
+        case .auroraMint:
+            return GalacticPalette(page: .galactic(0xEEFFFA), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xF2FFFC), ink: .galactic(0x073D38), muted: .galactic(0x55756F), divider: .galactic(0xCDEEE5), primary: .galactic(0x18BF96), secondary: .galactic(0x31C8D6), tertiary: .galactic(0x6BD8FF), highlight: .galactic(0x9DE993), heroStart: .galactic(0x0FAE8A), heroMid: .galactic(0x31C8B7), heroEnd: .galactic(0x7DE4DA), dockStart: .galactic(0xF5FFFC), dockEnd: .galactic(0xDAF8EF), dockIsDark: false, glassOpacity: 0.92)
+        case .cometPink:
+            return GalacticPalette(page: .galactic(0xFFF1F8), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFFF5FA), ink: .galactic(0x47142E), muted: .galactic(0x815D70), divider: .galactic(0xF5D0E2), primary: .galactic(0xFF3D8D), secondary: .galactic(0xFF6B9C), tertiary: .galactic(0x9D75FF), highlight: .galactic(0xFFB45C), heroStart: .galactic(0xF3267C), heroMid: .galactic(0xFF5B8B), heroEnd: .galactic(0xFF9A7D), dockStart: .galactic(0xFFF7FB), dockEnd: .galactic(0xFFE0EC), dockIsDark: false, glassOpacity: 0.91)
+        case .quantumBlue:
+            return GalacticPalette(page: .galactic(0xEEF6FF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xF2F7FF), ink: .galactic(0x071E51), muted: .galactic(0x53698B), divider: .galactic(0xD3E2FF), primary: .galactic(0x137BFF), secondary: .galactic(0x3C5BFF), tertiary: .galactic(0x45D2FF), highlight: .galactic(0x8D8CFF), heroStart: .galactic(0x0666E5), heroMid: .galactic(0x187FF4), heroEnd: .galactic(0x45C8FF), dockStart: .galactic(0x08235E), dockEnd: .galactic(0x0E55AE), dockIsDark: true, glassOpacity: 0.94)
+        case .neonCyber:
+            return GalacticPalette(page: .galactic(0xF8F1FF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFBF6FF), ink: .galactic(0x180927), muted: .galactic(0x6B5877), divider: .galactic(0xE9D3F5), primary: .galactic(0x1C7BFF), secondary: .galactic(0xE92BFF), tertiary: .galactic(0x1FE8F2), highlight: .galactic(0xFF3F93), heroStart: .galactic(0x161C78), heroMid: .galactic(0x6A1DC8), heroEnd: .galactic(0xE728CA), dockStart: .galactic(0x10051D), dockEnd: .galactic(0x31104C), dockIsDark: true, glassOpacity: 0.92)
+        case .celestialLight:
+            return GalacticPalette(page: .galactic(0xF5F8FF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xF8FAFF), ink: .galactic(0x0B194B), muted: .galactic(0x617094), divider: .galactic(0xDFE7FA), primary: .galactic(0x486DFF), secondary: .galactic(0x8A78FF), tertiary: .galactic(0x8CD9FF), highlight: .galactic(0xFFB2DE), heroStart: .galactic(0x7FB8FF), heroMid: .galactic(0x9FA6FF), heroEnd: .galactic(0xE5D7FF), dockStart: .galactic(0xFCFDFF), dockEnd: .galactic(0xEFF3FF), dockIsDark: false, glassOpacity: 0.90)
+        case .sunriseNebula:
+            return GalacticPalette(page: .galactic(0xFFF8F1), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFFF8FA), ink: .galactic(0x111A52), muted: .galactic(0x676784), divider: .galactic(0xF0DDE2), primary: .galactic(0x5967FF), secondary: .galactic(0xA865FF), tertiary: .galactic(0x6FDFFF), highlight: .galactic(0xFFD15D), heroStart: .galactic(0xFFD36A), heroMid: .galactic(0xFF9FCB), heroEnd: .galactic(0x8ACBFF), dockStart: .galactic(0xFFFEFC), dockEnd: .galactic(0xF7F1FF), dockIsDark: false, glassOpacity: 0.89)
+        case .lunarLavender:
+            return GalacticPalette(page: .galactic(0xF8F4FF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFBF8FF), ink: .galactic(0x23154A), muted: .galactic(0x6E6285), divider: .galactic(0xE4D9F5), primary: .galactic(0x7664FF), secondary: .galactic(0xB889FF), tertiary: .galactic(0x9AD8FF), highlight: .galactic(0xFFB7E8), heroStart: .galactic(0x9A8BFF), heroMid: .galactic(0xC4A7FF), heroEnd: .galactic(0xE6D7FF), dockStart: .galactic(0xFDFBFF), dockEnd: .galactic(0xF0E8FF), dockIsDark: false, glassOpacity: 0.90)
+        case .iceCrystal:
+            return GalacticPalette(page: .galactic(0xF2FCFF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xF5FCFF), ink: .galactic(0x10364C), muted: .galactic(0x5C7785), divider: .galactic(0xD4ECF4), primary: .galactic(0x44A8FF), secondary: .galactic(0x77C8FF), tertiary: .galactic(0x75E2ED), highlight: .galactic(0xB5BCFF), heroStart: .galactic(0x7AD3FF), heroMid: .galactic(0x9CDFFF), heroEnd: .galactic(0xD9F5FF), dockStart: .galactic(0xFCFFFF), dockEnd: .galactic(0xE9F8FF), dockIsDark: false, glassOpacity: 0.88)
+        case .peachOrbit:
+            return GalacticPalette(page: .galactic(0xFFF7F3), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFFF9F6), ink: .galactic(0x46261F), muted: .galactic(0x7E6860), divider: .galactic(0xF2DDD4), primary: .galactic(0xFF865F), secondary: .galactic(0xFFB16E), tertiary: .galactic(0x85C7FF), highlight: .galactic(0xFF75AF), heroStart: .galactic(0xFFAB72), heroMid: .galactic(0xFFBFAA), heroEnd: .galactic(0xA9D7FF), dockStart: .galactic(0xFFFCFA), dockEnd: .galactic(0xFFF0EA), dockIsDark: false, glassOpacity: 0.90)
+        case .emeraldNova:
+            return GalacticPalette(page: .galactic(0xF1FFF8), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xF4FFF9), ink: .galactic(0x0B4030), muted: .galactic(0x58766B), divider: .galactic(0xCFEBDD), primary: .galactic(0x14B97A), secondary: .galactic(0x2B91E8), tertiary: .galactic(0x53DCC4), highlight: .galactic(0xB5E764), heroStart: .galactic(0x19A874), heroMid: .galactic(0x2BB59D), heroEnd: .galactic(0x5AC7E8), dockStart: .galactic(0xF8FFFB), dockEnd: .galactic(0xE4F8EF), dockIsDark: false, glassOpacity: 0.92)
+        case .sapphireGlass:
+            return GalacticPalette(page: .galactic(0xEFF5FF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xF4F7FF), ink: .galactic(0x0A1B49), muted: .galactic(0x57698D), divider: .galactic(0xD4DFF5), primary: .galactic(0x315BDB), secondary: .galactic(0x5C7CFF), tertiary: .galactic(0x55C7F5), highlight: .galactic(0xA86BFF), heroStart: .galactic(0x244AB8), heroMid: .galactic(0x3862D8), heroEnd: .galactic(0x4FADEB), dockStart: .galactic(0x0A1B49), dockEnd: .galactic(0x1D3E88), dockIsDark: true, glassOpacity: 0.95)
+        case .roseGoldMoon:
+            return GalacticPalette(page: .galactic(0xFFF7F6), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFFF8F8), ink: .galactic(0x44272E), muted: .galactic(0x7C666A), divider: .galactic(0xEDD9DC), primary: .galactic(0xD9808D), secondary: .galactic(0xF3A5A2), tertiary: .galactic(0xA6C8FF), highlight: .galactic(0xF8C66E), heroStart: .galactic(0xD98791), heroMid: .galactic(0xEEA9A1), heroEnd: .galactic(0xF9D7A4), dockStart: .galactic(0xFFFDFD), dockEnd: .galactic(0xF9ECEE), dockIsDark: false, glassOpacity: 0.90)
+        case .arcticAurora:
+            return GalacticPalette(page: .galactic(0xF1FAFF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xF5FBFF), ink: .galactic(0x113450), muted: .galactic(0x5B7387), divider: .galactic(0xD3E8F4), primary: .galactic(0x3699F4), secondary: .galactic(0x48C6C8), tertiary: .galactic(0x7EE7D3), highlight: .galactic(0xA9B9FF), heroStart: .galactic(0x4CB8ED), heroMid: .galactic(0x60D3D2), heroEnd: .galactic(0xA6F0E1), dockStart: .galactic(0xFBFEFF), dockEnd: .galactic(0xEAF8F8), dockIsDark: false, glassOpacity: 0.89)
+        case .champagneCosmos:
+            return GalacticPalette(page: .galactic(0xFFF9F0), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFFFBF5), ink: .galactic(0x352B1F), muted: .galactic(0x776D5E), divider: .galactic(0xEDE0CB), primary: .galactic(0xC99A50), secondary: .galactic(0xE9BF77), tertiary: .galactic(0xB5CFFF), highlight: .galactic(0xFFCF7D), heroStart: .galactic(0xE7B85D), heroMid: .galactic(0xF4D7A1), heroEnd: .galactic(0xD8D8FF), dockStart: .galactic(0xFFFDF9), dockEnd: .galactic(0xF8EFD9), dockIsDark: false, glassOpacity: 0.89)
+        case .prismSky:
+            return GalacticPalette(page: .galactic(0xF7FAFF), panel: .galactic(0xFFFFFF), softPanel: .galactic(0xFAFBFF), ink: .galactic(0x101B4D), muted: .galactic(0x626D90), divider: .galactic(0xDEE4F4), primary: .galactic(0x4D6CFF), secondary: .galactic(0xB15BFF), tertiary: .galactic(0x5DD7E7), highlight: .galactic(0xFFD166), heroStart: .galactic(0x7EB8FF), heroMid: .galactic(0xB99CFF), heroEnd: .galactic(0xFFD18B), dockStart: .galactic(0xFFFFFF), dockEnd: .galactic(0xF2F3FF), dockIsDark: false, glassOpacity: 0.88)
+        }
+    }
+}
+
+enum GalacticLayoutStyle: String, CaseIterable, Identifiable {
+    case airyGlass
+    case softRounded
+    case compactPro
+    case crystalEdge
+    case boldGlow
+
+    static let storageKey = "galacticLayoutID"
+    static let defaultLayout: GalacticLayoutStyle = .softRounded
+
+    var id: String { rawValue }
+
+    var name: String {
+        switch self {
+        case .airyGlass: "Airy Glass"
+        case .softRounded: "Soft Rounded"
+        case .compactPro: "Compact Pro"
+        case .crystalEdge: "Crystal Edge"
+        case .boldGlow: "Bold Glow"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .airyGlass: "More breathing room"
+        case .softRounded: "Friendly iPhone feel"
+        case .compactPro: "More data on screen"
+        case .crystalEdge: "Sharper glass panels"
+        case .boldGlow: "Bigger glow + depth"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .airyGlass: "rectangle.inset.filled"
+        case .softRounded: "square.on.circle"
+        case .compactPro: "rectangle.grid.2x2.fill"
+        case .crystalEdge: "diamond.fill"
+        case .boldGlow: "sparkles"
+        }
+    }
+
+    var cardRadius: CGFloat {
+        switch self {
+        case .airyGlass: 26
+        case .softRounded: 22
+        case .compactPro: 16
+        case .crystalEdge: 18
+        case .boldGlow: 24
+        }
+    }
+
+    var cardPadding: CGFloat {
+        switch self {
+        case .airyGlass: 20
+        case .softRounded: 18
+        case .compactPro: 14
+        case .crystalEdge: 16
+        case .boldGlow: 18
+        }
+    }
+
+    var strokeWidth: CGFloat {
+        switch self {
+        case .airyGlass: 1.0
+        case .softRounded: 1.15
+        case .compactPro: 0.85
+        case .crystalEdge: 1.4
+        case .boldGlow: 1.3
+        }
+    }
+
+    var shadowRadius: CGFloat {
+        switch self {
+        case .airyGlass: 16
+        case .softRounded: 22
+        case .compactPro: 10
+        case .crystalEdge: 14
+        case .boldGlow: 28
+        }
+    }
+}
 
 struct GalacticTheme {
-    static let navy = Color(red: 0.018, green: 0.026, blue: 0.16)
-    static let deepBlue = Color(red: 0.025, green: 0.07, blue: 0.47)
-    static let indigo = Color(red: 0.20, green: 0.15, blue: 0.96)
-    static let violet = Color(red: 0.52, green: 0.18, blue: 0.98)
-    static let cyan = Color(red: 0.02, green: 0.78, blue: 0.94)
+    static var selectedOption: GalacticThemeOption {
+        guard let raw = UserDefaults.standard.string(forKey: GalacticThemeOption.storageKey),
+              let option = GalacticThemeOption(rawValue: raw) else {
+            return GalacticThemeOption.defaultTheme
+        }
+        return option
+    }
+
+    static var selectedLayout: GalacticLayoutStyle {
+        guard let raw = UserDefaults.standard.string(forKey: GalacticLayoutStyle.storageKey),
+              let layout = GalacticLayoutStyle(rawValue: raw) else {
+            return GalacticLayoutStyle.defaultLayout
+        }
+        return layout
+    }
+
+    static var palette: GalacticPalette { selectedOption.palette }
+
+    static var navy: Color { palette.ink }
+    static var deepBlue: Color { palette.heroMid }
+    static var indigo: Color { palette.primary }
+    static var violet: Color { palette.secondary }
+    static var cyan: Color { palette.tertiary }
     static let green = Color(red: 0.02, green: 0.72, blue: 0.46)
     static let pink = Color(red: 0.98, green: 0.21, blue: 0.48)
     static let orange = Color(red: 1.00, green: 0.55, blue: 0.12)
-    static let blue = Color(red: 0.08, green: 0.39, blue: 0.96)
-    static let teal = Color(red: 0.02, green: 0.64, blue: 0.67)
+    static var blue: Color { palette.primary }
+    static var teal: Color { palette.tertiary }
 
-    // A very light cosmic canvas keeps financial data easy to read while making
-    // the app feel more playful and unmistakably Galactic Trust.
-    static let page = Color(red: 0.958, green: 0.966, blue: 1.0)
-    static let panel = Color.white
-    static let softPanel = Color(red: 0.976, green: 0.980, blue: 1.0)
-    static let mutedText = Color(red: 0.29, green: 0.31, blue: 0.45)
-    static let divider = Color(red: 0.865, green: 0.875, blue: 0.95)
+    static var page: Color { palette.page }
+    static var panel: Color { palette.panel }
+    static var softPanel: Color { palette.softPanel }
+    static var mutedText: Color { palette.muted }
+    static var divider: Color { palette.divider }
+    static var dockForeground: Color { palette.dockIsDark ? .white : palette.ink }
+    static var dockSecondaryForeground: Color { dockForeground.opacity(palette.dockIsDark ? 0.64 : 0.58) }
 
-    static let heroGradient = LinearGradient(
-        colors: [
-            Color(red: 0.005, green: 0.055, blue: 0.62),
-            indigo,
-            violet,
-            cyan.opacity(0.82)
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    static var cardRadius: CGFloat { selectedLayout.cardRadius }
+    static var cardPadding: CGFloat { selectedLayout.cardPadding }
+    static var cardStrokeWidth: CGFloat { selectedLayout.strokeWidth }
+    static var cardShadowRadius: CGFloat { selectedLayout.shadowRadius }
 
-    static let accentGradient = LinearGradient(
-        colors: [indigo, violet, cyan],
-        startPoint: .leading,
-        endPoint: .trailing
-    )
+    static var heroGradient: LinearGradient {
+        LinearGradient(
+            colors: [palette.heroStart, palette.heroMid, palette.heroEnd],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
 
-    static let glassGradient = LinearGradient(
-        colors: [
-            Color.white.opacity(0.98),
-            Color.white.opacity(0.92),
-            Color(red: 0.95, green: 0.96, blue: 1.0).opacity(0.96)
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    static var accentGradient: LinearGradient {
+        LinearGradient(
+            colors: [palette.primary, palette.secondary, palette.tertiary, palette.highlight],
+            startPoint: .leading,
+            endPoint: .trailing
+        )
+    }
 
-    static let cardBorderGradient = LinearGradient(
-        colors: [
-            Color.white.opacity(0.92),
-            indigo.opacity(0.18),
-            cyan.opacity(0.14),
-            violet.opacity(0.16)
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    static var glassGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                palette.panel.opacity(palette.glassOpacity),
+                Color.white.opacity(max(0.76, palette.glassOpacity - 0.08)),
+                palette.softPanel.opacity(min(0.98, palette.glassOpacity + 0.03))
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
 
-    static let spaceGradient = LinearGradient(
-        colors: [
-            Color(red: 0.006, green: 0.012, blue: 0.09),
-            navy,
-            Color(red: 0.055, green: 0.025, blue: 0.30),
-            deepBlue.opacity(0.96)
-        ],
-        startPoint: .topLeading,
-        endPoint: .bottomTrailing
-    )
+    static var cardBorderGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color.white.opacity(0.94),
+                palette.highlight.opacity(0.26),
+                palette.tertiary.opacity(0.20),
+                palette.secondary.opacity(0.22)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
 
-    static let sidebarGradient = LinearGradient(
-        colors: [
-            Color(red: 0.008, green: 0.016, blue: 0.11),
-            Color(red: 0.035, green: 0.025, blue: 0.27),
-            Color(red: 0.025, green: 0.065, blue: 0.35)
-        ],
-        startPoint: .top,
-        endPoint: .bottom
-    )
+    static var spaceGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                palette.ink,
+                palette.heroStart,
+                palette.heroMid,
+                palette.heroEnd
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
 
-    static let backgroundGlow = RadialGradient(
-        colors: [
-            cyan.opacity(0.12),
-            violet.opacity(0.10),
-            indigo.opacity(0.055),
-            Color.clear
-        ],
-        center: .topTrailing,
-        startRadius: 8,
-        endRadius: 610
-    )
+    static var sidebarGradient: LinearGradient {
+        LinearGradient(
+            colors: [palette.dockStart, palette.dockEnd],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    static var backgroundGlow: RadialGradient {
+        RadialGradient(
+            colors: [
+                palette.highlight.opacity(0.16),
+                palette.tertiary.opacity(0.13),
+                palette.secondary.opacity(0.10),
+                Color.clear
+            ],
+            center: .topTrailing,
+            startRadius: 8,
+            endRadius: 610
+        )
+    }
 }
 
 struct GalacticCard<Content: View>: View {
     let content: Content
-    var padding: CGFloat = 18
-    var radius: CGFloat = 22
+    var padding: CGFloat?
+    var radius: CGFloat?
 
-    init(padding: CGFloat = 18, radius: CGFloat = 22, @ViewBuilder content: () -> Content) {
+    init(padding: CGFloat? = nil, radius: CGFloat? = nil, @ViewBuilder content: () -> Content) {
         self.padding = padding
         self.radius = radius
         self.content = content()
     }
 
     var body: some View {
+        let resolvedRadius = radius ?? GalacticTheme.cardRadius
+        let resolvedPadding = padding ?? GalacticTheme.cardPadding
+
         content
-            .padding(padding)
+            .padding(resolvedPadding)
             .background {
                 ZStack {
                     GalacticTheme.glassGradient
 
                     RadialGradient(
-                        colors: [GalacticTheme.cyan.opacity(0.055), Color.clear],
+                        colors: [GalacticTheme.cyan.opacity(0.075), Color.clear],
                         center: .topTrailing,
                         startRadius: 0,
                         endRadius: 190
                     )
 
                     RadialGradient(
-                        colors: [GalacticTheme.violet.opacity(0.045), Color.clear],
+                        colors: [GalacticTheme.violet.opacity(0.060), GalacticTheme.palette.highlight.opacity(0.035), Color.clear],
                         center: .bottomLeading,
                         startRadius: 0,
-                        endRadius: 170
+                        endRadius: 180
                     )
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: resolvedRadius, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: radius, style: .continuous)
-                    .stroke(GalacticTheme.cardBorderGradient, lineWidth: 1.15)
+                RoundedRectangle(cornerRadius: resolvedRadius, style: .continuous)
+                    .stroke(GalacticTheme.cardBorderGradient, lineWidth: GalacticTheme.cardStrokeWidth)
             }
-            .shadow(color: GalacticTheme.indigo.opacity(0.10), radius: 22, y: 10)
-            .shadow(color: GalacticTheme.cyan.opacity(0.055), radius: 8, y: 2)
+            .shadow(color: GalacticTheme.indigo.opacity(0.10), radius: GalacticTheme.cardShadowRadius, y: GalacticTheme.selectedLayout == .boldGlow ? 12 : 9)
+            .shadow(color: GalacticTheme.palette.highlight.opacity(0.08), radius: GalacticTheme.selectedLayout == .boldGlow ? 14 : 7, y: 2)
     }
 }
 
@@ -143,7 +412,7 @@ struct MetricTile: View {
     let tint: Color
 
     var body: some View {
-        GalacticCard(padding: 16, radius: 20) {
+        GalacticCard {
             HStack(alignment: .top, spacing: 13) {
                 Image(systemName: systemImage)
                     .font(.subheadline.bold())
