@@ -264,6 +264,14 @@ final class FinancialStore: ObservableObject {
         let cal = Calendar.current
         let now = Date()
         func day(_ n: Int) -> Date { cal.date(byAdding: .day, value: n, to: now) ?? now }
+        func recent(_ n: Int) -> Date {
+            var components = cal.dateComponents([.year, .month], from: now)
+            let currentDay = cal.component(.day, from: now)
+            components.day = max(1, currentDay - min(n, max(currentDay - 1, 0)))
+            components.hour = max(8, 20 - (n % 12))
+            components.minute = max(0, 58 - (n % 50))
+            return cal.date(from: components) ?? now
+        }
         func month(_ n: Int, day d: Int) -> Date {
             let base = cal.date(byAdding: .month, value: n, to: now) ?? now
             var comps = cal.dateComponents([.year, .month], from: base)
@@ -272,21 +280,21 @@ final class FinancialStore: ObservableObject {
         }
 
         var tx: [BusinessTransaction] = [
-            .init(date: day(-1), merchant: "Stellar Labs", memo: "Client payment", amount: 12_500, kind: .income, category: .services),
-            .init(date: day(-2), merchant: "Payroll", memo: "Employee salaries", amount: 9_800, kind: .expense, category: .payroll, isRecurring: true),
-            .init(date: day(-3), merchant: "Amazon Business", memo: "Office supplies", amount: 312.45, kind: .expense, category: .office),
-            .init(date: day(-4), merchant: "Notion", memo: "Team subscription", amount: 240, kind: .expense, category: .software, isRecurring: true),
-            .init(date: day(-5), merchant: "Google Ads", memo: "Growth campaign", amount: 1_250.75, kind: .expense, category: .marketing),
-            .init(date: day(-6), merchant: "Bright Agency", memo: "Customer refund", amount: 480, kind: .income, category: .services),
-            .init(date: day(-7), merchant: "Acme Corp", memo: "Invoice payment", amount: 18_950, kind: .income, category: .sales),
-            .init(date: day(-8), merchant: "AWS", memo: "Cloud infrastructure", amount: 2_140, kind: .expense, category: .software, isRecurring: true),
-            .init(date: day(-10), merchant: "Office Lease", memo: "Monthly rent", amount: 3_400, kind: .expense, category: .rentUtilities, isRecurring: true),
-            .init(date: day(-12), merchant: "Northstar Client", memo: "Project milestone", amount: 24_900, kind: .income, category: .services),
-            .init(date: day(-14), merchant: "Figma", memo: "Design subscription", amount: 180, kind: .expense, category: .software, isRecurring: true),
-            .init(date: day(-16), merchant: "City Electric", memo: "Utilities", amount: 620, kind: .expense, category: .rentUtilities, isRecurring: true),
-            .init(date: day(-19), merchant: "Orbit Retail", memo: "Product revenue", amount: 15_200, kind: .income, category: .sales),
-            .init(date: day(-21), merchant: "Meta Ads", memo: "Paid social", amount: 2_870, kind: .expense, category: .marketing),
-            .init(date: day(-23), merchant: "Payroll", memo: "Contractor payouts", amount: 6_200, kind: .expense, category: .payroll)
+            .init(date: recent(0), merchant: "Stellar Labs", memo: "Client payment", amount: 12_500, kind: .income, category: .services),
+            .init(date: recent(1), merchant: "Payroll", memo: "Employee salaries", amount: 9_800, kind: .expense, category: .payroll, isRecurring: true),
+            .init(date: recent(2), merchant: "Amazon Business", memo: "Office supplies", amount: 312.45, kind: .expense, category: .office),
+            .init(date: recent(3), merchant: "Notion", memo: "Team subscription", amount: 240, kind: .expense, category: .software, isRecurring: true),
+            .init(date: recent(4), merchant: "Google Ads", memo: "Growth campaign", amount: 1_250.75, kind: .expense, category: .marketing),
+            .init(date: recent(5), merchant: "Bright Agency", memo: "Customer refund", amount: 480, kind: .income, category: .services),
+            .init(date: recent(6), merchant: "Acme Corp", memo: "Invoice payment", amount: 18_950, kind: .income, category: .sales),
+            .init(date: recent(7), merchant: "AWS", memo: "Cloud infrastructure", amount: 2_140, kind: .expense, category: .software, isRecurring: true),
+            .init(date: recent(9), merchant: "Office Lease", memo: "Monthly rent", amount: 3_400, kind: .expense, category: .rentUtilities, isRecurring: true),
+            .init(date: recent(11), merchant: "Northstar Client", memo: "Project milestone", amount: 24_900, kind: .income, category: .services),
+            .init(date: recent(13), merchant: "Figma", memo: "Design subscription", amount: 180, kind: .expense, category: .software, isRecurring: true),
+            .init(date: recent(15), merchant: "City Electric", memo: "Utilities", amount: 620, kind: .expense, category: .rentUtilities, isRecurring: true),
+            .init(date: recent(18), merchant: "Orbit Retail", memo: "Product revenue", amount: 15_200, kind: .income, category: .sales),
+            .init(date: recent(20), merchant: "Meta Ads", memo: "Paid social", amount: 2_870, kind: .expense, category: .marketing),
+            .init(date: recent(22), merchant: "Payroll", memo: "Contractor payouts", amount: 6_200, kind: .expense, category: .payroll)
         ]
 
         for offset in -5 ... -1 {
