@@ -16,7 +16,7 @@ concurrency:
 jobs:
   capture:
     runs-on: macos-15
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -28,6 +28,7 @@ jobs:
           XCODE_APP=$(find /Applications -maxdepth 1 -type d -name 'Xcode*.app' | sort -V | tail -1)
           sudo xcode-select -s "$XCODE_APP/Contents/Developer"
           xcodebuild -version
+          xcrun simctl list runtimes
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -39,163 +40,140 @@ jobs:
           python3 scripts/generate_app_icon.py
           xcodegen generate
 
-      - name: Build simulator app
-        working-directory: ios/GalacticTrustBusiness
-        run: |
-          set -euo pipefail
-          xcodebuild \
-            -project GalacticTrustBusiness.xcodeproj \
-            -scheme GalacticTrustBusiness \
-            -configuration Release \
-            -sdk iphonesimulator \
-            -derivedDataPath "$RUNNER_TEMP/GalacticDerivedData" \
-            CODE_SIGNING_ALLOWED=NO \
-            build
-
-      - name: Capture screenshots
+      - name: Create App Store simulators
         shell: bash
         run: |
           set -euo pipefail
-          APP="$RUNNER_TEMP/GalacticDerivedData/Build/Products/Release-iphonesimulator/GalacticTrustBusiness.app"
-          BUNDLE_ID="com.hartensteindominic.galactictrustbusiness"
+
+          RUNTIME="com.apple.CoreSimulator.SimRuntime.iOS-18-6"
+          if ! xcrun simctl list runtimes | grep -q 'iOS 18.6'; then
+            echo "iOS 18.6 simulator runtime is unavailable on this runner." >&2
+            exit 1
+          fi
+
+          IPHONE_TYPE=$(xcrun simctl list devicetypes | awk -F '[()]' '/iPhone 11 Pro Max/ {print $2; exit}')
+          IPAD_TYPE=$(xcrun simctl list devicetypes | awk -F '[()]' '/iPad Pro 13-inch \(M4\)/ {print $(NF-1); exit}')
+
+          if [ -z "$IPHONE_TYPE" ]; then
+            echo "Could not find the iPhone 11 Pro Max simulator device type." >&2
+            xcrun simctl list devicetypes >&2
+            exit 1
+          fi
+          if [ -z "$IPAD_TYPE" ]; then
+            IPAD_TYPE=$(xcrun simctl list devicetypes | awk -F '[()]' '/iPad Pro \(13-inch\) \(M4\)/ {print $(NF-1); exit}')
+          fi
+          if [ -z "$IPAD_TYPE" ]; then
+            echo "Could not find the iPad Pro 13-inch (M4) simulator device type." >&2
+            xcrun simctl list devicetypes >&2
+            exit 1
+          fi
+
+          IPHONE_UDID=$(xcrun simctl create "Galactic-AppStore-iPhone-${GITHUB_RUN_ID}" "$IPHONE_TYPE" "$RUNTIME")
+          IPAD_UDID=$(xcrun simctl create "Galactic-AppStore-iPad-${GITHUB_RUN_ID}" "$IPAD_TYPE" "$RUNTIME")
+
+          echo "IPHONE_UDID=$IPHONE_UDID" >> "$GITHUB_ENV"
+          echo "IPAD_UDID=$IPAD_UDID" >> "$GITHUB_ENV"
+          echo "Created iPhone: $IPHONE_UDID"
+          echo "Created iPad: $IPAD_UDID"
+
+      - name: Capture real iPhone screenshot with XCUITest
+        working-directory: ios/GalacticTrustBusiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULT="$RUNNER_TEMP/iphone-app-store.xcresult"
+          EXPORT="$RUNNER_TEMP/iphone-attachments"
           OUT="$GITHUB_WORKSPACE/app-store-screenshots"
           mkdir -p "$OUT"
 
-          python3 <<'PY' > "$RUNNER_TEMP/simulators.env"
-          import json, subprocess
+          xcrun simctl boot "$IPHONE_UDID" || true
+          xcrun simctl bootstatus "$IPHONE_UDID" -b
+          xcrun simctl status_bar "$IPHONE_UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
 
-          def data(*args):
-              return json.loads(subprocess.check_output(args, text=True))
+          rm -rf "$RESULT" "$EXPORT"
+          xcodebuild test \
+            -project GalacticTrustBusiness.xcodeproj \
+            -scheme GalacticTrustBusiness \
+            -destination "platform=iOS Simulator,id=$IPHONE_UDID" \
+            -only-testing:GalacticTrustBusinessUITests/AppStoreScreenshotTests/testAppStoreScreenshot \
+            -derivedDataPath "$RUNNER_TEMP/GalacticScreenshotDerivedData" \
+            -resultBundlePath "$RESULT" \
+            CODE_SIGNING_ALLOWED=NO
 
-          runtimes = data('xcrun', 'simctl', 'list', 'runtimes', '--json')['runtimes']
-          ios = [r for r in runtimes if r.get('isAvailable') and (r.get('platform') == 'iOS' or 'iOS' in r.get('name', ''))]
-          if not ios:
-              raise SystemExit('No available iOS Simulator runtime found')
-          runtime = ios[-1]['identifier']
+          xcrun xcresulttool export attachments --path "$RESULT" --output-path "$EXPORT"
+          find "$EXPORT" -maxdepth 2 -type f -print
 
-          types = data('xcrun', 'simctl', 'list', 'devicetypes', '--json')['devicetypes']
-          by_name = {d['name']: d for d in types}
+          SHOT=$(find "$EXPORT" -type f -name '*.png' | head -1)
+          if [ -z "$SHOT" ]; then
+            echo "No PNG screenshot attachment was exported from the iPhone UI test." >&2
+            cat "$EXPORT/manifest.json" >&2 || true
+            exit 1
+          fi
 
-          def pick(names, fallback_words):
-              for name in names:
-                  if name in by_name:
-                      return by_name[name]['identifier']
-              for d in reversed(types):
-                  lower = d['name'].lower()
-                  if all(word in lower for word in fallback_words):
-                      return d['identifier']
-              raise SystemExit('No matching simulator device type found')
+          cp "$SHOT" "$OUT/Galactic-Trust-Business-iPhone-6.5.png"
+          sips -g pixelWidth -g pixelHeight "$OUT/Galactic-Trust-Business-iPhone-6.5.png"
 
-          iphone_id = pick(
-              ['iPhone 11 Pro Max', 'iPhone 16 Pro Max', 'iPhone 16 Plus', 'iPhone 15 Pro Max'],
-              ['iphone', 'max']
-          )
-          ipad_id = pick(
-              ['iPad Pro 13-inch (M4)', 'iPad Pro 13-inch (M5)', 'iPad Pro (13-inch) (M4)', 'iPad Pro (12.9-inch) (6th generation)'],
-              ['ipad', 'pro']
-          )
+          WIDTH=$(sips -g pixelWidth "$OUT/Galactic-Trust-Business-iPhone-6.5.png" | awk '/pixelWidth/ {print $2}')
+          HEIGHT=$(sips -g pixelHeight "$OUT/Galactic-Trust-Business-iPhone-6.5.png" | awk '/pixelHeight/ {print $2}')
+          if [ "$WIDTH" != "1242" ] || [ "$HEIGHT" != "2688" ]; then
+            echo "Unexpected iPhone screenshot dimensions: ${WIDTH}x${HEIGHT}; expected 1242x2688." >&2
+            exit 1
+          fi
 
-          print(f'RUNTIME={runtime}')
-          print(f'IPHONE_TYPE={iphone_id}')
-          print(f'IPAD_TYPE={ipad_id}')
-          PY
+          xcrun simctl shutdown "$IPHONE_UDID" || true
 
-          source "$RUNNER_TEMP/simulators.env"
+      - name: Capture real iPad screenshot with XCUITest
+        working-directory: ios/GalacticTrustBusiness
+        shell: bash
+        run: |
+          set -euo pipefail
+          RESULT="$RUNNER_TEMP/ipad-app-store.xcresult"
+          EXPORT="$RUNNER_TEMP/ipad-attachments"
+          OUT="$GITHUB_WORKSPACE/app-store-screenshots"
+          mkdir -p "$OUT"
 
-          run_with_timeout() {
-            seconds="$1"
-            shift
-            python3 - "$seconds" "$@" <<'PY'
-          import subprocess, sys
-          seconds = int(sys.argv[1])
-          subprocess.run(sys.argv[2:], check=True, timeout=seconds)
-          PY
-          }
+          xcrun simctl boot "$IPAD_UDID" || true
+          xcrun simctl bootstatus "$IPAD_UDID" -b
+          xcrun simctl status_bar "$IPAD_UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
 
-          wait_for_boot() {
-            udid="$1"
-            for attempt in $(seq 1 75); do
-              if xcrun simctl list devices | grep "$udid" | grep -q '(Booted)'; then
-                return 0
-              fi
-              sleep 2
-            done
-            echo "Simulator $udid did not reach Booted state" >&2
-            return 1
-          }
+          rm -rf "$RESULT" "$EXPORT"
+          xcodebuild test \
+            -project GalacticTrustBusiness.xcodeproj \
+            -scheme GalacticTrustBusiness \
+            -destination "platform=iOS Simulator,id=$IPAD_UDID" \
+            -only-testing:GalacticTrustBusinessUITests/AppStoreScreenshotTests/testAppStoreScreenshot \
+            -derivedDataPath "$RUNNER_TEMP/GalacticScreenshotDerivedData" \
+            -resultBundlePath "$RESULT" \
+            CODE_SIGNING_ALLOWED=NO
 
-          wait_for_app_process() {
-            for attempt in $(seq 1 45); do
-              if pgrep -f 'GalacticTrustBusiness.app/GalacticTrustBusiness' >/dev/null 2>&1; then
-                return 0
-              fi
-              sleep 2
-            done
-            return 1
-          }
+          xcrun xcresulttool export attachments --path "$RESULT" --output-path "$EXPORT"
+          find "$EXPORT" -maxdepth 2 -type f -print
 
-          capture() {
-            label="$1"
-            dtype="$2"
-            raw="$3"
-            final="$4"
-            width="$5"
-            height="$6"
-            launch_log="$OUT/${label}-launch.log"
+          SHOT=$(find "$EXPORT" -type f -name '*.png' | head -1)
+          if [ -z "$SHOT" ]; then
+            echo "No PNG screenshot attachment was exported from the iPad UI test." >&2
+            cat "$EXPORT/manifest.json" >&2 || true
+            exit 1
+          fi
 
-            udid=$(xcrun simctl create "Galactic-${label}-${GITHUB_RUN_ID}" "$dtype" "$RUNTIME")
-            echo "Created $label simulator $udid"
+          cp "$SHOT" "$OUT/Galactic-Trust-Business-iPad-13.png"
+          sips -g pixelWidth -g pixelHeight "$OUT/Galactic-Trust-Business-iPad-13.png"
 
-            run_with_timeout 30 xcrun simctl boot "$udid" || true
-            wait_for_boot "$udid"
+          WIDTH=$(sips -g pixelWidth "$OUT/Galactic-Trust-Business-iPad-13.png" | awk '/pixelWidth/ {print $2}')
+          HEIGHT=$(sips -g pixelHeight "$OUT/Galactic-Trust-Business-iPad-13.png" | awk '/pixelHeight/ {print $2}')
+          if [ "$WIDTH" != "2064" ] || [ "$HEIGHT" != "2752" ]; then
+            echo "Unexpected iPad screenshot dimensions: ${WIDTH}x${HEIGHT}; expected 2064x2752." >&2
+            exit 1
+          fi
 
-            # A simulator can report Booted before SpringBoard and app-launch services
-            # are fully ready. Give them a short settling window before installation.
-            sleep 10
+          xcrun simctl shutdown "$IPAD_UDID" || true
 
-            run_with_timeout 30 xcrun simctl status_bar "$udid" override --time 9:41 --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
-            run_with_timeout 60 xcrun simctl install "$udid" "$APP"
-
-            # On hosted macOS runners, simctl launch can occasionally stay attached
-            # even after it has successfully started the app. Launch it in the
-            # background and verify the actual app process instead of treating that
-            # attached CLI process as a failure.
-            (xcrun simctl launch --terminate-running-process "$udid" "$BUNDLE_ID" >"$launch_log" 2>&1) &
-            launch_cli_pid=$!
-
-            if ! wait_for_app_process; then
-              echo "The Galactic Trust Business process did not appear after launch." >&2
-              echo "--- simctl launch output ---" >&2
-              cat "$launch_log" >&2 || true
-              echo "--- simulator devices ---" >&2
-              xcrun simctl list devices >&2 || true
-              kill "$launch_cli_pid" >/dev/null 2>&1 || true
-              wait "$launch_cli_pid" >/dev/null 2>&1 || true
-              return 1
-            fi
-
-            echo "Galactic Trust Business is running on the $label simulator."
-            sleep 12
-            run_with_timeout 45 xcrun simctl io "$udid" screenshot "$raw"
-
-            # Produce App Store Connect-compatible dimensions while preserving the
-            # real pixels captured from the native simulator session.
-            sips --resampleHeightWidth "$height" "$width" "$raw" --out "$final" >/dev/null
-            sips -g pixelWidth -g pixelHeight "$final"
-            file "$final"
-
-            kill "$launch_cli_pid" >/dev/null 2>&1 || true
-            wait "$launch_cli_pid" >/dev/null 2>&1 || true
-            xcrun simctl terminate "$udid" "$BUNDLE_ID" || true
-            xcrun simctl shutdown "$udid" || true
-            xcrun simctl delete "$udid" || true
-          }
-
-          trap 'xcrun simctl shutdown all >/dev/null 2>&1 || true; xcrun simctl delete unavailable >/dev/null 2>&1 || true' EXIT
-
-          capture iphone "$IPHONE_TYPE" "$OUT/iphone-raw.png" "$OUT/Galactic-Trust-Business-iPhone-6.5.png" 1242 2688
-          capture ipad "$IPAD_TYPE" "$OUT/ipad-raw.png" "$OUT/Galactic-Trust-Business-iPad-13.png" 2064 2752
-          rm -f "$OUT/iphone-raw.png" "$OUT/ipad-raw.png" "$OUT/iphone-launch.log" "$OUT/ipad-launch.log"
+      - name: Clean up simulators
+        if: always()
+        shell: bash
+        run: |
+          if [ -n "${IPHONE_UDID:-}" ]; then xcrun simctl shutdown "$IPHONE_UDID" >/dev/null 2>&1 || true; xcrun simctl delete "$IPHONE_UDID" >/dev/null 2>&1 || true; fi
+          if [ -n "${IPAD_UDID:-}" ]; then xcrun simctl shutdown "$IPAD_UDID" >/dev/null 2>&1 || true; xcrun simctl delete "$IPAD_UDID" >/dev/null 2>&1 || true; fi
 
       - name: Upload screenshots
         uses: actions/upload-artifact@v4
