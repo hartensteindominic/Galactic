@@ -44,6 +44,7 @@ targets:
     scheme:
       testTargets:
         - GalacticTrustBusinessTests
+        - GalacticTrustBusinessUITests
   GalacticTrustBusinessTests:
     type: bundle.unit-test
     platform: iOS
@@ -51,3 +52,13 @@ targets:
       - path: GalacticTrustBusinessTests
     dependencies:
       - target: GalacticTrustBusiness
+  GalacticTrustBusinessUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: GalacticTrustBusinessUITests
+    dependencies:
+      - target: GalacticTrustBusiness
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.hartensteindominic.galactictrustbusiness.uitests
